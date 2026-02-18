@@ -1,0 +1,221 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --color-page-bg: #F5F0EB;
+    --color-card-bg: #FFFFFF;
+    --color-section-bg: #EDE6DF;
+    --color-input-bg: #EDE6DF;
+    --color-text-primary: #6B5D55;
+    --color-text-secondary: #9E9590;
+    --color-brand-primary: #9E9590;
+    --color-brand-dark: #7A6E5F;
+  }
+
+  .dark {
+    --color-page-bg: #1C1917;
+    --color-card-bg: #292524;
+    --color-section-bg: #3D3835;
+    --color-input-bg: #3D3835;
+    --color-text-primary: #E7E5E4;
+    --color-text-secondary: #A8A29E;
+    --color-brand-primary: #C9A5A0;
+    --color-brand-dark: #9E9590;
+  }
+
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  html {
+    font-family: 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    background-color: var(--color-page-bg);
+    color: var(--color-text-primary);
+    min-height: 100dvh;
+    overscroll-behavior: none;
+  }
+
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  input[type="number"] {
+    -moz-appearance: textfield;
+  }
+}
+
+@layer components {
+  .page-container {
+    @apply min-h-screen pb-32;
+    background-color: var(--color-page-bg);
+  }
+
+  .card {
+    @apply rounded-card shadow-sm p-4;
+    background-color: var(--color-card-bg);
+  }
+
+  .section-header {
+    @apply sticky top-14 z-10 px-4 py-2.5 font-semibold text-sm flex items-center justify-between;
+    background-color: var(--color-section-bg);
+    color: var(--color-text-primary);
+  }
+
+  .input-field {
+    @apply w-[56px] h-9 rounded-input text-right text-base font-semibold px-1.5 outline-none transition-all duration-150;
+    font-family: 'SF Pro Display', 'Roboto', 'Noto Sans TC', sans-serif;
+    background-color: var(--color-input-bg);
+    border: 1.5px solid transparent;
+    font-variant-numeric: tabular-nums;
+    color: #3D2E26;
+  }
+
+  .input-field:focus {
+    border-color: #9E9590;
+    box-shadow: 0 0 0 3px rgba(158, 149, 144, 0.15);
+  }
+
+  .input-field.filled {
+    background-color: #E8F5E9;
+  }
+
+  .btn-primary {
+    @apply w-full h-12 rounded-btn text-white font-semibold text-base transition-all duration-200 active:scale-[0.98];
+    background-color: #7A6E5F;
+  }
+
+  .btn-primary:active {
+    background-color: #6B5D55;
+  }
+
+  .btn-secondary {
+    @apply w-full h-11 rounded-btn font-semibold text-base transition-all duration-200 active:scale-[0.98];
+    border: 1.5px solid #9E9590;
+    color: #7A6E5F;
+    background: transparent;
+  }
+
+  .top-nav {
+    @apply sticky top-0 z-20 flex items-center justify-between px-4 h-14 text-white;
+    background-color: #9E9590;
+  }
+
+  .bottom-bar {
+    @apply fixed bottom-0 left-0 right-0 z-20 p-4 border-t border-gray-100;
+    background-color: var(--color-card-bg);
+    padding-bottom: max(16px, env(safe-area-inset-bottom));
+  }
+}
+
+/* A4 列印樣式 */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 10mm 8mm;
+  }
+
+  /* 隱藏非列印元素 */
+  body {
+    background: white !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .no-print,
+  .top-nav,
+  .bottom-bar {
+    display: none !important;
+  }
+
+  .page-container {
+    min-height: auto !important;
+    padding-bottom: 0 !important;
+    background: white !important;
+  }
+
+  /* 列印表頭 */
+  .print-header {
+    display: flex !important;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 0 6px 0;
+    border-bottom: 2px solid #6B5D55;
+    margin-bottom: 4px;
+  }
+  .print-header h1 {
+    font-size: 16px;
+    font-weight: 700;
+    color: #6B5D55;
+  }
+  .print-header .print-date {
+    font-size: 11px;
+    color: #9E9590;
+  }
+
+  /* 列印表格 */
+  .print-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 10px;
+  }
+  .print-table th {
+    background-color: #EDE6DF !important;
+    font-weight: 600;
+    padding: 3px 4px;
+    border: 0.5px solid #ccc;
+    text-align: center;
+    color: #6B5D55;
+  }
+  .print-table th:first-child {
+    text-align: left;
+    width: 18%;
+  }
+  .print-table td {
+    padding: 2.5px 4px;
+    border: 0.5px solid #ddd;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+  }
+  .print-table td:first-child {
+    text-align: left;
+    font-weight: 500;
+  }
+  .print-table .cat-row td {
+    background-color: #F5F0EB !important;
+    font-weight: 600;
+    font-size: 10px;
+    padding: 2px 4px;
+    color: #7A6E5F;
+  }
+  .print-table .total-col {
+    font-weight: 700;
+    background-color: #FFF8E1 !important;
+  }
+  .print-table .zero {
+    color: #ccc;
+  }
+
+  /* 頁面上的手機版內容列印時隱藏 */
+  .screen-only {
+    display: none !important;
+  }
+
+  /* 列印版內容顯示 */
+  .print-only {
+    display: block !important;
+  }
+}
