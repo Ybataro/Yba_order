@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { ToastProvider } from '@/components/Toast'
+import { useInitStores } from '@/hooks/useInitStores'
 
 import StoreHome from '@/pages/store/StoreHome'
 import Inventory from '@/pages/store/Inventory'
@@ -21,8 +22,11 @@ import MaterialManager from '@/pages/admin/MaterialManager'
 import StaffManager from '@/pages/admin/StaffManager'
 import StoreManager from '@/pages/admin/StoreManager'
 import SettlementManager from '@/pages/admin/SettlementManager'
+import QRCodePage from '@/pages/admin/QRCodePage'
 
 function App() {
+  useInitStores()
+
   return (
     <BrowserRouter>
       <ToastProvider>
@@ -54,6 +58,7 @@ function App() {
             <Route path="/admin/staff" element={<StaffManager />} />
             <Route path="/admin/stores" element={<StoreManager />} />
             <Route path="/admin/settlement-fields" element={<SettlementManager />} />
+            <Route path="/admin/qrcode" element={<QRCodePage />} />
           </Routes>
         </div>
       </ToastProvider>

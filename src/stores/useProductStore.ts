@@ -1,10 +1,13 @@
 import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
 import { storeProducts, productCategories, type StoreProduct } from '@/data/storeProducts'
+import { supabase } from '@/lib/supabase'
 
 interface ProductState {
   items: StoreProduct[]
   categories: string[]
+  loading: boolean
+  initialized: boolean
+  initialize: () => Promise<void>
   add: (item: StoreProduct) => void
   update: (id: string, partial: Partial<StoreProduct>) => void
   remove: (id: string) => void
@@ -16,61 +19,147 @@ interface ProductState {
   reorderCategory: (fromIdx: number, toIdx: number) => void
 }
 
-export const useProductStore = create<ProductState>()(
-  persist(
-    (set, get) => ({
-      items: storeProducts,
-      categories: [...productCategories],
+export const useProductStore = create<ProductState>()((set, get) => ({
+  items: storeProducts,
+  categories: [...productCategories],
+  loading: false,
+  initialized: false,
 
-      add: (item) => set((s) => ({ items: [...s.items, item] })),
-
-      update: (id, partial) =>
-        set((s) => ({
-          items: s.items.map((p) => (p.id === id ? { ...p, ...partial } : p)),
+  initialize: async () => {
+    if (get().initialized || !supabase) return
+    set({ loading: true })
+    const [prodRes, catRes] = await Promise.all([
+      supabase.from('store_products').select('*').order('sort_order'),
+      supabase.from('categories').select('*').eq('scope', 'product').order('sort_order'),
+    ])
+    if (prodRes.data && prodRes.data.length > 0) {
+      set({
+        items: prodRes.data.map((d) => ({
+          id: d.id,
+          name: d.name,
+          category: d.category,
+          unit: d.unit,
+          shelfLifeDays: d.shelf_life_days ?? undefined,
+          baseStock: d.base_stock ?? undefined,
         })),
+      })
+    }
+    if (catRes.data && catRes.data.length > 0) {
+      set({ categories: catRes.data.map((c) => c.name) })
+    }
+    set({ loading: false, initialized: true })
+  },
 
-      remove: (id) => set((s) => ({ items: s.items.filter((p) => p.id !== id) })),
+  add: (item) => {
+    set((s) => ({ items: [...s.items, item] }))
+    if (supabase) {
+      supabase.from('store_products').insert({
+        id: item.id,
+        name: item.name,
+        category: item.category,
+        unit: item.unit,
+        shelf_life_days: item.shelfLifeDays != null ? String(item.shelfLifeDays) : null,
+        base_stock: item.baseStock ?? null,
+        sort_order: get().items.length - 1,
+      }).then()
+    }
+  },
 
-      reorder: (fromIdx, toIdx) =>
-        set((s) => {
-          const arr = [...s.items]
-          const [moved] = arr.splice(fromIdx, 1)
-          arr.splice(toIdx, 0, moved)
-          return { items: arr }
-        }),
+  update: (id, partial) => {
+    set((s) => ({
+      items: s.items.map((p) => (p.id === id ? { ...p, ...partial } : p)),
+    }))
+    if (supabase) {
+      const db: Record<string, unknown> = {}
+      if (partial.name !== undefined) db.name = partial.name
+      if (partial.category !== undefined) db.category = partial.category
+      if (partial.unit !== undefined) db.unit = partial.unit
+      if (partial.shelfLifeDays !== undefined) db.shelf_life_days = partial.shelfLifeDays != null ? String(partial.shelfLifeDays) : null
+      if (partial.baseStock !== undefined) db.base_stock = partial.baseStock ?? null
+      if (Object.keys(db).length > 0) {
+        supabase.from('store_products').update(db).eq('id', id).then()
+      }
+    }
+  },
 
-      getByCategory: () => {
-        const { items, categories } = get()
-        const map = new Map<string, StoreProduct[]>()
-        for (const cat of categories) {
-          map.set(cat, items.filter((p) => p.category === cat))
-        }
-        return map
-      },
+  remove: (id) => {
+    set((s) => ({ items: s.items.filter((p) => p.id !== id) }))
+    if (supabase) {
+      supabase.from('store_products').delete().eq('id', id).then()
+    }
+  },
 
-      renameCategory: (oldName, newName) =>
-        set((s) => ({
-          categories: s.categories.map((c) => (c === oldName ? newName : c)),
-          items: s.items.map((p) => (p.category === oldName ? { ...p, category: newName } : p)),
-        })),
+  reorder: (fromIdx, toIdx) => {
+    set((s) => {
+      const arr = [...s.items]
+      const [moved] = arr.splice(fromIdx, 1)
+      arr.splice(toIdx, 0, moved)
+      return { items: arr }
+    })
+    if (supabase) {
+      const items = get().items
+      const updates = items.map((item, i) =>
+        supabase.from('store_products').update({ sort_order: i }).eq('id', item.id)
+      )
+      Promise.all(updates).then()
+    }
+  },
 
-      addCategory: (name) =>
-        set((s) => ({ categories: [...s.categories, name] })),
+  getByCategory: () => {
+    const { items, categories } = get()
+    const map = new Map<string, StoreProduct[]>()
+    for (const cat of categories) {
+      map.set(cat, items.filter((p) => p.category === cat))
+    }
+    return map
+  },
 
-      removeCategory: (name) =>
-        set((s) => ({
-          categories: s.categories.filter((c) => c !== name),
-          items: s.items.filter((p) => p.category !== name),
-        })),
+  renameCategory: (oldName, newName) => {
+    set((s) => ({
+      categories: s.categories.map((c) => (c === oldName ? newName : c)),
+      items: s.items.map((p) => (p.category === oldName ? { ...p, category: newName } : p)),
+    }))
+    if (supabase) {
+      supabase.from('categories').update({ name: newName }).eq('scope', 'product').eq('name', oldName).then()
+      supabase.from('store_products').update({ category: newName }).eq('category', oldName).then()
+    }
+  },
 
-      reorderCategory: (fromIdx, toIdx) =>
-        set((s) => {
-          const arr = [...s.categories]
-          const [moved] = arr.splice(fromIdx, 1)
-          arr.splice(toIdx, 0, moved)
-          return { categories: arr }
-        }),
-    }),
-    { name: 'yba-product-store' }
-  )
-)
+  addCategory: (name) => {
+    set((s) => ({ categories: [...s.categories, name] }))
+    if (supabase) {
+      supabase.from('categories').insert({
+        scope: 'product',
+        name,
+        sort_order: get().categories.length - 1,
+      }).then()
+    }
+  },
+
+  removeCategory: (name) => {
+    set((s) => ({
+      categories: s.categories.filter((c) => c !== name),
+      items: s.items.filter((p) => p.category !== name),
+    }))
+    if (supabase) {
+      supabase.from('categories').delete().eq('scope', 'product').eq('name', name).then()
+      supabase.from('store_products').delete().eq('category', name).then()
+    }
+  },
+
+  reorderCategory: (fromIdx, toIdx) => {
+    set((s) => {
+      const arr = [...s.categories]
+      const [moved] = arr.splice(fromIdx, 1)
+      arr.splice(toIdx, 0, moved)
+      return { categories: arr }
+    })
+    if (supabase) {
+      const cats = get().categories
+      const updates = cats.map((name, i) =>
+        supabase.from('categories').update({ sort_order: i }).eq('scope', 'product').eq('name', name)
+      )
+      Promise.all(updates).then()
+    }
+  },
+}))
