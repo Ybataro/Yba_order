@@ -12,7 +12,7 @@ import { Send, Lightbulb, Sun, CloudRain, Cloud, CloudSun, Thermometer, Droplets
 // 模擬天氣資料（Phase 2 串接中央氣象署 API）
 const mockWeather = {
   date: '明日',
-  condition: 'sunny' as const, // sunny | cloudy | partly_cloudy | rainy
+  condition: 'sunny' as WeatherCondition, // sunny | cloudy | partly_cloudy | rainy
   conditionText: '晴天',
   tempHigh: 32,
   tempLow: 24,

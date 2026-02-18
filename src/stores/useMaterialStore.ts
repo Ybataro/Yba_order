@@ -97,9 +97,10 @@ export const useMaterialStore = create<MaterialState>()((set, get) => ({
       return { items: arr }
     })
     if (supabase) {
+      const sb = supabase
       const items = get().items
       const updates = items.map((item, i) =>
-        supabase.from('raw_materials').update({ sort_order: i }).eq('id', item.id)
+        sb.from('raw_materials').update({ sort_order: i }).eq('id', item.id)
       )
       Promise.all(updates).then()
     }
@@ -155,9 +156,10 @@ export const useMaterialStore = create<MaterialState>()((set, get) => ({
       return { categories: arr }
     })
     if (supabase) {
+      const sb = supabase
       const cats = get().categories
       const updates = cats.map((name, i) =>
-        supabase.from('categories').update({ sort_order: i }).eq('scope', 'material').eq('name', name)
+        sb.from('categories').update({ sort_order: i }).eq('scope', 'material').eq('name', name)
       )
       Promise.all(updates).then()
     }

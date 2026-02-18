@@ -96,9 +96,10 @@ export const useSettlementStore = create<SettlementState>()((set, get) => ({
       return { items: arr }
     })
     if (supabase) {
+      const sb = supabase
       const items = get().items
       const updates = items.map((item, i) =>
-        supabase.from('settlement_fields').update({ sort_order: i }).eq('id', item.id)
+        sb.from('settlement_fields').update({ sort_order: i }).eq('id', item.id)
       )
       Promise.all(updates).then()
     }
