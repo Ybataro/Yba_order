@@ -52,20 +52,18 @@ export default function AdminHome() {
       {/* Quick links */}
       <div className="px-4 mt-6">
         <p className="text-xs text-brand-lotus mb-2">快速前往</p>
-        <div className="flex gap-2">
-          <div className="flex flex-1 gap-1">
-            <select
-              value={selectedStore}
-              onChange={(e) => setSelectedStore(e.target.value)}
-              className="h-9 rounded-lg border border-gray-200 bg-surface-input px-2 text-sm text-brand-oak outline-none focus:border-brand-lotus flex-1 min-w-0"
-            >
-              {stores.map((s) => (
-                <option key={s.id} value={s.id}>{s.name}</option>
-              ))}
-            </select>
-            <button onClick={() => navigate(`/store/${selectedStore}`)} className="btn-secondary !h-9 !text-sm whitespace-nowrap">前往</button>
-          </div>
-          <button onClick={() => navigate('/kitchen')} className="btn-secondary !h-9 !text-sm flex-shrink-0">央廚操作</button>
+        <div className="flex gap-2 items-center">
+          <select
+            value={selectedStore}
+            onChange={(e) => setSelectedStore(e.target.value)}
+            className="h-10 rounded-xl border border-gray-200 bg-surface-input px-3 text-sm text-brand-oak outline-none focus:border-brand-lotus flex-1 min-w-0"
+          >
+            {stores.map((s) => (
+              <option key={s.id} value={s.id}>{s.name}</option>
+            ))}
+          </select>
+          <button onClick={() => navigate(`/store/${selectedStore}`)} className="btn-secondary !h-10 !text-sm !px-5 whitespace-nowrap">前往</button>
+          <button onClick={() => navigate('/kitchen')} className="btn-secondary !h-10 !text-sm !px-4 whitespace-nowrap">央廚</button>
         </div>
       </div>
     </div>
