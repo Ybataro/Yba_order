@@ -21,9 +21,16 @@ const menuItems = [
 export default function AdminHome() {
   const navigate = useNavigate()
   const stores = useStoreStore((s) => s.items)
-  const [selectedStore, setSelectedStore] = useState(stores[0]?.id || '')
+  const [selectedStore, setSelectedStore] = useState('')
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
+
+  // stores 非同步載入後設定預設值
+  useEffect(() => {
+    if (stores.length > 0 && !selectedStore) {
+      setSelectedStore(stores[0].id)
+    }
+  }, [stores, selectedStore])
 
   const selectedName = stores.find((s) => s.id === selectedStore)?.name || '選擇門店'
 
@@ -65,24 +72,26 @@ export default function AdminHome() {
       </div>
 
       {/* Quick links */}
-      <div className="px-4 mt-6">
+      <div className="px-4 mt-6 pb-6">
         <p className="text-xs text-brand-lotus mb-2">快速前往</p>
-        <div className="flex gap-2 items-center">
-          <div ref={dropdownRef} className="relative flex-1 min-w-0">
+        <div className="space-y-2">
+          {/* 門店選擇 + 前往 */}
+          <div ref={dropdownRef} className="relative flex gap-2">
             <button
               onClick={() => setDropdownOpen((v) => !v)}
-              className="w-full h-10 rounded-xl border border-gray-200 bg-white px-3 text-sm text-brand-oak flex items-center justify-between gap-2"
+              className="flex-1 h-11 rounded-xl border border-gray-200 bg-white px-4 text-sm text-brand-oak flex items-center justify-between gap-2 active:bg-gray-50"
             >
-              <span className="truncate">{selectedName}</span>
+              <span>{selectedName}</span>
               <ChevronDown size={16} className={`shrink-0 text-gray-400 transition-transform ${dropdownOpen ? 'rotate-180' : ''}`} />
             </button>
+            <button onClick={() => navigate(`/store/${selectedStore}`)} className="btn-secondary !h-11 !text-sm !px-6 whitespace-nowrap">前往門店</button>
             {dropdownOpen && (
               <div className="absolute left-0 right-0 top-full mt-1 rounded-xl bg-white shadow-lg border border-gray-100 overflow-hidden z-50">
                 {stores.map((s) => (
                   <button
                     key={s.id}
                     onClick={() => { setSelectedStore(s.id); setDropdownOpen(false) }}
-                    className={`w-full text-left px-4 py-2.5 text-sm transition-colors ${s.id === selectedStore ? 'bg-brand-lotus/10 text-brand-lotus font-medium' : 'text-brand-oak hover:bg-gray-50'}`}
+                    className={`w-full text-left px-4 py-3 text-sm transition-colors ${s.id === selectedStore ? 'bg-brand-lotus/10 text-brand-lotus font-medium' : 'text-brand-oak hover:bg-gray-50'}`}
                   >
                     {s.name}
                   </button>
@@ -90,8 +99,8 @@ export default function AdminHome() {
               </div>
             )}
           </div>
-          <button onClick={() => navigate(`/store/${selectedStore}`)} className="btn-secondary !h-10 !text-sm !px-5 whitespace-nowrap">前往</button>
-          <button onClick={() => navigate('/kitchen')} className="btn-secondary !h-10 !text-sm !px-4 whitespace-nowrap">央廚</button>
+          {/* 央廚 */}
+          <button onClick={() => navigate('/kitchen')} className="btn-secondary w-full !h-11 !text-sm">前往央廚</button>
         </div>
       </div>
     </div>
