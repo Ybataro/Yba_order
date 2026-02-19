@@ -44,7 +44,7 @@ export default function Inventory() {
 
     const load = async () => {
       try {
-        const { data: session } = await supabase
+        const { data: session } = await supabase!
           .from('inventory_sessions')
           .select('id')
           .eq('id', sid)
@@ -53,7 +53,7 @@ export default function Inventory() {
         if (!session) { setLoading(false); return }
         setIsEdit(true)
 
-        const { data: items } = await supabase
+        const { data: items } = await supabase!
           .from('inventory_items')
           .select('*')
           .eq('session_id', sid)

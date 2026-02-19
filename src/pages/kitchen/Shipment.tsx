@@ -52,7 +52,7 @@ export default function Shipment() {
 
         // Load today's order for this store
         const orderSid = `${store.id}_${today}`
-        const { data: orderItems } = await supabase
+        const { data: orderItems } = await supabase!
           .from('order_items')
           .select('product_id, quantity')
           .eq('session_id', orderSid)
@@ -66,7 +66,7 @@ export default function Shipment() {
 
         // Load existing shipment
         const shipSid = shipmentSessionId(store.id, today)
-        const { data: shipSession } = await supabase
+        const { data: shipSession } = await supabase!
           .from('shipment_sessions')
           .select('confirmed_by')
           .eq('id', shipSid)
@@ -76,7 +76,7 @@ export default function Shipment() {
           editData[store.id] = true
           if (shipSession.confirmed_by) setConfirmBy(shipSession.confirmed_by)
 
-          const { data: shipItems } = await supabase
+          const { data: shipItems } = await supabase!
             .from('shipment_items')
             .select('*')
             .eq('session_id', shipSid)

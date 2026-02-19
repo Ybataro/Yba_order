@@ -45,7 +45,7 @@ export default function Receive() {
     setLoading(true)
 
     const load = async () => {
-      const { data: session } = await supabase
+      const { data: session } = await supabase!
         .from('shipment_sessions')
         .select('*')
         .eq('id', sessionId)
@@ -61,7 +61,7 @@ export default function Receive() {
       if (session.received_at) setIsEdit(true)
       if (session.receive_note) setNote(session.receive_note)
 
-      const { data: items } = await supabase
+      const { data: items } = await supabase!
         .from('shipment_items')
         .select('*')
         .eq('session_id', sessionId)
