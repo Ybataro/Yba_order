@@ -136,14 +136,59 @@ export default function Order() {
     return Math.round(value / unit) * unit
   }
 
-  const mockStock = useMemo(() => {
-    const d: Record<string, number> = {}
-    storeProducts.forEach(p => {
-      const unit = getRoundUnit(p)
-      d[p.id] = roundToUnit(Math.random() * 3, unit)
-    })
-    return d
-  }, [])
+  // 最新盤點庫存（架上 + 庫存，跨樓層加總）
+  const [stock, setStock] = useState<Record<string, number>>({})
+  const [stockLoading, setStockLoading] = useState(true)
+
+  useEffect(() => {
+    if (!supabase || !storeId) { setStockLoading(false); return }
+
+    const load = async () => {
+      setStockLoading(true)
+
+      // 找該門店最新一筆盤點 session（可能有多樓層）
+      const { data: sessions } = await supabase!
+        .from('inventory_sessions')
+        .select('id, date')
+        .eq('store_id', storeId)
+        .order('date', { ascending: false })
+        .limit(10)
+
+      if (!sessions || sessions.length === 0) {
+        setStock({})
+        setStockLoading(false)
+        return
+      }
+
+      // 取最新日期的所有 sessions（可能同一天有 1F + 2F）
+      const latestDate = sessions[0].date
+      const latestSessions = sessions.filter(s => s.date === latestDate)
+      const sids = latestSessions.map(s => s.id)
+
+      const { data: items } = await supabase!
+        .from('inventory_items')
+        .select('product_id, on_shelf, stock')
+        .in('session_id', sids)
+
+      if (!items || items.length === 0) {
+        setStock({})
+        setStockLoading(false)
+        return
+      }
+
+      // 跨樓層加總 on_shelf + stock
+      const totals: Record<string, number> = {}
+      items.forEach(item => {
+        const val = (item.on_shelf || 0) + (item.stock || 0)
+        totals[item.product_id] = (totals[item.product_id] || 0) + val
+      })
+
+      setStock(totals)
+      setStockLoading(false)
+    }
+
+    load()
+  }, [storeId])
 
   // 近 7 日平均叫貨量
   const [suggested, setSuggested] = useState<Record<string, number>>({})
@@ -311,7 +356,7 @@ export default function Order() {
         </div>
       )}
 
-      {(loading || suggestedLoading) ? (
+      {(loading || stockLoading || suggestedLoading) ? (
         <div className="flex items-center justify-center py-20 text-sm text-brand-lotus">載入中...</div>
       ) : (
         <>
@@ -389,7 +434,7 @@ export default function Order() {
                       <span className="text-sm font-medium text-brand-oak">{product.name}</span>
                       <span className="text-[10px] text-brand-lotus ml-1">({product.unit})</span>
                     </div>
-                    <span className={`w-[40px] text-center text-xs font-num ${mockStock[product.id] === 0 ? 'text-status-danger font-bold' : 'text-brand-oak'}`}>{mockStock[product.id]}</span>
+                    <span className={`w-[40px] text-center text-xs font-num ${stock[product.id] != null && stock[product.id] === 0 ? 'text-status-danger font-bold' : 'text-brand-oak'}`}>{stock[product.id] != null ? stock[product.id] : '-'}</span>
                     <span className="w-[40px] text-center text-xs font-num text-status-info">{suggested[product.id] > 0 ? suggested[product.id] : '-'}</span>
                     <div className="w-[60px] flex justify-center">
                       <NumericInput
