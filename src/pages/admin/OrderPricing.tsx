@@ -104,6 +104,12 @@ export default function OrderPricing() {
   const [loading, setLoading] = useState(false)
 
   const today = getTodayTW()
+  const currentYear = today.slice(0, 4)
+
+  // Yearly cost section
+  const [selectedYear, setSelectedYear] = useState(currentYear)
+  const [yearlyOrders, setYearlyOrders] = useState<OrderSession[]>([])
+  const [yearlyLoading, setYearlyLoading] = useState(false)
 
   const { startDate, endDate } = useMemo(() => {
     switch (dateRange) {
@@ -151,6 +157,65 @@ export default function OrderPricing() {
       setLoading(false)
     })
   }, [startDate, endDate, storeFilter])
+
+  // Fetch yearly data
+  useEffect(() => {
+    if (!supabase) return
+    setYearlyLoading(true)
+    const yearStart = `${selectedYear}-01-01`
+    const yearEnd = `${selectedYear}-12-31`
+    let q = supabase
+      .from('order_sessions')
+      .select('*, order_items(*)')
+      .gte('date', yearStart)
+      .lte('date', yearEnd)
+    if (storeFilter !== 'all') q = q.eq('store_id', storeFilter)
+    q.then((res) => {
+      setYearlyOrders(res.data || [])
+      setYearlyLoading(false)
+    })
+  }, [selectedYear, storeFilter])
+
+  // Monthly cost breakdown
+  const monthlyCosts = useMemo(() => {
+    const currentMonth = selectedYear === currentYear ? parseInt(today.slice(5, 7)) : 12
+    const months: { month: number; ourCost: number; franchiseCost: number }[] = []
+    for (let m = 1; m <= currentMonth; m++) {
+      let ourCost = 0
+      let franchiseCost = 0
+      const mm = String(m).padStart(2, '0')
+      yearlyOrders.forEach((s) => {
+        if (s.date.slice(5, 7) !== mm) return
+        ;(s.order_items || []).forEach((item) => {
+          if (item.quantity <= 0) return
+          const prod = products.find((p) => p.id === item.product_id)
+          ourCost += item.quantity * (prod?.ourCost || 0)
+          franchiseCost += item.quantity * (prod?.franchisePrice || 0)
+        })
+      })
+      months.push({ month: m, ourCost, franchiseCost })
+    }
+    return months
+  }, [yearlyOrders, products, selectedYear, currentYear, today])
+
+  const yearlyTotal = useMemo(() => {
+    let ourCost = 0
+    let franchiseCost = 0
+    monthlyCosts.forEach((m) => {
+      ourCost += m.ourCost
+      franchiseCost += m.franchiseCost
+    })
+    return { ourCost, franchiseCost }
+  }, [monthlyCosts])
+
+  const yearlyMax = useMemo(() => {
+    let max = 0
+    monthlyCosts.forEach((m) => {
+      if (m.ourCost > max) max = m.ourCost
+      if (m.franchiseCost > max) max = m.franchiseCost
+    })
+    return max
+  }, [monthlyCosts])
 
   // Build product × date matrix
   const { matrix, productTotals, grandTotal } = useMemo(() => {
@@ -491,6 +556,75 @@ export default function OrderPricing() {
                 )}
               </div>
             </div>
+          </div>
+
+          {/* Yearly cost section */}
+          <SectionHeader title="年度成本統計" icon="■" />
+          <div className="bg-white">
+            <div className="flex items-center gap-2 px-4 py-3 border-b border-gray-50">
+              <span className="text-xs text-brand-lotus shrink-0">年度：</span>
+              <select
+                value={selectedYear}
+                onChange={(e) => setSelectedYear(e.target.value)}
+                className="h-8 rounded-lg border border-gray-200 bg-white px-2 text-sm text-brand-oak outline-none"
+              >
+                {Array.from({ length: parseInt(currentYear) - 2024 }, (_, i) => String(2025 + i)).map((y) => (
+                  <option key={y} value={y}>{y}</option>
+                ))}
+              </select>
+            </div>
+
+            {yearlyLoading ? (
+              <div className="flex items-center justify-center py-10 text-sm text-brand-lotus">載入中...</div>
+            ) : (
+              <div className="divide-y divide-gray-50">
+                {monthlyCosts.map((m) => (
+                  <div key={m.month} className="px-4 py-2.5">
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="text-sm font-semibold text-brand-oak w-10">{m.month}月</span>
+                      <div className="flex gap-4 text-xs font-num">
+                        <span className="text-brand-mocha">{formatCurrency(m.ourCost)}</span>
+                        <span className="text-brand-lotus">{formatCurrency(m.franchiseCost)}</span>
+                      </div>
+                    </div>
+                    {yearlyMax > 0 && (
+                      <div className="flex flex-col gap-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] text-brand-mocha w-10 shrink-0">我們</span>
+                          <div className="flex-1 h-3.5 bg-gray-100 rounded-full overflow-hidden">
+                            <div
+                              className="h-full bg-brand-mocha/60 rounded-full transition-all"
+                              style={{ width: `${yearlyMax > 0 ? (m.ourCost / yearlyMax) * 100 : 0}%` }}
+                            />
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] text-brand-lotus w-10 shrink-0">加盟</span>
+                          <div className="flex-1 h-3.5 bg-gray-100 rounded-full overflow-hidden">
+                            <div
+                              className="h-full bg-brand-camel/60 rounded-full transition-all"
+                              style={{ width: `${yearlyMax > 0 ? (m.franchiseCost / yearlyMax) * 100 : 0}%` }}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+
+                {/* Yearly total */}
+                <div className="grid grid-cols-2 gap-px bg-gray-100">
+                  <div className="bg-white px-4 py-3">
+                    <p className="text-xs text-brand-lotus">年度我們成本</p>
+                    <p className="text-lg font-bold text-brand-oak font-num mt-0.5">{formatCurrency(yearlyTotal.ourCost)}</p>
+                  </div>
+                  <div className="bg-white px-4 py-3">
+                    <p className="text-xs text-brand-lotus">年度加盟成本</p>
+                    <p className="text-lg font-bold text-brand-oak font-num mt-0.5">{formatCurrency(yearlyTotal.franchiseCost)}</p>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </>
       )}
