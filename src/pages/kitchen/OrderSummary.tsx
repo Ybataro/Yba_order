@@ -16,7 +16,8 @@ const fixedNoteItems = [
 ]
 
 export default function OrderSummary() {
-  const storeProducts = useProductStore((s) => s.items)
+  const allProducts = useProductStore((s) => s.items)
+  const storeProducts = useMemo(() => allProducts.filter(p => !p.visibleIn || p.visibleIn === 'both' || p.visibleIn === 'order_only'), [allProducts])
   const productCategories = useProductStore((s) => s.categories)
   const stores = useStoreStore((s) => s.items)
   const today = getTodayTW()

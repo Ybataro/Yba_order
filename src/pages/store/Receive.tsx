@@ -27,7 +27,8 @@ export default function Receive() {
   const staffId = searchParams.get('staff') || ''
   const { showToast } = useToast()
   const storeName = useStoreStore((s) => s.getName(storeId || ''))
-  const storeProducts = useProductStore((s) => s.items)
+  const allProducts = useProductStore((s) => s.items)
+  const storeProducts = useMemo(() => allProducts.filter(p => !p.visibleIn || p.visibleIn === 'both' || p.visibleIn === 'order_only'), [allProducts])
   const productCategories = useProductStore((s) => s.categories)
 
   const today = getTodayTW()

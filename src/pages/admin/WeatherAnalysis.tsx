@@ -108,7 +108,8 @@ const conditionColor = (c: WeatherCondition) => {
 
 export default function WeatherAnalysis() {
   const stores = useStoreStore((s) => s.items)
-  const products = useProductStore((s) => s.items)
+  const allProducts = useProductStore((s) => s.items)
+  const products = useMemo(() => allProducts.filter(p => !p.visibleIn || p.visibleIn === 'both' || p.visibleIn === 'order_only'), [allProducts])
   const categories = useProductStore((s) => s.categories)
 
   const [dateRange, setDateRange] = useState<DateRange>('month')

@@ -58,7 +58,8 @@ function daysBetween(start: string, end: string): number {
 export default function OrderHistory() {
   const stores = useStoreStore((s) => s.items)
   const getStoreName = useStoreStore((s) => s.getName)
-  const products = useProductStore((s) => s.items)
+  const allProducts = useProductStore((s) => s.items)
+  const products = useMemo(() => allProducts.filter(p => !p.visibleIn || p.visibleIn === 'both' || p.visibleIn === 'order_only'), [allProducts])
   const productCategories = useProductStore((s) => s.categories)
   const materials = useMaterialStore((s) => s.items)
   const materialCategories = useMaterialStore((s) => s.categories)
