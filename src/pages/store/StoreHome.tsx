@@ -4,6 +4,7 @@ import { useStoreStore } from '@/stores/useStoreStore'
 import { useStaffStore } from '@/stores/useStaffStore'
 import { ClipboardList, DollarSign, Package, PackageCheck, UserCircle } from 'lucide-react'
 import { getTodayString, formatDate } from '@/lib/utils'
+import NotificationBell from '@/components/NotificationBell'
 
 const menuItems = [
   { icon: ClipboardList, label: '物料盤點', desc: '門店打烊物料清點', path: 'inventory', color: 'bg-brand-mocha' },
@@ -22,9 +23,14 @@ export default function StoreHome() {
   return (
     <div className="page-container">
       <div className="bg-brand-lotus text-white px-6 pt-12 pb-8">
-        <p className="text-sm opacity-80 mb-1">{formatDate(getTodayString())}</p>
-        <h1 className="text-2xl font-bold">阿爸的芋圓</h1>
-        <p className="text-base opacity-90 mt-1">{storeName}</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm opacity-80 mb-1">{formatDate(getTodayString())}</p>
+            <h1 className="text-2xl font-bold">阿爸的芋圓</h1>
+            <p className="text-base opacity-90 mt-1">{storeName}</p>
+          </div>
+          <NotificationBell context="store" storeId={storeId} className="text-white" />
+        </div>
       </div>
 
       {/* 當班人員選單 */}

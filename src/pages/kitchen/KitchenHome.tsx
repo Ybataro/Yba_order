@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import { ClipboardList, Truck, Package, Box, ShoppingCart } from 'lucide-react'
 import { getTodayString, formatDate } from '@/lib/utils'
+import NotificationBell from '@/components/NotificationBell'
 
 const menuItems = [
   { icon: ClipboardList, label: '各店叫貨總表', desc: '查看各店叫貨需求與加總', path: '/kitchen/orders', color: 'bg-brand-mocha' },
@@ -16,9 +17,14 @@ export default function KitchenHome() {
   return (
     <div className="page-container">
       <div className="bg-brand-silver text-white px-6 pt-12 pb-8">
-        <p className="text-sm opacity-80 mb-1">{formatDate(getTodayString())}</p>
-        <h1 className="text-2xl font-bold">阿爸的芋圓</h1>
-        <p className="text-base opacity-90 mt-1">中央廚房</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm opacity-80 mb-1">{formatDate(getTodayString())}</p>
+            <h1 className="text-2xl font-bold">阿爸的芋圓</h1>
+            <p className="text-base opacity-90 mt-1">中央廚房</p>
+          </div>
+          <NotificationBell context="kitchen" className="text-white" />
+        </div>
       </div>
 
       <div className="px-4 -mt-4 space-y-3">
