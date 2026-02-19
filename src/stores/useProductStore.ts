@@ -67,7 +67,9 @@ export const useProductStore = create<ProductState>()((set, get) => ({
         franchise_price: item.franchisePrice ?? 0,
         visible_in: item.visibleIn || 'both',
         sort_order: get().items.length - 1,
-      }).then()
+      }).then(({ error }) => {
+        if (error) console.error('[store_products] insert failed:', error.message)
+      })
     }
   },
 
@@ -86,7 +88,9 @@ export const useProductStore = create<ProductState>()((set, get) => ({
       if (partial.franchisePrice !== undefined) db.franchise_price = partial.franchisePrice ?? 0
       if (partial.visibleIn !== undefined) db.visible_in = partial.visibleIn || 'both'
       if (Object.keys(db).length > 0) {
-        supabase.from('store_products').update(db).eq('id', id).then()
+        supabase.from('store_products').update(db).eq('id', id).then(({ error }) => {
+          if (error) console.error('[store_products] update failed:', error.message)
+        })
       }
     }
   },
@@ -94,7 +98,9 @@ export const useProductStore = create<ProductState>()((set, get) => ({
   remove: (id) => {
     set((s) => ({ items: s.items.filter((p) => p.id !== id) }))
     if (supabase) {
-      supabase.from('store_products').delete().eq('id', id).then()
+      supabase.from('store_products').delete().eq('id', id).then(({ error }) => {
+        if (error) console.error('[store_products] delete failed:', error.message)
+      })
     }
   },
 
