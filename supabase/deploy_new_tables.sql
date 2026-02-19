@@ -216,3 +216,28 @@ alter table material_order_sessions enable row level security;
 create policy "anon_all" on material_order_sessions for all using (true) with check (true);
 alter table material_order_items enable row level security;
 create policy "anon_all" on material_order_items for all using (true) with check (true);
+
+-- ============================================
+-- H. 央廚成品庫存盤點
+-- ============================================
+
+create table product_stock_sessions (
+  id text primary key,
+  date date not null unique,
+  submitted_by text,
+  submitted_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+create table product_stock_items (
+  id serial primary key,
+  session_id text not null references product_stock_sessions(id) on delete cascade,
+  product_id text not null,
+  stock_qty numeric,
+  unique(session_id, product_id)
+);
+
+alter table product_stock_sessions enable row level security;
+create policy "anon_all" on product_stock_sessions for all using (true) with check (true);
+alter table product_stock_items enable row level security;
+create policy "anon_all" on product_stock_items for all using (true) with check (true);

@@ -25,6 +25,10 @@ export function materialOrderSessionId(date: string): string {
   return `kitchen_${date}`
 }
 
+export function productStockSessionId(date: string): string {
+  return `kitchen_products_${date}`
+}
+
 // === Taiwan timezone helpers ===
 
 /** YYYY-MM-DD in Asia/Taipei */
