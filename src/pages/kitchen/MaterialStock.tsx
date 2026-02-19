@@ -71,11 +71,49 @@ export default function MaterialStock() {
       })
   }, [today])
 
-  const weeklyUsage = useMemo(() => {
-    const d: Record<string, number> = {}
-    rawMaterials.forEach(m => { d[m.id] = Math.round(Math.random() * 5 * 10) / 10 })
-    return d
-  }, [])
+  // 近 7 日原物料叫貨日均
+  const [weeklyUsage, setWeeklyUsage] = useState<Record<string, number>>({})
+  const [weeklyLoading, setWeeklyLoading] = useState(true)
+
+  useEffect(() => {
+    if (!supabase) { setWeeklyLoading(false); return }
+    const load = async () => {
+      setWeeklyLoading(true)
+      const d = new Date()
+      d.setDate(d.getDate() - 7)
+      const sevenDaysAgo = d.toLocaleDateString('en-CA', { timeZone: 'Asia/Taipei' })
+
+      const { data: sessions } = await supabase!
+        .from('material_order_sessions')
+        .select('id, date')
+        .gte('date', sevenDaysAgo)
+        .lte('date', today)
+
+      if (!sessions || sessions.length === 0) { setWeeklyLoading(false); return }
+
+      const uniqueDays = new Set(sessions.map(s => s.date)).size
+      const sids = sessions.map(s => s.id)
+
+      const { data: items } = await supabase!
+        .from('material_order_items')
+        .select('material_id, quantity')
+        .in('session_id', sids)
+
+      if (items) {
+        const totals: Record<string, number> = {}
+        items.forEach(item => {
+          totals[item.material_id] = (totals[item.material_id] || 0) + item.quantity
+        })
+        const result: Record<string, number> = {}
+        Object.entries(totals).forEach(([mid, total]) => {
+          result[mid] = Math.round((total / uniqueDays) * 10) / 10
+        })
+        setWeeklyUsage(result)
+      }
+      setWeeklyLoading(false)
+    }
+    load()
+  }, [today])
 
   const materialsByCategory = useMemo(() => {
     const map = new Map<string, typeof rawMaterials>()
@@ -166,7 +204,7 @@ export default function MaterialStock() {
         </div>
       )}
 
-      {loading ? (
+      {(loading || weeklyLoading) ? (
         <div className="flex items-center justify-center py-20 text-sm text-brand-lotus">載入中...</div>
       ) : (
         <>
@@ -213,7 +251,7 @@ export default function MaterialStock() {
                       <NumericInput value={stock[material.id]} onChange={(v) => setStock(prev => ({ ...prev, [material.id]: v }))} isFilled onNext={focusNext} data-mat="" />
                       <div className="w-2 shrink-0"></div>
                       <NumericInput value={bulk[material.id]} onChange={(v) => setBulk(prev => ({ ...prev, [material.id]: v }))} isFilled onNext={focusNext} data-mat="" />
-                      <span className="w-[36px] text-center text-[11px] font-num text-brand-lotus">{weeklyUsage[material.id]}</span>
+                      <span className="w-[36px] text-center text-[11px] font-num text-brand-lotus">{weeklyUsage[material.id] || '-'}</span>
                       <div className="w-[18px] flex justify-center">
                         {status === 'danger' && stock[material.id] && <AlertTriangle size={13} className="text-status-danger" />}
                         {status === 'low' && stock[material.id] && <AlertTriangle size={13} className="text-status-warning" />}

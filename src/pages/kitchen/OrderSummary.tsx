@@ -1,12 +1,13 @@
-import { useMemo } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { TopNav } from '@/components/TopNav'
 import { SectionHeader } from '@/components/SectionHeader'
 import { useProductStore } from '@/stores/useProductStore'
 import { useStoreStore } from '@/stores/useStoreStore'
+import { supabase } from '@/lib/supabase'
+import { getTodayTW } from '@/lib/session'
 import { Printer, MessageSquareText } from 'lucide-react'
 import { getTodayString } from '@/lib/utils'
 
-// 固定備註項目定義（Phase 2 從資料庫讀取）
 const fixedNoteItems = [
   { id: 'almond1000', label: '杏仁茶瓶 1000ml', unit: '個' },
   { id: 'almond300', label: '杏仁茶瓶 300ml', unit: '個' },
@@ -18,34 +19,64 @@ export default function OrderSummary() {
   const storeProducts = useProductStore((s) => s.items)
   const productCategories = useProductStore((s) => s.categories)
   const stores = useStoreStore((s) => s.items)
+  const today = getTodayTW()
 
-  const mockOrders = useMemo(() => {
-    const data: Record<string, Record<string, number>> = {}
-    stores.forEach(store => {
-      data[store.id] = {}
-      storeProducts.forEach(p => {
-        data[store.id][p.id] = Math.random() > 0.3 ? Math.round(Math.random() * 10 * 10) / 10 : 0
+  const [storeOrders, setStoreOrders] = useState<Record<string, Record<string, number>>>({})
+  const [storeNotes, setStoreNotes] = useState<Record<string, { fixedItems: Record<string, number>; freeText: string }>>({})
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    if (!supabase) { setLoading(false); return }
+
+    const load = async () => {
+      setLoading(true)
+      const ordersData: Record<string, Record<string, number>> = {}
+      const notesData: Record<string, { fixedItems: Record<string, number>; freeText: string }> = {}
+
+      // 初始化
+      stores.forEach(store => {
+        ordersData[store.id] = {}
+        notesData[store.id] = { fixedItems: { almond1000: 0, almond300: 0, bowlK520: 0, bowl750: 0 }, freeText: '' }
       })
-    })
-    return data
-  }, [])
 
-  // 模擬各店備註資料（Phase 2 從 Supabase 讀取）
-  const mockNotes = useMemo(() => {
-    const data: Record<string, { fixedItems: Record<string, number>; freeText: string }> = {}
-    stores.forEach(store => {
-      data[store.id] = {
-        fixedItems: {
-          almond1000: Math.random() > 0.5 ? Math.round(Math.random() * 10) : 0,
-          almond300: Math.random() > 0.5 ? Math.round(Math.random() * 20) : 0,
-          bowlK520: Math.random() > 0.6 ? Math.round(Math.random() * 3) : 0,
-          bowl750: Math.random() > 0.6 ? Math.round(Math.random() * 3) : 0,
-        },
-        freeText: store.id === 'lehua' ? '明天有活動，芋圓多備一些' : '',
+      // 查今日各店 order_sessions + order_items
+      const { data: sessions } = await supabase!
+        .from('order_sessions')
+        .select('*, order_items(*)')
+        .eq('date', today)
+
+      if (sessions) {
+        sessions.forEach(session => {
+          const sid = session.store_id
+          if (!sid) return
+
+          // 叫貨品項
+          const items = session.order_items || []
+          items.forEach((item: { product_id: string; quantity: number }) => {
+            ordersData[sid] = ordersData[sid] || {}
+            ordersData[sid][item.product_id] = (ordersData[sid][item.product_id] || 0) + item.quantity
+          })
+
+          // 備註
+          notesData[sid] = {
+            fixedItems: {
+              almond1000: parseInt(session.almond_1000) || 0,
+              almond300: parseInt(session.almond_300) || 0,
+              bowlK520: parseInt(session.bowl_k520) || 0,
+              bowl750: parseInt(session.bowl_750) || 0,
+            },
+            freeText: session.note || '',
+          }
+        })
       }
-    })
-    return data
-  }, [])
+
+      setStoreOrders(ordersData)
+      setStoreNotes(notesData)
+      setLoading(false)
+    }
+
+    load()
+  }, [today, stores])
 
   const productsByCategory = useMemo(() => {
     const map = new Map<string, typeof storeProducts>()
@@ -56,7 +87,7 @@ export default function OrderSummary() {
   }, [])
 
   const getTotal = (productId: string) =>
-    Math.round(stores.reduce((sum, s) => sum + (mockOrders[s.id]?.[productId] || 0), 0) * 10) / 10
+    Math.round(stores.reduce((sum, s) => sum + (storeOrders[s.id]?.[productId] || 0), 0) * 10) / 10
 
   const handlePrint = () => {
     window.print()
@@ -64,7 +95,7 @@ export default function OrderSummary() {
 
   // 檢查某店是否有任何備註內容
   const hasNotes = (storeId: string) => {
-    const n = mockNotes[storeId]
+    const n = storeNotes[storeId]
     if (!n) return false
     if (n.freeText) return true
     return Object.values(n.fixedItems).some(v => v > 0)
@@ -74,6 +105,10 @@ export default function OrderSummary() {
     <div className="page-container !pb-4">
       <TopNav title="各店叫貨總表" />
 
+      {loading ? (
+        <div className="flex items-center justify-center py-20 text-sm text-brand-lotus">載入中...</div>
+      ) : (
+      <>
       {/* 列印按鈕 */}
       <div className="no-print px-4 pt-3 pb-1">
         <button
@@ -108,7 +143,7 @@ export default function OrderSummary() {
                       <span className="text-[10px] text-brand-lotus ml-1">({product.unit})</span>
                     </div>
                     {stores.map(store => {
-                      const qty = mockOrders[store.id]?.[product.id] || 0
+                      const qty = storeOrders[store.id]?.[product.id] || 0
                       return (
                         <span key={store.id} className={`w-[55px] text-center text-sm font-num ${qty === 0 ? 'text-gray-300' : 'text-brand-oak'}`}>
                           {qty || '-'}
@@ -139,7 +174,7 @@ export default function OrderSummary() {
                 <div className="pl-5">
                   {/* 固定項目 */}
                   {fixedNoteItems.map(item => {
-                    const qty = mockNotes[store.id]?.fixedItems[item.id] || 0
+                    const qty = storeNotes[store.id]?.fixedItems[item.id] || 0
                     if (qty === 0) return null
                     return (
                       <div key={item.id} className="flex items-center gap-2 text-sm text-brand-oak py-0.5">
@@ -150,9 +185,9 @@ export default function OrderSummary() {
                     )
                   })}
                   {/* 自由備註 */}
-                  {mockNotes[store.id]?.freeText && (
+                  {storeNotes[store.id]?.freeText && (
                     <p className="text-sm text-brand-oak mt-1 bg-status-warning/5 px-2 py-1 rounded-lg">
-                      {mockNotes[store.id].freeText}
+                      {storeNotes[store.id].freeText}
                     </p>
                   )}
                 </div>
@@ -194,7 +229,7 @@ export default function OrderSummary() {
                       <td>{product.name}</td>
                       <td>{product.unit}</td>
                       {stores.map(store => {
-                        const qty = mockOrders[store.id]?.[product.id] || 0
+                        const qty = storeOrders[store.id]?.[product.id] || 0
                         return (
                           <td key={store.id} className={qty === 0 ? 'zero' : ''}>
                             {qty || '-'}
@@ -220,10 +255,10 @@ export default function OrderSummary() {
               {hasNotes(store.id) ? (
                 <span style={{ fontSize: '10px', color: '#6B5D55' }}>
                   {fixedNoteItems
-                    .filter(item => (mockNotes[store.id]?.fixedItems[item.id] || 0) > 0)
-                    .map(item => `${item.label} ${mockNotes[store.id].fixedItems[item.id]}${item.unit}`)
+                    .filter(item => (storeNotes[store.id]?.fixedItems[item.id] || 0) > 0)
+                    .map(item => `${item.label} ${storeNotes[store.id].fixedItems[item.id]}${item.unit}`)
                     .join('、')}
-                  {mockNotes[store.id]?.freeText ? `。${mockNotes[store.id].freeText}` : ''}
+                  {storeNotes[store.id]?.freeText ? `。${storeNotes[store.id].freeText}` : ''}
                 </span>
               ) : (
                 <span style={{ fontSize: '10px', color: '#aaa' }}>無備註</span>
@@ -232,6 +267,8 @@ export default function OrderSummary() {
           ))}
         </div>
       </div>
+      </>
+      )}
     </div>
   )
 }

@@ -61,17 +61,82 @@ export default function MaterialOrder() {
       })
   }, [today])
 
-  const mockStock = useMemo(() => {
-    const d: Record<string, number> = {}
-    rawMaterials.forEach(m => { d[m.id] = Math.round(Math.random() * 5 * 10) / 10 })
-    return d
+  // 最新原物料庫存（from material_stock_items）
+  const [matStock, setMatStock] = useState<Record<string, number>>({})
+  const [matStockLoading, setMatStockLoading] = useState(true)
+
+  useEffect(() => {
+    if (!supabase) { setMatStockLoading(false); return }
+    const load = async () => {
+      setMatStockLoading(true)
+      const { data: sessions } = await supabase!
+        .from('material_stock_sessions')
+        .select('id')
+        .order('date', { ascending: false })
+        .limit(1)
+
+      if (!sessions || sessions.length === 0) { setMatStockLoading(false); return }
+
+      const { data: items } = await supabase!
+        .from('material_stock_items')
+        .select('material_id, stock_qty, bulk_qty')
+        .eq('session_id', sessions[0].id)
+
+      if (items) {
+        const totals: Record<string, number> = {}
+        items.forEach(item => {
+          totals[item.material_id] = (item.stock_qty || 0) + (item.bulk_qty || 0)
+        })
+        setMatStock(totals)
+      }
+      setMatStockLoading(false)
+    }
+    load()
   }, [])
 
-  const weeklyUsage = useMemo(() => {
-    const d: Record<string, number> = {}
-    rawMaterials.forEach(m => { d[m.id] = Math.round(Math.random() * 3 * 10) / 10 })
-    return d
-  }, [])
+  // 近 7 日原物料叫貨日均
+  const [weeklyUsage, setWeeklyUsage] = useState<Record<string, number>>({})
+  const [weeklyLoading, setWeeklyLoading] = useState(true)
+
+  useEffect(() => {
+    if (!supabase) { setWeeklyLoading(false); return }
+    const load = async () => {
+      setWeeklyLoading(true)
+      const d = new Date()
+      d.setDate(d.getDate() - 7)
+      const sevenDaysAgo = d.toLocaleDateString('en-CA', { timeZone: 'Asia/Taipei' })
+
+      const { data: sessions } = await supabase!
+        .from('material_order_sessions')
+        .select('id, date')
+        .gte('date', sevenDaysAgo)
+        .lte('date', today)
+
+      if (!sessions || sessions.length === 0) { setWeeklyLoading(false); return }
+
+      const uniqueDays = new Set(sessions.map(s => s.date)).size
+      const sids = sessions.map(s => s.id)
+
+      const { data: items } = await supabase!
+        .from('material_order_items')
+        .select('material_id, quantity')
+        .in('session_id', sids)
+
+      if (items) {
+        const totals: Record<string, number> = {}
+        items.forEach(item => {
+          totals[item.material_id] = (totals[item.material_id] || 0) + item.quantity
+        })
+        const result: Record<string, number> = {}
+        Object.entries(totals).forEach(([mid, total]) => {
+          result[mid] = Math.round((total / uniqueDays) * 10) / 10
+        })
+        setWeeklyUsage(result)
+      }
+      setWeeklyLoading(false)
+    }
+    load()
+  }, [today])
 
   const materialsByCategory = useMemo(() => {
     const map = new Map<string, typeof rawMaterials>()
@@ -153,7 +218,7 @@ export default function MaterialOrder() {
         </div>
       )}
 
-      {loading ? (
+      {(loading || matStockLoading || weeklyLoading) ? (
         <div className="flex items-center justify-center py-20 text-sm text-brand-lotus">載入中...</div>
       ) : (
         <>
@@ -192,8 +257,8 @@ export default function MaterialOrder() {
                       {material.notes && <p className="text-[10px] text-brand-camel">{material.notes}</p>}
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className={`w-[50px] text-center text-xs font-num ${mockStock[material.id] <= 1 ? 'text-status-danger font-bold' : 'text-brand-oak'}`}>{mockStock[material.id]}</span>
-                      <span className="w-[50px] text-center text-xs font-num text-brand-lotus">{weeklyUsage[material.id]}</span>
+                      <span className={`w-[50px] text-center text-xs font-num ${matStock[material.id] != null && matStock[material.id] <= 1 ? 'text-status-danger font-bold' : 'text-brand-oak'}`}>{matStock[material.id] != null ? matStock[material.id] : '-'}</span>
+                      <span className="w-[50px] text-center text-xs font-num text-brand-lotus">{weeklyUsage[material.id] || '-'}</span>
                       <NumericInput value={orders[material.id]} onChange={(v) => setOrders(prev => ({ ...prev, [material.id]: v }))} unit={material.unit} isFilled onNext={focusNext} data-mo="" />
                     </div>
                   </div>
