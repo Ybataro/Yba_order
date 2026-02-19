@@ -41,33 +41,41 @@ export default function Inventory() {
     if (!supabase || !storeId) { setLoading(false); return }
     const sid = inventorySessionId(storeId, today, currentZone || '')
     setLoading(true)
-    supabase
-      .from('inventory_sessions')
-      .select('id')
-      .eq('id', sid)
-      .maybeSingle()
-      .then(({ data: session }) => {
+
+    const load = async () => {
+      try {
+        const { data: session } = await supabase
+          .from('inventory_sessions')
+          .select('id')
+          .eq('id', sid)
+          .maybeSingle()
+
         if (!session) { setLoading(false); return }
         setIsEdit(true)
-        supabase!
+
+        const { data: items } = await supabase
           .from('inventory_items')
           .select('*')
           .eq('session_id', sid)
-          .then(({ data: items }) => {
-            if (items && items.length > 0) {
-              const loaded: Record<string, InventoryEntry> = {}
-              items.forEach((item) => {
-                loaded[item.product_id] = {
-                  onShelf: item.on_shelf != null ? String(item.on_shelf) : '',
-                  stock: item.stock != null ? String(item.stock) : '',
-                  discarded: item.discarded != null ? String(item.discarded) : '',
-                }
-              })
-              setData(loaded)
+
+        if (items && items.length > 0) {
+          const loaded: Record<string, InventoryEntry> = {}
+          items.forEach((item) => {
+            loaded[item.product_id] = {
+              onShelf: item.on_shelf != null ? String(item.on_shelf) : '',
+              stock: item.stock != null ? String(item.stock) : '',
+              discarded: item.discarded != null ? String(item.discarded) : '',
             }
-            setLoading(false)
           })
-      })
+          setData(loaded)
+        }
+      } catch {
+        // ignore fetch errors
+      }
+      setLoading(false)
+    }
+
+    load()
   }, [storeId, currentZone, today])
 
   const getEntry = useCallback((productId: string): InventoryEntry => {

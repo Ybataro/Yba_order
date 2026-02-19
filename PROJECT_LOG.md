@@ -251,11 +251,67 @@
 #### 2. 叫貨建議四捨五入規則更新
 - 新增薏仁湯、芋頭湯(冷/熱)以 0.5 為單位四捨五入
 
-#### 3. 備份
-- 專案備份：`Yba_order_backup_20260219`
+#### 3. 後台管理系統（全新建立）
+- **5 個管理頁面**：
+  - `ProductManager.tsx` — 門店品項 CRUD + 分類管理
+  - `MaterialManager.tsx` — 原物料 CRUD + 分類管理
+  - `StaffManager.tsx` — 央廚/門店人員管理
+  - `StoreManager.tsx` — 門店資訊管理
+  - `SettlementManager.tsx` — 結帳欄位管理
+- **5 個 Zustand Stores**（含 persist middleware → localStorage）：
+  - `useProductStore.ts` — 品項 + 分類 CRUD/排序
+  - `useMaterialStore.ts` — 原物料 + 分類 CRUD/排序
+  - `useStaffStore.ts` — 人員 CRUD（央廚/門店分開）
+  - `useStoreStore.ts` — 門店 CRUD
+  - `useSettlementStore.ts` — 結帳欄位 + 分組 CRUD/排序
+- **共用元件**：`AdminModal.tsx`、`AdminTable.tsx`、`CategoryManager.tsx`
+- **AdminHome.tsx** — 後台首頁（6 張功能卡片）
 
-#### 4. Netlify 部署更新
-- 重新建置 dist 並更新線上版
+#### 4. QR Code 管理頁面
+- **新增 `QRCodePage.tsx`**：
+  - 動態讀取門店列表產生 QR codes
+  - 各門店 → `/store/{storeId}`
+  - 央廚 → `/kitchen`
+  - 後台 → `/admin`
+  - BASE_URL 可編輯（預設 `window.location.origin`）
+  - 每個 QR code 卡片含：標題 + QR + 可點擊連結
+  - 「列印全部」按鈕（A4 排版）
+
+#### 5. Supabase 雲端整合
+- **新增 `src/lib/supabase.ts`** — Supabase client（讀環境變數，無設定自動降級）
+- **6 張資料表**（`supabase/migration.sql`）：
+  - `stores` — 門店
+  - `store_products` — 門店品項
+  - `raw_materials` — 原物料
+  - `staff` — 人員（用 group_id 區分央廚/門店）
+  - `settlement_fields` — 結帳欄位
+  - `categories` — 分類（scope: product/material/settlement）
+- **RLS Policy**：全部 anon 可 SELECT/INSERT/UPDATE/DELETE
+- **Seed Data**：所有初始資料已寫入 migration SQL
+- **改寫 5 個 Zustand Stores**：
+  - 移除 `persist` middleware
+  - 新增 `loading` / `initialized` 狀態
+  - 初始化時從 Supabase fetch
+  - CRUD 操作：樂觀更新（先更新 local state → 非同步寫 Supabase）
+  - 分類操作接 `categories` 表
+  - 無 Supabase 環境變數時自動降級為本地預設資料
+- **新增 `src/hooks/useInitStores.ts`** — App 啟動時初始化所有 stores
+
+#### 6. Netlify 部署
+- GitHub repo：https://github.com/Ybataro/Yba_order
+- Netlify 連結 GitHub 自動部署
+- Build command：`npm run build`
+- Publish directory：`dist`
+- 環境變數已設定（VITE_SUPABASE_URL + VITE_SUPABASE_ANON_KEY）
+- SPA fallback：`public/_redirects`（`/* → /index.html 200`）
+- 線上版：https://yba-order.netlify.app
+
+#### 7. TypeScript 嚴格模式修正
+- 修正 stores 中 supabase 在 `.map()` callback 內的 null 檢查（Netlify 環境較嚴格）
+- 修正 `Order.tsx` 天氣條件型別比較錯誤（`'sunny' as const` → `as WeatherCondition`）
+
+#### 8. 備份
+- 專案備份：`Yba_order_backup_20260219`
 
 ---
 
@@ -263,26 +319,45 @@
 
 | 檔案 | 修改內容 |
 |------|----------|
-| src/data/storeProducts.ts | 品項大幅調整：新增/移動/刪除/修改期效與baseStock |
-| src/pages/store/Order.tsx | 新增薏仁湯/芋頭湯四捨五入規則 |
+| package.json | 新增 qrcode.react、@supabase/supabase-js |
+| src/App.tsx | 新增 /admin/qrcode 路由 + useInitStores 初始化 |
+| src/pages/admin/AdminHome.tsx | 新增第 6 張 QR Code 管理卡片 |
+| src/pages/admin/QRCodePage.tsx | **新增** QR Code 管理頁面 |
+| src/lib/supabase.ts | **新增** Supabase client |
+| src/hooks/useInitStores.ts | **新增** Store 初始化 hook |
+| src/stores/useProductStore.ts | 改接 Supabase（移除 persist，加 loading/initialized） |
+| src/stores/useMaterialStore.ts | 改接 Supabase |
+| src/stores/useStaffStore.ts | 改接 Supabase |
+| src/stores/useStoreStore.ts | 改接 Supabase |
+| src/stores/useSettlementStore.ts | 改接 Supabase |
+| src/pages/store/Order.tsx | 修正天氣條件型別 |
+| src/data/storeProducts.ts | 品項大幅調整 |
+| supabase/migration.sql | **新增** 6 張表 + RLS + seed data |
+| .env.example | **新增** 環境變數範例 |
+| public/_redirects | **新增** Netlify SPA fallback |
 
 ---
 
-## 下一步計畫（Day 3 下半）
+### Day 3 Git 記錄
 
-### Phase 2：後台管理系統 + Supabase 串接
-1. 建立管理後台頁面（品項管理、人員管理）
-2. 建立 Supabase 專案與資料表
-3. 設定 Row Level Security
-4. 建立 Supabase 客戶端 (`src/lib/supabase.ts`)
-5. 逐頁替換模擬資料為 CRUD 操作
-6. 加入使用者認證（QR Code 角色判定）
+```
+130d89a fix: 修正 TypeScript 嚴格模式編譯錯誤
+b78581c feat: QR Code 頁面 + Supabase 雲端整合 + Netlify 部署準備
+bad6c7c feat: 建立後台管理系統 + Zustand 狀態管理
+```
 
-### Phase 3：部署與進階
-7. 叫貨建議量計算（近 7 日平均用量）
-8. 老闆報表（日/週/月報）
-9. 數據匯出功能
-10. 天氣 API 串接（中央氣象署）
+---
+
+## 下一步計畫（Phase 3）
+
+### 進階功能
+1. 天氣 API 串接（中央氣象署開放資料）
+2. 門店當班人員傳遞到子頁面提交
+3. 叫貨建議量計算（近 7 日平均用量）
+4. 老闆報表（日/週/月報）
+5. 天氣記錄與用量分析
+6. 數據匯出功能（Excel / PDF）
+7. 推播通知（庫存不足、叫貨提醒）
 
 ---
 
@@ -292,14 +367,23 @@ Yba_order/
 ├── docs/
 │   ├── PRD.md                    # 產品需求文檔
 │   └── DESIGN_SPEC.md            # 設計規範文檔
+├── supabase/
+│   └── migration.sql             # 資料表 + RLS + seed data
+├── public/
+│   └── _redirects                # Netlify SPA fallback
 ├── src/
-│   ├── components/               # 6 個核心元件
+│   ├── components/               # 核心 UI 元件
 │   │   ├── NumericInput.tsx
 │   │   ├── SectionHeader.tsx
 │   │   ├── ProgressBar.tsx
 │   │   ├── TopNav.tsx
 │   │   ├── BottomAction.tsx
-│   │   └── Toast.tsx
+│   │   ├── Toast.tsx
+│   │   ├── AdminModal.tsx        # Day 3 新增
+│   │   ├── AdminTable.tsx        # Day 3 新增
+│   │   └── CategoryManager.tsx   # Day 3 新增
+│   ├── hooks/
+│   │   └── useInitStores.ts      # Day 3 新增：Store 初始化
 │   ├── pages/
 │   │   ├── store/                # 6 個門店頁面
 │   │   │   ├── StoreHome.tsx
@@ -308,24 +392,40 @@ Yba_order/
 │   │   │   ├── Usage.tsx
 │   │   │   ├── Order.tsx
 │   │   │   └── Receive.tsx
-│   │   └── kitchen/              # 6 個央廚頁面
-│   │       ├── KitchenHome.tsx
-│   │       ├── OrderSummary.tsx
-│   │       ├── Shipment.tsx
-│   │       ├── MaterialStock.tsx
-│   │       ├── ProductStock.tsx
-│   │       └── MaterialOrder.tsx
-│   ├── data/                     # 5 個資料定義
+│   │   ├── kitchen/              # 6 個央廚頁面
+│   │   │   ├── KitchenHome.tsx
+│   │   │   ├── OrderSummary.tsx
+│   │   │   ├── Shipment.tsx
+│   │   │   ├── MaterialStock.tsx
+│   │   │   ├── ProductStock.tsx
+│   │   │   └── MaterialOrder.tsx
+│   │   └── admin/                # 7 個後台頁面（Day 3 新增）
+│   │       ├── AdminHome.tsx
+│   │       ├── ProductManager.tsx
+│   │       ├── MaterialManager.tsx
+│   │       ├── StaffManager.tsx
+│   │       ├── StoreManager.tsx
+│   │       ├── SettlementManager.tsx
+│   │       └── QRCodePage.tsx
+│   ├── stores/                   # 5 個 Zustand stores（Day 3 接 Supabase）
+│   │   ├── useProductStore.ts
+│   │   ├── useMaterialStore.ts
+│   │   ├── useStaffStore.ts
+│   │   ├── useStoreStore.ts
+│   │   └── useSettlementStore.ts
+│   ├── data/                     # 5 個資料定義（預設/fallback）
 │   │   ├── storeProducts.ts
 │   │   ├── rawMaterials.ts
 │   │   ├── stores.ts
 │   │   ├── settlementFields.ts
-│   │   └── staff.ts              # Day 2 新增：人員資料
+│   │   └── staff.ts
 │   ├── lib/
-│   │   └── utils.ts
+│   │   ├── utils.ts
+│   │   └── supabase.ts           # Day 3 新增：Supabase client
 │   ├── App.tsx                   # 路由設定
 │   ├── main.tsx                  # 入口
 │   └── index.css                 # 全局樣式 + 設計 Token
+├── .env.example                  # 環境變數範例
 ├── tailwind.config.js
 ├── vite.config.ts
 ├── package.json

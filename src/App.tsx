@@ -24,6 +24,7 @@ import StoreManager from '@/pages/admin/StoreManager'
 import SettlementManager from '@/pages/admin/SettlementManager'
 import QRCodePage from '@/pages/admin/QRCodePage'
 import ZoneManager from '@/pages/admin/ZoneManager'
+import OrderHistory from '@/pages/admin/OrderHistory'
 
 function App() {
   useInitStores()
@@ -61,6 +62,7 @@ function App() {
             <Route path="/admin/settlement-fields" element={<SettlementManager />} />
             <Route path="/admin/qrcode" element={<QRCodePage />} />
             <Route path="/admin/zones" element={<ZoneManager />} />
+            <Route path="/admin/order-history" element={<OrderHistory />} />
           </Routes>
         </div>
       </ToastProvider>

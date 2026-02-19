@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { defaultZones, type StoreZone, type ZoneProduct } from '@/data/zones'
+import { defaultZones, defaultZoneProducts, type StoreZone, type ZoneProduct } from '@/data/zones'
 import { supabase } from '@/lib/supabase'
 
 interface ZoneState {
@@ -19,7 +19,7 @@ interface ZoneState {
 
 export const useZoneStore = create<ZoneState>()((set, get) => ({
   zones: defaultZones,
-  zoneProducts: [],
+  zoneProducts: defaultZoneProducts,
   loading: false,
   initialized: false,
 

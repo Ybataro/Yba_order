@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useCallback } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useProductStore } from '@/stores/useProductStore'
 import { useZoneStore } from '@/stores/useZoneStore'
@@ -17,12 +17,12 @@ export function useZoneFilteredProducts(storeId: string): ZoneFilterResult {
   const [searchParams, setSearchParams] = useSearchParams()
   const allProducts = useProductStore((s) => s.items)
   const allCategories = useProductStore((s) => s.categories)
-  const storeZones = useZoneStore((s) => s.getStoreZones(storeId))
+  const zones = useZoneStore((s) => s.zones)
   const zoneProducts = useZoneStore((s) => s.zoneProducts)
 
   const currentZone = searchParams.get('zone')
 
-  const setZone = (zoneCode: string | null) => {
+  const setZone = useCallback((zoneCode: string | null) => {
     setSearchParams((prev) => {
       const next = new URLSearchParams(prev)
       if (zoneCode) {
@@ -32,7 +32,13 @@ export function useZoneFilteredProducts(storeId: string): ZoneFilterResult {
       }
       return next
     }, { replace: true })
-  }
+  }, [setSearchParams])
+
+  const storeZones = useMemo(() => {
+    return zones
+      .filter((z) => z.storeId === storeId)
+      .sort((a, b) => a.sortOrder - b.sortOrder)
+  }, [zones, storeId])
 
   const matchedZone = useMemo(() => {
     if (!currentZone) return null

@@ -35,22 +35,50 @@
 16. ✅ 叫貨備註（固定項目+自由備註+央廚同步顯示）
 17. ✅ 建議量四捨五入規則（各品類不同單位）
 18. ✅ 品項資料完整調整（Day 3 大幅更新，共 38 項）
-19. ✅ Netlify 部署完成（https://yba-order.netlify.app）
 
-### ⏳ Phase 2 進行中 — 後台管理 + Supabase 串接
-1. ⏳ 後台管理系統（品項管理、人員管理）
-2. ❌ Supabase 資料庫建立（資料表、RLS 規則）
-3. ❌ Supabase Auth 使用者認證
-4. ❌ 替換模擬資料為 Supabase CRUD
-5. ❌ QR Code 產生（各角色入口）
-6. ❌ 天氣 API 串接（中央氣象署開放資料）
-7. ❌ 門店當班人員傳遞到子頁面提交
+### ✅ Phase 2 後台管理 + Supabase + 部署 — 全部完成
+1. ✅ 後台管理系統（5 個管理頁面：品項/原物料/人員/門店/結帳欄位）
+2. ✅ Zustand 狀態管理（5 個 stores + 分類管理）
+3. ✅ QR Code 管理頁面（動態門店 QR、央廚、後台、列印功能）
+4. ✅ Supabase 資料庫（6 張表 + RLS + seed data）
+5. ✅ Supabase 串接（5 個 stores 全部改接雲端，樂觀更新）
+6. ✅ Netlify 部署 + GitHub 自動部署
+7. ✅ SPA fallback (_redirects)
 
-### ❌ Phase 3 進階功能
-8. ❌ 老闆報表（日報、週報、月報）
-9. ❌ 天氣記錄與用量分析
-10. ❌ 數據匯出（Excel / PDF）
-11. ❌ 推播通知（庫存不足、叫貨提醒）
+### ❌ Phase 3 進階功能（未開始）
+1. ❌ 天氣 API 串接（中央氣象署開放資料）
+2. ❌ 門店當班人員傳遞到子頁面提交
+3. ❌ 老闆報表（日報、週報、月報）
+4. ❌ 天氣記錄與用量分析
+5. ❌ 數據匯出（Excel / PDF）
+6. ❌ 推播通知（庫存不足、叫貨提醒）
+7. ❌ 叫貨建議量計算（近 7 日平均用量）
+
+---
+
+## 線上服務
+
+| 服務 | 網址 |
+|------|------|
+| 線上版 | https://yba-order.netlify.app |
+| GitHub | https://github.com/Ybataro/Yba_order |
+| Supabase | https://qshfgheqsnsghwqaqehi.supabase.co |
+
+### Supabase 環境變數
+```
+VITE_SUPABASE_URL=https://qshfgheqsnsghwqaqehi.supabase.co
+VITE_SUPABASE_ANON_KEY=sb_publishable_xTxUuXl9Jpmo85bkKwLSSg_Y8fIiCGN
+```
+
+### Supabase 資料表（6 張）
+| 表名 | 說明 |
+|------|------|
+| stores | 門店（樂華店、興南店） |
+| store_products | 門店品項（38 項） |
+| raw_materials | 央廚原物料（29 項） |
+| staff | 人員（央廚 5 人 + 門店 4 人） |
+| settlement_fields | 結帳欄位（32 欄） |
+| categories | 分類（product/material/settlement） |
 
 ---
 
@@ -65,12 +93,24 @@ npm run dev
 - 樂華店：http://localhost:5173/store/lehua
 - 興南店：http://localhost:5173/store/xingnan
 - 中央廚房：http://localhost:5173/kitchen
+- 後台管理：http://localhost:5173/admin
+- QR Code：http://localhost:5173/admin/qrcode
 
 線上版：https://yba-order.netlify.app
 
 手機測試（同 Wi-Fi）：
 - 終端機顯示 `Network: http://192.168.x.x:5173/`
 - 需開放防火牆：`netsh advfirewall firewall add rule name="Vite Dev" dir=in action=allow protocol=TCP localport=5173-5180`
+
+---
+
+## 部署流程
+
+修改程式碼後：
+```bash
+git add . && git commit -m "描述" && git push
+```
+Netlify 會自動偵測 GitHub push 並重新部署（約 1-2 分鐘）。
 
 ---
 
@@ -106,9 +146,11 @@ npm run dev
 | Tailwind CSS | 3.x |
 | React Router | 7.x |
 | Lucide React | icons |
-| Zustand | (已安裝，待使用) |
-| React Hook Form | (已安裝，待使用) |
-| Zod | (已安裝，待使用) |
+| Zustand | 5.x（狀態管理，已接 Supabase） |
+| React Hook Form | 7.x |
+| Zod | 4.x |
+| Supabase | 2.x（雲端資料庫） |
+| qrcode.react | 4.x（QR Code 產生） |
 
 ---
 
