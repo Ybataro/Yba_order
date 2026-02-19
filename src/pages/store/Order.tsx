@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useParams } from 'react-router-dom'
 import { TopNav } from '@/components/TopNav'
 import { NumericInput } from '@/components/NumericInput'
@@ -7,12 +7,14 @@ import { BottomAction } from '@/components/BottomAction'
 import { useToast } from '@/components/Toast'
 import { useProductStore } from '@/stores/useProductStore'
 import { useStoreStore } from '@/stores/useStoreStore'
-import { Send, Lightbulb, Sun, CloudRain, Cloud, CloudSun, Thermometer, Droplets, TrendingUp, TrendingDown } from 'lucide-react'
+import { supabase } from '@/lib/supabase'
+import { orderSessionId, getTodayTW, getOrderDeadline, isPastDeadline } from '@/lib/session'
+import { Send, Lightbulb, Sun, CloudRain, Cloud, CloudSun, Thermometer, Droplets, TrendingUp, TrendingDown, Lock, RefreshCw } from 'lucide-react'
 
 // 模擬天氣資料（Phase 2 串接中央氣象署 API）
 const mockWeather = {
   date: '明日',
-  condition: 'sunny' as WeatherCondition, // sunny | cloudy | partly_cloudy | rainy
+  condition: 'sunny' as WeatherCondition,
   conditionText: '晴天',
   tempHigh: 32,
   tempLow: 24,
@@ -29,7 +31,6 @@ const weatherIcons: Record<WeatherCondition, typeof Sun> = {
   rainy: CloudRain,
 }
 
-// 天氣對各品類的影響係數
 function getWeatherImpacts(weather: typeof mockWeather) {
   const impacts: { category: string; adjust: number; reason: string }[] = []
   const { tempHigh, rainProb, condition } = weather
@@ -62,6 +63,62 @@ export default function Order() {
   const storeProducts = useProductStore((s) => s.items)
   const productCategories = useProductStore((s) => s.categories)
 
+  const today = getTodayTW()
+  const sessionId = orderSessionId(storeId || '', today)
+  const deadline = getOrderDeadline(today)
+
+  const [orders, setOrders] = useState<Record<string, string>>(() => {
+    const init: Record<string, string> = {}
+    storeProducts.forEach(p => { init[p.id] = '' })
+    return init
+  })
+  const [note, setNote] = useState('')
+  const [almond1000, setAlmond1000] = useState('')
+  const [almond300, setAlmond300] = useState('')
+  const [bowlK520, setBowlK520] = useState('')
+  const [bowl750, setBowl750] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+  const [isEdit, setIsEdit] = useState(false)
+  const [locked, setLocked] = useState(false)
+  const [loading, setLoading] = useState(true)
+
+  // Load existing session
+  useEffect(() => {
+    if (!supabase || !storeId) { setLoading(false); return }
+    setLoading(true)
+    supabase
+      .from('order_sessions')
+      .select('*')
+      .eq('id', sessionId)
+      .maybeSingle()
+      .then(({ data: session }) => {
+        if (!session) { setLoading(false); return }
+        setIsEdit(true)
+        if (isPastDeadline(session.deadline)) setLocked(true)
+        setAlmond1000(session.almond_1000 || '')
+        setAlmond300(session.almond_300 || '')
+        setBowlK520(session.bowl_k520 || '')
+        setBowl750(session.bowl_750 || '')
+        setNote(session.note || '')
+
+        supabase!
+          .from('order_items')
+          .select('*')
+          .eq('session_id', sessionId)
+          .then(({ data: items }) => {
+            if (items && items.length > 0) {
+              const loaded: Record<string, string> = {}
+              storeProducts.forEach(p => { loaded[p.id] = '' })
+              items.forEach((item) => {
+                loaded[item.product_id] = item.quantity > 0 ? String(item.quantity) : ''
+              })
+              setOrders(loaded)
+            }
+            setLoading(false)
+          })
+      })
+  }, [storeId, today])
+
   const weatherImpacts = useMemo(() => getWeatherImpacts(mockWeather), [])
   const impactMap = useMemo(() => {
     const m: Record<string, number> = {}
@@ -69,7 +126,6 @@ export default function Order() {
     return m
   }, [weatherImpacts])
 
-  // 各品類四捨五入單位
   const getRoundUnit = (product: typeof storeProducts[0]): number => {
     if (product.name === '紫米紅豆湯') return 0.5
     if (product.name === '豆花(冷)' || product.name === '豆花(熱)') return 0.5
@@ -102,20 +158,8 @@ export default function Order() {
     return d
   }, [impactMap])
 
-  const [orders, setOrders] = useState<Record<string, string>>(() => {
-    const init: Record<string, string> = {}
-    storeProducts.forEach(p => { init[p.id] = '' })
-    return init
-  })
-
-  const [note, setNote] = useState('')
-  // 固定備註項目
-  const [almond1000, setAlmond1000] = useState('')
-  const [almond300, setAlmond300] = useState('')
-  const [bowlK520, setBowlK520] = useState('')
-  const [bowl750, setBowl750] = useState('')
-
   const applyAllSuggestions = () => {
+    if (locked) return
     const newOrders: Record<string, string> = {}
     storeProducts.forEach(p => {
       newOrders[p.id] = mockSuggested[p.id] > 0 ? String(mockSuggested[p.id]) : ''
@@ -139,132 +183,223 @@ export default function Order() {
     if (idx >= 0 && idx < arr.length - 1) arr[idx + 1].focus()
   }
 
-  const handleSubmit = () => { showToast('叫貨單已提交成功！') }
+  const handleSubmit = async () => {
+    if (locked) return
+    if (!supabase || !storeId) {
+      showToast('叫貨單已提交成功！')
+      return
+    }
+
+    setSubmitting(true)
+
+    const { error: sessionErr } = await supabase
+      .from('order_sessions')
+      .upsert({
+        id: sessionId,
+        store_id: storeId,
+        date: today,
+        deadline,
+        almond_1000: almond1000,
+        almond_300: almond300,
+        bowl_k520: bowlK520,
+        bowl_750: bowl750,
+        note,
+        updated_at: new Date().toISOString(),
+      }, { onConflict: 'id' })
+
+    if (sessionErr) {
+      showToast('提交失敗：' + sessionErr.message, 'error')
+      setSubmitting(false)
+      return
+    }
+
+    const items = storeProducts
+      .filter(p => orders[p.id] && orders[p.id] !== '')
+      .map(p => ({
+        session_id: sessionId,
+        product_id: p.id,
+        quantity: parseFloat(orders[p.id]) || 0,
+      }))
+
+    if (items.length > 0) {
+      const { error: itemErr } = await supabase
+        .from('order_items')
+        .upsert(items, { onConflict: 'session_id,product_id' })
+
+      if (itemErr) {
+        showToast('提交失敗：' + itemErr.message, 'error')
+        setSubmitting(false)
+        return
+      }
+    }
+
+    setIsEdit(true)
+    setSubmitting(false)
+    showToast(isEdit ? '叫貨單已更新！' : '叫貨單已提交成功！')
+  }
 
   return (
     <div className="page-container">
       <TopNav title={`${storeName} 叫貨`} />
 
-      {/* 天氣預報卡片 */}
-      {(() => {
-        const WeatherIcon = weatherIcons[mockWeather.condition]
-        return (
-          <div className="mx-4 mt-3 mb-2 rounded-card overflow-hidden border border-gray-100 bg-white">
-            <div className="flex items-center gap-3 px-3 py-2.5">
-              <div className="flex items-center justify-center w-11 h-11 rounded-xl bg-brand-amber/10">
-                <WeatherIcon size={24} className="text-brand-amber" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-baseline gap-1.5">
-                  <span className="text-sm font-semibold text-brand-oak">{mockWeather.date} {mockWeather.conditionText}</span>
+      {/* Locked banner */}
+      {locked && (
+        <div className="flex items-center gap-1.5 px-4 py-2 bg-status-danger/10 text-status-danger text-xs">
+          <Lock size={12} />
+          <span>已超過修改截止時間（隔日 08:00），此叫貨單為唯讀</span>
+        </div>
+      )}
+
+      {/* Edit badge */}
+      {isEdit && !locked && (
+        <div className="flex items-center gap-1.5 px-4 py-1.5 bg-status-info/10 text-status-info text-xs">
+          <RefreshCw size={12} />
+          <span>已載入今日叫貨紀錄，修改後可重新提交（截止：隔日 08:00）</span>
+        </div>
+      )}
+
+      {loading ? (
+        <div className="flex items-center justify-center py-20 text-sm text-brand-lotus">載入中...</div>
+      ) : (
+        <>
+          {/* 天氣預報卡片 */}
+          {(() => {
+            const WeatherIcon = weatherIcons[mockWeather.condition]
+            return (
+              <div className="mx-4 mt-3 mb-2 rounded-card overflow-hidden border border-gray-100 bg-white">
+                <div className="flex items-center gap-3 px-3 py-2.5">
+                  <div className="flex items-center justify-center w-11 h-11 rounded-xl bg-brand-amber/10">
+                    <WeatherIcon size={24} className="text-brand-amber" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-baseline gap-1.5">
+                      <span className="text-sm font-semibold text-brand-oak">{mockWeather.date} {mockWeather.conditionText}</span>
+                    </div>
+                    <div className="flex items-center gap-3 mt-0.5 text-xs text-brand-lotus">
+                      <span className="flex items-center gap-0.5">
+                        <Thermometer size={12} />
+                        {mockWeather.tempLow}~{mockWeather.tempHigh}°C
+                      </span>
+                      <span className="flex items-center gap-0.5">
+                        <Droplets size={12} />
+                        降雨 {mockWeather.rainProb}%
+                      </span>
+                    </div>
+                  </div>
                 </div>
-                <div className="flex items-center gap-3 mt-0.5 text-xs text-brand-lotus">
-                  <span className="flex items-center gap-0.5">
-                    <Thermometer size={12} />
-                    {mockWeather.tempLow}~{mockWeather.tempHigh}°C
-                  </span>
-                  <span className="flex items-center gap-0.5">
-                    <Droplets size={12} />
-                    降雨 {mockWeather.rainProb}%
-                  </span>
-                </div>
+                {weatherImpacts.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 px-3 pb-2.5 border-t border-gray-50 pt-2">
+                    {weatherImpacts.map((impact, i) => (
+                      <span
+                        key={i}
+                        className={`inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[11px] font-medium ${
+                          impact.adjust > 0
+                            ? 'bg-status-warning/10 text-status-warning'
+                            : 'bg-status-info/10 text-status-info'
+                        }`}
+                      >
+                        {impact.adjust > 0 ? <TrendingUp size={10} /> : <TrendingDown size={10} />}
+                        {impact.category.replace(/（.+）/, '')} {impact.adjust > 0 ? '+' : ''}{impact.adjust}%
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
+            )
+          })()}
+
+          <div className="mx-4 mb-2 flex items-center gap-2 bg-status-info/10 text-status-info px-3 py-2 rounded-btn text-xs">
+            <Lightbulb size={14} />
+            <span>建議量已結合近7日用量 + 天氣因素計算</span>
+          </div>
+
+          {!locked && (
+            <div className="mx-4 mb-3">
+              <button onClick={applyAllSuggestions} className="btn-secondary !h-9 !text-sm">一鍵套用全部建議量</button>
             </div>
-            {weatherImpacts.length > 0 && (
-              <div className="flex flex-wrap gap-1.5 px-3 pb-2.5 border-t border-gray-50 pt-2">
-                {weatherImpacts.map((impact, i) => (
-                  <span
-                    key={i}
-                    className={`inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[11px] font-medium ${
-                      impact.adjust > 0
-                        ? 'bg-status-warning/10 text-status-warning'
-                        : 'bg-status-info/10 text-status-info'
-                    }`}
-                  >
-                    {impact.adjust > 0 ? <TrendingUp size={10} /> : <TrendingDown size={10} />}
-                    {impact.category.replace(/（.+）/, '')} {impact.adjust > 0 ? '+' : ''}{impact.adjust}%
-                  </span>
+          )}
+
+          <div className="flex items-center px-4 py-1 bg-surface-section text-[11px] text-brand-lotus border-b border-gray-100">
+            <span className="flex-1">品項</span>
+            <span className="w-[40px] text-center">庫存</span>
+            <span className="w-[40px] text-center text-status-info">建議</span>
+            <span className="w-[60px] text-center">叫貨量</span>
+          </div>
+
+          {Array.from(productsByCategory.entries()).map(([category, products]) => (
+            <div key={category}>
+              <SectionHeader title={category} icon="■" />
+              <div className="bg-white">
+                {products.map((product, idx) => (
+                  <div key={product.id} className={`flex items-center px-4 py-1.5 ${idx < products.length - 1 ? 'border-b border-gray-50' : ''}`}>
+                    <div className="flex-1 min-w-0 pr-1">
+                      <span className="text-sm font-medium text-brand-oak">{product.name}</span>
+                      <span className="text-[10px] text-brand-lotus ml-1">({product.unit})</span>
+                    </div>
+                    <span className={`w-[40px] text-center text-xs font-num ${mockStock[product.id] === 0 ? 'text-status-danger font-bold' : 'text-brand-oak'}`}>{mockStock[product.id]}</span>
+                    <span className="w-[40px] text-center text-xs font-num text-status-info">{mockSuggested[product.id] > 0 ? mockSuggested[product.id] : '-'}</span>
+                    <div className="w-[60px] flex justify-center">
+                      <NumericInput
+                        value={orders[product.id]}
+                        onChange={(v) => !locked && setOrders(prev => ({ ...prev, [product.id]: v }))}
+                        isFilled
+                        onNext={focusNext}
+                        data-ord=""
+                        disabled={locked}
+                      />
+                    </div>
+                  </div>
                 ))}
               </div>
-            )}
-          </div>
-        )
-      })()}
+            </div>
+          ))}
 
-      <div className="mx-4 mb-2 flex items-center gap-2 bg-status-info/10 text-status-info px-3 py-2 rounded-btn text-xs">
-        <Lightbulb size={14} />
-        <span>建議量已結合近7日用量 + 天氣因素計算</span>
-      </div>
-
-      <div className="mx-4 mb-3">
-        <button onClick={applyAllSuggestions} className="btn-secondary !h-9 !text-sm">一鍵套用全部建議量</button>
-      </div>
-
-      <div className="flex items-center px-4 py-1 bg-surface-section text-[11px] text-brand-lotus border-b border-gray-100">
-        <span className="flex-1">品項</span>
-        <span className="w-[40px] text-center">庫存</span>
-        <span className="w-[40px] text-center text-status-info">建議</span>
-        <span className="w-[60px] text-center">叫貨量</span>
-      </div>
-
-      {Array.from(productsByCategory.entries()).map(([category, products]) => (
-        <div key={category}>
-          <SectionHeader title={category} icon="■" />
-          <div className="bg-white">
-            {products.map((product, idx) => (
-              <div key={product.id} className={`flex items-center px-4 py-1.5 ${idx < products.length - 1 ? 'border-b border-gray-50' : ''}`}>
-                <div className="flex-1 min-w-0 pr-1">
-                  <span className="text-sm font-medium text-brand-oak">{product.name}</span>
-                  <span className="text-[10px] text-brand-lotus ml-1">({product.unit})</span>
-                </div>
-                <span className={`w-[40px] text-center text-xs font-num ${mockStock[product.id] === 0 ? 'text-status-danger font-bold' : 'text-brand-oak'}`}>{mockStock[product.id]}</span>
-                <span className="w-[40px] text-center text-xs font-num text-status-info">{mockSuggested[product.id] > 0 ? mockSuggested[product.id] : '-'}</span>
-                <div className="w-[60px] flex justify-center">
-                  <NumericInput value={orders[product.id]} onChange={(v) => setOrders(prev => ({ ...prev, [product.id]: v }))} isFilled onNext={focusNext} data-ord="" />
-                </div>
+          {/* 固定備註項目 */}
+          <SectionHeader title="叫貨備註" icon="■" />
+          <div className="bg-white px-4 py-3">
+            <div className="flex items-center gap-3 mb-3">
+              <span className="text-sm text-brand-oak shrink-0">杏仁茶瓶</span>
+              <div className="flex items-center gap-1">
+                <span className="text-xs text-brand-lotus">1000ml</span>
+                <NumericInput value={almond1000} onChange={(v) => !locked && setAlmond1000(v)} unit="個" isFilled disabled={locked} />
               </div>
-            ))}
+              <div className="flex items-center gap-1">
+                <span className="text-xs text-brand-lotus">300ml</span>
+                <NumericInput value={almond300} onChange={(v) => !locked && setAlmond300(v)} unit="個" isFilled disabled={locked} />
+              </div>
+            </div>
+            <div className="flex items-center gap-3 mb-3">
+              <span className="text-sm text-brand-oak shrink-0">紙碗</span>
+              <div className="flex items-center gap-1">
+                <span className="text-xs text-brand-lotus">K520</span>
+                <NumericInput value={bowlK520} onChange={(v) => !locked && setBowlK520(v)} unit="箱" isFilled disabled={locked} />
+              </div>
+              <div className="flex items-center gap-1">
+                <span className="text-xs text-brand-lotus">750</span>
+                <NumericInput value={bowl750} onChange={(v) => !locked && setBowl750(v)} unit="箱" isFilled disabled={locked} />
+              </div>
+            </div>
+            <div className="mt-2">
+              <label className="text-sm text-brand-lotus block mb-1.5">其他備註</label>
+              <textarea value={note} onChange={e => !locked && setNote(e.target.value)} placeholder="有特殊需求請在此備註..."
+                className="w-full h-20 rounded-input p-3 text-sm outline-none border border-gray-200 focus:border-brand-lotus resize-none"
+                style={{ backgroundColor: 'var(--color-input-bg)' }}
+                disabled={locked} />
+            </div>
           </div>
-        </div>
-      ))}
 
-      {/* 固定備註項目 */}
-      <SectionHeader title="叫貨備註" icon="■" />
-      <div className="bg-white px-4 py-3">
-        {/* 杏仁茶瓶 - 橫向排列 */}
-        <div className="flex items-center gap-3 mb-3">
-          <span className="text-sm text-brand-oak shrink-0">杏仁茶瓶</span>
-          <div className="flex items-center gap-1">
-            <span className="text-xs text-brand-lotus">1000ml</span>
-            <NumericInput value={almond1000} onChange={setAlmond1000} unit="個" isFilled />
-          </div>
-          <div className="flex items-center gap-1">
-            <span className="text-xs text-brand-lotus">300ml</span>
-            <NumericInput value={almond300} onChange={setAlmond300} unit="個" isFilled />
-          </div>
-        </div>
-        {/* 紙碗 - 橫向排列 */}
-        <div className="flex items-center gap-3 mb-3">
-          <span className="text-sm text-brand-oak shrink-0">紙碗</span>
-          <div className="flex items-center gap-1">
-            <span className="text-xs text-brand-lotus">K520</span>
-            <NumericInput value={bowlK520} onChange={setBowlK520} unit="箱" isFilled />
-          </div>
-          <div className="flex items-center gap-1">
-            <span className="text-xs text-brand-lotus">750</span>
-            <NumericInput value={bowl750} onChange={setBowl750} unit="箱" isFilled />
-          </div>
-        </div>
-        {/* 其他備註 */}
-        <div className="mt-2">
-          <label className="text-sm text-brand-lotus block mb-1.5">其他備註</label>
-          <textarea value={note} onChange={e => setNote(e.target.value)} placeholder="有特殊需求請在此備註..."
-            className="w-full h-20 rounded-input p-3 text-sm outline-none border border-gray-200 focus:border-brand-lotus resize-none"
-            style={{ backgroundColor: 'var(--color-input-bg)' }} />
-        </div>
-      </div>
-
-      <BottomAction label="提交叫貨單（隔日到貨）" onClick={handleSubmit} icon={<Send size={18} />} />
+          {locked ? (
+            <BottomAction label="已鎖定（超過隔日 08:00）" onClick={() => {}} icon={<Lock size={18} />} disabled />
+          ) : (
+            <BottomAction
+              label={submitting ? '提交中...' : isEdit ? '更新叫貨單' : '提交叫貨單（隔日到貨）'}
+              onClick={handleSubmit}
+              icon={<Send size={18} />}
+              disabled={submitting}
+            />
+          )}
+        </>
+      )}
     </div>
   )
 }

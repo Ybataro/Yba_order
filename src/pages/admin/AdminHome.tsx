@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom'
-import { Package, Warehouse, Users, Store, Receipt, QrCode } from 'lucide-react'
+import { Package, Warehouse, Users, Store, Receipt, QrCode, Layers } from 'lucide-react'
 import { getTodayString, formatDate } from '@/lib/utils'
 
 const menuItems = [
@@ -8,6 +8,7 @@ const menuItems = [
   { icon: Users, label: '人員管理', desc: '管理央廚及各門店人員', path: '/admin/staff', color: 'bg-brand-lotus' },
   { icon: Store, label: '門店管理', desc: '新增/編輯門店資訊', path: '/admin/stores', color: 'bg-brand-blush' },
   { icon: Receipt, label: '結帳欄位管理', desc: '管理每日結帳表單欄位', path: '/admin/settlement-fields', color: 'bg-brand-silver' },
+  { icon: Layers, label: '樓層品項管理', desc: '設定門店樓層及品項分配', path: '/admin/zones', color: 'bg-brand-camel' },
   { icon: QrCode, label: 'QR Code 管理', desc: '產生各門店/央廚/後台 QR Code', path: '/admin/qrcode', color: 'bg-brand-oak' },
 ]
 

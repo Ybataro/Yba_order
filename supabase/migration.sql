@@ -242,3 +242,229 @@ insert into categories (scope, name, sort_order) values
   ('settlement', '其它收支', 4),
   ('settlement', '實收盤點', 5),
   ('settlement', '鐵櫃內盤點', 6);
+
+-- ============================================
+-- 7. 門店樓層
+-- ============================================
+
+create table store_zones (
+  id text primary key,            -- 'lehua_1f'
+  store_id text not null,
+  zone_code text not null,        -- '1F'
+  zone_name text not null,        -- '1樓'
+  sort_order int default 0
+);
+
+-- 8. 樓層品項對應
+create table zone_products (
+  id serial primary key,
+  zone_id text not null references store_zones(id) on delete cascade,
+  product_id text not null,
+  sort_order int default 0,
+  unique(zone_id, product_id)
+);
+
+alter table store_zones enable row level security;
+create policy "anon_all_store_zones" on store_zones for all using (true) with check (true);
+
+alter table zone_products enable row level security;
+create policy "anon_all_zone_products" on zone_products for all using (true) with check (true);
+
+-- ============================================
+-- Seed Data: 門店樓層
+-- ============================================
+
+insert into store_zones (id, store_id, zone_code, zone_name, sort_order) values
+  ('lehua_1f', 'lehua', '1F', '1樓', 0),
+  ('lehua_2f', 'lehua', '2F', '2樓', 1),
+  ('xingnan_1f', 'xingnan', '1F', '1樓', 0);
+
+-- Seed: 全部品項預設指向各店的 1F
+insert into zone_products (zone_id, product_id, sort_order)
+select 'lehua_1f', id, sort_order from store_products;
+
+insert into zone_products (zone_id, product_id, sort_order)
+select 'xingnan_1f', id, sort_order from store_products;
+
+-- ============================================
+-- 營運資料表 (Operations)
+-- ============================================
+-- 設計原則：
+--   每個操作 = session（表頭）+ items（明細）
+--   session 存 who/when/status，items 存逐項數值
+--   session.id 用可讀文字組合，前端可直接組出
+
+-- ============================================
+-- 9. 門店物料盤點
+-- ============================================
+
+create table inventory_sessions (
+  id text primary key,               -- '{store_id}_{date}_{zone_code}' e.g. 'lehua_2025-01-15_1f'
+  store_id text not null,
+  date date not null,
+  zone_code text not null default '', -- '' = 全部
+  submitted_by text,                  -- staff id
+  submitted_at timestamptz default now(),
+  updated_at timestamptz default now(),
+  unique(store_id, date, zone_code)
+);
+
+create table inventory_items (
+  id serial primary key,
+  session_id text not null references inventory_sessions(id) on delete cascade,
+  product_id text not null,
+  on_shelf numeric,
+  stock numeric,
+  discarded numeric,
+  unique(session_id, product_id)
+);
+
+-- ============================================
+-- 10. 門店叫貨
+-- ============================================
+
+create table order_sessions (
+  id text primary key,               -- '{store_id}_{date}' e.g. 'lehua_2025-01-15'
+  store_id text not null,
+  date date not null,                -- 叫貨日期（到貨日 = date + 1）
+  deadline timestamptz not null,     -- 修改截止時間 = 隔天 08:00
+  almond_1000 text default '',       -- 杏仁茶瓶 1000ml
+  almond_300 text default '',        -- 杏仁茶瓶 300ml
+  bowl_k520 text default '',         -- 紙碗 K520
+  bowl_750 text default '',          -- 紙碗 750
+  note text default '',              -- 其他備註
+  submitted_by text,
+  submitted_at timestamptz default now(),
+  updated_at timestamptz default now(),
+  unique(store_id, date)
+);
+
+create table order_items (
+  id serial primary key,
+  session_id text not null references order_sessions(id) on delete cascade,
+  product_id text not null,
+  quantity numeric not null default 0,
+  unique(session_id, product_id)
+);
+
+-- ============================================
+-- 11. 門店每日結帳
+-- ============================================
+
+create table settlement_sessions (
+  id text primary key,               -- '{store_id}_{date}'
+  store_id text not null,
+  date date not null,
+  submitted_by text,
+  submitted_at timestamptz default now(),
+  updated_at timestamptz default now(),
+  unique(store_id, date)
+);
+
+create table settlement_values (
+  id serial primary key,
+  session_id text not null references settlement_sessions(id) on delete cascade,
+  field_id text not null,
+  value text not null default '',
+  unique(session_id, field_id)
+);
+
+-- ============================================
+-- 12. 央廚出貨 + 門店收貨確認
+-- ============================================
+
+create table shipment_sessions (
+  id text primary key,               -- '{store_id}_{date}'
+  store_id text not null,
+  date date not null,
+  confirmed_by text,                 -- 央廚確認人
+  confirmed_at timestamptz,
+  receive_note text default '',      -- 門店收貨差異備註
+  received_at timestamptz,           -- 門店確認收貨時間
+  unique(store_id, date)
+);
+
+create table shipment_items (
+  id serial primary key,
+  session_id text not null references shipment_sessions(id) on delete cascade,
+  product_id text not null,
+  order_qty numeric not null default 0,
+  actual_qty numeric not null default 0,
+  received boolean default false,    -- 門店逐項確認
+  unique(session_id, product_id)
+);
+
+-- ============================================
+-- 13. 央廚原物料庫存盤點
+-- ============================================
+
+create table material_stock_sessions (
+  id text primary key,               -- 'kitchen_{date}'
+  date date not null unique,
+  submitted_by text,
+  submitted_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+create table material_stock_items (
+  id serial primary key,
+  session_id text not null references material_stock_sessions(id) on delete cascade,
+  material_id text not null,
+  stock_qty numeric,
+  bulk_qty numeric,
+  unique(session_id, material_id)
+);
+
+-- ============================================
+-- 14. 央廚原物料叫貨
+-- ============================================
+
+create table material_order_sessions (
+  id text primary key,               -- 'kitchen_{date}'
+  date date not null unique,
+  submitted_by text,
+  submitted_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+create table material_order_items (
+  id serial primary key,
+  session_id text not null references material_order_sessions(id) on delete cascade,
+  material_id text not null,
+  quantity numeric not null default 0,
+  unique(session_id, material_id)
+);
+
+-- ============================================
+-- RLS: 營運資料表
+-- ============================================
+
+alter table inventory_sessions enable row level security;
+create policy "anon_all" on inventory_sessions for all using (true) with check (true);
+alter table inventory_items enable row level security;
+create policy "anon_all" on inventory_items for all using (true) with check (true);
+
+alter table order_sessions enable row level security;
+create policy "anon_all" on order_sessions for all using (true) with check (true);
+alter table order_items enable row level security;
+create policy "anon_all" on order_items for all using (true) with check (true);
+
+alter table settlement_sessions enable row level security;
+create policy "anon_all" on settlement_sessions for all using (true) with check (true);
+alter table settlement_values enable row level security;
+create policy "anon_all" on settlement_values for all using (true) with check (true);
+
+alter table shipment_sessions enable row level security;
+create policy "anon_all" on shipment_sessions for all using (true) with check (true);
+alter table shipment_items enable row level security;
+create policy "anon_all" on shipment_items for all using (true) with check (true);
+
+alter table material_stock_sessions enable row level security;
+create policy "anon_all" on material_stock_sessions for all using (true) with check (true);
+alter table material_stock_items enable row level security;
+create policy "anon_all" on material_stock_items for all using (true) with check (true);
+
+alter table material_order_sessions enable row level security;
+create policy "anon_all" on material_order_sessions for all using (true) with check (true);
+alter table material_order_items enable row level security;
+create policy "anon_all" on material_order_items for all using (true) with check (true);

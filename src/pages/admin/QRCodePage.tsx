@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { QRCodeSVG } from 'qrcode.react'
 import { ArrowLeft, Printer, ExternalLink } from 'lucide-react'
 import { useStoreStore } from '@/stores/useStoreStore'
+import { useZoneStore } from '@/stores/useZoneStore'
 
 interface QRItem {
   title: string
@@ -12,14 +13,21 @@ interface QRItem {
 export default function QRCodePage() {
   const navigate = useNavigate()
   const stores = useStoreStore((s) => s.items)
+  const getStoreZones = useZoneStore((s) => s.getStoreZones)
   const [baseUrl, setBaseUrl] = useState(window.location.origin)
   const printRef = useRef<HTMLDivElement>(null)
 
   const qrItems: QRItem[] = [
-    ...stores.map((store) => ({
-      title: `${store.name}`,
-      path: `/store/${store.id}`,
-    })),
+    ...stores.flatMap((store) => {
+      const zones = getStoreZones(store.id)
+      if (zones.length <= 1) {
+        return [{ title: store.name, path: `/store/${store.id}` }]
+      }
+      return zones.map((zone) => ({
+        title: `${store.name} ${zone.zoneName}`,
+        path: `/store/${store.id}?zone=${zone.zoneCode}`,
+      }))
+    }),
     { title: '央廚', path: '/kitchen' },
     { title: '後台管理', path: '/admin' },
   ]
@@ -35,7 +43,7 @@ export default function QRCodePage() {
         (item) => `
       <div style="display:inline-flex;flex-direction:column;align-items:center;padding:24px;border:1px solid #ddd;border-radius:12px;width:240px;margin:12px;">
         <h3 style="margin:0 0 12px;font-size:18px;color:#5D4037;">${item.title}</h3>
-        <div id="qr-${item.path}"></div>
+        <div id="qr-${item.path.replace(/[?=&]/g, '_')}"></div>
         <p style="margin:8px 0 0;font-size:11px;color:#888;word-break:break-all;text-align:center;max-width:200px;">${getFullUrl(item.path)}</p>
       </div>
     `
@@ -62,7 +70,7 @@ export default function QRCodePage() {
           ${qrItems
             .map(
               (item) => `
-            new QRCode(document.getElementById('qr-${item.path}'), {
+            new QRCode(document.getElementById('qr-${item.path.replace(/[?=&]/g, '_')}'), {
               text: '${getFullUrl(item.path)}',
               width: 180,
               height: 180,
@@ -88,7 +96,7 @@ export default function QRCodePage() {
           返回後台
         </button>
         <h1 className="text-xl font-bold">QR Code 管理</h1>
-        <p className="text-sm opacity-80 mt-1">掃碼直接進入各系統頁面</p>
+        <p className="text-sm opacity-80 mt-1">掃碼直接進入各門店首頁</p>
       </div>
 
       <div className="px-4 py-4 space-y-4">

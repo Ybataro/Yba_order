@@ -23,6 +23,7 @@ import StaffManager from '@/pages/admin/StaffManager'
 import StoreManager from '@/pages/admin/StoreManager'
 import SettlementManager from '@/pages/admin/SettlementManager'
 import QRCodePage from '@/pages/admin/QRCodePage'
+import ZoneManager from '@/pages/admin/ZoneManager'
 
 function App() {
   useInitStores()
@@ -59,6 +60,7 @@ function App() {
             <Route path="/admin/stores" element={<StoreManager />} />
             <Route path="/admin/settlement-fields" element={<SettlementManager />} />
             <Route path="/admin/qrcode" element={<QRCodePage />} />
+            <Route path="/admin/zones" element={<ZoneManager />} />
           </Routes>
         </div>
       </ToastProvider>
