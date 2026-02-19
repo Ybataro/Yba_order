@@ -69,7 +69,7 @@ export default function ZoneManager() {
 
   return (
     <div className="page-container">
-      <TopNav title="樓層品項管理" />
+      <TopNav title="樓層品項管理" backTo="/admin" />
 
       {/* Store tabs */}
       <div className="flex border-b border-gray-200 bg-white">

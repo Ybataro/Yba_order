@@ -71,7 +71,7 @@ export default function MaterialManager() {
 
   return (
     <div className="page-container">
-      <TopNav title="央廚原物料管理" />
+      <TopNav title="央廚原物料管理" backTo="/admin" />
 
       {/* Category manager toggle */}
       <div className="px-4 pt-3 pb-1 flex justify-end">

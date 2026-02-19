@@ -89,7 +89,7 @@ export default function ProductManager() {
 
   return (
     <div className="page-container">
-      <TopNav title="門店品項管理" />
+      <TopNav title="門店品項管理" backTo="/admin" />
 
       {/* Category manager toggle */}
       <div className="px-4 pt-3 pb-1 flex justify-end">

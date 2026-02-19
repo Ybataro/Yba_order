@@ -233,7 +233,7 @@ export default function OrderHistory() {
   if (!supabase) {
     return (
       <div className="page-container">
-        <TopNav title="歷史叫貨查詢" />
+        <TopNav title="歷史叫貨查詢" backTo="/admin" />
         <div className="flex items-center justify-center py-20 text-sm text-brand-lotus">
           尚無歷史資料（需連接 Supabase）
         </div>
@@ -243,7 +243,7 @@ export default function OrderHistory() {
 
   return (
     <div className="page-container">
-      <TopNav title="歷史叫貨查詢" />
+      <TopNav title="歷史叫貨查詢" backTo="/admin" />
 
       {/* Type tabs */}
       <div className="flex border-b border-gray-200 bg-white">

@@ -72,7 +72,7 @@ export default function SettlementManager() {
 
   return (
     <div className="page-container">
-      <TopNav title="結帳欄位管理" />
+      <TopNav title="結帳欄位管理" backTo="/admin" />
 
       {/* Group manager toggle */}
       <div className="px-4 pt-3 pb-1 flex justify-end">

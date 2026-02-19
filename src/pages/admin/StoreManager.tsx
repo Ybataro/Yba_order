@@ -62,7 +62,7 @@ export default function StoreManager() {
 
   return (
     <div className="page-container">
-      <TopNav title="門店管理" />
+      <TopNav title="門店管理" backTo="/admin" />
 
       <div className="bg-white">
         {items.length === 0 && (

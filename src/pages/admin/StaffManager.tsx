@@ -108,7 +108,7 @@ export default function StaffManager() {
 
   return (
     <div className="page-container">
-      <TopNav title="人員管理" />
+      <TopNav title="人員管理" backTo="/admin" />
 
       {/* Kitchen staff */}
       <SectionHeader title={`央廚人員 (${kitchenStaff.length})`} icon="■" />

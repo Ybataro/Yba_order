@@ -5,17 +5,18 @@ import { formatDate, getTodayString } from '@/lib/utils'
 interface TopNavProps {
   title: string
   showBack?: boolean
+  backTo?: string
   date?: string
 }
 
-export function TopNav({ title, showBack = true, date }: TopNavProps) {
+export function TopNav({ title, showBack = true, backTo, date }: TopNavProps) {
   const navigate = useNavigate()
 
   return (
     <div className="top-nav">
       <div className="flex items-center gap-3">
         {showBack && (
-          <button onClick={() => navigate(-1)} className="p-1 -ml-1 active:opacity-70">
+          <button onClick={() => backTo ? navigate(backTo) : navigate(-1)} className="p-1 -ml-1 active:opacity-70">
             <ArrowLeft size={22} />
           </button>
         )}
