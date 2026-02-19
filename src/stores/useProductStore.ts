@@ -41,6 +41,8 @@ export const useProductStore = create<ProductState>()((set, get) => ({
           unit: d.unit,
           shelfLifeDays: d.shelf_life_days ?? undefined,
           baseStock: d.base_stock ?? undefined,
+          ourCost: d.our_cost ?? 0,
+          franchisePrice: d.franchise_price ?? 0,
         })),
       })
     }
@@ -60,6 +62,8 @@ export const useProductStore = create<ProductState>()((set, get) => ({
         unit: item.unit,
         shelf_life_days: item.shelfLifeDays != null ? String(item.shelfLifeDays) : null,
         base_stock: item.baseStock ?? null,
+        our_cost: item.ourCost ?? 0,
+        franchise_price: item.franchisePrice ?? 0,
         sort_order: get().items.length - 1,
       }).then()
     }
@@ -76,6 +80,8 @@ export const useProductStore = create<ProductState>()((set, get) => ({
       if (partial.unit !== undefined) db.unit = partial.unit
       if (partial.shelfLifeDays !== undefined) db.shelf_life_days = partial.shelfLifeDays != null ? String(partial.shelfLifeDays) : null
       if (partial.baseStock !== undefined) db.base_stock = partial.baseStock ?? null
+      if (partial.ourCost !== undefined) db.our_cost = partial.ourCost ?? 0
+      if (partial.franchisePrice !== undefined) db.franchise_price = partial.franchisePrice ?? 0
       if (Object.keys(db).length > 0) {
         supabase.from('store_products').update(db).eq('id', id).then()
       }

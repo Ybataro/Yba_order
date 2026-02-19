@@ -10,7 +10,7 @@ import { useProductStore } from '@/stores/useProductStore'
 import type { StoreProduct } from '@/data/storeProducts'
 import { Plus, FolderCog } from 'lucide-react'
 
-const emptyProduct: StoreProduct = { id: '', name: '', category: '', unit: '', shelfLifeDays: '', baseStock: '' }
+const emptyProduct: StoreProduct = { id: '', name: '', category: '', unit: '', shelfLifeDays: '', baseStock: '', ourCost: 0, franchisePrice: 0 }
 
 export default function ProductManager() {
   const { items, categories, add, update, remove, reorder, renameCategory, addCategory, removeCategory, reorderCategory } = useProductStore()
@@ -227,6 +227,12 @@ export default function ProductManager() {
         </ModalField>
         <ModalField label="基準庫存">
           <ModalInput value={form.baseStock ?? ''} onChange={(v) => setForm({ ...form, baseStock: v })} placeholder="例：2盒/2天" />
+        </ModalField>
+        <ModalField label="我們價格">
+          <ModalInput value={String(form.ourCost || '')} onChange={(v) => setForm({ ...form, ourCost: parseFloat(v) || 0 })} placeholder="例：50" />
+        </ModalField>
+        <ModalField label="加盟價格">
+          <ModalInput value={String(form.franchisePrice || '')} onChange={(v) => setForm({ ...form, franchisePrice: parseFloat(v) || 0 })} placeholder="例：65" />
         </ModalField>
       </AdminModal>
 

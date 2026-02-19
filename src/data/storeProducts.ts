@@ -5,6 +5,8 @@ export interface StoreProduct {
   unit: string
   shelfLifeDays?: number | string
   baseStock?: string
+  ourCost?: number
+  franchisePrice?: number
 }
 
 export const productCategories = [

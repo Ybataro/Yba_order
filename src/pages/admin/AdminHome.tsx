@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom'
-import { Package, Warehouse, Users, Store, Receipt, QrCode, Layers, ClipboardList } from 'lucide-react'
+import { Package, Warehouse, Users, Store, Receipt, QrCode, Layers, ClipboardList, FileText, DollarSign } from 'lucide-react'
 import { getTodayString, formatDate } from '@/lib/utils'
 
 const menuItems = [
@@ -11,6 +11,8 @@ const menuItems = [
   { icon: Layers, label: '樓層品項管理', desc: '設定門店樓層及品項分配', path: '/admin/zones', color: 'bg-brand-camel' },
   { icon: QrCode, label: 'QR Code 管理', desc: '產生各門店/央廚/後台 QR Code', path: '/admin/qrcode', color: 'bg-brand-oak' },
   { icon: ClipboardList, label: '歷史叫貨查詢', desc: '查看叫貨紀錄及品項統計分析', path: '/admin/order-history', color: 'bg-brand-lotus' },
+  { icon: FileText, label: '結帳歷史查詢', desc: '各店結帳紀錄及月報表', path: '/admin/settlement-history', color: 'bg-brand-amber' },
+  { icon: DollarSign, label: '叫貨價格統計', desc: '品項成本與加盟價格統計', path: '/admin/order-pricing', color: 'bg-brand-oak' },
 ]
 
 export default function AdminHome() {

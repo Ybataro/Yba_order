@@ -241,3 +241,10 @@ alter table product_stock_sessions enable row level security;
 create policy "anon_all" on product_stock_sessions for all using (true) with check (true);
 alter table product_stock_items enable row level security;
 create policy "anon_all" on product_stock_items for all using (true) with check (true);
+
+-- ============================================
+-- I. 品項價格欄位
+-- ============================================
+
+alter table store_products add column our_cost numeric default 0;
+alter table store_products add column franchise_price numeric default 0;
