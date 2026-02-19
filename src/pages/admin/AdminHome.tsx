@@ -1,6 +1,5 @@
-import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Package, Warehouse, Users, Store, Receipt, QrCode, Layers, ClipboardList, FileText, DollarSign, CloudSun, ChevronDown } from 'lucide-react'
+import { Package, Warehouse, Users, Store, Receipt, QrCode, Layers, ClipboardList, FileText, DollarSign, CloudSun, ChefHat } from 'lucide-react'
 import { getTodayString, formatDate } from '@/lib/utils'
 import { useStoreStore } from '@/stores/useStoreStore'
 
@@ -21,29 +20,6 @@ const menuItems = [
 export default function AdminHome() {
   const navigate = useNavigate()
   const stores = useStoreStore((s) => s.items)
-  const [selectedStore, setSelectedStore] = useState('')
-  const [dropdownOpen, setDropdownOpen] = useState(false)
-  const dropdownRef = useRef<HTMLDivElement>(null)
-
-  // stores 非同步載入後設定預設值
-  useEffect(() => {
-    if (stores.length > 0 && !selectedStore) {
-      setSelectedStore(stores[0].id)
-    }
-  }, [stores, selectedStore])
-
-  const selectedName = stores.find((s) => s.id === selectedStore)?.name || '選擇門店'
-
-  useEffect(() => {
-    if (!dropdownOpen) return
-    function handleClick(e: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
-        setDropdownOpen(false)
-      }
-    }
-    document.addEventListener('mousedown', handleClick)
-    return () => document.removeEventListener('mousedown', handleClick)
-  }, [dropdownOpen])
 
   return (
     <div className="page-container">
@@ -71,36 +47,31 @@ export default function AdminHome() {
         ))}
       </div>
 
-      {/* Quick links */}
+      {/* 快速前往 */}
       <div className="px-4 mt-6 pb-6">
         <p className="text-xs text-brand-lotus mb-2">快速前往</p>
-        <div className="space-y-2">
-          {/* 門店選擇 + 前往 */}
-          <div ref={dropdownRef} className="relative flex flex-row gap-2">
+        <div className="grid grid-cols-3 gap-2">
+          {stores.map((s) => (
             <button
-              onClick={() => setDropdownOpen((v) => !v)}
-              className="flex-1 h-11 rounded-xl border border-gray-200 bg-white px-4 text-sm text-brand-oak inline-flex flex-row items-center justify-between gap-2 active:bg-gray-50 min-w-0"
+              key={s.id}
+              onClick={() => navigate(`/store/${s.id}`)}
+              className="card flex flex-col items-center gap-1.5 py-3 active:scale-[0.97] transition-transform"
             >
-              <span className="truncate whitespace-nowrap">{selectedName}</span>
-              <ChevronDown size={16} className={`shrink-0 text-gray-400 transition-transform ${dropdownOpen ? 'rotate-180' : ''}`} />
-            </button>
-            <button onClick={() => navigate(`/store/${selectedStore}`)} className="btn-secondary !h-11 !text-sm !px-6 whitespace-nowrap shrink-0">前往門店</button>
-            {dropdownOpen && (
-              <div className="absolute left-0 right-0 top-full mt-1 rounded-xl bg-white shadow-lg border border-gray-100 overflow-hidden z-50">
-                {stores.map((s) => (
-                  <button
-                    key={s.id}
-                    onClick={() => { setSelectedStore(s.id); setDropdownOpen(false) }}
-                    className={`w-full text-left px-4 py-3 text-sm transition-colors ${s.id === selectedStore ? 'bg-brand-lotus/10 text-brand-lotus font-medium' : 'text-brand-oak hover:bg-gray-50'}`}
-                  >
-                    {s.name}
-                  </button>
-                ))}
+              <div className="bg-brand-lotus w-9 h-9 rounded-lg flex items-center justify-center text-white">
+                <Store size={18} />
               </div>
-            )}
-          </div>
-          {/* 央廚 */}
-          <button onClick={() => navigate('/kitchen')} className="btn-secondary w-full !h-11 !text-sm">前往央廚</button>
+              <span className="text-xs font-medium text-brand-oak">{s.name}</span>
+            </button>
+          ))}
+          <button
+            onClick={() => navigate('/kitchen')}
+            className="card flex flex-col items-center gap-1.5 py-3 active:scale-[0.97] transition-transform"
+          >
+            <div className="bg-brand-silver w-9 h-9 rounded-lg flex items-center justify-center text-white">
+              <ChefHat size={18} />
+            </div>
+            <span className="text-xs font-medium text-brand-oak">央廚</span>
+          </button>
         </div>
       </div>
     </div>
