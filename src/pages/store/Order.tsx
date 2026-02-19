@@ -8,7 +8,7 @@ import { useToast } from '@/components/Toast'
 import { useProductStore } from '@/stores/useProductStore'
 import { useStoreStore } from '@/stores/useStoreStore'
 import { supabase } from '@/lib/supabase'
-import { orderSessionId, getTodayTW, getOrderDeadline, isPastDeadline } from '@/lib/session'
+import { orderSessionId, getTodayTW, getYesterdayTW, getOrderDeadline, isPastDeadline } from '@/lib/session'
 import { fetchWeather, type WeatherData, type WeatherCondition } from '@/lib/weather'
 import { Send, Lightbulb, Sun, CloudRain, Cloud, CloudSun, Thermometer, Droplets, TrendingUp, TrendingDown, Lock, RefreshCw } from 'lucide-react'
 
@@ -55,8 +55,11 @@ export default function Order() {
   const productCategories = useProductStore((s) => s.categories)
 
   const today = getTodayTW()
-  const sessionId = orderSessionId(storeId || '', today)
-  const deadline = getOrderDeadline(today)
+  const yesterday = getYesterdayTW()
+  // 若昨日叫貨截止時間（隔日08:00）尚未到，繼續顯示昨日的叫貨單
+  const orderDate = !isPastDeadline(getOrderDeadline(yesterday)) ? yesterday : today
+  const sessionId = orderSessionId(storeId || '', orderDate)
+  const deadline = getOrderDeadline(orderDate)
 
   const [orders, setOrders] = useState<Record<string, string>>(() => {
     const init: Record<string, string> = {}

@@ -8,7 +8,7 @@ import { useProductStore } from '@/stores/useProductStore'
 import { useStoreStore } from '@/stores/useStoreStore'
 import { useStaffStore } from '@/stores/useStaffStore'
 import { supabase } from '@/lib/supabase'
-import { shipmentSessionId, getTodayTW } from '@/lib/session'
+import { shipmentSessionId, getTodayTW, getYesterdayTW } from '@/lib/session'
 import { Truck, AlertTriangle, UserCheck, RefreshCw } from 'lucide-react'
 
 export default function Shipment() {
@@ -22,6 +22,7 @@ export default function Shipment() {
   const [confirmBy, setConfirmBy] = useState('')
 
   const today = getTodayTW()
+  const orderDate = getYesterdayTW() // 叫貨是隔日到貨，所以查昨日的叫貨
 
   // 各店叫貨量（從 order_sessions/order_items 載入）
   const [orderQty, setOrderQty] = useState<Record<string, Record<string, number>>>({})
@@ -51,8 +52,8 @@ export default function Shipment() {
           aqData[store.id][p.id] = ''
         })
 
-        // Load today's order for this store
-        const orderSid = `${store.id}_${today}`
+        // Load yesterday's order for this store (隔日到貨)
+        const orderSid = `${store.id}_${orderDate}`
         const { data: orderItems } = await supabase!
           .from('order_items')
           .select('product_id, quantity')

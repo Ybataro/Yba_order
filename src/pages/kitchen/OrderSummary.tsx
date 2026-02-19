@@ -4,7 +4,7 @@ import { SectionHeader } from '@/components/SectionHeader'
 import { useProductStore } from '@/stores/useProductStore'
 import { useStoreStore } from '@/stores/useStoreStore'
 import { supabase } from '@/lib/supabase'
-import { getTodayTW } from '@/lib/session'
+import { getYesterdayTW } from '@/lib/session'
 import { Printer, MessageSquareText } from 'lucide-react'
 import { getTodayString } from '@/lib/utils'
 
@@ -20,7 +20,7 @@ export default function OrderSummary() {
   const storeProducts = useMemo(() => allProducts.filter(p => !p.visibleIn || p.visibleIn === 'both' || p.visibleIn === 'order_only'), [allProducts])
   const productCategories = useProductStore((s) => s.categories)
   const stores = useStoreStore((s) => s.items)
-  const today = getTodayTW()
+  const orderDate = getYesterdayTW() // 叫貨是隔日到貨，查昨日叫貨
 
   const [storeOrders, setStoreOrders] = useState<Record<string, Record<string, number>>>({})
   const [storeNotes, setStoreNotes] = useState<Record<string, { fixedItems: Record<string, number>; freeText: string }>>({})
@@ -44,7 +44,7 @@ export default function OrderSummary() {
       const { data: sessions } = await supabase!
         .from('order_sessions')
         .select('*, order_items(*)')
-        .eq('date', today)
+        .eq('date', orderDate)
 
       if (sessions) {
         sessions.forEach(session => {
@@ -77,7 +77,7 @@ export default function OrderSummary() {
     }
 
     load()
-  }, [today, stores])
+  }, [orderDate, stores])
 
   const productsByCategory = useMemo(() => {
     const map = new Map<string, typeof storeProducts>()

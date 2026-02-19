@@ -36,6 +36,13 @@ export function getTodayTW(): string {
   return new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Taipei' })
 }
 
+/** 昨日 YYYY-MM-DD in Asia/Taipei（叫貨隔日到貨用） */
+export function getYesterdayTW(): string {
+  const d = new Date()
+  d.setDate(d.getDate() - 1)
+  return d.toLocaleDateString('en-CA', { timeZone: 'Asia/Taipei' })
+}
+
 /** 叫貨修改截止：隔天 08:00 台灣時間 (= 隔天 00:00 UTC) */
 export function getOrderDeadline(orderDate: string): string {
   const [y, m, d] = orderDate.split('-').map(Number)

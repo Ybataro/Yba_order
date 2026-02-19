@@ -4,7 +4,7 @@ import { SectionHeader } from '@/components/SectionHeader'
 import { useStoreStore } from '@/stores/useStoreStore'
 import { useProductStore } from '@/stores/useProductStore'
 import { supabase } from '@/lib/supabase'
-import { getTodayTW } from '@/lib/session'
+import { getTodayTW, getYesterdayTW } from '@/lib/session'
 import { formatCurrency } from '@/lib/utils'
 import { computeSession, type SettlementValue } from '@/lib/settlement'
 import { RefreshCw } from 'lucide-react'
@@ -74,6 +74,7 @@ export default function BossDashboard() {
   const products = useProductStore((s) => s.items)
 
   const today = getTodayTW()
+  const yesterday = getYesterdayTW() // 叫貨是隔日到貨，查昨日叫貨
   const sevenDaysAgo = getDateNDaysAgo(6)
 
   const [loading, setLoading] = useState(true)
@@ -96,11 +97,11 @@ export default function BossDashboard() {
         .gte('date', sevenDaysAgo)
         .lte('date', today)
         .order('date', { ascending: false }),
-      // B. Order sessions (today)
+      // B. Order sessions (yesterday — 隔日到貨)
       supabase
         .from('order_sessions')
         .select('id, store_id, date')
-        .eq('date', today),
+        .eq('date', yesterday),
       // C. Shipment sessions (today)
       supabase
         .from('shipment_sessions')
@@ -125,7 +126,7 @@ export default function BossDashboard() {
       setOrderItems((orderItemRes.data as OrderItemRow[] | null)?.filter(i => i.order_sessions) || [])
       setLoading(false)
     })
-  }, [today, sevenDaysAgo])
+  }, [today, yesterday, sevenDaysAgo])
 
   // ===== Computed data =====
 
