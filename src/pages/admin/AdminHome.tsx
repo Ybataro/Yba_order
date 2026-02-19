@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom'
-import { Package, Warehouse, Users, Store, Receipt, QrCode, Layers, ClipboardList, FileText, DollarSign } from 'lucide-react'
+import { Package, Warehouse, Users, Store, Receipt, QrCode, Layers, ClipboardList, FileText, DollarSign, CloudSun } from 'lucide-react'
 import { getTodayString, formatDate } from '@/lib/utils'
 
 const menuItems = [
@@ -13,6 +13,7 @@ const menuItems = [
   { icon: ClipboardList, label: '歷史叫貨查詢', desc: '查看叫貨紀錄及品項統計分析', path: '/admin/order-history', color: 'bg-brand-lotus' },
   { icon: FileText, label: '結帳歷史查詢', desc: '各店結帳紀錄及月報表', path: '/admin/settlement-history', color: 'bg-brand-amber' },
   { icon: DollarSign, label: '叫貨價格統計', desc: '品項成本與加盟價格統計', path: '/admin/order-pricing', color: 'bg-brand-oak' },
+  { icon: CloudSun, label: '天氣用量分析', desc: '天氣與營業額、叫貨量關聯分析', path: '/admin/weather-analysis', color: 'bg-brand-amber' },
 ]
 
 export default function AdminHome() {

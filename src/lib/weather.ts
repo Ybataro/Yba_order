@@ -1,3 +1,6 @@
+import { supabase } from '@/lib/supabase'
+import { getTodayTW } from '@/lib/session'
+
 export type WeatherCondition = 'sunny' | 'cloudy' | 'partly_cloudy' | 'rainy'
 
 export interface WeatherData {
@@ -81,7 +84,7 @@ export async function fetchWeather(): Promise<WeatherData> {
     const humidity = pop >= 60 ? 80 : pop >= 30 ? 70 : 60
     void ciEl // CI is comfort index, not used for humidity
 
-    return {
+    const result: WeatherData = {
       date: '明日',
       condition,
       conditionText,
@@ -90,7 +93,37 @@ export async function fetchWeather(): Promise<WeatherData> {
       rainProb: pop,
       humidity,
     }
+
+    // Fire-and-forget: save to DB
+    saveWeatherRecord(result).catch(() => {})
+
+    return result
   } catch {
     return defaultWeather
   }
+}
+
+/** Save weather record to Supabase (upsert by date) */
+async function saveWeatherRecord(weather: WeatherData): Promise<void> {
+  if (!supabase) return
+
+  // fetchWeather returns tomorrow's forecast
+  const today = getTodayTW()
+  const d = new Date(today + 'T00:00:00')
+  d.setDate(d.getDate() + 1)
+  const tomorrow = d.toLocaleDateString('en-CA')
+
+  await supabase.from('weather_records').upsert(
+    {
+      id: `weather_${tomorrow}`,
+      date: tomorrow,
+      condition: weather.condition,
+      condition_text: weather.conditionText,
+      temp_high: weather.tempHigh,
+      temp_low: weather.tempLow,
+      rain_prob: weather.rainProb,
+      humidity: weather.humidity,
+    },
+    { onConflict: 'id' },
+  )
 }

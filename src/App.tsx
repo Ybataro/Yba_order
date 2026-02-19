@@ -27,6 +27,7 @@ import ZoneManager from '@/pages/admin/ZoneManager'
 import OrderHistory from '@/pages/admin/OrderHistory'
 import SettlementHistory from '@/pages/admin/SettlementHistory'
 import OrderPricing from '@/pages/admin/OrderPricing'
+import WeatherAnalysis from '@/pages/admin/WeatherAnalysis'
 
 function App() {
   useInitStores()
@@ -67,6 +68,7 @@ function App() {
             <Route path="/admin/order-history" element={<OrderHistory />} />
             <Route path="/admin/settlement-history" element={<SettlementHistory />} />
             <Route path="/admin/order-pricing" element={<OrderPricing />} />
+            <Route path="/admin/weather-analysis" element={<WeatherAnalysis />} />
           </Routes>
         </div>
       </ToastProvider>
