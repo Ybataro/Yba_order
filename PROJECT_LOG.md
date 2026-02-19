@@ -219,14 +219,14 @@
 ---
 
 ### 已知問題 / 待改進（更新）
-1. 目前使用模擬隨機資料，每次重整會變
+1. ~~目前使用模擬隨機資料，每次重整會變~~ → ✅ Day 6 全部改用 Supabase 真實資料
 2. Settlement 頁面的「應結總金額」計算邏輯需與實際業務確認
 3. 品項順序需與門店實際貨架動線對齊（需用戶確認）
 4. 深色模式 UI 已定義 CSS 變數但尚未加入切換按鈕
 5. 尚未加入離線提示與本地暫存功能
-6. 天氣資料目前為模擬，Phase 2 需串接中央氣象署開放資料 API
-7. 人員名單目前寫死在前端，Phase 2 需改為後台管理
-8. 門店當班人員選擇後尚未傳遞到子頁面（盤點/結帳/叫貨提交時帶上人名）
+6. ~~天氣資料目前為模擬~~ → ✅ Day 6 已串接中央氣象署 API
+7. ~~人員名單目前寫死在前端~~ → ✅ Day 4 已改為後台管理 + Supabase
+8. ~~門店當班人員選擇後尚未傳遞到子頁面~~ → ✅ Day 6 已透過 URL params 傳遞
 
 ---
 
@@ -348,16 +348,250 @@ bad6c7c feat: 建立後台管理系統 + Zustand 狀態管理
 
 ---
 
-## 下一步計畫（Phase 3）
+## 2026-02-19（Day 4）
+
+### 完成事項
+
+#### 1. 營運資料表建立（deploy_new_tables.sql）
+- **10 張新表**（session + items 模式）：
+  - `store_zones` / `zone_products` — 門店樓層+品項對應
+  - `inventory_sessions` / `inventory_items` — 門店物料盤點
+  - `order_sessions` / `order_items` — 門店叫貨
+  - `settlement_sessions` / `settlement_values` — 門店每日結帳
+  - `shipment_sessions` / `shipment_items` — 央廚出貨+門店收貨
+  - `material_stock_sessions` / `material_stock_items` — 央廚原物料庫存
+  - `material_order_sessions` / `material_order_items` — 央廚原物料叫貨
+  - `product_stock_sessions` / `product_stock_items` — 央廚成品庫存
+- 全部表加 RLS anon policy
+- Seed data：樂華 1F+2F、興南 1F、品項預設指向各店 1F
+
+#### 2. 全頁面 Supabase 提交邏輯
+- 新增 `src/lib/session.ts` — Session ID 產生器（inventorySessionId, orderSessionId, settlementSessionId 等）
+- 所有操作頁面皆實作 upsert 邏輯：
+  - 門店：盤點、叫貨、結帳、收貨確認
+  - 央廚：出貨、原物料庫存盤點、原物料叫貨、成品庫存盤點
+- 載入時檢查既有 session，載入已填資料、支援修改後重新提交
+
+#### 3. 盤點分樓層功能
+- **新增 `useZoneStore.ts`** — 樓層 Zustand store（CRUD + Supabase 同步）
+- **新增 `useZoneFilteredProducts.ts`** — 依樓層篩選品項的 hook
+- **新增 `ZoneManager.tsx`** — 後台樓層品項管理頁面
+- 盤點頁面支援 `?zone=1F` 篩選，各樓層人員可同時用手機輸入
+- QR Code 頁面產生各樓層專用 QR
+- 樂華店：1F + 2F（品項分兩層）
+- 興南店：1F only（全部品項在 1F）
+
+#### 4. 盤點「全部」合併檢視
+- 選擇「全部」時顯示合併後的完整盤點（唯讀）
+- 各樓層數據自動加總
+
+#### 5. 歷史叫貨查詢及統計
+- **新增 `OrderHistory.tsx`** — /admin/order-history
+- **明細模式**：按日期分組，可展開收合，顯示各品項叫貨數量
+- **統計模式**：按分類統計品項合計/日均/叫貨次數
+- 支援門店叫貨 + 原物料叫貨切換
+- 篩選：今日/本週/本月/自訂日期 + 門店篩選
+
+#### 6. 其他改善
+- 央廚成品庫存盤點接上 Supabase
+- 物料盤點編輯模式顯示已修改品項標記
+- 後台子頁面返回鍵統一導向 /admin
+- .env 加入 .gitignore 避免金鑰外洩
+- 修正 supabase null 的 TypeScript 嚴格模式錯誤
+
+---
+
+### Day 4 修改檔案清單
+
+| 檔案 | 修改內容 |
+|------|----------|
+| supabase/deploy_new_tables.sql | **新增** 10 張營運資料表 + 樓層表 |
+| src/lib/session.ts | **新增** Session ID 產生器 + 台灣時區 helpers |
+| src/stores/useZoneStore.ts | **新增** 樓層 Zustand store |
+| src/hooks/useZoneFilteredProducts.ts | **新增** 樓層品項篩選 hook |
+| src/pages/admin/ZoneManager.tsx | **新增** 後台樓層品項管理 |
+| src/pages/admin/OrderHistory.tsx | **新增** 歷史叫貨查詢及統計 |
+| src/pages/admin/AdminHome.tsx | 新增樓層管理+歷史叫貨選單項 |
+| src/App.tsx | 新增 zones / order-history 路由 |
+| src/hooks/useInitStores.ts | 加入 useZoneStore 初始化 |
+| src/pages/store/Inventory.tsx | 接 Supabase + 樓層篩選 |
+| src/pages/store/Order.tsx | 接 Supabase（含截止時間邏輯） |
+| src/pages/store/Settlement.tsx | 接 Supabase |
+| src/pages/store/Receive.tsx | 接 Supabase |
+| src/pages/kitchen/Shipment.tsx | 接 Supabase |
+| src/pages/kitchen/MaterialStock.tsx | 接 Supabase |
+| src/pages/kitchen/MaterialOrder.tsx | 接 Supabase |
+| src/pages/kitchen/ProductStock.tsx | 接 Supabase |
+| src/pages/admin/QRCodePage.tsx | 新增樓層專用 QR |
+| .gitignore | 加入 .env |
+
+---
+
+### Day 4 Git 記錄
+
+```
+cbfc638 feat: 物料盤點編輯模式顯示已修改品項標記
+73472e9 chore: 將 .env 加入 gitignore 避免金鑰外洩
+5d05b5a feat: 央廚成品庫存盤點接上 Supabase
+3097c77 feat: 盤點「全部」模式顯示合併檢視（唯讀）
+fc06a1c fix: 後台子頁面返回鍵固定導向 /admin
+cc63369 fix: 修正 supabase 可能為 null 的 TypeScript 嚴格模式錯誤
+3644fab feat: 新增歷史叫貨查詢及統計頁面 + 樓層盤點修正
+398a684 feat: 盤點分樓層功能 + 營運資料表 + 全頁面 Supabase 提交邏輯
+```
+
+---
+
+## 2026-02-19（Day 5）
+
+### 完成事項
+
+#### 1. 品項價格欄位
+- `store_products` 表新增 `our_cost` / `franchise_price` 欄位（numeric, default 0）
+- `StoreProduct` 介面加 `ourCost?: number` / `franchisePrice?: number`
+- `useProductStore` — initialize 讀取新欄位、add/update 同步新欄位
+- `ProductManager` — Modal 新增「我們價格」「加盟價格」兩個輸入欄位
+
+#### 2. 結帳歷史查詢（/admin/settlement-history）
+- **新增 `SettlementHistory.tsx`**
+- 查詢 `settlement_sessions` JOIN `settlement_values`
+- 篩選：今日/本週/本月/自訂日期 + 門店篩選
+- **明細模式**：
+  - 按日期列出每筆結帳，顯示營業額/號數/客單價/差額
+  - 展開顯示 POS 金額/實收(鈔票+鐵櫃)/差額/支付方式明細
+  - 差額 ±10 內綠色，超出紅色
+- **月報統計模式**：
+  - 四宮格摘要：總營業額/日均營業額/總號數/平均客單價
+  - 各支付方式佔比（金額+百分比）
+  - 差額統計（正常筆數 vs 異常筆數）
+
+#### 3. 叫貨價格統計（/admin/order-pricing）
+- **新增 `OrderPricing.tsx`**
+- 篩選：本週/本月/自訂日期 + 門店篩選（全部加總 or 指定門店）
+- **主表格（橫向可捲動）**：
+  - 列 = 各品項（按分類分組）
+  - 欄 = 日期範圍內每日數量 + 總數量 + 我們價格 + 我們總價 + 加盟價格 + 加盟總價
+  - 品項左欄 sticky 不隨捲動
+- **底部摘要**：
+  - 營業額/號數/客單價（按日，從 settlement_sessions 帶入）
+  - 我們成本合計 + 成本%
+  - 加盟成本合計 + 成本%
+
+#### 4. Route + 選單更新
+- `App.tsx` 新增 `/admin/settlement-history` + `/admin/order-pricing` 路由
+- `AdminHome.tsx` 新增「結帳歷史查詢」+「叫貨價格統計」兩個選單項目
+
+---
+
+### Day 5 修改檔案清單
+
+| 檔案 | 修改內容 |
+|------|----------|
+| supabase/deploy_new_tables.sql | 新增 ALTER TABLE store_products（our_cost, franchise_price） |
+| src/data/storeProducts.ts | StoreProduct 介面加 ourCost / franchisePrice |
+| src/stores/useProductStore.ts | initialize/add/update 同步價格欄位 |
+| src/pages/admin/ProductManager.tsx | Modal 新增「我們價格」「加盟價格」 |
+| src/pages/admin/SettlementHistory.tsx | **新增** 結帳歷史查詢頁面 |
+| src/pages/admin/OrderPricing.tsx | **新增** 叫貨價格統計頁面 |
+| src/App.tsx | 新增 settlement-history / order-pricing 路由 |
+| src/pages/admin/AdminHome.tsx | 新增 2 個選單項目 |
+
+---
+
+### Day 5 Git 記錄
+
+```
+13dd907 feat: 新增結帳歷史查詢及叫貨價格統計報表
+```
+
+---
+
+## 2026-02-19（Day 6）
+
+### 完成事項
+
+#### 1. 門店當班人員傳遞
+- StoreHome 導航到子頁面時帶上 `?staff={staffId}` URL 參數
+- 4 個子頁面（盤點/結帳/叫貨/收貨）讀取 `useSearchParams` → `submitted_by`
+- 提交 Supabase upsert 時自動帶入人員 ID
+- 未選人員仍可操作，不強制
+
+#### 2. 叫貨建議量改用近 7 日平均
+- 移除 `mockSuggested` 隨機資料
+- 新增 useEffect 查詢該門店近 7 日 `order_sessions` + `order_items`
+- 計算各品項日均用量 × 天氣係數 × 四捨五入規則
+- 無歷史資料時建議量顯示 0
+
+#### 3. 天氣 API 串接（中央氣象署）
+- **新增 `src/lib/weather.ts`** — 天氣 API fetch + 資料轉換
+- API：中央氣象署 F-C0032-001（36 小時一般天氣預報）
+- 取「新北市」明日預報：最高溫/最低溫/降雨機率/天氣現象
+- 天氣描述 → 內部 condition（sunny/cloudy/partly_cloudy/rainy）映射
+- API key 由 `VITE_CWA_API_KEY` 環境變數提供
+- 無 API key 或請求失敗時 fallback 預設天氣（不影響叫貨功能）
+
+#### 4. 數據匯出 Excel
+- 安裝 `xlsx` 套件
+- **新增 `src/lib/exportExcel.ts`** — 通用 Excel 匯出工具函數
+- 3 個報表頁面加匯出按鈕：
+  - 歷史叫貨查詢（統計模式）→ `叫貨統計_YYYY-MM.xlsx`
+  - 結帳歷史查詢（統計模式）→ `結帳歷史_YYYY-MM.xlsx`
+  - 叫貨價格統計 → `叫貨價格_YYYY-MM.xlsx`
+
+#### 5. 全專案 mock 資料清除
+- **門店叫貨（Order.tsx）**：`mockStock` → 查詢最新 `inventory_sessions` + `inventory_items`（跨樓層加總）
+- **央廚原物料叫貨（MaterialOrder.tsx）**：`mockStock` → 查詢最新 `material_stock_items`（stock_qty + bulk_qty）
+- **央廚原物料叫貨（MaterialOrder.tsx）**：`weeklyUsage` → 查詢近 7 日 `material_order_items` 日均
+- **央廚原物料庫存（MaterialStock.tsx）**：`weeklyUsage` → 查詢近 7 日 `material_order_items` 日均
+- **央廚叫貨總表（OrderSummary.tsx）**：`mockOrders` + `mockNotes` → 查詢今日 `order_sessions` JOIN `order_items`
+- **門店每日用量（Usage.tsx）**：`mockData` → 前日叫貨量 + 最新盤點庫存/倒掉量 + 今日央廚出貨量
+- 全專案已無殘留 mock 或 Math.random
+
+---
+
+### Day 6 修改檔案清單
+
+| 檔案 | 修改內容 |
+|------|----------|
+| package.json | 新增 xlsx 依賴 |
+| .env | 新增 VITE_CWA_API_KEY |
+| .env.example | 新增 VITE_CWA_API_KEY= |
+| src/lib/weather.ts | **新增** 中央氣象署天氣 API 整合 |
+| src/lib/exportExcel.ts | **新增** 通用 Excel 匯出工具 |
+| src/pages/store/StoreHome.tsx | 導航連結加上 ?staff= 參數 |
+| src/pages/store/Inventory.tsx | 讀取 staff 參數 → submitted_by |
+| src/pages/store/Settlement.tsx | 讀取 staff 參數 → submitted_by |
+| src/pages/store/Order.tsx | staff 傳遞 + 天氣 API + 建議量改用 7 日均 + 庫存改用真實資料 |
+| src/pages/store/Receive.tsx | 讀取 staff 參數 → received_by |
+| src/pages/store/Usage.tsx | 移除 mockData，改用 Supabase 真實資料 |
+| src/pages/kitchen/OrderSummary.tsx | 移除 mockOrders/mockNotes，改用 Supabase |
+| src/pages/kitchen/MaterialStock.tsx | 新增近 7 日原物料叫貨日均查詢 |
+| src/pages/kitchen/MaterialOrder.tsx | mockStock → Supabase 庫存 + 週用量查詢 |
+| src/pages/admin/OrderHistory.tsx | 新增 Excel 匯出按鈕 |
+| src/pages/admin/SettlementHistory.tsx | 新增 Excel 匯出按鈕 |
+| src/pages/admin/OrderPricing.tsx | 新增 Excel 匯出按鈕 |
+
+---
+
+### Day 6 Git 記錄
+
+```
+e37ff81 feat: Day 6 — 當班人員傳遞、叫貨建議量、天氣API、Excel匯出
+c0444c1 feat: 叫貨頁庫存欄改用真實盤點資料
+edeffca feat: 央廚頁面移除所有 mock 資料，改用 Supabase 真實資料
+5becfa6 feat: Usage 頁面移除 mock 資料，改用 Supabase 真實資料
+```
+
+---
+
+## 下一步計畫（Phase 4）
 
 ### 進階功能
-1. 天氣 API 串接（中央氣象署開放資料）
-2. 門店當班人員傳遞到子頁面提交
-3. 叫貨建議量計算（近 7 日平均用量）
-4. 老闆報表（日/週/月報）
-5. 天氣記錄與用量分析
-6. 數據匯出功能（Excel / PDF）
-7. 推播通知（庫存不足、叫貨提醒）
+1. 天氣記錄與用量分析
+2. 推播通知（庫存不足、叫貨提醒）
+3. PDF 匯出
+4. 權限/登入系統
+5. 離線暫存與同步
 
 ---
 
@@ -368,7 +602,8 @@ Yba_order/
 │   ├── PRD.md                    # 產品需求文檔
 │   └── DESIGN_SPEC.md            # 設計規範文檔
 ├── supabase/
-│   └── migration.sql             # 資料表 + RLS + seed data
+│   ├── migration.sql             # 基礎 6 張表 + 樓層+營運表 + RLS + seed data
+│   └── deploy_new_tables.sql     # 營運資料表（獨立部署用，含品項價格欄位）
 ├── public/
 │   └── _redirects                # Netlify SPA fallback
 ├── src/
@@ -379,11 +614,12 @@ Yba_order/
 │   │   ├── TopNav.tsx
 │   │   ├── BottomAction.tsx
 │   │   ├── Toast.tsx
-│   │   ├── AdminModal.tsx        # Day 3 新增
-│   │   ├── AdminTable.tsx        # Day 3 新增
-│   │   └── CategoryManager.tsx   # Day 3 新增
+│   │   ├── AdminModal.tsx
+│   │   ├── AdminTable.tsx
+│   │   └── CategoryManager.tsx
 │   ├── hooks/
-│   │   └── useInitStores.ts      # Day 3 新增：Store 初始化
+│   │   ├── useInitStores.ts          # Store 初始化
+│   │   └── useZoneFilteredProducts.ts # 樓層品項篩選
 │   ├── pages/
 │   │   ├── store/                # 6 個門店頁面
 │   │   │   ├── StoreHome.tsx
@@ -399,20 +635,25 @@ Yba_order/
 │   │   │   ├── MaterialStock.tsx
 │   │   │   ├── ProductStock.tsx
 │   │   │   └── MaterialOrder.tsx
-│   │   └── admin/                # 7 個後台頁面（Day 3 新增）
+│   │   └── admin/                # 11 個後台頁面
 │   │       ├── AdminHome.tsx
 │   │       ├── ProductManager.tsx
 │   │       ├── MaterialManager.tsx
 │   │       ├── StaffManager.tsx
 │   │       ├── StoreManager.tsx
 │   │       ├── SettlementManager.tsx
-│   │       └── QRCodePage.tsx
-│   ├── stores/                   # 5 個 Zustand stores（Day 3 接 Supabase）
+│   │       ├── QRCodePage.tsx
+│   │       ├── ZoneManager.tsx         # Day 4 新增
+│   │       ├── OrderHistory.tsx        # Day 4 新增
+│   │       ├── SettlementHistory.tsx   # Day 5 新增
+│   │       └── OrderPricing.tsx        # Day 5 新增
+│   ├── stores/                   # 6 個 Zustand stores
 │   │   ├── useProductStore.ts
 │   │   ├── useMaterialStore.ts
 │   │   ├── useStaffStore.ts
 │   │   ├── useStoreStore.ts
-│   │   └── useSettlementStore.ts
+│   │   ├── useSettlementStore.ts
+│   │   └── useZoneStore.ts           # Day 4 新增
 │   ├── data/                     # 5 個資料定義（預設/fallback）
 │   │   ├── storeProducts.ts
 │   │   ├── rawMaterials.ts
@@ -421,7 +662,10 @@ Yba_order/
 │   │   └── staff.ts
 │   ├── lib/
 │   │   ├── utils.ts
-│   │   └── supabase.ts           # Day 3 新增：Supabase client
+│   │   ├── supabase.ts
+│   │   ├── session.ts               # Day 4 新增：Session ID + 時區
+│   │   ├── weather.ts               # Day 6 新增：中央氣象署天氣 API
+│   │   └── exportExcel.ts           # Day 6 新增：Excel 匯出工具
 │   ├── App.tsx                   # 路由設定
 │   ├── main.tsx                  # 入口
 │   └── index.css                 # 全局樣式 + 設計 Token

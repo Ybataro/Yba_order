@@ -45,14 +45,35 @@
 6. ✅ Netlify 部署 + GitHub 自動部署
 7. ✅ SPA fallback (_redirects)
 
-### ❌ Phase 3 進階功能（未開始）
-1. ❌ 天氣 API 串接（中央氣象署開放資料）
-2. ❌ 門店當班人員傳遞到子頁面提交
-3. ❌ 老闆報表（日報、週報、月報）
-4. ❌ 天氣記錄與用量分析
-5. ❌ 數據匯出（Excel / PDF）
-6. ❌ 推播通知（庫存不足、叫貨提醒）
-7. ❌ 叫貨建議量計算（近 7 日平均用量）
+### ✅ Phase 2.5 營運資料表 + 樓層功能（Day 4 完成）
+1. ✅ 營運資料表（10 張新表：盤點/叫貨/結帳/出貨/收貨/原物料庫存/原物料叫貨/成品庫存）
+2. ✅ 全部操作頁面接上 Supabase（盤點/叫貨/結帳/出貨/收貨等 upsert 邏輯）
+3. ✅ 盤點分樓層功能（zone 概念、QR Code 樓層篩選、合併檢視）
+4. ✅ 後台樓層品項管理（ZoneManager）
+5. ✅ 歷史叫貨查詢及統計（OrderHistory 明細+統計雙模式）
+6. ✅ 盤點「全部」合併檢視（唯讀）
+7. ✅ 央廚成品庫存盤點接 Supabase
+8. ✅ 物料盤點編輯模式已修改品項標記
+9. ✅ 後台子頁面返回鍵統一導向 /admin
+
+### ✅ Phase 2.6 報表功能（Day 5 完成）
+1. ✅ 結帳歷史查詢（/admin/settlement-history）— 明細+月報統計雙模式
+2. ✅ 叫貨價格統計（/admin/order-pricing）— 品項×日期矩陣+成本摘要
+3. ✅ 品項價格欄位（our_cost / franchise_price）— SQL + type + store + Modal
+
+### ✅ Phase 3 進階功能（Day 6 完成）
+1. ✅ 門店當班人員傳遞（?staff= URL params → submitted_by）
+2. ✅ 叫貨建議量計算（近 7 日 Supabase 日均 × 天氣係數）
+3. ✅ 天氣 API 串接（中央氣象署 F-C0032-001，新北市明日預報）
+4. ✅ 數據匯出 Excel（xlsx 套件，三個報表頁面）
+5. ✅ 全專案 mock 資料清除（所有頁面改用 Supabase 真實資料）
+
+### ❌ Phase 4 待開發
+1. ❌ 天氣記錄與用量分析
+2. ❌ 推播通知（庫存不足、叫貨提醒）
+3. ❌ PDF 匯出
+4. ❌ 權限/登入系統
+5. ❌ 離線暫存與同步
 
 ---
 
@@ -64,21 +85,42 @@
 | GitHub | https://github.com/Ybataro/Yba_order |
 | Supabase | https://qshfgheqsnsghwqaqehi.supabase.co |
 
-### Supabase 環境變數
+### 環境變數
 ```
 VITE_SUPABASE_URL=https://qshfgheqsnsghwqaqehi.supabase.co
 VITE_SUPABASE_ANON_KEY=sb_publishable_xTxUuXl9Jpmo85bkKwLSSg_Y8fIiCGN
+VITE_CWA_API_KEY=CWA-EAAD8090-1787-462E-8BC1-73478DD637B3
 ```
+> Netlify 也需設定這三個環境變數（已完成）
 
-### Supabase 資料表（6 張）
+### Supabase 資料表（18 張）
+
+**基礎資料（6 張，migration.sql）：**
 | 表名 | 說明 |
 |------|------|
 | stores | 門店（樂華店、興南店） |
-| store_products | 門店品項（38 項） |
+| store_products | 門店品項（38 項，含 our_cost / franchise_price） |
 | raw_materials | 央廚原物料（29 項） |
 | staff | 人員（央廚 5 人 + 門店 4 人） |
 | settlement_fields | 結帳欄位（32 欄） |
 | categories | 分類（product/material/settlement） |
+
+**樓層功能（2 張）：**
+| 表名 | 說明 |
+|------|------|
+| store_zones | 門店樓層（樂華 1F+2F、興南 1F） |
+| zone_products | 樓層品項對應 |
+
+**營運資料（10 張）：**
+| 表名 | 說明 |
+|------|------|
+| inventory_sessions / inventory_items | 門店物料盤點 |
+| order_sessions / order_items | 門店叫貨 |
+| settlement_sessions / settlement_values | 門店每日結帳 |
+| shipment_sessions / shipment_items | 央廚出貨 + 門店收貨 |
+| material_stock_sessions / material_stock_items | 央廚原物料庫存盤點 |
+| material_order_sessions / material_order_items | 央廚原物料叫貨 |
+| product_stock_sessions / product_stock_items | 央廚成品庫存盤點 |
 
 ---
 
@@ -151,6 +193,7 @@ Netlify 會自動偵測 GitHub push 並重新部署（約 1-2 分鐘）。
 | Zod | 4.x |
 | Supabase | 2.x（雲端資料庫） |
 | qrcode.react | 4.x（QR Code 產生） |
+| xlsx | 0.18.x（Excel 匯出） |
 
 ---
 
