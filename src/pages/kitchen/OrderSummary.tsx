@@ -128,7 +128,7 @@ export default function OrderSummary() {
           {stores.map(s => (
             <span key={s.id} className="w-[55px] text-center font-semibold">{s.name.replace('店', '')}</span>
           ))}
-          <span className="w-[60px] text-center font-bold text-brand-oak">加總</span>
+          <span className="w-[60px] text-center font-bold text-brand-oak bg-brand-amber/15 rounded-md py-0.5">加總</span>
         </div>
 
         {Array.from(productsByCategory.entries()).map(([category, products]) => (
@@ -151,7 +151,7 @@ export default function OrderSummary() {
                         </span>
                       )
                     })}
-                    <span className={`w-[60px] text-center text-sm font-num font-bold ${total > 0 ? 'text-brand-amber' : 'text-gray-300'}`}>
+                    <span className={`w-[60px] text-center text-sm font-num font-bold rounded-md py-0.5 ${total > 0 ? 'text-brand-amber bg-brand-amber/10' : 'text-gray-300'}`}>
                       {total || '-'}
                     </span>
                   </div>
