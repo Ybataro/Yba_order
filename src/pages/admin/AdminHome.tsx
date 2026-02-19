@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Package, Warehouse, Users, Store, Receipt, QrCode, Layers, ClipboardList, FileText, DollarSign, CloudSun } from 'lucide-react'
+import { Package, Warehouse, Users, Store, Receipt, QrCode, Layers, ClipboardList, FileText, DollarSign, CloudSun, ChevronDown } from 'lucide-react'
 import { getTodayString, formatDate } from '@/lib/utils'
 import { useStoreStore } from '@/stores/useStoreStore'
 
@@ -22,6 +22,21 @@ export default function AdminHome() {
   const navigate = useNavigate()
   const stores = useStoreStore((s) => s.items)
   const [selectedStore, setSelectedStore] = useState(stores[0]?.id || '')
+  const [dropdownOpen, setDropdownOpen] = useState(false)
+  const dropdownRef = useRef<HTMLDivElement>(null)
+
+  const selectedName = stores.find((s) => s.id === selectedStore)?.name || '選擇門店'
+
+  useEffect(() => {
+    if (!dropdownOpen) return
+    function handleClick(e: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setDropdownOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [dropdownOpen])
 
   return (
     <div className="page-container">
@@ -53,15 +68,28 @@ export default function AdminHome() {
       <div className="px-4 mt-6">
         <p className="text-xs text-brand-lotus mb-2">快速前往</p>
         <div className="flex gap-2 items-center">
-          <select
-            value={selectedStore}
-            onChange={(e) => setSelectedStore(e.target.value)}
-            className="h-10 rounded-xl border border-gray-200 bg-surface-input px-3 text-sm text-brand-oak outline-none focus:border-brand-lotus flex-1 min-w-0"
-          >
-            {stores.map((s) => (
-              <option key={s.id} value={s.id}>{s.name}</option>
-            ))}
-          </select>
+          <div ref={dropdownRef} className="relative flex-1 min-w-0">
+            <button
+              onClick={() => setDropdownOpen((v) => !v)}
+              className="w-full h-10 rounded-xl border border-gray-200 bg-white px-3 text-sm text-brand-oak flex items-center justify-between gap-2"
+            >
+              <span className="truncate">{selectedName}</span>
+              <ChevronDown size={16} className={`shrink-0 text-gray-400 transition-transform ${dropdownOpen ? 'rotate-180' : ''}`} />
+            </button>
+            {dropdownOpen && (
+              <div className="absolute left-0 right-0 top-full mt-1 rounded-xl bg-white shadow-lg border border-gray-100 overflow-hidden z-50">
+                {stores.map((s) => (
+                  <button
+                    key={s.id}
+                    onClick={() => { setSelectedStore(s.id); setDropdownOpen(false) }}
+                    className={`w-full text-left px-4 py-2.5 text-sm transition-colors ${s.id === selectedStore ? 'bg-brand-lotus/10 text-brand-lotus font-medium' : 'text-brand-oak hover:bg-gray-50'}`}
+                  >
+                    {s.name}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
           <button onClick={() => navigate(`/store/${selectedStore}`)} className="btn-secondary !h-10 !text-sm !px-5 whitespace-nowrap">前往</button>
           <button onClick={() => navigate('/kitchen')} className="btn-secondary !h-10 !text-sm !px-4 whitespace-nowrap">央廚</button>
         </div>
