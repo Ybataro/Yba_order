@@ -28,3 +28,6 @@ yba_order.env
 *.njsproj
 *.sln
 *.sw?
+
+# Local Netlify folder
+.netlify

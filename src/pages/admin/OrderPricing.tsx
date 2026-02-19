@@ -1,6 +1,7 @@
-import { useState, useEffect, useMemo, Fragment } from 'react'
+import { useState, useEffect, useMemo, useCallback, Fragment } from 'react'
 import { TopNav } from '@/components/TopNav'
 import { SectionHeader } from '@/components/SectionHeader'
+import { NumericInput } from '@/components/NumericInput'
 import { useStoreStore } from '@/stores/useStoreStore'
 import { useProductStore } from '@/stores/useProductStore'
 import { supabase } from '@/lib/supabase'
@@ -9,7 +10,7 @@ import { formatCurrency } from '@/lib/utils'
 import { Download } from 'lucide-react'
 import { exportToExcel } from '@/lib/exportExcel'
 
-type DateRange = 'week' | 'month' | 'custom'
+type DateRange = 'today' | 'week' | 'month' | 'custom'
 
 interface OrderSession {
   id: string
@@ -25,12 +26,19 @@ interface SettlementSession {
   settlement_values: { field_id: string; value: string }[]
 }
 
+function toLocalDateStr(d: Date): string {
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
+}
+
 function getMonday(dateStr: string): string {
   const d = new Date(dateStr + 'T00:00:00')
   const day = d.getDay()
   const diff = day === 0 ? 6 : day - 1
   d.setDate(d.getDate() - diff)
-  return d.toISOString().split('T')[0]
+  return toLocalDateStr(d)
 }
 
 function getFirstOfMonth(dateStr: string): string {
@@ -43,7 +51,7 @@ function getDateRange(start: string, end: string): string[] {
   const d = new Date(start + 'T00:00:00')
   const endD = new Date(end + 'T00:00:00')
   while (d <= endD) {
-    dates.push(d.toISOString().split('T')[0])
+    dates.push(toLocalDateStr(d))
     d.setDate(d.getDate() + 1)
   }
   return dates
@@ -53,6 +61,38 @@ export default function OrderPricing() {
   const stores = useStoreStore((s) => s.items)
   const products = useProductStore((s) => s.items)
   const categories = useProductStore((s) => s.categories)
+  const updateProduct = useProductStore((s) => s.update)
+
+  // Local editable price state — keyed by product id
+  const [editPrices, setEditPrices] = useState<Record<string, { ourCost?: string; franchisePrice?: string }>>({})
+
+  const getPriceValue = useCallback((pid: string, field: 'ourCost' | 'franchisePrice', prodValue: number) => {
+    const editing = editPrices[pid]?.[field]
+    if (editing !== undefined) return editing
+    return prodValue > 0 ? String(prodValue) : ''
+  }, [editPrices])
+
+  const handlePriceChange = useCallback((pid: string, field: 'ourCost' | 'franchisePrice', value: string) => {
+    setEditPrices((prev) => ({
+      ...prev,
+      [pid]: { ...prev[pid], [field]: value },
+    }))
+  }, [])
+
+  const handlePriceBlur = useCallback((pid: string, field: 'ourCost' | 'franchisePrice') => {
+    const raw = editPrices[pid]?.[field]
+    if (raw === undefined) return
+    const num = parseFloat(raw) || 0
+    updateProduct(pid, { [field]: num })
+    setEditPrices((prev) => {
+      const next = { ...prev }
+      if (next[pid]) {
+        delete next[pid][field]
+        if (Object.keys(next[pid]).length === 0) delete next[pid]
+      }
+      return next
+    })
+  }, [editPrices, updateProduct])
 
   const [dateRange, setDateRange] = useState<DateRange>('week')
   const [storeFilter, setStoreFilter] = useState('all')
@@ -67,6 +107,8 @@ export default function OrderPricing() {
 
   const { startDate, endDate } = useMemo(() => {
     switch (dateRange) {
+      case 'today':
+        return { startDate: today, endDate: today }
       case 'week':
         return { startDate: getMonday(today), endDate: today }
       case 'month':
@@ -178,9 +220,6 @@ export default function OrderPricing() {
     return { posTotal, orderCount }
   }, [settlementByDate])
 
-  // Active products (only those with orders)
-  const activeProductIds = Object.keys(productTotals)
-
   const formatShortDate = (d: string) => {
     const [, m, day] = d.split('-')
     return `${parseInt(m)}/${parseInt(day)}`
@@ -204,7 +243,7 @@ export default function OrderPricing() {
       {/* Filters */}
       <div className="px-4 pt-3 pb-2 bg-white border-b border-gray-100 space-y-2">
         <div className="flex gap-2">
-          {([['week', '本週'], ['month', '本月'], ['custom', '自訂']] as const).map(([key, label]) => (
+          {([['today', '本日'], ['week', '本週'], ['month', '本月'], ['custom', '自訂']] as const).map(([key, label]) => (
             <button
               key={key}
               onClick={() => setDateRange(key)}
@@ -255,29 +294,24 @@ export default function OrderPricing() {
       {/* Content */}
       {loading ? (
         <div className="flex items-center justify-center py-20 text-sm text-brand-lotus">載入中...</div>
-      ) : activeProductIds.length === 0 ? (
-        <div className="flex items-center justify-center py-20 text-sm text-brand-lotus">
-          此期間無叫貨紀錄
-        </div>
       ) : (
         <>
           <div className="flex items-center justify-end px-4 py-2 bg-white border-b border-gray-100">
             <button
               onClick={() => {
-                const rows = activeProductIds.map(pid => {
-                  const prod = products.find(p => p.id === pid)
-                  const dateMap = matrix[pid] || {}
-                  const total = productTotals[pid] || 0
+                const rows = products.map(prod => {
+                  const dateMap = matrix[prod.id] || {}
+                  const total = productTotals[prod.id] || 0
                   const row: Record<string, unknown> = {
-                    '分類': prod?.category || '',
-                    '品名': prod?.name || pid,
+                    '分類': prod.category,
+                    '品名': prod.name,
                   }
                   dates.forEach(d => { row[formatShortDate(d)] = dateMap[d] || 0 })
                   row['總數'] = total
-                  row['我們價'] = prod?.ourCost || 0
-                  row['我們總價'] = total * (prod?.ourCost || 0)
-                  row['加盟價'] = prod?.franchisePrice || 0
-                  row['加盟總價'] = total * (prod?.franchisePrice || 0)
+                  row['我們價'] = prod.ourCost || 0
+                  row['我們總價'] = total * (prod.ourCost || 0)
+                  row['加盟價'] = prod.franchisePrice || 0
+                  row['加盟總價'] = total * (prod.franchisePrice || 0)
                   return row
                 })
                 exportToExcel({
@@ -311,19 +345,15 @@ export default function OrderPricing() {
               </thead>
               <tbody>
                 {categories.map((cat) => {
-                  const catProducts = products.filter(
-                    (p) => p.category === cat && activeProductIds.includes(p.id)
-                  )
+                  const catProducts = products.filter((p) => p.category === cat)
                   if (catProducts.length === 0) return null
                   return (
                     <Fragment key={cat}>
                       <tr>
-                        <td
-                          colSpan={dates.length + 6}
-                          className="sticky left-0 bg-brand-camel/10 px-3 py-1.5 text-xs font-semibold text-brand-mocha"
-                        >
+                        <td className="sticky left-0 bg-brand-camel/10 px-3 py-1.5 text-xs font-semibold text-brand-mocha z-10">
                           {cat}
                         </td>
+                        <td colSpan={dates.length + 5} className="bg-brand-camel/10" />
                       </tr>
                       {catProducts.map((prod) => {
                         const dateMap = matrix[prod.id] || {}
@@ -344,17 +374,29 @@ export default function OrderPricing() {
                               )
                             })}
                             <td className="text-center py-1.5 font-num font-semibold text-brand-oak">{total}</td>
-                            <td className="text-center py-1.5 font-num text-brand-lotus">
-                              {ourPrice > 0 ? ourPrice : '-'}
+                            <td className="text-center py-0.5 px-0.5">
+                              <NumericInput
+                                value={getPriceValue(prod.id, 'ourCost', ourPrice)}
+                                onChange={(v) => handlePriceChange(prod.id, 'ourCost', v)}
+                                onBlur={() => handlePriceBlur(prod.id, 'ourCost')}
+                                isFilled
+                                className="!w-[52px] !h-7 !text-xs"
+                              />
                             </td>
                             <td className="text-center py-1.5 font-num font-semibold text-brand-oak">
-                              {ourPrice > 0 ? formatCurrency(total * ourPrice) : '-'}
+                              {formatCurrency(total * ourPrice)}
                             </td>
-                            <td className="text-center py-1.5 font-num text-brand-lotus">
-                              {franPrice > 0 ? franPrice : '-'}
+                            <td className="text-center py-0.5 px-0.5">
+                              <NumericInput
+                                value={getPriceValue(prod.id, 'franchisePrice', franPrice)}
+                                onChange={(v) => handlePriceChange(prod.id, 'franchisePrice', v)}
+                                onBlur={() => handlePriceBlur(prod.id, 'franchisePrice')}
+                                isFilled
+                                className="!w-[52px] !h-7 !text-xs"
+                              />
                             </td>
                             <td className="text-center py-1.5 font-num font-semibold text-brand-oak">
-                              {franPrice > 0 ? formatCurrency(total * franPrice) : '-'}
+                              {formatCurrency(total * franPrice)}
                             </td>
                           </tr>
                         )
