@@ -25,8 +25,9 @@ export default function Inventory() {
   const { products: storeProducts, categories: productCategories, storeZones, currentZone, setZone } = useZoneFilteredProducts(storeId || '')
 
   const hasMultipleZones = storeZones.length > 1
+  const isMergedView = hasMultipleZones && !currentZone
   const currentZoneObj = storeZones.find((z) => z.zoneCode === currentZone)
-  const zoneLabel = currentZoneObj ? ` ${currentZoneObj.zoneName}` : ''
+  const zoneLabel = isMergedView ? '' : currentZoneObj ? ` ${currentZoneObj.zoneName}` : ''
 
   const today = getTodayTW()
   const sessionId = inventorySessionId(storeId || '', today, currentZone || '')
@@ -35,6 +36,11 @@ export default function Inventory() {
   const [submitting, setSubmitting] = useState(false)
   const [isEdit, setIsEdit] = useState(false)
   const [loading, setLoading] = useState(true)
+
+  // Merged view state
+  const [mergedData, setMergedData] = useState<Record<string, InventoryEntry>>({})
+  const [zoneStatuses, setZoneStatuses] = useState<Record<string, boolean>>({})
+  const [mergedLoading, setMergedLoading] = useState(false)
 
   // Load existing session
   useEffect(() => {
@@ -78,9 +84,84 @@ export default function Inventory() {
     load()
   }, [storeId, currentZone, today])
 
+  // Load merged data for "全部" view
+  useEffect(() => {
+    if (!supabase || !storeId || !isMergedView) return
+    setMergedLoading(true)
+
+    const load = async () => {
+      try {
+        const zoneSids = storeZones.map((z) =>
+          inventorySessionId(storeId, today, z.zoneCode)
+        )
+
+        // Check which sessions exist
+        const { data: sessions } = await supabase!
+          .from('inventory_sessions')
+          .select('id, zone_code')
+          .in('id', zoneSids)
+
+        const existingIds = new Set((sessions || []).map((s) => s.id))
+        const statuses: Record<string, boolean> = {}
+        storeZones.forEach((z) => {
+          const sid = inventorySessionId(storeId, today, z.zoneCode)
+          statuses[z.zoneCode] = existingIds.has(sid)
+        })
+        setZoneStatuses(statuses)
+
+        // Load all items from existing sessions
+        const existingSids = zoneSids.filter((sid) => existingIds.has(sid))
+        if (existingSids.length === 0) {
+          setMergedData({})
+          setMergedLoading(false)
+          return
+        }
+
+        const { data: items } = await supabase!
+          .from('inventory_items')
+          .select('*')
+          .in('session_id', existingSids)
+
+        // Merge: sum values for same product across zones
+        const merged: Record<string, InventoryEntry> = {}
+        if (items) {
+          items.forEach((item) => {
+            const existing = merged[item.product_id]
+            if (!existing) {
+              merged[item.product_id] = {
+                onShelf: item.on_shelf != null ? String(item.on_shelf) : '',
+                stock: item.stock != null ? String(item.stock) : '',
+                discarded: item.discarded != null ? String(item.discarded) : '',
+              }
+            } else {
+              // Sum values
+              const addNum = (a: string, b: number | null): string => {
+                if (b == null) return a
+                if (a === '') return String(b)
+                return String(parseFloat(a) + b)
+              }
+              merged[item.product_id] = {
+                onShelf: addNum(existing.onShelf, item.on_shelf),
+                stock: addNum(existing.stock, item.stock),
+                discarded: addNum(existing.discarded, item.discarded),
+              }
+            }
+          })
+        }
+        setMergedData(merged)
+      } catch {
+        // ignore
+      }
+      setMergedLoading(false)
+    }
+
+    load()
+  }, [storeId, isMergedView, storeZones, today])
+
   const getEntry = useCallback((productId: string): InventoryEntry => {
+    if (isMergedView) return mergedData[productId] ?? { onShelf: '', stock: '', discarded: '' }
     return data[productId] ?? { onShelf: '', stock: '', discarded: '' }
-  }, [data])
+  }, [data, isMergedView, mergedData])
 
   const updateField = useCallback((productId: string, field: keyof InventoryEntry, value: string) => {
     setData(prev => ({
@@ -184,7 +265,7 @@ export default function Inventory() {
       <TopNav title={`${storeName}${zoneLabel} 物料盤點`} />
 
       {/* Edit badge */}
-      {isEdit && (
+      {isEdit && !isMergedView && (
         <div className="flex items-center gap-1.5 px-4 py-1.5 bg-status-info/10 text-status-info text-xs">
           <RefreshCw size={12} />
           <span>已載入今日盤點紀錄，修改後可重新提交</span>
@@ -192,24 +273,7 @@ export default function Inventory() {
       )}
 
       {/* Zone selector pills */}
-      {hasMultipleZones && !currentZone && (
-        <div className="px-4 py-3 bg-amber-50 border-b border-amber-200">
-          <p className="text-sm text-amber-800 font-medium mb-2">請選擇盤點樓層</p>
-          <div className="flex gap-2">
-            {storeZones.map((zone) => (
-              <button
-                key={zone.id}
-                onClick={() => setZone(zone.zoneCode)}
-                className="flex-1 py-2 px-4 rounded-full text-sm font-semibold bg-white border-2 border-brand-oak text-brand-oak active:scale-95 transition-transform"
-              >
-                {zone.zoneName}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {hasMultipleZones && currentZone && (
+      {hasMultipleZones && (
         <div className="flex items-center gap-2 px-4 py-2 bg-surface-section border-b border-gray-100">
           {storeZones.map((zone) => (
             <button
@@ -226,14 +290,32 @@ export default function Inventory() {
           ))}
           <button
             onClick={() => setZone(null)}
-            className="py-1 px-3 rounded-full text-xs text-brand-lotus border border-gray-200 bg-white ml-auto"
+            className={`py-1 px-4 rounded-full text-sm font-semibold transition-colors ml-auto ${
+              isMergedView
+                ? 'bg-brand-oak text-white'
+                : 'bg-white text-brand-oak border border-brand-oak/30'
+            }`}
           >
             全部
           </button>
         </div>
       )}
 
-      {loading ? (
+      {/* Merged view status banner */}
+      {isMergedView && !mergedLoading && (
+        <div className="px-4 py-2 bg-blue-50 border-b border-blue-200">
+          <p className="text-xs font-medium text-blue-800 mb-1">📋 合併檢視（唯讀）</p>
+          <div className="flex gap-3 text-xs">
+            {storeZones.map((zone) => (
+              <span key={zone.id} className={zoneStatuses[zone.zoneCode] ? 'text-green-700' : 'text-red-600'}>
+                {zoneStatuses[zone.zoneCode] ? '✓' : '✗'} {zone.zoneName} {zoneStatuses[zone.zoneCode] ? '已提交' : '未提交'}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {(isMergedView ? mergedLoading : loading) ? (
         <div className="flex items-center justify-center py-20 text-sm text-brand-lotus">載入中...</div>
       ) : (
         <>
@@ -272,28 +354,38 @@ export default function Inventory() {
                         </p>
                       </div>
                       <div className="flex items-center gap-1">
-                        <NumericInput
-                          value={entry.onShelf}
-                          onChange={(v) => updateField(product.id, 'onShelf', v)}
-                          isFilled
-                          onNext={focusNext}
-                          data-inv=""
-                        />
-                        <NumericInput
-                          value={entry.stock}
-                          onChange={(v) => updateField(product.id, 'stock', v)}
-                          isFilled
-                          onNext={focusNext}
-                          data-inv=""
-                        />
-                        <NumericInput
-                          value={entry.discarded}
-                          onChange={(v) => updateField(product.id, 'discarded', v)}
-                          isFilled
-                          className={entry.discarded && parseFloat(entry.discarded) > 0 ? '!text-status-danger' : ''}
-                          onNext={focusNext}
-                          data-inv=""
-                        />
+                        {isMergedView ? (
+                          <>
+                            <span className="w-[60px] text-center text-sm text-brand-oak">{entry.onShelf || '-'}</span>
+                            <span className="w-[60px] text-center text-sm text-brand-oak">{entry.stock || '-'}</span>
+                            <span className={`w-[60px] text-center text-sm ${entry.discarded && parseFloat(entry.discarded) > 0 ? 'text-status-danger' : 'text-brand-oak'}`}>{entry.discarded || '-'}</span>
+                          </>
+                        ) : (
+                          <>
+                            <NumericInput
+                              value={entry.onShelf}
+                              onChange={(v) => updateField(product.id, 'onShelf', v)}
+                              isFilled
+                              onNext={focusNext}
+                              data-inv=""
+                            />
+                            <NumericInput
+                              value={entry.stock}
+                              onChange={(v) => updateField(product.id, 'stock', v)}
+                              isFilled
+                              onNext={focusNext}
+                              data-inv=""
+                            />
+                            <NumericInput
+                              value={entry.discarded}
+                              onChange={(v) => updateField(product.id, 'discarded', v)}
+                              isFilled
+                              className={entry.discarded && parseFloat(entry.discarded) > 0 ? '!text-status-danger' : ''}
+                              onNext={focusNext}
+                              data-inv=""
+                            />
+                          </>
+                        )}
                       </div>
                     </div>
                   )
@@ -302,12 +394,14 @@ export default function Inventory() {
             </div>
           ))}
 
-          <BottomAction
-            label={submitting ? '提交中...' : isEdit ? '更新盤點資料' : '預覽並提交盤點'}
-            onClick={handleSubmit}
-            icon={<Send size={18} />}
-            disabled={submitting}
-          />
+          {!isMergedView && (
+            <BottomAction
+              label={submitting ? '提交中...' : isEdit ? '更新盤點資料' : '預覽並提交盤點'}
+              onClick={handleSubmit}
+              icon={<Send size={18} />}
+              disabled={submitting}
+            />
+          )}
         </>
       )}
     </div>
