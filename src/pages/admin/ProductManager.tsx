@@ -7,10 +7,16 @@ import { SectionHeader } from '@/components/SectionHeader'
 import { CategoryManager } from '@/components/CategoryManager'
 import { useToast } from '@/components/Toast'
 import { useProductStore } from '@/stores/useProductStore'
-import type { StoreProduct } from '@/data/storeProducts'
+import type { StoreProduct, VisibleIn } from '@/data/storeProducts'
 import { Plus, FolderCog } from 'lucide-react'
 
-const emptyProduct: StoreProduct = { id: '', name: '', category: '', unit: '', shelfLifeDays: '', baseStock: '', ourCost: 0, franchisePrice: 0 }
+const emptyProduct: StoreProduct = { id: '', name: '', category: '', unit: '', shelfLifeDays: '', baseStock: '', ourCost: 0, franchisePrice: 0, visibleIn: 'both' }
+
+const visibleInOptions: { value: VisibleIn; label: string }[] = [
+  { value: 'both', label: '盤點＋叫貨' },
+  { value: 'inventory_only', label: '僅盤點' },
+  { value: 'order_only', label: '僅叫貨' },
+]
 
 export default function ProductManager() {
   const { items, categories, add, update, remove, reorder, renameCategory, addCategory, removeCategory, reorderCategory } = useProductStore()
@@ -156,7 +162,14 @@ export default function ProductManager() {
               label: '品名',
               render: (p) => (
                 <div>
-                  <p className="text-sm font-medium text-brand-oak">{p.name}</p>
+                  <div className="flex items-center gap-1.5">
+                    <p className="text-sm font-medium text-brand-oak">{p.name}</p>
+                    {p.visibleIn && p.visibleIn !== 'both' && (
+                      <span className={`px-1.5 py-0.5 rounded text-[9px] font-medium ${p.visibleIn === 'inventory_only' ? 'bg-blue-100 text-blue-700' : 'bg-amber-100 text-amber-700'}`}>
+                        {p.visibleIn === 'inventory_only' ? '僅盤點' : '僅叫貨'}
+                      </span>
+                    )}
+                  </div>
                   <p className="text-[10px] text-brand-lotus">{p.unit}{p.shelfLifeDays ? ` · 期效${p.shelfLifeDays}` : ''}</p>
                 </div>
               ),
@@ -233,6 +246,13 @@ export default function ProductManager() {
         </ModalField>
         <ModalField label="加盟價格">
           <ModalInput value={String(form.franchisePrice || '')} onChange={(v) => setForm({ ...form, franchisePrice: parseFloat(v) || 0 })} placeholder="例：65" />
+        </ModalField>
+        <ModalField label="顯示範圍">
+          <ModalSelect
+            value={form.visibleIn || 'both'}
+            onChange={(v) => setForm({ ...form, visibleIn: v as VisibleIn })}
+            options={visibleInOptions}
+          />
         </ModalField>
       </AdminModal>
 

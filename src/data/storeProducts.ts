@@ -1,3 +1,5 @@
+export type VisibleIn = 'both' | 'inventory_only' | 'order_only'
+
 export interface StoreProduct {
   id: string
   name: string
@@ -7,6 +9,7 @@ export interface StoreProduct {
   baseStock?: string
   ourCost?: number
   franchisePrice?: number
+  visibleIn?: VisibleIn
 }
 
 export const productCategories = [

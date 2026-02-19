@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { storeProducts, productCategories, type StoreProduct } from '@/data/storeProducts'
+import { storeProducts, productCategories, type StoreProduct, type VisibleIn } from '@/data/storeProducts'
 import { supabase } from '@/lib/supabase'
 
 interface ProductState {
@@ -43,6 +43,7 @@ export const useProductStore = create<ProductState>()((set, get) => ({
           baseStock: d.base_stock ?? undefined,
           ourCost: d.our_cost ?? 0,
           franchisePrice: d.franchise_price ?? 0,
+          visibleIn: (d.visible_in as VisibleIn) || 'both',
         })),
       })
     }
@@ -64,6 +65,7 @@ export const useProductStore = create<ProductState>()((set, get) => ({
         base_stock: item.baseStock ?? null,
         our_cost: item.ourCost ?? 0,
         franchise_price: item.franchisePrice ?? 0,
+        visible_in: item.visibleIn || 'both',
         sort_order: get().items.length - 1,
       }).then()
     }
@@ -82,6 +84,7 @@ export const useProductStore = create<ProductState>()((set, get) => ({
       if (partial.baseStock !== undefined) db.base_stock = partial.baseStock ?? null
       if (partial.ourCost !== undefined) db.our_cost = partial.ourCost ?? 0
       if (partial.franchisePrice !== undefined) db.franchise_price = partial.franchisePrice ?? 0
+      if (partial.visibleIn !== undefined) db.visible_in = partial.visibleIn || 'both'
       if (Object.keys(db).length > 0) {
         supabase.from('store_products').update(db).eq('id', id).then()
       }

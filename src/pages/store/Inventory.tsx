@@ -24,7 +24,8 @@ export default function Inventory() {
   const staffId = searchParams.get('staff') || ''
   const { showToast } = useToast()
   const storeName = useStoreStore((s) => s.getName(storeId || ''))
-  const { products: storeProducts, categories: productCategories, storeZones, currentZone, setZone } = useZoneFilteredProducts(storeId || '')
+  const { products: allZoneProducts, categories: productCategories, storeZones, currentZone, setZone } = useZoneFilteredProducts(storeId || '')
+  const storeProducts = useMemo(() => allZoneProducts.filter(p => !p.visibleIn || p.visibleIn === 'both' || p.visibleIn === 'inventory_only'), [allZoneProducts])
 
   const hasMultipleZones = storeZones.length > 1
   const isMergedView = hasMultipleZones && !currentZone
