@@ -46,13 +46,25 @@ export function useZoneFilteredProducts(storeId: string): ZoneFilterResult {
   }, [currentZone, storeZones])
 
   const products = useMemo(() => {
-    if (!matchedZone) return allProducts
-    const productIds = zoneProducts
-      .filter((zp) => zp.zoneId === matchedZone.id)
-      .map((zp) => zp.productId)
-    const idSet = new Set(productIds)
-    return allProducts.filter((p) => idSet.has(p.id))
-  }, [matchedZone, allProducts, zoneProducts])
+    // If a specific zone is selected, show only that zone's products
+    if (matchedZone) {
+      const productIds = zoneProducts
+        .filter((zp) => zp.zoneId === matchedZone.id)
+        .map((zp) => zp.productId)
+      const idSet = new Set(productIds)
+      return allProducts.filter((p) => idSet.has(p.id))
+    }
+    // If the store has zones, show only products assigned to any of its zones
+    if (storeZones.length > 0) {
+      const storeZoneIds = new Set(storeZones.map((z) => z.id))
+      const assignedIds = new Set(
+        zoneProducts.filter((zp) => storeZoneIds.has(zp.zoneId)).map((zp) => zp.productId)
+      )
+      return allProducts.filter((p) => assignedIds.has(p.id))
+    }
+    // No zones configured — show all products
+    return allProducts
+  }, [matchedZone, storeZones, allProducts, zoneProducts])
 
   const categories = useMemo(() => {
     const productCats = new Set(products.map((p) => p.category))

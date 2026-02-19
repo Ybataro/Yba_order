@@ -28,6 +28,7 @@ import OrderHistory from '@/pages/admin/OrderHistory'
 import SettlementHistory from '@/pages/admin/SettlementHistory'
 import OrderPricing from '@/pages/admin/OrderPricing'
 import WeatherAnalysis from '@/pages/admin/WeatherAnalysis'
+import BossDashboard from '@/pages/admin/BossDashboard'
 
 function App() {
   useInitStores()
@@ -58,6 +59,7 @@ function App() {
 
             {/* Admin routes */}
             <Route path="/admin" element={<AdminHome />} />
+            <Route path="/admin/dashboard" element={<BossDashboard />} />
             <Route path="/admin/products" element={<ProductManager />} />
             <Route path="/admin/materials" element={<MaterialManager />} />
             <Route path="/admin/staff" element={<StaffManager />} />
