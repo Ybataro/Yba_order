@@ -584,6 +584,68 @@ edeffca feat: 央廚頁面移除所有 mock 資料，改用 Supabase 真實資�
 
 ---
 
+## 2026-02-19（Day 7）
+
+### 完成事項
+
+#### 1. 叫貨價格統計 — 新增「本日」篩選
+- `DateRange` 型別加入 `'today'`
+- 篩選按鈕列新增「本日」（排在最前：本日/本週/本月/自訂）
+- `useMemo` switch 新增 `case 'today'` → `{ startDate: today, endDate: today }`
+
+#### 2. 叫貨價格統計 — 修正日期時區 Bug（關鍵修正）
+- **根因**：`getMonday()` 和 `getDateRange()` 使用 `d.toISOString().split('T')[0]`，`toISOString()` 輸出 UTC 時間，台灣 UTC+8 導致日期少一天
+- **修正**：新增 `toLocalDateStr(d: Date)` 函數，使用 `getFullYear()/getMonth()/getDate()` 產生本地日期字串
+- 全部替換 `d.toISOString().split('T')[0]` → `toLocalDateStr(d)`
+
+#### 3. 叫貨價格統計 — 價格欄改用 NumericInput
+- 「我們價」「加盟價」改用 `NumericInput` 元件（和前台叫貨一致的輸入體驗）
+- 點擊即可輸入、自動全選、無值時空白（不顯示 0）
+- 有值時綠色背景（filled 狀態）
+- `onBlur` 時透過 `useProductStore.update()` 樂觀更新 + Supabase 同步
+- 總價欄仍為自動計算、唯讀
+
+#### 4. 叫貨價格統計 — 分類標題列 sticky 修正
+- 拆掉原本的 `colSpan` 整行合併
+- 改為第一格（類別名稱）`sticky left-0 z-10` + 第二格 `colSpan` 填滿背景
+- 水平捲動時分類標題固定不動
+
+#### 5. 叫貨價格統計 — 品項列表與前台叫貨同步
+- 移除 `activeProductIds` 過濾（原本只顯示有叫貨紀錄的品項）
+- 改為顯示 `store_products` 全部品項（和前台門店叫貨完全一致）
+- 分類迴圈改為 `products.filter(p => p.category === cat)`
+- Excel 匯出同步改為匯出全部品項
+
+#### 6. 叫貨價格統計 — 年度成本統計區塊（新功能）
+- 獨立 `useEffect` 從 Supabase fetch 整年 `order_sessions` + `order_items`
+- 按月計算我們成本 / 加盟成本（使用當前品項價格 × 歷史叫貨數量）
+- UI：每月一行，顯示金額 + 橫條圖（bar）視覺化成本高低起伏
+- 年度選擇器下拉（2025 起）、門店篩選同步套用
+- 只顯示到當前月份（不顯示未來月份）
+- 底部年度合計卡片：年度我們成本 / 年度加盟成本
+
+#### 7. 備份
+- 專案備份：`Yba_order_backup_20260219_v2`
+
+---
+
+### Day 7 修改檔案清單
+
+| 檔案 | 修改內容 |
+|------|----------|
+| src/pages/admin/OrderPricing.tsx | 本日篩選 + 時區修正 + NumericInput 價格編輯 + 分類 sticky + 全品項顯示 + 年度成本統計 |
+
+---
+
+### Day 7 Git 記錄
+
+```
+2833b13 fix: 叫貨價格統計頁面修正 — 時區Bug、本日篩選、價格可編輯、品項同步
+c63421b feat: 叫貨價格統計新增年度成本統計區塊
+```
+
+---
+
 ## 下一步計畫（Phase 4）
 
 ### 進階功能

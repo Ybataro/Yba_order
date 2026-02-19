@@ -11,6 +11,7 @@
 - Day 2 早：`Yba_order_backup_20260218`
 - Day 2 晚：`Yba_order_backup_20260218_v2`
 - Day 3：`Yba_order_backup_20260219`
+- Day 7：`Yba_order_backup_20260219_v2`
 
 ---
 
@@ -67,6 +68,14 @@
 3. ✅ 天氣 API 串接（中央氣象署 F-C0032-001，新北市明日預報）
 4. ✅ 數據匯出 Excel（xlsx 套件，三個報表頁面）
 5. ✅ 全專案 mock 資料清除（所有頁面改用 Supabase 真實資料）
+
+### ✅ Phase 3.5 叫貨價格統計強化（Day 7 完成）
+1. ✅ 新增「本日」篩選選項
+2. ✅ 修正日期時區 Bug（toISOString UTC → toLocalDateStr 本地時間）
+3. ✅ 價格欄改用 NumericInput（和前台叫貨一致的輸入體驗，blur 自動存 Supabase）
+4. ✅ 分類標題列 sticky left 固定（水平捲動時不再跟著移動）
+5. ✅ 品項列表與前台叫貨同步（顯示全部品項，不再只顯示有紀錄的品項）
+6. ✅ 年度成本統計區塊（按月計算我們成本/加盟成本、bar 視覺化、年度選擇器）
 
 ### ❌ Phase 4 待開發
 1. ❌ 天氣記錄與用量分析
