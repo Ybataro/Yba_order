@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, useEffect } from 'react'
+import { useState, useCallback, useMemo, useEffect, useRef } from 'react'
 import { useParams } from 'react-router-dom'
 import { TopNav } from '@/components/TopNav'
 import { NumericInput } from '@/components/NumericInput'
@@ -33,6 +33,7 @@ export default function Inventory() {
   const sessionId = inventorySessionId(storeId || '', today, currentZone || '')
 
   const [data, setData] = useState<Record<string, InventoryEntry>>({})
+  const originalData = useRef<Record<string, InventoryEntry>>({})
   const [submitting, setSubmitting] = useState(false)
   const [isEdit, setIsEdit] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -47,6 +48,8 @@ export default function Inventory() {
     if (!supabase || !storeId) { setLoading(false); return }
     const sid = inventorySessionId(storeId, today, currentZone || '')
     setLoading(true)
+    setIsEdit(false)
+    originalData.current = {}
 
     const load = async () => {
       try {
@@ -73,6 +76,7 @@ export default function Inventory() {
               discarded: item.discarded != null ? String(item.discarded) : '',
             }
           })
+          originalData.current = JSON.parse(JSON.stringify(loaded))
           setData(loaded)
         }
       } catch {
@@ -194,6 +198,21 @@ export default function Inventory() {
     return map
   }, [storeProducts, productCategories])
 
+  const isItemModified = useCallback((productId: string): boolean => {
+    if (!isEdit) return false
+    const orig = originalData.current[productId]
+    const curr = data[productId]
+    if (!orig && !curr) return false
+    if (!orig) return !!(curr && (curr.onShelf !== '' || curr.stock !== '' || curr.discarded !== ''))
+    if (!curr) return true
+    return orig.onShelf !== curr.onShelf || orig.stock !== curr.stock || orig.discarded !== curr.discarded
+  }, [isEdit, data])
+
+  const modifiedCount = useMemo(() => {
+    if (!isEdit) return 0
+    return storeProducts.filter(p => isItemModified(p.id)).length
+  }, [isEdit, storeProducts, isItemModified])
+
   const getCategoryCompleted = useCallback((products: typeof storeProducts) => {
     return products.filter(p => {
       const e = getEntry(p.id)
@@ -255,6 +274,7 @@ export default function Inventory() {
       }
     }
 
+    originalData.current = JSON.parse(JSON.stringify(data))
     setIsEdit(true)
     setSubmitting(false)
     showToast(isEdit ? '盤點資料已更新！' : '盤點資料已提交成功！')
@@ -269,6 +289,9 @@ export default function Inventory() {
         <div className="flex items-center gap-1.5 px-4 py-1.5 bg-status-info/10 text-status-info text-xs">
           <RefreshCw size={12} />
           <span>已載入今日盤點紀錄，修改後可重新提交</span>
+          {modifiedCount > 0 && (
+            <span className="ml-auto font-medium text-brand-lotus">已修改 {modifiedCount} 項</span>
+          )}
         </div>
       )}
 
@@ -340,11 +363,12 @@ export default function Inventory() {
                 {products.map((product, idx) => {
                   const entry = getEntry(product.id)
                   const isFilled = entry.onShelf !== '' || entry.stock !== '' || entry.discarded !== ''
+                  const modified = isItemModified(product.id)
 
                   return (
                     <div
                       key={product.id}
-                      className={`flex items-center px-4 py-2 ${idx < products.length - 1 ? 'border-b border-gray-50' : ''} ${isFilled ? 'bg-surface-filled/30' : ''}`}
+                      className={`flex items-center px-4 py-2 ${idx < products.length - 1 ? 'border-b border-gray-50' : ''} ${modified ? 'bg-amber-100 border-l-3 border-l-amber-500' : isFilled ? 'bg-surface-filled/30' : ''}`}
                     >
                       <div className="flex-1 min-w-0 pr-2">
                         <p className="text-sm font-semibold text-brand-oak leading-tight">{product.name}</p>
