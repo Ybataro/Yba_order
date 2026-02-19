@@ -76,15 +76,15 @@ export default function AdminHome() {
         <p className="text-xs text-brand-lotus mb-2">快速前往</p>
         <div className="space-y-2">
           {/* 門店選擇 + 前往 */}
-          <div ref={dropdownRef} className="relative flex gap-2">
+          <div ref={dropdownRef} className="relative flex flex-row gap-2">
             <button
               onClick={() => setDropdownOpen((v) => !v)}
-              className="flex-1 h-11 rounded-xl border border-gray-200 bg-white px-4 text-sm text-brand-oak flex items-center justify-between gap-2 active:bg-gray-50"
+              className="flex-1 h-11 rounded-xl border border-gray-200 bg-white px-4 text-sm text-brand-oak inline-flex flex-row items-center justify-between gap-2 active:bg-gray-50 min-w-0"
             >
-              <span>{selectedName}</span>
+              <span className="truncate whitespace-nowrap">{selectedName}</span>
               <ChevronDown size={16} className={`shrink-0 text-gray-400 transition-transform ${dropdownOpen ? 'rotate-180' : ''}`} />
             </button>
-            <button onClick={() => navigate(`/store/${selectedStore}`)} className="btn-secondary !h-11 !text-sm !px-6 whitespace-nowrap">前往門店</button>
+            <button onClick={() => navigate(`/store/${selectedStore}`)} className="btn-secondary !h-11 !text-sm !px-6 whitespace-nowrap shrink-0">前往門店</button>
             {dropdownOpen && (
               <div className="absolute left-0 right-0 top-full mt-1 rounded-xl bg-white shadow-lg border border-gray-100 overflow-hidden z-50">
                 {stores.map((s) => (
