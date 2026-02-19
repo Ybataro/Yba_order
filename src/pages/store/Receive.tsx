@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react'
-import { useParams } from 'react-router-dom'
+import { useParams, useSearchParams } from 'react-router-dom'
 import { TopNav } from '@/components/TopNav'
 import { SectionHeader } from '@/components/SectionHeader'
 import { BottomAction } from '@/components/BottomAction'
@@ -23,6 +23,8 @@ interface ShipmentItem {
 
 export default function Receive() {
   const { storeId } = useParams<{ storeId: string }>()
+  const [searchParams] = useSearchParams()
+  const staffId = searchParams.get('staff') || ''
   const { showToast } = useToast()
   const storeName = useStoreStore((s) => s.getName(storeId || ''))
   const storeProducts = useProductStore((s) => s.items)
@@ -129,6 +131,7 @@ export default function Receive() {
       .update({
         receive_note: note,
         received_at: new Date().toISOString(),
+        received_by: staffId || null,
       })
       .eq('id', sessionId)
 

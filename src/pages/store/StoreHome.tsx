@@ -49,7 +49,7 @@ export default function StoreHome() {
         {menuItems.map((item) => (
           <button
             key={item.path}
-            onClick={() => navigate(`/store/${storeId}/${item.path}`)}
+            onClick={() => navigate(`/store/${storeId}/${item.path}${currentStaff ? `?staff=${currentStaff}` : ''}`)}
             className="card w-full flex items-center gap-4 active:scale-[0.98] transition-transform text-left"
           >
             <div className={`${item.color} w-12 h-12 rounded-xl flex items-center justify-center text-white shrink-0`}>

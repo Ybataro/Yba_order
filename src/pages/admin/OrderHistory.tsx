@@ -6,7 +6,8 @@ import { useProductStore } from '@/stores/useProductStore'
 import { useMaterialStore } from '@/stores/useMaterialStore'
 import { supabase } from '@/lib/supabase'
 import { getTodayTW } from '@/lib/session'
-import { ChevronDown, ChevronUp } from 'lucide-react'
+import { ChevronDown, ChevronUp, Download } from 'lucide-react'
+import { exportToExcel } from '@/lib/exportExcel'
 
 type OrderType = 'store' | 'material'
 type ViewMode = 'detail' | 'stats'
@@ -443,13 +444,38 @@ export default function OrderHistory() {
             </div>
           ) : (
             <>
-              <div className="px-4 py-3 bg-white border-b border-gray-100">
-                <p className="text-sm font-semibold text-brand-oak">
-                  {formatDateDisplay(startDate)} ~ {formatDateDisplay(endDate)}
-                </p>
-                <p className="text-xs text-brand-lotus mt-0.5">
-                  共 {stats.totalSessions} 筆叫貨紀錄，{stats.days} 天
-                </p>
+              <div className="flex items-center justify-between px-4 py-3 bg-white border-b border-gray-100">
+                <div>
+                  <p className="text-sm font-semibold text-brand-oak">
+                    {formatDateDisplay(startDate)} ~ {formatDateDisplay(endDate)}
+                  </p>
+                  <p className="text-xs text-brand-lotus mt-0.5">
+                    共 {stats.totalSessions} 筆叫貨紀錄，{stats.days} 天
+                  </p>
+                </div>
+                <button
+                  onClick={() => {
+                    const rows = stats.categories.flatMap(cat =>
+                      cat.items.map(item => ({
+                        '分類': cat.name,
+                        '品名': item.name,
+                        '單位': item.unit,
+                        '合計': item.total,
+                        '日均': item.avg,
+                        '次數': item.count,
+                      }))
+                    )
+                    exportToExcel({
+                      data: rows,
+                      fileName: `叫貨統計_${startDate}_${endDate}.xlsx`,
+                      sheetName: '叫貨統計',
+                    })
+                  }}
+                  className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-brand-mocha text-white text-xs font-medium active:scale-95 transition-transform"
+                >
+                  <Download size={14} />
+                  匯出
+                </button>
               </div>
 
               {/* Column header */}

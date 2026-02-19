@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo, useEffect, useRef } from 'react'
-import { useParams } from 'react-router-dom'
+import { useParams, useSearchParams } from 'react-router-dom'
 import { TopNav } from '@/components/TopNav'
 import { NumericInput } from '@/components/NumericInput'
 import { SectionHeader } from '@/components/SectionHeader'
@@ -20,6 +20,8 @@ interface InventoryEntry {
 
 export default function Inventory() {
   const { storeId } = useParams<{ storeId: string }>()
+  const [searchParams] = useSearchParams()
+  const staffId = searchParams.get('staff') || ''
   const { showToast } = useToast()
   const storeName = useStoreStore((s) => s.getName(storeId || ''))
   const { products: storeProducts, categories: productCategories, storeZones, currentZone, setZone } = useZoneFilteredProducts(storeId || '')
@@ -236,6 +238,7 @@ export default function Inventory() {
         store_id: storeId,
         date: today,
         zone_code: currentZone || '',
+        submitted_by: staffId || null,
         updated_at: new Date().toISOString(),
       }, { onConflict: 'id' })
 

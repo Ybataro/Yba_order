@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react'
-import { useParams } from 'react-router-dom'
+import { useParams, useSearchParams } from 'react-router-dom'
 import { TopNav } from '@/components/TopNav'
 import { NumericInput } from '@/components/NumericInput'
 import { SectionHeader } from '@/components/SectionHeader'
@@ -9,20 +9,8 @@ import { useProductStore } from '@/stores/useProductStore'
 import { useStoreStore } from '@/stores/useStoreStore'
 import { supabase } from '@/lib/supabase'
 import { orderSessionId, getTodayTW, getOrderDeadline, isPastDeadline } from '@/lib/session'
+import { fetchWeather, type WeatherData, type WeatherCondition } from '@/lib/weather'
 import { Send, Lightbulb, Sun, CloudRain, Cloud, CloudSun, Thermometer, Droplets, TrendingUp, TrendingDown, Lock, RefreshCw } from 'lucide-react'
-
-// 模擬天氣資料（Phase 2 串接中央氣象署 API）
-const mockWeather = {
-  date: '明日',
-  condition: 'sunny' as WeatherCondition,
-  conditionText: '晴天',
-  tempHigh: 32,
-  tempLow: 24,
-  rainProb: 10,
-  humidity: 65,
-}
-
-type WeatherCondition = 'sunny' | 'cloudy' | 'partly_cloudy' | 'rainy'
 
 const weatherIcons: Record<WeatherCondition, typeof Sun> = {
   sunny: Sun,
@@ -31,7 +19,7 @@ const weatherIcons: Record<WeatherCondition, typeof Sun> = {
   rainy: CloudRain,
 }
 
-function getWeatherImpacts(weather: typeof mockWeather) {
+function getWeatherImpacts(weather: WeatherData) {
   const impacts: { category: string; adjust: number; reason: string }[] = []
   const { tempHigh, rainProb, condition } = weather
 
@@ -58,6 +46,8 @@ function getWeatherImpacts(weather: typeof mockWeather) {
 
 export default function Order() {
   const { storeId } = useParams<{ storeId: string }>()
+  const [searchParams] = useSearchParams()
+  const staffId = searchParams.get('staff') || ''
   const { showToast } = useToast()
   const storeName = useStoreStore((s) => s.getName(storeId || ''))
   const storeProducts = useProductStore((s) => s.items)
@@ -81,6 +71,13 @@ export default function Order() {
   const [isEdit, setIsEdit] = useState(false)
   const [locked, setLocked] = useState(false)
   const [loading, setLoading] = useState(true)
+
+  // 天氣資料
+  const [weather, setWeather] = useState<WeatherData | null>(null)
+
+  useEffect(() => {
+    fetchWeather().then(setWeather)
+  }, [])
 
   // Load existing session
   useEffect(() => {
@@ -119,7 +116,9 @@ export default function Order() {
       })
   }, [storeId, today])
 
-  const weatherImpacts = useMemo(() => getWeatherImpacts(mockWeather), [])
+  const defaultWeather: WeatherData = { date: '明日', condition: 'partly_cloudy', conditionText: '多雲', tempHigh: 28, tempLow: 20, rainProb: 30, humidity: 70 }
+  const currentWeather = weather || defaultWeather
+  const weatherImpacts = useMemo(() => getWeatherImpacts(currentWeather), [currentWeather])
   const impactMap = useMemo(() => {
     const m: Record<string, number> = {}
     weatherImpacts.forEach(i => { m[i.category] = i.adjust })
@@ -146,23 +145,76 @@ export default function Order() {
     return d
   }, [])
 
-  const mockSuggested = useMemo(() => {
-    const d: Record<string, number> = {}
-    storeProducts.forEach(p => {
-      const base = Math.random() * 5
-      const adjust = impactMap[p.category] || 0
-      const raw = Math.max(0, base * (1 + adjust / 100))
-      const unit = getRoundUnit(p)
-      d[p.id] = roundToUnit(raw, unit)
-    })
-    return d
-  }, [impactMap])
+  // 近 7 日平均叫貨量
+  const [suggested, setSuggested] = useState<Record<string, number>>({})
+  const [suggestedLoading, setSuggestedLoading] = useState(true)
+
+  useEffect(() => {
+    if (!supabase || !storeId) { setSuggestedLoading(false); return }
+
+    const load = async () => {
+      setSuggestedLoading(true)
+      // 計算 7 天前的日期
+      const d = new Date()
+      d.setDate(d.getDate() - 7)
+      const sevenDaysAgo = d.toLocaleDateString('en-CA', { timeZone: 'Asia/Taipei' })
+
+      const { data: sessions } = await supabase!
+        .from('order_sessions')
+        .select('id, date')
+        .eq('store_id', storeId)
+        .gte('date', sevenDaysAgo)
+        .lte('date', today)
+
+      if (!sessions || sessions.length === 0) {
+        setSuggested({})
+        setSuggestedLoading(false)
+        return
+      }
+
+      const sessionIds = sessions.map(s => s.id)
+      const uniqueDays = new Set(sessions.map(s => s.date)).size
+
+      const { data: items } = await supabase!
+        .from('order_items')
+        .select('product_id, quantity')
+        .in('session_id', sessionIds)
+
+      if (!items || items.length === 0) {
+        setSuggested({})
+        setSuggestedLoading(false)
+        return
+      }
+
+      // 加總各品項
+      const totals: Record<string, number> = {}
+      items.forEach(item => {
+        totals[item.product_id] = (totals[item.product_id] || 0) + item.quantity
+      })
+
+      // 計算日均 × 天氣係數
+      const result: Record<string, number> = {}
+      storeProducts.forEach(p => {
+        const total = totals[p.id] || 0
+        const avg = total / uniqueDays
+        const adjust = impactMap[p.category] || 0
+        const raw = Math.max(0, avg * (1 + adjust / 100))
+        const unit = getRoundUnit(p)
+        result[p.id] = roundToUnit(raw, unit)
+      })
+
+      setSuggested(result)
+      setSuggestedLoading(false)
+    }
+
+    load()
+  }, [storeId, today, impactMap])
 
   const applyAllSuggestions = () => {
     if (locked) return
     const newOrders: Record<string, string> = {}
     storeProducts.forEach(p => {
-      newOrders[p.id] = mockSuggested[p.id] > 0 ? String(mockSuggested[p.id]) : ''
+      newOrders[p.id] = suggested[p.id] > 0 ? String(suggested[p.id]) : ''
     })
     setOrders(newOrders)
     showToast('已套用全部建議叫貨量', 'info')
@@ -204,6 +256,7 @@ export default function Order() {
         bowl_k520: bowlK520,
         bowl_750: bowl750,
         note,
+        submitted_by: staffId || null,
         updated_at: new Date().toISOString(),
       }, { onConflict: 'id' })
 
@@ -258,13 +311,13 @@ export default function Order() {
         </div>
       )}
 
-      {loading ? (
+      {(loading || suggestedLoading) ? (
         <div className="flex items-center justify-center py-20 text-sm text-brand-lotus">載入中...</div>
       ) : (
         <>
           {/* 天氣預報卡片 */}
           {(() => {
-            const WeatherIcon = weatherIcons[mockWeather.condition]
+            const WeatherIcon = weatherIcons[currentWeather.condition]
             return (
               <div className="mx-4 mt-3 mb-2 rounded-card overflow-hidden border border-gray-100 bg-white">
                 <div className="flex items-center gap-3 px-3 py-2.5">
@@ -273,16 +326,16 @@ export default function Order() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-baseline gap-1.5">
-                      <span className="text-sm font-semibold text-brand-oak">{mockWeather.date} {mockWeather.conditionText}</span>
+                      <span className="text-sm font-semibold text-brand-oak">{currentWeather.date} {currentWeather.conditionText}</span>
                     </div>
                     <div className="flex items-center gap-3 mt-0.5 text-xs text-brand-lotus">
                       <span className="flex items-center gap-0.5">
                         <Thermometer size={12} />
-                        {mockWeather.tempLow}~{mockWeather.tempHigh}°C
+                        {currentWeather.tempLow}~{currentWeather.tempHigh}°C
                       </span>
                       <span className="flex items-center gap-0.5">
                         <Droplets size={12} />
-                        降雨 {mockWeather.rainProb}%
+                        降雨 {currentWeather.rainProb}%
                       </span>
                     </div>
                   </div>
@@ -337,7 +390,7 @@ export default function Order() {
                       <span className="text-[10px] text-brand-lotus ml-1">({product.unit})</span>
                     </div>
                     <span className={`w-[40px] text-center text-xs font-num ${mockStock[product.id] === 0 ? 'text-status-danger font-bold' : 'text-brand-oak'}`}>{mockStock[product.id]}</span>
-                    <span className="w-[40px] text-center text-xs font-num text-status-info">{mockSuggested[product.id] > 0 ? mockSuggested[product.id] : '-'}</span>
+                    <span className="w-[40px] text-center text-xs font-num text-status-info">{suggested[product.id] > 0 ? suggested[product.id] : '-'}</span>
                     <div className="w-[60px] flex justify-center">
                       <NumericInput
                         value={orders[product.id]}

@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react'
-import { useParams } from 'react-router-dom'
+import { useParams, useSearchParams } from 'react-router-dom'
 import { TopNav } from '@/components/TopNav'
 import { NumericInput } from '@/components/NumericInput'
 import { SectionHeader } from '@/components/SectionHeader'
@@ -14,6 +14,8 @@ import { Send, RefreshCw } from 'lucide-react'
 
 export default function Settlement() {
   const { storeId } = useParams<{ storeId: string }>()
+  const [searchParams] = useSearchParams()
+  const staffId = searchParams.get('staff') || ''
   const { showToast } = useToast()
   const storeName = useStoreStore((s) => s.getName(storeId || ''))
   const settlementFields = useSettlementStore((s) => s.items)
@@ -113,6 +115,7 @@ export default function Settlement() {
         id: sessionId,
         store_id: storeId,
         date: today,
+        submitted_by: staffId || null,
         updated_at: new Date().toISOString(),
       }, { onConflict: 'id' })
 

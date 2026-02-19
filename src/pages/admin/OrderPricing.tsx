@@ -6,6 +6,8 @@ import { useProductStore } from '@/stores/useProductStore'
 import { supabase } from '@/lib/supabase'
 import { getTodayTW } from '@/lib/session'
 import { formatCurrency } from '@/lib/utils'
+import { Download } from 'lucide-react'
+import { exportToExcel } from '@/lib/exportExcel'
 
 type DateRange = 'week' | 'month' | 'custom'
 
@@ -259,6 +261,37 @@ export default function OrderPricing() {
         </div>
       ) : (
         <>
+          <div className="flex items-center justify-end px-4 py-2 bg-white border-b border-gray-100">
+            <button
+              onClick={() => {
+                const rows = activeProductIds.map(pid => {
+                  const prod = products.find(p => p.id === pid)
+                  const dateMap = matrix[pid] || {}
+                  const total = productTotals[pid] || 0
+                  const row: Record<string, unknown> = {
+                    '分類': prod?.category || '',
+                    '品名': prod?.name || pid,
+                  }
+                  dates.forEach(d => { row[formatShortDate(d)] = dateMap[d] || 0 })
+                  row['總數'] = total
+                  row['我們價'] = prod?.ourCost || 0
+                  row['我們總價'] = total * (prod?.ourCost || 0)
+                  row['加盟價'] = prod?.franchisePrice || 0
+                  row['加盟總價'] = total * (prod?.franchisePrice || 0)
+                  return row
+                })
+                exportToExcel({
+                  data: rows,
+                  fileName: `叫貨價格統計_${startDate}_${endDate}.xlsx`,
+                  sheetName: '價格統計',
+                })
+              }}
+              className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-brand-mocha text-white text-xs font-medium active:scale-95 transition-transform"
+            >
+              <Download size={14} />
+              匯出 Excel
+            </button>
+          </div>
           {/* Scrollable table */}
           <div className="overflow-x-auto">
             <table className="w-full text-xs border-collapse min-w-[600px]">

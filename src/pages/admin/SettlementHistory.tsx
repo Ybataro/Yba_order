@@ -5,7 +5,8 @@ import { useStoreStore } from '@/stores/useStoreStore'
 import { supabase } from '@/lib/supabase'
 import { getTodayTW } from '@/lib/session'
 import { formatCurrency } from '@/lib/utils'
-import { ChevronDown, ChevronUp } from 'lucide-react'
+import { ChevronDown, ChevronUp, Download } from 'lucide-react'
+import { exportToExcel } from '@/lib/exportExcel'
 
 type ViewMode = 'detail' | 'stats'
 type DateRange = 'today' | 'week' | 'month' | 'custom'
@@ -396,6 +397,34 @@ export default function SettlementHistory() {
             </div>
           ) : (
             <>
+              <div className="flex items-center justify-end px-4 py-2 bg-white border-b border-gray-100">
+                <button
+                  onClick={() => {
+                    const rows = sessions.map(s => {
+                      const c = computeSession(s.settlement_values || [])
+                      return {
+                        '日期': s.date,
+                        '門店': getStoreName(s.store_id),
+                        '營業額': c.posTotal,
+                        '號數': c.orderCount,
+                        '客單價': c.avgPrice,
+                        '應結金額': c.expectedTotal,
+                        '實收金額': c.actualTotal,
+                        '差額': c.diff,
+                      }
+                    })
+                    exportToExcel({
+                      data: rows,
+                      fileName: `結帳歷史_${startDate}_${endDate}.xlsx`,
+                      sheetName: '結帳歷史',
+                    })
+                  }}
+                  className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-brand-mocha text-white text-xs font-medium active:scale-95 transition-transform"
+                >
+                  <Download size={14} />
+                  匯出 Excel
+                </button>
+              </div>
               <SectionHeader title="月報摘要" icon="■" />
               <div className="bg-white">
                 <div className="grid grid-cols-2 gap-px bg-gray-100">
