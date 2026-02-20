@@ -1,4 +1,4 @@
-import { useState, useCallback, type ReactNode } from 'react'
+import { useState, useEffect, useCallback, type ReactNode } from 'react'
 import { useParams } from 'react-router-dom'
 import { getSession, isAuthorized, clearSession, type AuthSession } from '@/lib/auth'
 import { supabase } from '@/lib/supabase'
@@ -9,16 +9,45 @@ interface AuthGuardProps {
   children: ReactNode
 }
 
+// Module-level cache: null = not checked, true/false = result
+let hasPinsCache: boolean | null = null
+
 export default function AuthGuard({ requiredRole, children }: AuthGuardProps) {
   const { storeId } = useParams<{ storeId: string }>()
   const [session, setSessionState] = useState<AuthSession | null>(() => getSession())
+  const [hasPins, setHasPins] = useState<boolean | null>(hasPinsCache)
 
   const handleSuccess = useCallback((s: AuthSession) => {
     setSessionState(s)
   }, [])
 
-  // If no Supabase or no user_pins table configured, skip auth
+  // Check if user_pins table has any records
+  useEffect(() => {
+    if (!supabase || hasPinsCache !== null) return
+
+    supabase
+      .from('user_pins')
+      .select('id', { count: 'exact', head: true })
+      .then(({ count }) => {
+        const result = (count ?? 0) > 0
+        hasPinsCache = result
+        setHasPins(result)
+      })
+      .catch(() => {
+        // Table might not exist yet → skip auth
+        hasPinsCache = false
+        setHasPins(false)
+      })
+  }, [])
+
+  // No Supabase → skip auth
   if (!supabase) return <>{children}</>
+
+  // Still checking → show nothing (brief flash)
+  if (hasPins === null) return null
+
+  // No PINs configured yet → skip auth (setup mode)
+  if (!hasPins) return <>{children}</>
 
   // No session → show PIN entry
   if (!session) {
