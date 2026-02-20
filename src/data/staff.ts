@@ -3,6 +3,9 @@ export interface StaffMember {
   name: string
 }
 
+// 管理者人員（老闆等）
+export const adminStaff: StaffMember[] = []
+
 // 央廚人員（Phase 2 改為後台管理）
 export const kitchenStaff: StaffMember[] = [
   { id: 'k1', name: '關堉勝' },

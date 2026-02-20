@@ -1,13 +1,17 @@
 import { create } from 'zustand'
-import { kitchenStaff as defaultKitchen, storeStaff as defaultStore, type StaffMember } from '@/data/staff'
+import { adminStaff as defaultAdmin, kitchenStaff as defaultKitchen, storeStaff as defaultStore, type StaffMember } from '@/data/staff'
 import { supabase } from '@/lib/supabase'
 
 interface StaffState {
+  adminStaff: StaffMember[]
   kitchenStaff: StaffMember[]
   storeStaff: Record<string, StaffMember[]>
   loading: boolean
   initialized: boolean
   initialize: () => Promise<void>
+  addAdmin: (member: StaffMember) => void
+  updateAdmin: (id: string, partial: Partial<StaffMember>) => void
+  removeAdmin: (id: string) => void
   addKitchen: (member: StaffMember) => void
   updateKitchen: (id: string, partial: Partial<StaffMember>) => void
   removeKitchen: (id: string) => void
@@ -18,6 +22,7 @@ interface StaffState {
 }
 
 export const useStaffStore = create<StaffState>()((set, get) => ({
+  adminStaff: defaultAdmin,
   kitchenStaff: defaultKitchen,
   storeStaff: defaultStore,
   loading: false,
@@ -31,20 +36,51 @@ export const useStaffStore = create<StaffState>()((set, get) => ({
       .select('*')
       .order('sort_order')
     if (data && data.length > 0) {
+      const admin: StaffMember[] = []
       const kitchen: StaffMember[] = []
       const storeMap: Record<string, StaffMember[]> = {}
       for (const d of data) {
         const member = { id: d.id, name: d.name }
-        if (d.group_id === 'kitchen') {
+        if (d.group_id === 'admin') {
+          admin.push(member)
+        } else if (d.group_id === 'kitchen') {
           kitchen.push(member)
         } else {
           if (!storeMap[d.group_id]) storeMap[d.group_id] = []
           storeMap[d.group_id].push(member)
         }
       }
-      set({ kitchenStaff: kitchen, storeStaff: storeMap })
+      set({ adminStaff: admin, kitchenStaff: kitchen, storeStaff: storeMap })
     }
     set({ loading: false, initialized: true })
+  },
+
+  addAdmin: (member) => {
+    set((s) => ({ adminStaff: [...s.adminStaff, member] }))
+    if (supabase) {
+      supabase.from('staff').insert({
+        id: member.id,
+        name: member.name,
+        group_id: 'admin',
+        sort_order: get().adminStaff.length - 1,
+      }).then()
+    }
+  },
+
+  updateAdmin: (id, partial) => {
+    set((s) => ({
+      adminStaff: s.adminStaff.map((m) => (m.id === id ? { ...m, ...partial } : m)),
+    }))
+    if (supabase && partial.name !== undefined) {
+      supabase.from('staff').update({ name: partial.name }).eq('id', id).then()
+    }
+  },
+
+  removeAdmin: (id) => {
+    set((s) => ({ adminStaff: s.adminStaff.filter((m) => m.id !== id) }))
+    if (supabase) {
+      supabase.from('staff').delete().eq('id', id).then()
+    }
   },
 
   addKitchen: (member) => {

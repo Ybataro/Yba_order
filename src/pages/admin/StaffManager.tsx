@@ -10,7 +10,7 @@ import type { StaffMember } from '@/data/staff'
 import { Plus, Pencil, Trash2 } from 'lucide-react'
 
 export default function StaffManager() {
-  const { kitchenStaff, storeStaff, addKitchen, updateKitchen, removeKitchen, addStore, updateStore, removeStore } = useStaffStore()
+  const { adminStaff, kitchenStaff, storeStaff, addAdmin, updateAdmin, removeAdmin, addKitchen, updateKitchen, removeKitchen, addStore, updateStore, removeStore } = useStaffStore()
   const stores = useStoreStore((s) => s.items)
   const { showToast } = useToast()
 
@@ -21,6 +21,7 @@ export default function StaffManager() {
   const [deleteConfirm, setDeleteConfirm] = useState<{ member: StaffMember; group: string } | null>(null)
 
   const groupOptions = [
+    { value: 'admin', label: '管理者' },
     { value: 'kitchen', label: '央廚' },
     ...stores.map((s) => ({ value: s.id, label: s.name })),
   ]
@@ -45,7 +46,9 @@ export default function StaffManager() {
       return
     }
     if (editing) {
-      if (editing.group === 'kitchen') {
+      if (editing.group === 'admin') {
+        updateAdmin(editing.member.id, { name: formName })
+      } else if (editing.group === 'kitchen') {
         updateKitchen(editing.member.id, { name: formName })
       } else {
         updateStore(editing.group, editing.member.id, { name: formName })
@@ -53,7 +56,9 @@ export default function StaffManager() {
       showToast('人員已更新')
     } else {
       const newMember: StaffMember = { id: `staff_${Date.now()}`, name: formName }
-      if (formGroup === 'kitchen') {
+      if (formGroup === 'admin') {
+        addAdmin(newMember)
+      } else if (formGroup === 'kitchen') {
         addKitchen(newMember)
       } else {
         addStore(formGroup, newMember)
@@ -69,7 +74,9 @@ export default function StaffManager() {
 
   const confirmDelete = () => {
     if (deleteConfirm) {
-      if (deleteConfirm.group === 'kitchen') {
+      if (deleteConfirm.group === 'admin') {
+        removeAdmin(deleteConfirm.member.id)
+      } else if (deleteConfirm.group === 'kitchen') {
         removeKitchen(deleteConfirm.member.id)
       } else {
         removeStore(deleteConfirm.group, deleteConfirm.member.id)
@@ -109,6 +116,10 @@ export default function StaffManager() {
   return (
     <div className="page-container">
       <TopNav title="人員管理" backTo="/admin" />
+
+      {/* Admin staff */}
+      <SectionHeader title={`管理者 (${adminStaff.length})`} icon="■" />
+      {renderStaffList(adminStaff, 'admin')}
 
       {/* Kitchen staff */}
       <SectionHeader title={`央廚人員 (${kitchenStaff.length})`} icon="■" />

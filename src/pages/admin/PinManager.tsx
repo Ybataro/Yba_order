@@ -48,8 +48,11 @@ export default function PinManager() {
       })
   }, [])
 
+  const adminStaff = useStaffStore((s) => s.adminStaff)
+
   // All staff flat list
   const allStaff = [
+    ...adminStaff.map((s) => ({ id: s.id, name: s.name, group: '管理者' })),
     ...kitchenStaff.map((s) => ({ id: s.id, name: s.name, group: '央廚' })),
     ...Object.entries(storeStaff).flatMap(([storeId, members]) => {
       const storeName = stores.find((s) => s.id === storeId)?.name || storeId
