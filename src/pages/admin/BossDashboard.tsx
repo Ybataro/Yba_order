@@ -77,6 +77,8 @@ export default function BossDashboard() {
   const yesterday = getYesterdayTW() // 叫貨是隔日到貨，查昨日叫貨
   const sevenDaysAgo = getDateNDaysAgo(6)
 
+  const [viewDate, setViewDate] = useState<'today' | 'yesterday'>('today')
+  const selectedDate = viewDate === 'today' ? today : yesterday
   const [loading, setLoading] = useState(true)
   const [settlements, setSettlements] = useState<SettlementSession[]>([])
   const [orderSessions, setOrderSessions] = useState<OrderSession[]>([])
@@ -130,10 +132,10 @@ export default function BossDashboard() {
 
   // ===== Computed data =====
 
-  // Today's settlements
-  const todaySettlements = useMemo(() =>
-    settlements.filter((s) => s.date === today),
-  [settlements, today])
+  // Selected date settlements
+  const selectedSettlements = useMemo(() =>
+    settlements.filter((s) => s.date === selectedDate),
+  [settlements, selectedDate])
 
   // Summary cards
   const summary = useMemo(() => {
@@ -142,7 +144,7 @@ export default function BossDashboard() {
     let totalStaff = 0
     let abnormalStores = 0
 
-    todaySettlements.forEach((s) => {
+    selectedSettlements.forEach((s) => {
       const c = computeSession(s.settlement_values || [])
       totalRevenue += c.posTotal
       totalOrders += c.orderCount
@@ -151,12 +153,12 @@ export default function BossDashboard() {
     })
 
     return { totalRevenue, totalOrders, totalStaff, abnormalStores }
-  }, [todaySettlements])
+  }, [selectedSettlements])
 
   // Per-store details
   const storeDetails = useMemo(() => {
     return stores.map((store) => {
-      const session = todaySettlements.find((s) => s.store_id === store.id)
+      const session = selectedSettlements.find((s) => s.store_id === store.id)
       if (!session) {
         return { storeId: store.id, storeName: store.name, settled: false as const }
       }
@@ -171,7 +173,7 @@ export default function BossDashboard() {
         diff: c.diff,
       }
     })
-  }, [stores, todaySettlements])
+  }, [stores, selectedSettlements])
 
   // 7-day revenue trend
   const trendData = useMemo(() => {
@@ -275,6 +277,26 @@ export default function BossDashboard() {
     <div className="page-container">
       <TopNav title="老闆儀表板" backTo="/admin" />
 
+      {/* 日期切換 */}
+      <div className="flex items-center gap-2 px-4 py-2 bg-white border-b border-gray-100">
+        {([['today', '今日'], ['yesterday', '昨日']] as const).map(([key, label]) => (
+          <button
+            key={key}
+            onClick={() => setViewDate(key)}
+            className={`px-4 py-1.5 rounded-full text-xs font-medium transition-colors ${
+              viewDate === key
+                ? 'bg-brand-mocha text-white'
+                : 'bg-gray-100 text-brand-lotus'
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+        <span className="ml-auto text-xs text-brand-lotus font-num">
+          {formatShortDate(selectedDate)}
+        </span>
+      </div>
+
       {loading ? (
         <div className="flex items-center justify-center py-20 gap-2 text-sm text-brand-lotus">
           <RefreshCw size={16} className="animate-spin" />
@@ -282,8 +304,8 @@ export default function BossDashboard() {
         </div>
       ) : (
         <>
-          {/* ===== 1. 今日摘要卡片 ===== */}
-          <SectionHeader title="今日摘要" icon="■" />
+          {/* ===== 1. 摘要卡片 ===== */}
+          <SectionHeader title={viewDate === 'today' ? '今日摘要' : '昨日摘要'} icon="■" />
           <div className="bg-white">
             <div className="grid grid-cols-2 gap-px bg-gray-100">
               <div className="bg-white px-4 py-3">
@@ -314,7 +336,7 @@ export default function BossDashboard() {
           </div>
 
           {/* ===== 2. 各店營運明細 ===== */}
-          <SectionHeader title="各店營運明細" icon="■" />
+          <SectionHeader title={viewDate === 'today' ? '各店營運明細' : '昨日各店營運'} icon="■" />
           <div className="bg-white divide-y divide-gray-50">
             {storeDetails.map((s) => (
               <div key={s.storeId} className="flex items-center px-4 py-3">
