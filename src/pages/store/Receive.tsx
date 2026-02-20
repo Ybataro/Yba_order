@@ -8,6 +8,7 @@ import { useProductStore } from '@/stores/useProductStore'
 import { useStoreStore } from '@/stores/useStoreStore'
 import { supabase } from '@/lib/supabase'
 import { shipmentSessionId, getTodayTW } from '@/lib/session'
+import { logAudit } from '@/lib/auditLog'
 import { CheckCircle, AlertTriangle, ArrowRight, RefreshCw } from 'lucide-react'
 
 interface ShipmentItem {
@@ -153,6 +154,7 @@ export default function Receive() {
 
     setIsEdit(true)
     setSubmitting(false)
+    logAudit('receive_submit', storeId, sessionId)
     showToast(isEdit ? '收貨確認已更新！' : '收貨確認已提交！')
   }
 

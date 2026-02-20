@@ -1,7 +1,8 @@
 import { useNavigate } from 'react-router-dom'
-import { Package, Warehouse, Users, Store, Receipt, QrCode, Layers, ClipboardList, FileText, DollarSign, CloudSun, ChefHat, LayoutDashboard } from 'lucide-react'
+import { Package, Warehouse, Users, Store, Receipt, QrCode, Layers, ClipboardList, FileText, DollarSign, CloudSun, ChefHat, LayoutDashboard, LogOut, KeyRound, ScrollText } from 'lucide-react'
 import { getTodayString, formatDate } from '@/lib/utils'
 import { useStoreStore } from '@/stores/useStoreStore'
+import { clearSession } from '@/lib/auth'
 
 const menuItems = [
   { icon: LayoutDashboard, label: '老闆儀表板', desc: '今日營運總覽、庫存與趨勢', path: '/admin/dashboard', color: 'bg-brand-amber' },
@@ -16,6 +17,8 @@ const menuItems = [
   { icon: FileText, label: '結帳歷史查詢', desc: '各店結帳紀錄及月報表', path: '/admin/settlement-history', color: 'bg-brand-amber' },
   { icon: DollarSign, label: '叫貨價格統計', desc: '品項成本與加盟價格統計', path: '/admin/order-pricing', color: 'bg-brand-oak' },
   { icon: CloudSun, label: '天氣用量分析', desc: '天氣與營業額、叫貨量關聯分析', path: '/admin/weather-analysis', color: 'bg-brand-amber' },
+  { icon: KeyRound, label: 'PIN 碼管理', desc: '人員 PIN 碼、角色與授權門市', path: '/admin/pins', color: 'bg-brand-lotus' },
+  { icon: ScrollText, label: '操作記錄', desc: '盤點、叫貨、結帳等操作記錄', path: '/admin/audit', color: 'bg-brand-silver' },
 ]
 
 export default function AdminHome() {
@@ -25,9 +28,20 @@ export default function AdminHome() {
   return (
     <div className="page-container">
       <div className="bg-brand-oak text-white px-6 pt-12 pb-8">
-        <p className="text-sm opacity-80 mb-1">{formatDate(getTodayString())}</p>
-        <h1 className="text-2xl font-bold">阿爸的芋圓</h1>
-        <p className="text-base opacity-90 mt-1">後台管理系統</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm opacity-80 mb-1">{formatDate(getTodayString())}</p>
+            <h1 className="text-2xl font-bold">阿爸的芋圓</h1>
+            <p className="text-base opacity-90 mt-1">後台管理系統</p>
+          </div>
+          <button
+            onClick={() => { clearSession(); window.location.reload() }}
+            className="p-2 rounded-full text-white/80 hover:bg-white/20"
+            title="登出"
+          >
+            <LogOut size={20} />
+          </button>
+        </div>
       </div>
 
       <div className="px-4 -mt-4 space-y-3">

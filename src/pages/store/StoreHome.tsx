@@ -1,10 +1,13 @@
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useStoreStore } from '@/stores/useStoreStore'
 import { useStaffStore } from '@/stores/useStaffStore'
-import { ClipboardList, DollarSign, Package, PackageCheck, UserCircle } from 'lucide-react'
+import { ClipboardList, DollarSign, Package, PackageCheck, UserCircle, LogOut } from 'lucide-react'
 import { getTodayString, formatDate } from '@/lib/utils'
 import NotificationBell from '@/components/NotificationBell'
+import CriticalAlertModal from '@/components/CriticalAlertModal'
+import type { Notification } from '@/hooks/useNotifications'
+import { clearSession, getSession } from '@/lib/auth'
 
 const menuItems = [
   { icon: ClipboardList, label: '物料盤點', desc: '門店打烊物料清點', path: 'inventory', color: 'bg-brand-mocha' },
@@ -18,7 +21,20 @@ export default function StoreHome() {
   const navigate = useNavigate()
   const storeName = useStoreStore((s) => s.getName(storeId || ''))
   const staffList = useStaffStore((s) => s.getStoreStaff(storeId || ''))
-  const [currentStaff, setCurrentStaff] = useState('')
+  const authSession = getSession()
+  const [currentStaff, setCurrentStaff] = useState(() => authSession?.staffId || '')
+  const [criticalNotifications, setCriticalNotifications] = useState<Notification[]>([])
+  const [criticalDismiss, setCriticalDismiss] = useState<((id: string) => void) | null>(null)
+
+  const handleCriticalNotifications = useCallback((notifications: Notification[], dismiss: (id: string) => void) => {
+    setCriticalNotifications(notifications)
+    setCriticalDismiss(() => dismiss)
+  }, [])
+
+  const handleLogout = () => {
+    clearSession()
+    window.location.reload()
+  }
 
   return (
     <div className="page-container">
@@ -29,7 +45,17 @@ export default function StoreHome() {
             <h1 className="text-2xl font-bold">阿爸的芋圓</h1>
             <p className="text-base opacity-90 mt-1">{storeName}</p>
           </div>
-          <NotificationBell context="store" storeId={storeId} className="text-white" />
+          <div className="flex items-center gap-1">
+            <NotificationBell
+              context="store"
+              storeId={storeId}
+              className="text-white"
+              onCriticalNotifications={handleCriticalNotifications}
+            />
+            <button onClick={handleLogout} className="p-2 rounded-full text-white/80 hover:bg-white/20" title="登出">
+              <LogOut size={20} />
+            </button>
+          </div>
         </div>
       </div>
 
@@ -68,6 +94,14 @@ export default function StoreHome() {
           </button>
         ))}
       </div>
+
+      {/* Critical alert modal */}
+      {criticalDismiss && (
+        <CriticalAlertModal
+          notifications={criticalNotifications}
+          onDismiss={criticalDismiss}
+        />
+      )}
     </div>
   )
 }

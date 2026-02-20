@@ -9,6 +9,8 @@ import { useProductStore } from '@/stores/useProductStore'
 import { useStoreStore } from '@/stores/useStoreStore'
 import { supabase } from '@/lib/supabase'
 import { orderSessionId, getTodayTW, getYesterdayTW, getOrderDeadline, isPastDeadline } from '@/lib/session'
+import { submitWithOffline } from '@/lib/submitWithOffline'
+import { logAudit } from '@/lib/auditLog'
 import { fetchWeather, type WeatherData, type WeatherCondition } from '@/lib/weather'
 import { Send, Lightbulb, Sun, CloudRain, Cloud, CloudSun, Thermometer, Droplets, TrendingUp, TrendingDown, Lock, RefreshCw } from 'lucide-react'
 
@@ -286,33 +288,22 @@ export default function Order() {
 
   const handleSubmit = async () => {
     if (locked) return
-    if (!supabase || !storeId) {
-      showToast('叫貨單已提交成功！')
-      return
-    }
+    if (!storeId) return
 
     setSubmitting(true)
 
-    const { error: sessionErr } = await supabase
-      .from('order_sessions')
-      .upsert({
-        id: sessionId,
-        store_id: storeId,
-        date: today,
-        deadline,
-        almond_1000: almond1000,
-        almond_300: almond300,
-        bowl_k520: bowlK520,
-        bowl_750: bowl750,
-        note,
-        submitted_by: staffId || null,
-        updated_at: new Date().toISOString(),
-      }, { onConflict: 'id' })
-
-    if (sessionErr) {
-      showToast('提交失敗：' + sessionErr.message, 'error')
-      setSubmitting(false)
-      return
+    const session = {
+      id: sessionId,
+      store_id: storeId,
+      date: today,
+      deadline,
+      almond_1000: almond1000,
+      almond_300: almond300,
+      bowl_k520: bowlK520,
+      bowl_750: bowl750,
+      note,
+      submitted_by: staffId || null,
+      updated_at: new Date().toISOString(),
     }
 
     const items = storeProducts
@@ -323,21 +314,25 @@ export default function Order() {
         quantity: parseFloat(orders[p.id]) || 0,
       }))
 
-    if (items.length > 0) {
-      const { error: itemErr } = await supabase
-        .from('order_items')
-        .upsert(items, { onConflict: 'session_id,product_id' })
+    const success = await submitWithOffline({
+      type: 'order',
+      storeId,
+      sessionId,
+      session,
+      items,
+      onSuccess: (msg) => {
+        setIsEdit(true)
+        logAudit('order_submit', storeId, sessionId, { itemCount: items.length })
+        showToast(msg || (isEdit ? '叫貨單已更新！' : '叫貨單已提交成功！'))
+      },
+      onError: (msg) => showToast(msg, 'error'),
+    })
 
-      if (itemErr) {
-        showToast('提交失敗：' + itemErr.message, 'error')
-        setSubmitting(false)
-        return
-      }
+    if (success && !navigator.onLine) {
+      setIsEdit(true)
     }
 
-    setIsEdit(true)
     setSubmitting(false)
-    showToast(isEdit ? '叫貨單已更新！' : '叫貨單已提交成功！')
   }
 
   return (

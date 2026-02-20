@@ -9,6 +9,7 @@ import { useStoreStore } from '@/stores/useStoreStore'
 import { useStaffStore } from '@/stores/useStaffStore'
 import { supabase } from '@/lib/supabase'
 import { shipmentSessionId, getTodayTW, getYesterdayTW } from '@/lib/session'
+import { logAudit } from '@/lib/auditLog'
 import { Truck, AlertTriangle, UserCheck, RefreshCw } from 'lucide-react'
 
 export default function Shipment() {
@@ -191,6 +192,7 @@ export default function Shipment() {
     const staffName = kitchenStaff.find(s => s.id === confirmBy)?.name
     setIsEdit(prev => ({ ...prev, [activeStore]: true }))
     setSubmitting(false)
+    logAudit('shipment_submit', activeStore, sid)
     showToast(`${stores.find(s => s.id === activeStore)?.name}出貨已確認！確認人：${staffName}`)
   }
 

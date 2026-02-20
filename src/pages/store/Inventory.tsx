@@ -10,6 +10,8 @@ import { useStoreStore } from '@/stores/useStoreStore'
 import { useZoneFilteredProducts } from '@/hooks/useZoneFilteredProducts'
 import { supabase } from '@/lib/supabase'
 import { inventorySessionId, getTodayTW } from '@/lib/session'
+import { submitWithOffline } from '@/lib/submitWithOffline'
+import { logAudit } from '@/lib/auditLog'
 import { Send, RefreshCw } from 'lucide-react'
 
 interface InventoryEntry {
@@ -224,32 +226,19 @@ export default function Inventory() {
   }, [data, getEntry])
 
   const handleSubmit = async () => {
-    if (!supabase || !storeId) {
-      showToast('盤點資料已提交成功！')
-      return
-    }
+    if (!storeId) return
 
     setSubmitting(true)
 
-    // Upsert session
-    const { error: sessionErr } = await supabase
-      .from('inventory_sessions')
-      .upsert({
-        id: sessionId,
-        store_id: storeId,
-        date: today,
-        zone_code: currentZone || '',
-        submitted_by: staffId || null,
-        updated_at: new Date().toISOString(),
-      }, { onConflict: 'id' })
-
-    if (sessionErr) {
-      showToast('提交失敗：' + sessionErr.message, 'error')
-      setSubmitting(false)
-      return
+    const session = {
+      id: sessionId,
+      store_id: storeId,
+      date: today,
+      zone_code: currentZone || '',
+      submitted_by: staffId || null,
+      updated_at: new Date().toISOString(),
     }
 
-    // Build items (only those with at least one value)
     const items = storeProducts
       .filter(p => {
         const e = getEntry(p.id)
@@ -266,22 +255,28 @@ export default function Inventory() {
         }
       })
 
-    if (items.length > 0) {
-      const { error: itemErr } = await supabase
-        .from('inventory_items')
-        .upsert(items, { onConflict: 'session_id,product_id' })
+    const success = await submitWithOffline({
+      type: 'inventory',
+      storeId,
+      sessionId,
+      session,
+      items,
+      onSuccess: (msg) => {
+        originalData.current = JSON.parse(JSON.stringify(data))
+        setIsEdit(true)
+        logAudit('inventory_submit', storeId, sessionId, { itemCount: items.length })
+        showToast(msg || (isEdit ? '盤點資料已更新！' : '盤點資料已提交成功！'))
+      },
+      onError: (msg) => showToast(msg, 'error'),
+    })
 
-      if (itemErr) {
-        showToast('提交失敗：' + itemErr.message, 'error')
-        setSubmitting(false)
-        return
-      }
+    if (success && !navigator.onLine) {
+      // offline success — still mark as submitted locally
+      originalData.current = JSON.parse(JSON.stringify(data))
+      setIsEdit(true)
     }
 
-    originalData.current = JSON.parse(JSON.stringify(data))
-    setIsEdit(true)
     setSubmitting(false)
-    showToast(isEdit ? '盤點資料已更新！' : '盤點資料已提交成功！')
   }
 
   return (

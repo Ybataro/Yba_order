@@ -6,8 +6,10 @@ import { useProductStore } from '@/stores/useProductStore'
 import { useMaterialStore } from '@/stores/useMaterialStore'
 import { supabase } from '@/lib/supabase'
 import { getTodayTW } from '@/lib/session'
-import { ChevronDown, ChevronUp, Download } from 'lucide-react'
+import { ChevronDown, ChevronUp } from 'lucide-react'
 import { exportToExcel } from '@/lib/exportExcel'
+import { exportToPdf } from '@/lib/exportPdf'
+import ExportButtons from '@/components/ExportButtons'
 
 type OrderType = 'store' | 'material'
 type ViewMode = 'detail' | 'stats'
@@ -454,8 +456,8 @@ export default function OrderHistory() {
                     共 {stats.totalSessions} 筆叫貨紀錄，{stats.days} 天
                   </p>
                 </div>
-                <button
-                  onClick={() => {
+                <ExportButtons
+                  onExportExcel={() => {
                     const rows = stats.categories.flatMap(cat =>
                       cat.items.map(item => ({
                         '分類': cat.name,
@@ -472,11 +474,33 @@ export default function OrderHistory() {
                       sheetName: '叫貨統計',
                     })
                   }}
-                  className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-brand-mocha text-white text-xs font-medium active:scale-95 transition-transform"
-                >
-                  <Download size={14} />
-                  匯出
-                </button>
+                  onExportPdf={() => {
+                    const rows = stats.categories.flatMap(cat =>
+                      cat.items.map(item => ({
+                        category: cat.name,
+                        name: item.name,
+                        unit: item.unit,
+                        total: item.total,
+                        avg: item.avg,
+                        count: item.count,
+                      }))
+                    )
+                    exportToPdf({
+                      title: '叫貨統計',
+                      dateRange: `${startDate} ~ ${endDate}`,
+                      columns: [
+                        { header: '分類', dataKey: 'category' },
+                        { header: '品名', dataKey: 'name' },
+                        { header: '單位', dataKey: 'unit' },
+                        { header: '合計', dataKey: 'total' },
+                        { header: '日均', dataKey: 'avg' },
+                        { header: '次數', dataKey: 'count' },
+                      ],
+                      data: rows,
+                      fileName: `叫貨統計_${startDate}_${endDate}.pdf`,
+                    })
+                  }}
+                />
               </div>
 
               {/* Column header */}

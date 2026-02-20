@@ -8,8 +8,8 @@ import { useProductStore } from '@/stores/useProductStore'
 
 export interface Notification {
   id: string
-  type: 'low_stock' | 'order_reminder' | 'shipment_pending'
-  severity: 'warning' | 'info'
+  type: 'low_stock' | 'order_reminder' | 'shipment_pending' | 'settlement_reminder' | 'shift_change'
+  severity: 'warning' | 'info' | 'critical'
   icon: string
   title: string
   message: string
@@ -270,6 +270,68 @@ export function useNotifications(
       }
     } catch (err) {
       console.error('[useNotifications] shipment_pending query error:', err)
+    }
+
+    // ── 4. 結帳提醒（21:00 後尚未結帳）─ critical ────
+    if (hour >= 21) {
+      try {
+        if (context === 'store' && storeId) {
+          const { data: todaySettlement } = await supabase
+            .from('settlement_sessions')
+            .select('id')
+            .eq('store_id', storeId)
+            .eq('date', today)
+            .limit(1)
+
+          if (!todaySettlement || todaySettlement.length === 0) {
+            results.push({
+              id: `settlement_reminder_${storeId}_${today}`,
+              type: 'settlement_reminder',
+              severity: 'critical',
+              icon: '🔴',
+              title: '尚未結帳！',
+              message: '已過 21:00，今日尚未提交結帳資料\n請盡快完成每日結帳',
+              link: `/store/${storeId}/settlement`,
+            })
+          }
+        } else if (context === 'kitchen') {
+          const { data: todaySettlements } = await supabase
+            .from('settlement_sessions')
+            .select('store_id')
+            .eq('date', today)
+
+          const settledIds = new Set(todaySettlements?.map((s) => s.store_id) || [])
+          const unsettledStores = stores.filter((s) => !settledIds.has(s.id))
+
+          if (unsettledStores.length > 0) {
+            const names = unsettledStores.map((s) => s.name).join('、')
+            results.push({
+              id: `settlement_reminder_kitchen_${today}`,
+              type: 'settlement_reminder',
+              severity: 'critical',
+              icon: '🔴',
+              title: '門店尚未結帳',
+              message: `${names} 今日尚未結帳`,
+            })
+          }
+        }
+      } catch (err) {
+        console.error('[useNotifications] settlement_reminder query error:', err)
+      }
+    }
+
+    // ── 5. 換班提醒（14:00~15:00）─ info ─────────────
+    if (hour >= 14 && hour < 15) {
+      if (context === 'store' && storeId) {
+        results.push({
+          id: `shift_change_${storeId}_${today}`,
+          type: 'shift_change',
+          severity: 'info',
+          icon: '🔄',
+          title: '換班提醒',
+          message: '現在是換班時段\n請完成交接確認',
+        })
+      }
     }
 
     setNotifications(results)

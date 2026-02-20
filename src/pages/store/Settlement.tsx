@@ -9,6 +9,8 @@ import { useStoreStore } from '@/stores/useStoreStore'
 import { useSettlementStore } from '@/stores/useSettlementStore'
 import { supabase } from '@/lib/supabase'
 import { settlementSessionId, getTodayTW } from '@/lib/session'
+import { submitWithOffline } from '@/lib/submitWithOffline'
+import { logAudit } from '@/lib/auditLog'
 import { formatCurrency } from '@/lib/utils'
 import { Send, RefreshCw } from 'lucide-react'
 
@@ -102,27 +104,16 @@ export default function Settlement() {
   }
 
   const handleSubmit = async () => {
-    if (!supabase || !storeId) {
-      showToast('結帳資料已提交成功！')
-      return
-    }
+    if (!storeId) return
 
     setSubmitting(true)
 
-    const { error: sessionErr } = await supabase
-      .from('settlement_sessions')
-      .upsert({
-        id: sessionId,
-        store_id: storeId,
-        date: today,
-        submitted_by: staffId || null,
-        updated_at: new Date().toISOString(),
-      }, { onConflict: 'id' })
-
-    if (sessionErr) {
-      showToast('提交失敗：' + sessionErr.message, 'error')
-      setSubmitting(false)
-      return
+    const session = {
+      id: sessionId,
+      store_id: storeId,
+      date: today,
+      submitted_by: staffId || null,
+      updated_at: new Date().toISOString(),
     }
 
     const items = settlementFields
@@ -133,21 +124,25 @@ export default function Settlement() {
         value: values[f.id],
       }))
 
-    if (items.length > 0) {
-      const { error: itemErr } = await supabase
-        .from('settlement_values')
-        .upsert(items, { onConflict: 'session_id,field_id' })
+    const success = await submitWithOffline({
+      type: 'settlement',
+      storeId,
+      sessionId,
+      session,
+      items,
+      onSuccess: (msg) => {
+        setIsEdit(true)
+        logAudit('settlement_submit', storeId, sessionId, { itemCount: items.length })
+        showToast(msg || (isEdit ? '結帳資料已更新！' : '結帳資料已提交成功！'))
+      },
+      onError: (msg) => showToast(msg, 'error'),
+    })
 
-      if (itemErr) {
-        showToast('提交失敗：' + itemErr.message, 'error')
-        setSubmitting(false)
-        return
-      }
+    if (success && !navigator.onLine) {
+      setIsEdit(true)
     }
 
-    setIsEdit(true)
     setSubmitting(false)
-    showToast(isEdit ? '結帳資料已更新！' : '結帳資料已提交成功！')
   }
 
   return (

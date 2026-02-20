@@ -8,6 +8,9 @@ import { getTodayTW, getYesterdayTW } from '@/lib/session'
 import { formatCurrency } from '@/lib/utils'
 import { computeSession, type SettlementValue } from '@/lib/settlement'
 import { RefreshCw } from 'lucide-react'
+import { exportToExcel } from '@/lib/exportExcel'
+import { exportToPdf } from '@/lib/exportPdf'
+import ExportButtons from '@/components/ExportButtons'
 
 // ---------- types ----------
 
@@ -292,9 +295,50 @@ export default function BossDashboard() {
             {label}
           </button>
         ))}
-        <span className="ml-auto text-xs text-brand-lotus font-num">
+        <span className="ml-auto text-xs text-brand-lotus font-num mr-2">
           {formatShortDate(selectedDate)}
         </span>
+        <ExportButtons
+          onExportExcel={() => {
+            const rows = storeDetails.map((s) => ({
+              '門店': s.storeName,
+              '已結帳': s.settled ? '是' : '否',
+              '營業額': s.settled ? s.posTotal : 0,
+              '號數': s.settled ? s.orderCount : 0,
+              '人力': s.settled ? s.staffCount : 0,
+              '差額': s.settled ? s.diff : 0,
+            }))
+            exportToExcel({
+              data: rows,
+              fileName: `儀表板_${selectedDate}.xlsx`,
+              sheetName: '各店摘要',
+            })
+          }}
+          onExportPdf={() => {
+            const rows = storeDetails.map((s) => ({
+              store: s.storeName,
+              settled: s.settled ? '是' : '否',
+              posTotal: s.settled ? s.posTotal : 0,
+              orderCount: s.settled ? s.orderCount : 0,
+              staffCount: s.settled ? s.staffCount : 0,
+              diff: s.settled ? s.diff : 0,
+            }))
+            exportToPdf({
+              title: '老闆儀表板',
+              dateRange: selectedDate,
+              columns: [
+                { header: '門店', dataKey: 'store' },
+                { header: '已結帳', dataKey: 'settled' },
+                { header: '營業額', dataKey: 'posTotal' },
+                { header: '號數', dataKey: 'orderCount' },
+                { header: '人力', dataKey: 'staffCount' },
+                { header: '差額', dataKey: 'diff' },
+              ],
+              data: rows,
+              fileName: `儀表板_${selectedDate}.pdf`,
+            })
+          }}
+        />
       </div>
 
       {loading ? (

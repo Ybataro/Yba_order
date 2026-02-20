@@ -7,8 +7,9 @@ import { useProductStore } from '@/stores/useProductStore'
 import { supabase } from '@/lib/supabase'
 import { getTodayTW } from '@/lib/session'
 import { formatCurrency } from '@/lib/utils'
-import { Download } from 'lucide-react'
 import { exportToExcel } from '@/lib/exportExcel'
+import { exportToPdf } from '@/lib/exportPdf'
+import ExportButtons from '@/components/ExportButtons'
 
 type DateRange = 'today' | 'week' | 'month' | 'custom'
 
@@ -363,8 +364,8 @@ export default function OrderPricing() {
       ) : (
         <>
           <div className="flex items-center justify-end px-4 py-2 bg-white border-b border-gray-100">
-            <button
-              onClick={() => {
+            <ExportButtons
+              onExportExcel={() => {
                 const rows = products.map(prod => {
                   const dateMap = matrix[prod.id] || {}
                   const total = productTotals[prod.id] || 0
@@ -386,11 +387,36 @@ export default function OrderPricing() {
                   sheetName: '價格統計',
                 })
               }}
-              className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-brand-mocha text-white text-xs font-medium active:scale-95 transition-transform"
-            >
-              <Download size={14} />
-              匯出 Excel
-            </button>
+              onExportPdf={() => {
+                const rows = products.map(prod => {
+                  const total = productTotals[prod.id] || 0
+                  return {
+                    category: prod.category,
+                    name: prod.name,
+                    total,
+                    ourCost: prod.ourCost || 0,
+                    ourTotal: total * (prod.ourCost || 0),
+                    franchisePrice: prod.franchisePrice || 0,
+                    franchiseTotal: total * (prod.franchisePrice || 0),
+                  }
+                })
+                exportToPdf({
+                  title: '叫貨價格統計',
+                  dateRange: `${startDate} ~ ${endDate}`,
+                  columns: [
+                    { header: '分類', dataKey: 'category' },
+                    { header: '品名', dataKey: 'name' },
+                    { header: '總數', dataKey: 'total' },
+                    { header: '我們價', dataKey: 'ourCost' },
+                    { header: '我們總價', dataKey: 'ourTotal' },
+                    { header: '加盟價', dataKey: 'franchisePrice' },
+                    { header: '加盟總價', dataKey: 'franchiseTotal' },
+                  ],
+                  data: rows,
+                  fileName: `叫貨價格統計_${startDate}_${endDate}.pdf`,
+                })
+              }}
+            />
           </div>
           {/* Scrollable table */}
           <div className="overflow-x-auto">

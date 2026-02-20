@@ -6,8 +6,10 @@ import { useProductStore } from '@/stores/useProductStore'
 import { supabase } from '@/lib/supabase'
 import { getTodayTW } from '@/lib/session'
 import { formatCurrency } from '@/lib/utils'
-import { Download, Sun, Cloud, CloudRain, CloudSun, Info } from 'lucide-react'
+import { Sun, Cloud, CloudRain, CloudSun, Info } from 'lucide-react'
 import { exportToExcel } from '@/lib/exportExcel'
+import { exportToPdf } from '@/lib/exportPdf'
+import ExportButtons from '@/components/ExportButtons'
 import type { WeatherCondition } from '@/lib/weather'
 
 // ── Types ──
@@ -382,8 +384,28 @@ export default function WeatherAnalysis() {
     return texts
   }, [weatherRevenueStats, categoryByWeather, categories])
 
-  // ── Excel export ──
-  const handleExport = () => {
+  // ── Export helpers ──
+  const getExportRows = () => calendarDates.map((date) => {
+    const w = weatherByDate[date]
+    const s = settlementByDate[date]
+    const o = orderByDate[date]
+    const row: Record<string, unknown> = {
+      date,
+      condition: w ? w.condition_text : '-',
+      tempHigh: w ? w.temp_high : '-',
+      tempLow: w ? w.temp_low : '-',
+      rain: w ? w.rain_prob : '-',
+      humidity: w ? w.humidity : '-',
+      revenue: s ? s.posTotal : 0,
+      orders: s ? s.orderCount : 0,
+    }
+    categories.forEach((cat) => {
+      row[`order_${cat}`] = o?.[cat] || 0
+    })
+    return row
+  })
+
+  const handleExportExcel = () => {
     const rows = calendarDates.map((date) => {
       const w = weatherByDate[date]
       const s = settlementByDate[date]
@@ -407,6 +429,27 @@ export default function WeatherAnalysis() {
       data: rows,
       fileName: `天氣用量分析_${startDate}_${endDate}.xlsx`,
       sheetName: '天氣分析',
+    })
+  }
+
+  const handleExportPdf = () => {
+    const rows = getExportRows()
+    const cols = [
+      { header: '日期', dataKey: 'date' },
+      { header: '天氣', dataKey: 'condition' },
+      { header: '最高溫', dataKey: 'tempHigh' },
+      { header: '最低溫', dataKey: 'tempLow' },
+      { header: '降雨%', dataKey: 'rain' },
+      { header: '營業額', dataKey: 'revenue' },
+      { header: '號數', dataKey: 'orders' },
+      ...categories.map((cat) => ({ header: `叫貨_${cat}`, dataKey: `order_${cat}` })),
+    ]
+    exportToPdf({
+      title: '天氣用量分析',
+      dateRange: `${startDate} ~ ${endDate}`,
+      columns: cols,
+      data: rows,
+      fileName: `天氣用量分析_${startDate}_${endDate}.pdf`,
     })
   }
 
@@ -490,15 +533,9 @@ export default function WeatherAnalysis() {
             </div>
           )}
 
-          {/* Export button */}
+          {/* Export buttons */}
           <div className="flex items-center justify-end px-4 py-2 bg-white border-b border-gray-100">
-            <button
-              onClick={handleExport}
-              className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-brand-mocha text-white text-xs font-medium active:scale-95 transition-transform"
-            >
-              <Download size={14} />
-              匯出 Excel
-            </button>
+            <ExportButtons onExportExcel={handleExportExcel} onExportPdf={handleExportPdf} />
           </div>
 
           {/* A. Weather Calendar */}

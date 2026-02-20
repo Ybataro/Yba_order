@@ -5,8 +5,10 @@ import { useStoreStore } from '@/stores/useStoreStore'
 import { supabase } from '@/lib/supabase'
 import { getTodayTW } from '@/lib/session'
 import { formatCurrency } from '@/lib/utils'
-import { ChevronDown, ChevronUp, Download } from 'lucide-react'
+import { ChevronDown, ChevronUp } from 'lucide-react'
 import { exportToExcel } from '@/lib/exportExcel'
+import { exportToPdf } from '@/lib/exportPdf'
+import ExportButtons from '@/components/ExportButtons'
 import { computeSession, type SettlementValue } from '@/lib/settlement'
 
 type ViewMode = 'detail' | 'stats'
@@ -351,8 +353,8 @@ export default function SettlementHistory() {
           ) : (
             <>
               <div className="flex items-center justify-end px-4 py-2 bg-white border-b border-gray-100">
-                <button
-                  onClick={() => {
+                <ExportButtons
+                  onExportExcel={() => {
                     const rows = sessions.map(s => {
                       const c = computeSession(s.settlement_values || [])
                       return {
@@ -372,11 +374,38 @@ export default function SettlementHistory() {
                       sheetName: '結帳歷史',
                     })
                   }}
-                  className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-brand-mocha text-white text-xs font-medium active:scale-95 transition-transform"
-                >
-                  <Download size={14} />
-                  匯出 Excel
-                </button>
+                  onExportPdf={() => {
+                    const rows = sessions.map(s => {
+                      const c = computeSession(s.settlement_values || [])
+                      return {
+                        date: s.date,
+                        store: getStoreName(s.store_id),
+                        posTotal: c.posTotal,
+                        orderCount: c.orderCount,
+                        avgPrice: c.avgPrice,
+                        expectedTotal: c.expectedTotal,
+                        actualTotal: c.actualTotal,
+                        diff: c.diff,
+                      }
+                    })
+                    exportToPdf({
+                      title: '結帳歷史',
+                      dateRange: `${startDate} ~ ${endDate}`,
+                      columns: [
+                        { header: '日期', dataKey: 'date' },
+                        { header: '門店', dataKey: 'store' },
+                        { header: '營業額', dataKey: 'posTotal' },
+                        { header: '號數', dataKey: 'orderCount' },
+                        { header: '客單價', dataKey: 'avgPrice' },
+                        { header: '應結金額', dataKey: 'expectedTotal' },
+                        { header: '實收金額', dataKey: 'actualTotal' },
+                        { header: '差額', dataKey: 'diff' },
+                      ],
+                      data: rows,
+                      fileName: `結帳歷史_${startDate}_${endDate}.pdf`,
+                    })
+                  }}
+                />
               </div>
               <SectionHeader title="月報摘要" icon="■" />
               <div className="bg-white">
