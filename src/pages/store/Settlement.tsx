@@ -82,7 +82,7 @@ export default function Settlement() {
 
     // 鈔票總額（僅紙鈔）
     const billTotal = num('cash1000') * 1000 + num('cash500') * 500 + num('cash100') * 100
-    // 當日實收總金額（紙鈔 + 硬幣）
+    // 當日實收現金（紙鈔 + 硬幣）
     const cashTotal = billTotal + num('coin50') * 50 + num('coin10') * 10 + num('coin5') * 5 + num('coin1') * 1
 
     const safeTotal = num('safe1000') * 1000 + num('safe100') * 100 +
@@ -228,7 +228,7 @@ export default function Settlement() {
                         <span className="text-lg font-bold text-brand-amber font-num">{formatCurrency(computed.billTotal)}</span>
                       </div>
                       <div className="flex items-center justify-between px-4 py-3 bg-brand-camel/10 border-t border-brand-camel/20">
-                        <span className="text-sm font-semibold text-brand-amber">當日實收總金額</span>
+                        <span className="text-sm font-semibold text-brand-amber">當日實收現金</span>
                         <span className="text-lg font-bold text-brand-amber font-num">{formatCurrency(computed.cashTotal)}</span>
                       </div>
                     </>
