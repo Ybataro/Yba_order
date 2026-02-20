@@ -13,7 +13,6 @@ interface PinUser {
   staff_name: string
   role: string
   allowed_stores: string[]
-  pin_hash: string
 }
 
 const roleLabels: Record<string, string> = {
@@ -28,16 +27,16 @@ export default function PinEntry({ onSuccess }: PinEntryProps) {
   const [users, setUsers] = useState<PinUser[]>([])
   const [selectedUser, setSelectedUser] = useState<PinUser | null>(null)
   const [pin, setPin] = useState('')
-  const [error, setError] = useState(false)
+  const [error, setError] = useState('')
   const [checking, setChecking] = useState(false)
   const [loadingUsers, setLoadingUsers] = useState(true)
 
-  // Load active users
+  // Load active users (NO pin_hash exposed to frontend)
   useEffect(() => {
     if (!supabase) return
     supabase
       .from('user_pins')
-      .select('id, staff_id, role, allowed_stores, pin_hash, staff:staff_id(name)')
+      .select('id, staff_id, role, allowed_stores, staff:staff_id(name)')
       .eq('is_active', true)
       .then(({ data }) => {
         if (data) {
@@ -47,7 +46,6 @@ export default function PinEntry({ onSuccess }: PinEntryProps) {
             staff_name: (d.staff as { name: string })?.name || (d.staff_id as string),
             role: d.role as string,
             allowed_stores: (d.allowed_stores as string[]) || [],
-            pin_hash: d.pin_hash as string,
           }))
           mapped.sort((a, b) => (roleOrder[a.role] ?? 9) - (roleOrder[b.role] ?? 9))
           setUsers(mapped)
@@ -58,30 +56,54 @@ export default function PinEntry({ onSuccess }: PinEntryProps) {
 
   const handleDigit = (digit: string) => {
     if (pin.length >= 4 || checking) return
-    setError(false)
+    setError('')
     setPin((prev) => prev + digit)
   }
 
   const handleDelete = () => {
-    setError(false)
+    setError('')
     setPin((prev) => prev.slice(0, -1))
   }
 
   const handleBack = () => {
     setSelectedUser(null)
     setPin('')
-    setError(false)
+    setError('')
   }
 
   const verify = useCallback(async (fullPin: string) => {
-    if (!selectedUser) return
+    if (!selectedUser || !supabase) return
 
     setChecking(true)
     try {
+      // Check crypto.subtle availability
+      if (!crypto?.subtle) {
+        setError('此瀏覽器不支援加密功能，請用 Chrome 或 Safari 開啟')
+        setPin('')
+        setChecking(false)
+        return
+      }
+
       const hashed = await hashPin(fullPin)
 
-      if (hashed !== selectedUser.pin_hash) {
-        setError(true)
+      // Verify via Supabase query (server-side hash comparison)
+      const { data, error: dbErr } = await supabase
+        .from('user_pins')
+        .select('id')
+        .eq('id', selectedUser.id)
+        .eq('pin_hash', hashed)
+        .eq('is_active', true)
+        .maybeSingle()
+
+      if (dbErr) {
+        setError('驗證失敗：' + dbErr.message)
+        setPin('')
+        setChecking(false)
+        return
+      }
+
+      if (!data) {
+        setError('PIN 碼錯誤，請重試')
         setPin('')
         setChecking(false)
         return
@@ -97,8 +119,8 @@ export default function PinEntry({ onSuccess }: PinEntryProps) {
 
       setSession(session)
       onSuccess(session)
-    } catch {
-      setError(true)
+    } catch (e) {
+      setError('系統錯誤：' + (e instanceof Error ? e.message : String(e)))
       setPin('')
     }
     setChecking(false)
@@ -204,7 +226,7 @@ export default function PinEntry({ onSuccess }: PinEntryProps) {
 
       {/* Error message */}
       {error && (
-        <p className="text-red-300 text-sm mb-4">PIN 碼錯誤，請重試</p>
+        <p className="text-red-300 text-sm mb-4 text-center px-4">{error}</p>
       )}
 
       {/* Number pad */}
