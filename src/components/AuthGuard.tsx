@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, type ReactNode } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams } from 'react-router-dom'
 import { getSession, isAuthorized, clearSession, type AuthSession } from '@/lib/auth'
 import { supabase } from '@/lib/supabase'
 import PinEntry from '@/pages/PinEntry'
@@ -24,7 +24,6 @@ function getRoleHomePath(role: string, allowedStores: string[]): string {
 
 export default function AuthGuard({ requiredRole, children }: AuthGuardProps) {
   const { storeId } = useParams<{ storeId: string }>()
-  const navigate = useNavigate()
   const [session, setSessionState] = useState<AuthSession | null>(() => getSession())
   const [hasPins, setHasPins] = useState<boolean | null>(hasPinsCache)
 
@@ -32,20 +31,25 @@ export default function AuthGuard({ requiredRole, children }: AuthGuardProps) {
     setSessionState(s)
     // After login, if role doesn't match current route, redirect to correct area
     if (!isAuthorized(s, requiredRole, storeId)) {
-      navigate(getRoleHomePath(s.role, s.allowedStores), { replace: true })
+      window.location.href = getRoleHomePath(s.role, s.allowedStores)
     }
-  }, [requiredRole, storeId, navigate])
+  }, [requiredRole, storeId])
 
   // Check if user_pins table has any records
   useEffect(() => {
-    if (!supabase || hasPinsCache !== null) return
+    if (!supabase || hasPinsCache !== null) {
+      // Ensure local state matches cache
+      if (hasPinsCache !== null && hasPins !== hasPinsCache) {
+        setHasPins(hasPinsCache)
+      }
+      return
+    }
 
     supabase
       .from('user_pins')
       .select('id', { count: 'exact', head: true })
       .then(({ count, error }) => {
         if (error) {
-          // Table might not exist yet → skip auth
           hasPinsCache = false
           setHasPins(false)
           return
@@ -54,13 +58,19 @@ export default function AuthGuard({ requiredRole, children }: AuthGuardProps) {
         hasPinsCache = result
         setHasPins(result)
       })
-  }, [])
+  }, [hasPins])
 
   // No Supabase → skip auth
   if (!supabase) return <>{children}</>
 
-  // Still checking → show nothing (brief flash)
-  if (hasPins === null) return null
+  // Still checking → show loading
+  if (hasPins === null) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-sm text-brand-lotus">載入中...</p>
+      </div>
+    )
+  }
 
   // No PINs configured yet → skip auth (setup mode)
   if (!hasPins) return <>{children}</>
@@ -83,7 +93,7 @@ export default function AuthGuard({ requiredRole, children }: AuthGuardProps) {
           </p>
           <div className="flex flex-col gap-3">
             <button
-              onClick={() => navigate(homePath, { replace: true })}
+              onClick={() => { window.location.href = homePath }}
               className="px-6 py-2 rounded-xl bg-brand-mocha text-white text-sm font-medium active:scale-95 transition-transform"
             >
               前往我的首頁

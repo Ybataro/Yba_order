@@ -11,11 +11,16 @@ export default function OfflineBanner() {
   const [syncMessage, setSyncMessage] = useState('')
   const wasOfflineRef = useRef(false)
 
-  // Poll pending count
+  // Poll pending count (with error handling for IndexedDB)
   useEffect(() => {
     const check = async () => {
-      const count = await getPendingCount()
-      setPendingCount(count)
+      try {
+        const count = await getPendingCount()
+        setPendingCount(count)
+      } catch {
+        // IndexedDB not available (e.g., private browsing)
+        setPendingCount(0)
+      }
     }
     check()
     const interval = setInterval(check, 10_000)
