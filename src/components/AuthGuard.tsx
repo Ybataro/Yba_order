@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, type ReactNode } from 'react'
-import { useParams } from 'react-router-dom'
+import { useParams, useLocation } from 'react-router-dom'
 import { getSession, isAuthorized, clearSession, type AuthSession } from '@/lib/auth'
 import { supabase } from '@/lib/supabase'
 import PinEntry from '@/pages/PinEntry'
@@ -24,8 +24,15 @@ function getRoleHomePath(role: string, allowedStores: string[]): string {
 
 export default function AuthGuard({ requiredRole, children }: AuthGuardProps) {
   const { storeId } = useParams<{ storeId: string }>()
+  const location = useLocation() // Subscribe to route changes — forces re-render on navigation
   const [session, setSessionState] = useState<AuthSession | null>(() => getSession())
   const [hasPins, setHasPins] = useState<boolean | null>(hasPinsCache)
+
+  // Re-read session from storage whenever route changes (handles React reusing this component)
+  useEffect(() => {
+    const current = getSession()
+    setSessionState(current)
+  }, [location.pathname])
 
   const handleSuccess = useCallback((s: AuthSession) => {
     setSessionState(s)
