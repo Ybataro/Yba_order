@@ -28,15 +28,16 @@ export default function AuthGuard({ requiredRole, children }: AuthGuardProps) {
     supabase
       .from('user_pins')
       .select('id', { count: 'exact', head: true })
-      .then(({ count }) => {
+      .then(({ count, error }) => {
+        if (error) {
+          // Table might not exist yet → skip auth
+          hasPinsCache = false
+          setHasPins(false)
+          return
+        }
         const result = (count ?? 0) > 0
         hasPinsCache = result
         setHasPins(result)
-      })
-      .catch(() => {
-        // Table might not exist yet → skip auth
-        hasPinsCache = false
-        setHasPins(false)
       })
   }, [])
 

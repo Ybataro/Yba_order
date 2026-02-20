@@ -112,13 +112,14 @@ export default function ProductionSchedule() {
       const demandDays = new Set<string>()
       const dailyMap: Record<string, Record<string, number>> = {}
 
-      ;(orderRes.data || []).forEach((item: { product_id: string; quantity: number; order_sessions: { date: string } }) => {
+      ;(orderRes.data || []).forEach((item: { product_id: string; quantity: number; order_sessions: { date: string }[] }) => {
+        const sessionDate = item.order_sessions?.[0]?.date
+        if (!sessionDate) return
         demandTotals[item.product_id] = (demandTotals[item.product_id] || 0) + (item.quantity || 0)
-        demandDays.add(item.order_sessions.date)
+        demandDays.add(sessionDate)
 
-        const date = item.order_sessions.date
-        if (!dailyMap[date]) dailyMap[date] = {}
-        dailyMap[date][item.product_id] = (dailyMap[date][item.product_id] || 0) + (item.quantity || 0)
+        if (!dailyMap[sessionDate]) dailyMap[sessionDate] = {}
+        dailyMap[sessionDate][item.product_id] = (dailyMap[sessionDate][item.product_id] || 0) + (item.quantity || 0)
       })
 
       const days = Math.max(demandDays.size, 1)
