@@ -1,15 +1,60 @@
 import { useState, useEffect, useCallback } from 'react'
 import { hashPin, setSession, type AuthSession } from '@/lib/auth'
 import { supabase } from '@/lib/supabase'
+import { UserCircle } from 'lucide-react'
 
 interface PinEntryProps {
   onSuccess: (session: AuthSession) => void
 }
 
+interface PinUser {
+  id: string
+  staff_id: string
+  staff_name: string
+  role: string
+  allowed_stores: string[]
+  pin_hash: string
+}
+
+const roleLabels: Record<string, string> = {
+  admin: '管理者',
+  kitchen: '央廚',
+  store: '門店',
+}
+
+const roleOrder: Record<string, number> = { admin: 0, kitchen: 1, store: 2 }
+
 export default function PinEntry({ onSuccess }: PinEntryProps) {
+  const [users, setUsers] = useState<PinUser[]>([])
+  const [selectedUser, setSelectedUser] = useState<PinUser | null>(null)
   const [pin, setPin] = useState('')
   const [error, setError] = useState(false)
   const [checking, setChecking] = useState(false)
+  const [loadingUsers, setLoadingUsers] = useState(true)
+
+  // Load active users
+  useEffect(() => {
+    if (!supabase) return
+    supabase
+      .from('user_pins')
+      .select('id, staff_id, role, allowed_stores, pin_hash, staff:staff_id(name)')
+      .eq('is_active', true)
+      .then(({ data }) => {
+        if (data) {
+          const mapped: PinUser[] = data.map((d: Record<string, unknown>) => ({
+            id: d.id as string,
+            staff_id: d.staff_id as string,
+            staff_name: (d.staff as { name: string })?.name || (d.staff_id as string),
+            role: d.role as string,
+            allowed_stores: (d.allowed_stores as string[]) || [],
+            pin_hash: d.pin_hash as string,
+          }))
+          mapped.sort((a, b) => (roleOrder[a.role] ?? 9) - (roleOrder[b.role] ?? 9))
+          setUsers(mapped)
+        }
+        setLoadingUsers(false)
+      })
+  }, [])
 
   const handleDigit = (digit: string) => {
     if (pin.length >= 4 || checking) return
@@ -22,22 +67,20 @@ export default function PinEntry({ onSuccess }: PinEntryProps) {
     setPin((prev) => prev.slice(0, -1))
   }
 
+  const handleBack = () => {
+    setSelectedUser(null)
+    setPin('')
+    setError(false)
+  }
+
   const verify = useCallback(async (fullPin: string) => {
-    if (!supabase) return
+    if (!selectedUser) return
 
     setChecking(true)
     try {
       const hashed = await hashPin(fullPin)
 
-      const { data, error: dbErr } = await supabase
-        .from('user_pins')
-        .select('*, staff:staff_id(id, name)')
-        .eq('pin_hash', hashed)
-        .eq('is_active', true)
-        .limit(1)
-        .single()
-
-      if (dbErr || !data) {
+      if (hashed !== selectedUser.pin_hash) {
         setError(true)
         setPin('')
         setChecking(false)
@@ -45,10 +88,10 @@ export default function PinEntry({ onSuccess }: PinEntryProps) {
       }
 
       const session: AuthSession = {
-        staffId: data.staff_id,
-        staffName: (data.staff as { id: string; name: string })?.name || '',
-        role: data.role as 'admin' | 'kitchen' | 'store',
-        allowedStores: data.allowed_stores || [],
+        staffId: selectedUser.staff_id,
+        staffName: selectedUser.staff_name,
+        role: selectedUser.role as 'admin' | 'kitchen' | 'store',
+        allowedStores: selectedUser.allowed_stores,
         loginAt: Date.now(),
       }
 
@@ -59,7 +102,7 @@ export default function PinEntry({ onSuccess }: PinEntryProps) {
       setPin('')
     }
     setChecking(false)
-  }, [onSuccess])
+  }, [selectedUser, onSuccess])
 
   // Auto-verify when 4 digits entered
   useEffect(() => {
@@ -70,16 +113,81 @@ export default function PinEntry({ onSuccess }: PinEntryProps) {
 
   const digits = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', 'del']
 
+  // ── Step 1: Select user ──
+  if (!selectedUser) {
+    // Group users by role
+    const grouped = new Map<string, PinUser[]>()
+    for (const u of users) {
+      const group = grouped.get(u.role) || []
+      group.push(u)
+      grouped.set(u.role, group)
+    }
+
+    return (
+      <div className="min-h-screen flex flex-col bg-gradient-to-b from-brand-lotus to-brand-mocha px-6">
+        <div className="text-center pt-16 pb-8">
+          <h1 className="text-3xl font-bold text-white mb-2">阿爸的芋圓</h1>
+          <p className="text-white/70 text-sm">請選擇您的身分</p>
+        </div>
+
+        {loadingUsers ? (
+          <p className="text-center text-white/60 text-sm py-10">載入中...</p>
+        ) : users.length === 0 ? (
+          <p className="text-center text-white/60 text-sm py-10">尚未設定任何 PIN 碼</p>
+        ) : (
+          <div className="flex-1 overflow-y-auto pb-8 space-y-4">
+            {Array.from(grouped.entries()).map(([role, members]) => (
+              <div key={role}>
+                <p className="text-white/50 text-xs font-medium mb-2 px-1">
+                  {roleLabels[role] || role}
+                </p>
+                <div className="space-y-2">
+                  {members.map((user) => (
+                    <button
+                      key={user.id}
+                      onClick={() => setSelectedUser(user)}
+                      className="w-full flex items-center gap-3 bg-white/15 backdrop-blur-sm rounded-2xl px-4 py-3.5 text-left active:bg-white/25 transition-colors"
+                    >
+                      <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center shrink-0">
+                        <UserCircle size={24} className="text-white" />
+                      </div>
+                      <div>
+                        <p className="text-white font-semibold text-base">{user.staff_name}</p>
+                        <p className="text-white/50 text-xs">{roleLabels[user.role] || user.role}</p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  // ── Step 2: Enter PIN for selected user ──
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-brand-lotus to-brand-mocha px-6">
-      {/* Brand */}
-      <div className="text-center mb-10">
-        <h1 className="text-3xl font-bold text-white mb-2">阿爸的芋圓</h1>
-        <p className="text-white/70 text-sm">請輸入 PIN 碼登入</p>
+      {/* User info */}
+      <div className="text-center mb-8">
+        <div className="w-16 h-16 rounded-full bg-white/20 flex items-center justify-center mx-auto mb-3">
+          <UserCircle size={36} className="text-white" />
+        </div>
+        <h2 className="text-xl font-bold text-white">{selectedUser.staff_name}</h2>
+        <p className="text-white/60 text-sm">{roleLabels[selectedUser.role] || selectedUser.role}</p>
+        <button
+          onClick={handleBack}
+          className="mt-2 text-white/50 text-xs underline"
+        >
+          切換身分
+        </button>
       </div>
 
+      <p className="text-white/80 text-sm mb-4">請輸入 PIN 碼</p>
+
       {/* PIN dots */}
-      <div className={`flex gap-4 mb-8 ${error ? 'animate-shake' : ''}`}>
+      <div className={`flex gap-4 mb-6 ${error ? 'animate-shake' : ''}`}>
         {[0, 1, 2, 3].map((i) => (
           <div
             key={i}
