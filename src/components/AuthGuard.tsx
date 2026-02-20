@@ -1,12 +1,11 @@
-import { useState, useEffect, useCallback, type ReactNode } from 'react'
-import { useParams, useLocation } from 'react-router-dom'
+import { useState, useEffect, useCallback } from 'react'
+import { useParams, Outlet } from 'react-router-dom'
 import { getSession, isAuthorized, clearSession, type AuthSession } from '@/lib/auth'
 import { supabase } from '@/lib/supabase'
 import PinEntry from '@/pages/PinEntry'
 
 interface AuthGuardProps {
   requiredRole: 'admin' | 'kitchen' | 'store'
-  children: ReactNode
 }
 
 // Module-level cache: null = not checked, true/false = result
@@ -22,17 +21,10 @@ function getRoleHomePath(role: string, allowedStores: string[]): string {
   }
 }
 
-export default function AuthGuard({ requiredRole, children }: AuthGuardProps) {
+export default function AuthGuard({ requiredRole }: AuthGuardProps) {
   const { storeId } = useParams<{ storeId: string }>()
-  const location = useLocation() // Subscribe to route changes — forces re-render on navigation
   const [session, setSessionState] = useState<AuthSession | null>(() => getSession())
   const [hasPins, setHasPins] = useState<boolean | null>(hasPinsCache)
-
-  // Re-read session from storage whenever route changes (handles React reusing this component)
-  useEffect(() => {
-    const current = getSession()
-    setSessionState(current)
-  }, [location.pathname])
 
   const handleSuccess = useCallback((s: AuthSession) => {
     setSessionState(s)
@@ -45,7 +37,6 @@ export default function AuthGuard({ requiredRole, children }: AuthGuardProps) {
   // Check if user_pins table has any records
   useEffect(() => {
     if (!supabase || hasPinsCache !== null) {
-      // Ensure local state matches cache
       if (hasPinsCache !== null && hasPins !== hasPinsCache) {
         setHasPins(hasPinsCache)
       }
@@ -68,7 +59,7 @@ export default function AuthGuard({ requiredRole, children }: AuthGuardProps) {
   }, [hasPins])
 
   // No Supabase → skip auth
-  if (!supabase) return <>{children}</>
+  if (!supabase) return <Outlet />
 
   // Still checking → show loading
   if (hasPins === null) {
@@ -80,7 +71,7 @@ export default function AuthGuard({ requiredRole, children }: AuthGuardProps) {
   }
 
   // No PINs configured yet → skip auth (setup mode)
-  if (!hasPins) return <>{children}</>
+  if (!hasPins) return <Outlet />
 
   // No session → show PIN entry
   if (!session) {
@@ -120,5 +111,5 @@ export default function AuthGuard({ requiredRole, children }: AuthGuardProps) {
     )
   }
 
-  return <>{children}</>
+  return <Outlet />
 }
