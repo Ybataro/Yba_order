@@ -1,5 +1,4 @@
 import { useState, useRef, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { Bell, Clock } from 'lucide-react'
 import { useNotifications, type Notification } from '@/hooks/useNotifications'
 import { cn } from '@/lib/utils'
@@ -15,7 +14,6 @@ interface NotificationBellProps {
 }
 
 export default function NotificationBell({ context, storeId, className, onCriticalNotifications }: NotificationBellProps) {
-  const navigate = useNavigate()
   const [open, setOpen] = useState(false)
   const [showHistory, setShowHistory] = useState(false)
   const panelRef = useRef<HTMLDivElement>(null)
@@ -73,7 +71,7 @@ export default function NotificationBell({ context, storeId, className, onCritic
     }
     setOpen(false)
     setShowHistory(false)
-    if (link) navigate(link)
+    if (link) window.location.href = link
   }
 
   function handleDismissAll() {

@@ -1,5 +1,4 @@
 import { ArrowLeft } from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
 import { formatDate, getTodayString } from '@/lib/utils'
 
 interface TopNavProps {
@@ -10,13 +9,11 @@ interface TopNavProps {
 }
 
 export function TopNav({ title, showBack = true, backTo, date }: TopNavProps) {
-  const navigate = useNavigate()
-
   return (
     <div className="top-nav">
       <div className="flex items-center gap-3">
         {showBack && (
-          <button onClick={() => backTo ? navigate(backTo) : navigate(-1)} className="p-1 -ml-1 active:opacity-70">
+          <button onClick={() => backTo ? window.location.href = backTo : window.history.back()} className="p-1 -ml-1 active:opacity-70">
             <ArrowLeft size={22} />
           </button>
         )}

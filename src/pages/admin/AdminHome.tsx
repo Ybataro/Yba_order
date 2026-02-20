@@ -1,4 +1,3 @@
-import { useNavigate } from 'react-router-dom'
 import { Package, Warehouse, Users, Store, Receipt, QrCode, Layers, ClipboardList, FileText, DollarSign, CloudSun, ChefHat, LayoutDashboard, LogOut, KeyRound, ScrollText } from 'lucide-react'
 import { getTodayString, formatDate } from '@/lib/utils'
 import { useStoreStore } from '@/stores/useStoreStore'
@@ -22,7 +21,6 @@ const menuItems = [
 ]
 
 export default function AdminHome() {
-  const navigate = useNavigate()
   const stores = useStoreStore((s) => s.items)
 
   return (
@@ -48,7 +46,7 @@ export default function AdminHome() {
         {menuItems.map((item) => (
           <button
             key={item.path}
-            onClick={() => navigate(item.path)}
+            onClick={() => { window.location.href = item.path }}
             className="card w-full flex items-center gap-4 active:scale-[0.98] transition-transform text-left"
           >
             <div className={`${item.color} w-12 h-12 rounded-xl flex items-center justify-center text-white shrink-0`}>
@@ -69,7 +67,7 @@ export default function AdminHome() {
           {stores.map((s) => (
             <button
               key={s.id}
-              onClick={() => navigate(`/store/${s.id}`)}
+              onClick={() => { window.location.href = `/store/${s.id}` }}
               className="card flex flex-col items-center gap-1.5 py-3 active:scale-[0.97] transition-transform"
             >
               <div className="bg-brand-lotus w-9 h-9 rounded-lg flex items-center justify-center text-white">
@@ -79,7 +77,7 @@ export default function AdminHome() {
             </button>
           ))}
           <button
-            onClick={() => navigate('/kitchen')}
+            onClick={() => { window.location.href = '/kitchen' }}
             className="card flex flex-col items-center gap-1.5 py-3 active:scale-[0.97] transition-transform"
           >
             <div className="bg-brand-silver w-9 h-9 rounded-lg flex items-center justify-center text-white">

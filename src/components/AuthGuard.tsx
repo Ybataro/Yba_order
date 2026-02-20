@@ -8,8 +8,25 @@ interface AuthGuardProps {
   requiredRole: 'admin' | 'kitchen' | 'store'
 }
 
-// Module-level cache: null = not checked, true/false = result
-let hasPinsCache: boolean | null = null
+const HASPINS_KEY = 'yba_has_pins'
+
+// Read hasPins from sessionStorage for instant page loads
+function getCachedHasPins(): boolean | null {
+  try {
+    const v = sessionStorage.getItem(HASPINS_KEY)
+    if (v === 'true') return true
+    if (v === 'false') return false
+    return null
+  } catch {
+    return null
+  }
+}
+
+function setCachedHasPins(val: boolean) {
+  try {
+    sessionStorage.setItem(HASPINS_KEY, String(val))
+  } catch { /* ignore */ }
+}
 
 // Get the home path for a given role
 function getRoleHomePath(role: string, allowedStores: string[]): string {
@@ -24,11 +41,10 @@ function getRoleHomePath(role: string, allowedStores: string[]): string {
 export default function AuthGuard({ requiredRole }: AuthGuardProps) {
   const { storeId } = useParams<{ storeId: string }>()
   const [session, setSessionState] = useState<AuthSession | null>(() => getSession())
-  const [hasPins, setHasPins] = useState<boolean | null>(hasPinsCache)
+  const [hasPins, setHasPins] = useState<boolean | null>(() => getCachedHasPins())
 
   const handleSuccess = useCallback((s: AuthSession) => {
     setSessionState(s)
-    // After login, if role doesn't match current route, redirect to correct area
     if (!isAuthorized(s, requiredRole, storeId)) {
       window.location.href = getRoleHomePath(s.role, s.allowedStores)
     }
@@ -36,10 +52,12 @@ export default function AuthGuard({ requiredRole }: AuthGuardProps) {
 
   // Check if user_pins table has any records
   useEffect(() => {
-    if (!supabase || hasPinsCache !== null) {
-      if (hasPinsCache !== null && hasPins !== hasPinsCache) {
-        setHasPins(hasPinsCache)
-      }
+    if (!supabase) return
+
+    // Already have cached result
+    const cached = getCachedHasPins()
+    if (cached !== null) {
+      if (hasPins !== cached) setHasPins(cached)
       return
     }
 
@@ -48,20 +66,18 @@ export default function AuthGuard({ requiredRole }: AuthGuardProps) {
       .select('id', { count: 'exact', head: true })
       .then(({ count, error }) => {
         if (error) {
-          hasPinsCache = false
+          setCachedHasPins(false)
           setHasPins(false)
           return
         }
         const result = (count ?? 0) > 0
-        hasPinsCache = result
+        setCachedHasPins(result)
         setHasPins(result)
       })
   }, [hasPins])
 
-  // No Supabase → skip auth
   if (!supabase) return <Outlet />
 
-  // Still checking → show loading
   if (hasPins === null) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -70,15 +86,12 @@ export default function AuthGuard({ requiredRole }: AuthGuardProps) {
     )
   }
 
-  // No PINs configured yet → skip auth (setup mode)
   if (!hasPins) return <Outlet />
 
-  // No session → show PIN entry
   if (!session) {
     return <PinEntry onSuccess={handleSuccess} />
   }
 
-  // Check authorization — redirect to correct area instead of blocking
   if (!isAuthorized(session, requiredRole, storeId)) {
     const homePath = getRoleHomePath(session.role, session.allowedStores)
     return (
@@ -86,9 +99,7 @@ export default function AuthGuard({ requiredRole }: AuthGuardProps) {
         <div className="text-center">
           <p className="text-4xl mb-4">🔒</p>
           <h2 className="text-lg font-bold text-brand-oak mb-2">權限不足</h2>
-          <p className="text-sm text-brand-lotus mb-4">
-            您的帳號無法存取此頁面
-          </p>
+          <p className="text-sm text-brand-lotus mb-4">您的帳號無法存取此頁面</p>
           <div className="flex flex-col gap-3">
             <button
               onClick={() => { window.location.href = homePath }}
@@ -97,10 +108,7 @@ export default function AuthGuard({ requiredRole }: AuthGuardProps) {
               前往我的首頁
             </button>
             <button
-              onClick={() => {
-                clearSession()
-                setSessionState(null)
-              }}
+              onClick={() => { clearSession(); setSessionState(null) }}
               className="px-6 py-2 rounded-xl bg-brand-lotus text-white text-sm font-medium active:scale-95 transition-transform"
             >
               切換帳號

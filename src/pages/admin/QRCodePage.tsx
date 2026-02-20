@@ -1,5 +1,4 @@
 import { useState, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { QRCodeSVG } from 'qrcode.react'
 import { ArrowLeft, Printer, ExternalLink } from 'lucide-react'
 import { useStoreStore } from '@/stores/useStoreStore'
@@ -11,7 +10,6 @@ interface QRItem {
 }
 
 export default function QRCodePage() {
-  const navigate = useNavigate()
   const stores = useStoreStore((s) => s.items)
   const getStoreZones = useZoneStore((s) => s.getStoreZones)
   const [baseUrl, setBaseUrl] = useState(window.location.origin)
@@ -91,7 +89,7 @@ export default function QRCodePage() {
     <div className="page-container">
       {/* Header */}
       <div className="bg-brand-oak text-white px-4 pt-12 pb-6">
-        <button onClick={() => navigate('/admin')} className="flex items-center gap-1 text-sm opacity-80 mb-3">
+        <button onClick={() => { window.location.href = '/admin' }} className="flex items-center gap-1 text-sm opacity-80 mb-3">
           <ArrowLeft size={16} />
           返回後台
         </button>

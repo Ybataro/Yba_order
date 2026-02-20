@@ -1,5 +1,4 @@
 import { useState, useCallback } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { ClipboardList, Truck, Package, Box, ShoppingCart, LogOut, CalendarClock } from 'lucide-react'
 import { getTodayString, formatDate } from '@/lib/utils'
 import NotificationBell from '@/components/NotificationBell'
@@ -17,7 +16,6 @@ const menuItems = [
 ]
 
 export default function KitchenHome() {
-  const navigate = useNavigate()
   const [criticalNotifications, setCriticalNotifications] = useState<Notification[]>([])
   const [criticalDismiss, setCriticalDismiss] = useState<((id: string) => void) | null>(null)
 
@@ -55,7 +53,7 @@ export default function KitchenHome() {
 
       <div className="px-4 -mt-4 space-y-3">
         {menuItems.map((item) => (
-          <button key={item.path} onClick={() => navigate(item.path)}
+          <button key={item.path} onClick={() => { window.location.href = item.path }}
             className="card w-full flex items-center gap-4 active:scale-[0.98] transition-transform text-left">
             <div className={`${item.color} w-12 h-12 rounded-xl flex items-center justify-center text-white shrink-0`}>
               <item.icon size={24} />
