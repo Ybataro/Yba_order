@@ -1,7 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useParams } from 'react-router-dom'
 import { TopNav } from '@/components/TopNav'
-import { SectionHeader } from '@/components/SectionHeader'
 import { useProductStore } from '@/stores/useProductStore'
 import { useStoreStore } from '@/stores/useStoreStore'
 import { supabase } from '@/lib/supabase'
