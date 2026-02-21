@@ -356,9 +356,9 @@ export default function Order() {
       })
 
       // 央廚休息日：週三(3)、週日(0) 公休
-      // 週二(2)、週六(6) 叫貨需 ×2（需撐 2 天）
+      // 週一(1)、週五(5) 叫貨需 ×2（隔天到貨後，再隔天央廚休息無法叫貨，需撐 2 天）
       const orderDayOfWeek = new Date(today + 'T00:00:00+08:00').getDay()
-      const restDayMultiplier = (orderDayOfWeek === 2 || orderDayOfWeek === 6) ? 2 : 1
+      const restDayMultiplier = (orderDayOfWeek === 1 || orderDayOfWeek === 5) ? 2 : 1
 
       // 計算日均 × 天氣係數 × 休息日倍率
       const result: Record<string, number> = {}
@@ -388,10 +388,10 @@ export default function Order() {
     showToast('已套用全部建議叫貨量', 'info')
   }
 
-  // 判斷今日是否為央廚休息日前一天（週二/週六叫貨需 ×2）
+  // 判斷今日是否為央廚休息日前一天（週一/週五叫貨需 ×2）
   const isRestDayEve = (() => {
     const dow = new Date(today + 'T00:00:00+08:00').getDay()
-    return dow === 2 || dow === 6
+    return dow === 1 || dow === 5
   })()
 
   const productsByCategory = useMemo(() => {
