@@ -295,7 +295,7 @@ export default function Order() {
     const session = {
       id: sessionId,
       store_id: storeId,
-      date: today,
+      date: orderDate,
       deadline,
       almond_1000: almond1000,
       almond_300: almond300,

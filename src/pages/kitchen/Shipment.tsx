@@ -8,7 +8,7 @@ import { useProductStore } from '@/stores/useProductStore'
 import { useStoreStore } from '@/stores/useStoreStore'
 import { useStaffStore } from '@/stores/useStaffStore'
 import { supabase } from '@/lib/supabase'
-import { shipmentSessionId, getTodayTW, getYesterdayTW } from '@/lib/session'
+import { shipmentSessionId, getTodayTW } from '@/lib/session'
 import { logAudit } from '@/lib/auditLog'
 import { Truck, AlertTriangle, UserCheck, RefreshCw } from 'lucide-react'
 
@@ -23,7 +23,7 @@ export default function Shipment() {
   const [confirmBy, setConfirmBy] = useState('')
 
   const today = getTodayTW()
-  const orderDate = getYesterdayTW() // 叫貨是隔日到貨，所以查昨日的叫貨
+  const orderDate = today // 查今日叫貨（門店今天下單，央廚今天可見，隔日出貨）
 
   // 各店叫貨量（從 order_sessions/order_items 載入）
   const [orderQty, setOrderQty] = useState<Record<string, Record<string, number>>>({})

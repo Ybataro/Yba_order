@@ -77,7 +77,7 @@ export default function BossDashboard() {
   const products = useProductStore((s) => s.items)
 
   const today = getTodayTW()
-  const yesterday = getYesterdayTW() // 叫貨是隔日到貨，查昨日叫貨
+  const yesterday = getYesterdayTW()
   const sevenDaysAgo = getDateNDaysAgo(6)
 
   const [viewDate, setViewDate] = useState<'today' | 'yesterday'>('today')
@@ -102,11 +102,11 @@ export default function BossDashboard() {
         .gte('date', sevenDaysAgo)
         .lte('date', today)
         .order('date', { ascending: false }),
-      // B. Order sessions (yesterday — 隔日到貨)
+      // B. Order sessions (today — 門店今天叫的貨)
       supabase
         .from('order_sessions')
         .select('id, store_id, date')
-        .eq('date', yesterday),
+        .eq('date', today),
       // C. Shipment sessions (today)
       supabase
         .from('shipment_sessions')
