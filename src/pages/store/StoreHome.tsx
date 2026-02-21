@@ -22,7 +22,10 @@ export default function StoreHome() {
   const storeName = useStoreStore((s) => s.getName(storeId || ''))
   const staffList = useStaffStore((s) => s.getStoreStaff(storeId || ''))
   const authSession = getSession()
-  const [currentStaff, setCurrentStaff] = useState(() => authSession?.staffId || '')
+  const [currentStaff, setCurrentStaff] = useState(() => {
+    const sid = authSession?.staffId || ''
+    return staffList.some((s) => s.id === sid) ? sid : ''
+  })
   const [criticalNotifications, setCriticalNotifications] = useState<Notification[]>([])
   const [criticalDismiss, setCriticalDismiss] = useState<((id: string) => void) | null>(null)
 

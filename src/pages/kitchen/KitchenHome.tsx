@@ -20,7 +20,10 @@ const menuItems = [
 export default function KitchenHome() {
   const kitchenStaff = useStaffStore((s) => s.kitchenStaff)
   const authSession = getSession()
-  const [currentStaff, setCurrentStaff] = useState(() => authSession?.staffId || '')
+  const [currentStaff, setCurrentStaff] = useState(() => {
+    const sid = authSession?.staffId || ''
+    return kitchenStaff.some((s) => s.id === sid) ? sid : ''
+  })
   const [criticalNotifications, setCriticalNotifications] = useState<Notification[]>([])
   const [criticalDismiss, setCriticalDismiss] = useState<((id: string) => void) | null>(null)
 
