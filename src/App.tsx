@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { ToastProvider } from '@/components/Toast'
 import { useInitStores } from '@/hooks/useInitStores'
 import AuthGuard from '@/components/AuthGuard'
+import ErrorBoundary from '@/components/ErrorBoundary'
 import OfflineBanner from '@/components/OfflineBanner'
 
 // Store pages
@@ -56,6 +57,7 @@ function App() {
   useInitStores()
 
   return (
+    <ErrorBoundary>
     <BrowserRouter>
       <ToastProvider>
         <div className="max-w-lg mx-auto min-h-screen" style={{ backgroundColor: 'var(--color-page-bg)' }}>
@@ -114,6 +116,7 @@ function App() {
         </div>
       </ToastProvider>
     </BrowserRouter>
+    </ErrorBoundary>
   )
 }
 
