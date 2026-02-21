@@ -22,7 +22,14 @@ export function getTodayString(): string {
   return new Date().toISOString().split('T')[0]
 }
 
+const WEEKDAYS = ['日', '一', '二', '三', '四', '五', '六']
+
+export function getWeekday(date: string): string {
+  const d = new Date(date + 'T00:00:00')
+  return WEEKDAYS[d.getDay()]
+}
+
 export function formatDate(date: string): string {
-  const d = new Date(date)
-  return `${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}`
+  const d = new Date(date + 'T00:00:00')
+  return `${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}（${WEEKDAYS[d.getDay()]}）`
 }

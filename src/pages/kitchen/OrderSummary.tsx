@@ -6,7 +6,7 @@ import { useStoreStore } from '@/stores/useStoreStore'
 import { supabase } from '@/lib/supabase'
 import { getTodayTW } from '@/lib/session'
 import { Printer, MessageSquareText } from 'lucide-react'
-import { getTodayString } from '@/lib/utils'
+import { getTodayString, formatDate } from '@/lib/utils'
 
 const fixedNoteItems = [
   { id: 'almond1000', label: '杏仁茶瓶 1000ml', unit: '個' },
@@ -202,7 +202,7 @@ export default function OrderSummary() {
       <div className="print-only" style={{ display: 'none' }}>
         <div className="print-header">
           <h1>阿爸的芋圓 — 各店叫貨總表</h1>
-          <span className="print-date">{getTodayString()}</span>
+          <span className="print-date">{formatDate(getTodayString())}</span>
         </div>
 
         <table className="print-table">

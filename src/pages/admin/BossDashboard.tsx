@@ -66,7 +66,8 @@ function getDateNDaysAgo(n: number): string {
 
 function formatShortDate(dateStr: string): string {
   const parts = dateStr.split('-')
-  return `${parseInt(parts[1])}/${parseInt(parts[2])}`
+  const wd = ['日', '一', '二', '三', '四', '五', '六'][new Date(dateStr + 'T00:00:00').getDay()]
+  return `${parseInt(parts[1])}/${parseInt(parts[2])}(${wd})`
 }
 
 // ---------- component ----------

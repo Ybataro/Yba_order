@@ -4,6 +4,7 @@ import { SectionHeader } from '@/components/SectionHeader'
 import { useStoreStore } from '@/stores/useStoreStore'
 import { supabase } from '@/lib/supabase'
 import { getTodayTW } from '@/lib/session'
+import { formatDate } from '@/lib/utils'
 import { RefreshCw } from 'lucide-react'
 
 interface AuditEntry {
@@ -178,7 +179,7 @@ export default function AuditLog() {
       ) : (
         Object.entries(grouped).map(([date, entries]) => (
           <div key={date}>
-            <SectionHeader title={date} icon="■" />
+            <SectionHeader title={formatDate(date)} icon="■" />
             <div className="bg-white divide-y divide-gray-50">
               {entries.map((log) => (
                 <div key={log.id} className="px-4 py-2.5">

@@ -231,7 +231,8 @@ export default function OrderHistory() {
 
   const formatDateDisplay = (d: string) => {
     const [y, m, day] = d.split('-')
-    return `${y}/${m}/${day}`
+    const wd = ['日', '一', '二', '三', '四', '五', '六'][new Date(d + 'T00:00:00').getDay()]
+    return `${y}/${m}/${day}（${wd}）`
   }
 
   if (!supabase) {
