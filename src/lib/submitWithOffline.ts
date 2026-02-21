@@ -83,6 +83,7 @@ export async function submitWithOffline({
       }
     }
 
+    onSuccess('')
     return true
   } catch (err) {
     // Unexpected network failure → queue
