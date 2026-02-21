@@ -12,7 +12,7 @@ import { settlementSessionId, getTodayTW } from '@/lib/session'
 import { submitWithOffline } from '@/lib/submitWithOffline'
 import { logAudit } from '@/lib/auditLog'
 import { formatCurrency } from '@/lib/utils'
-import { Send, RefreshCw } from 'lucide-react'
+import { Send, RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react'
 
 export default function Settlement() {
   const { storeId } = useParams<{ storeId: string }>()
@@ -24,7 +24,9 @@ export default function Settlement() {
   const settlementGroups = useSettlementStore((s) => s.groups)
 
   const today = getTodayTW()
-  const sessionId = settlementSessionId(storeId || '', today)
+  const [selectedDate, setSelectedDate] = useState(today)
+  const sessionId = settlementSessionId(storeId || '', selectedDate)
+  const isToday = selectedDate === today
 
   const [values, setValues] = useState<Record<string, string>>(() => {
     const init: Record<string, string> = {}
@@ -35,10 +37,27 @@ export default function Settlement() {
   const [isEdit, setIsEdit] = useState(false)
   const [loading, setLoading] = useState(true)
 
+  const shiftDate = (days: number) => {
+    const d = new Date(selectedDate + 'T00:00:00+08:00')
+    d.setDate(d.getDate() + days)
+    const yyyy = d.getFullYear()
+    const mm = String(d.getMonth() + 1).padStart(2, '0')
+    const dd = String(d.getDate()).padStart(2, '0')
+    const next = `${yyyy}-${mm}-${dd}`
+    if (next > today) return
+    setSelectedDate(next)
+  }
+
   // Load existing session
   useEffect(() => {
     if (!supabase || !storeId) { setLoading(false); return }
     setLoading(true)
+    // Reset form
+    const init: Record<string, string> = {}
+    settlementFields.forEach(f => { init[f.id] = '' })
+    setValues(init)
+    setIsEdit(false)
+
     supabase
       .from('settlement_sessions')
       .select('id')
@@ -63,7 +82,7 @@ export default function Settlement() {
             setLoading(false)
           })
       })
-  }, [storeId, today])
+  }, [storeId, selectedDate])
 
   const num = (id: string) => parseFloat(values[id]) || 0
 
@@ -114,7 +133,7 @@ export default function Settlement() {
     const session = {
       id: sessionId,
       store_id: storeId,
-      date: today,
+      date: selectedDate,
       submitted_by: staffId || null,
       updated_at: new Date().toISOString(),
     }
@@ -152,10 +171,39 @@ export default function Settlement() {
     <div className="page-container">
       <TopNav title={`${storeName} 每日結帳`} />
 
+      {/* Date selector */}
+      <div className="flex items-center justify-center gap-3 px-4 py-2 bg-white border-b border-gray-100">
+        <button onClick={() => shiftDate(-1)} className="p-1 rounded-full hover:bg-gray-100 active:bg-gray-200">
+          <ChevronLeft size={20} className="text-brand-oak" />
+        </button>
+        <input
+          type="date"
+          value={selectedDate}
+          max={today}
+          onChange={e => { if (e.target.value && e.target.value <= today) setSelectedDate(e.target.value) }}
+          className="text-sm font-semibold text-brand-oak bg-transparent text-center"
+        />
+        <button
+          onClick={() => shiftDate(1)}
+          disabled={isToday}
+          className="p-1 rounded-full hover:bg-gray-100 active:bg-gray-200 disabled:opacity-30"
+        >
+          <ChevronRight size={20} className="text-brand-oak" />
+        </button>
+        {!isToday && (
+          <button
+            onClick={() => setSelectedDate(today)}
+            className="text-xs text-brand-amber underline"
+          >
+            回到今天
+          </button>
+        )}
+      </div>
+
       {isEdit && (
         <div className="flex items-center gap-1.5 px-4 py-1.5 bg-status-info/10 text-status-info text-xs">
           <RefreshCw size={12} />
-          <span>已載入今日結帳紀錄，修改後可重新提交</span>
+          <span>已載入{isToday ? '今日' : selectedDate}結帳紀錄，修改後可重新提交</span>
         </div>
       )}
 

@@ -12,7 +12,7 @@ import { supabase } from '@/lib/supabase'
 import { inventorySessionId, getTodayTW } from '@/lib/session'
 import { submitWithOffline } from '@/lib/submitWithOffline'
 import { logAudit } from '@/lib/auditLog'
-import { Send, RefreshCw } from 'lucide-react'
+import { Send, RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react'
 
 interface InventoryEntry {
   onShelf: string
@@ -35,7 +35,20 @@ export default function Inventory() {
   const zoneLabel = isMergedView ? '' : currentZoneObj ? ` ${currentZoneObj.zoneName}` : ''
 
   const today = getTodayTW()
-  const sessionId = inventorySessionId(storeId || '', today, currentZone || '')
+  const [selectedDate, setSelectedDate] = useState(today)
+  const isToday = selectedDate === today
+  const sessionId = inventorySessionId(storeId || '', selectedDate, currentZone || '')
+
+  const shiftDate = (days: number) => {
+    const d = new Date(selectedDate + 'T00:00:00+08:00')
+    d.setDate(d.getDate() + days)
+    const yyyy = d.getFullYear()
+    const mm = String(d.getMonth() + 1).padStart(2, '0')
+    const dd = String(d.getDate()).padStart(2, '0')
+    const next = `${yyyy}-${mm}-${dd}`
+    if (next > today) return
+    setSelectedDate(next)
+  }
 
   const [data, setData] = useState<Record<string, InventoryEntry>>({})
   const originalData = useRef<Record<string, InventoryEntry>>({})
@@ -51,9 +64,10 @@ export default function Inventory() {
   // Load existing session
   useEffect(() => {
     if (!supabase || !storeId) { setLoading(false); return }
-    const sid = inventorySessionId(storeId, today, currentZone || '')
+    const sid = inventorySessionId(storeId, selectedDate, currentZone || '')
     setLoading(true)
     setIsEdit(false)
+    setData({})
     originalData.current = {}
 
     const load = async () => {
@@ -91,7 +105,7 @@ export default function Inventory() {
     }
 
     load()
-  }, [storeId, currentZone, today])
+  }, [storeId, currentZone, selectedDate])
 
   // Load merged data for "全部" view
   useEffect(() => {
@@ -101,7 +115,7 @@ export default function Inventory() {
     const load = async () => {
       try {
         const zoneSids = storeZones.map((z) =>
-          inventorySessionId(storeId, today, z.zoneCode)
+          inventorySessionId(storeId, selectedDate, z.zoneCode)
         )
 
         // Check which sessions exist
@@ -113,7 +127,7 @@ export default function Inventory() {
         const existingIds = new Set((sessions || []).map((s) => s.id))
         const statuses: Record<string, boolean> = {}
         storeZones.forEach((z) => {
-          const sid = inventorySessionId(storeId, today, z.zoneCode)
+          const sid = inventorySessionId(storeId, selectedDate, z.zoneCode)
           statuses[z.zoneCode] = existingIds.has(sid)
         })
         setZoneStatuses(statuses)
@@ -165,7 +179,7 @@ export default function Inventory() {
     }
 
     load()
-  }, [storeId, isMergedView, storeZones, today])
+  }, [storeId, isMergedView, storeZones, selectedDate])
 
   const getEntry = useCallback((productId: string): InventoryEntry => {
     if (isMergedView) return mergedData[productId] ?? { onShelf: '', stock: '', discarded: '' }
@@ -233,7 +247,7 @@ export default function Inventory() {
     const session = {
       id: sessionId,
       store_id: storeId,
-      date: today,
+      date: selectedDate,
       zone_code: currentZone || '',
       submitted_by: staffId || null,
       updated_at: new Date().toISOString(),
@@ -283,11 +297,40 @@ export default function Inventory() {
     <div className="page-container">
       <TopNav title={`${storeName}${zoneLabel} 物料盤點`} />
 
+      {/* Date selector */}
+      <div className="flex items-center justify-center gap-3 px-4 py-2 bg-white border-b border-gray-100">
+        <button onClick={() => shiftDate(-1)} className="p-1 rounded-full hover:bg-gray-100 active:bg-gray-200">
+          <ChevronLeft size={20} className="text-brand-oak" />
+        </button>
+        <input
+          type="date"
+          value={selectedDate}
+          max={today}
+          onChange={e => { if (e.target.value && e.target.value <= today) setSelectedDate(e.target.value) }}
+          className="text-sm font-semibold text-brand-oak bg-transparent text-center"
+        />
+        <button
+          onClick={() => shiftDate(1)}
+          disabled={isToday}
+          className="p-1 rounded-full hover:bg-gray-100 active:bg-gray-200 disabled:opacity-30"
+        >
+          <ChevronRight size={20} className="text-brand-oak" />
+        </button>
+        {!isToday && (
+          <button
+            onClick={() => setSelectedDate(today)}
+            className="text-xs text-brand-amber underline"
+          >
+            回到今天
+          </button>
+        )}
+      </div>
+
       {/* Edit badge */}
       {isEdit && !isMergedView && (
         <div className="flex items-center gap-1.5 px-4 py-1.5 bg-status-info/10 text-status-info text-xs">
           <RefreshCw size={12} />
-          <span>已載入今日盤點紀錄，修改後可重新提交</span>
+          <span>已載入{isToday ? '今日' : selectedDate}盤點紀錄，修改後可重新提交</span>
           {modifiedCount > 0 && (
             <span className="ml-auto font-medium text-brand-lotus">已修改 {modifiedCount} 項</span>
           )}
