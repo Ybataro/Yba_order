@@ -6,7 +6,7 @@ import { useStoreStore } from '@/stores/useStoreStore'
 import { supabase } from '@/lib/supabase'
 import { getTodayTW } from '@/lib/session'
 import { Printer, MessageSquareText, ChevronLeft, ChevronRight } from 'lucide-react'
-import { getTodayString, formatDate } from '@/lib/utils'
+import { formatDate } from '@/lib/utils'
 
 const fixedNoteItems = [
   { id: 'almond1000', label: '杏仁茶瓶 1000ml', unit: '個' },
