@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { TopNav } from '@/components/TopNav'
 import { SectionHeader } from '@/components/SectionHeader'
 import { useProductStore } from '@/stores/useProductStore'
@@ -16,6 +17,8 @@ const fixedNoteItems = [
 ]
 
 export default function OrderSummary() {
+  const [searchParams] = useSearchParams()
+  const staffId = searchParams.get('staff') || ''
   const allProducts = useProductStore((s) => s.items)
   const storeProducts = useMemo(() => allProducts.filter(p => !p.visibleIn || p.visibleIn === 'both' || p.visibleIn === 'order_only'), [allProducts])
   const productCategories = useProductStore((s) => s.categories)
@@ -119,7 +122,7 @@ export default function OrderSummary() {
 
   return (
     <div className="page-container !pb-4">
-      <TopNav title="各店叫貨總表" />
+      <TopNav title="各店叫貨總表" backTo={`/kitchen${staffId ? `?staff=${staffId}` : ''}`} />
 
       {/* 日期選擇器 */}
       <div className="no-print flex items-center justify-center gap-3 px-4 py-2 bg-white border-b border-gray-100">
