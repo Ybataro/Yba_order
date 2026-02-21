@@ -5,7 +5,7 @@ import { useProductStore } from '@/stores/useProductStore'
 import { useStoreStore } from '@/stores/useStoreStore'
 import { supabase } from '@/lib/supabase'
 import { getTodayTW } from '@/lib/session'
-import { Printer, MessageSquareText } from 'lucide-react'
+import { Printer, MessageSquareText, ChevronLeft, ChevronRight } from 'lucide-react'
 import { getTodayString, formatDate } from '@/lib/utils'
 
 const fixedNoteItems = [
@@ -20,7 +20,22 @@ export default function OrderSummary() {
   const storeProducts = useMemo(() => allProducts.filter(p => !p.visibleIn || p.visibleIn === 'both' || p.visibleIn === 'order_only'), [allProducts])
   const productCategories = useProductStore((s) => s.categories)
   const stores = useStoreStore((s) => s.items)
-  const orderDate = getTodayTW() // 查今日叫貨（門店今天下單，央廚今天可見，隔日出貨）
+
+  const today = getTodayTW()
+  const [selectedDate, setSelectedDate] = useState(today)
+  const orderDate = selectedDate
+  const isToday = selectedDate === today
+
+  const shiftDate = (days: number) => {
+    const d = new Date(selectedDate + 'T00:00:00+08:00')
+    d.setDate(d.getDate() + days)
+    const yyyy = d.getFullYear()
+    const mm = String(d.getMonth() + 1).padStart(2, '0')
+    const dd = String(d.getDate()).padStart(2, '0')
+    const next = `${yyyy}-${mm}-${dd}`
+    if (next > today) return
+    setSelectedDate(next)
+  }
 
   const [storeOrders, setStoreOrders] = useState<Record<string, Record<string, number>>>({})
   const [storeNotes, setStoreNotes] = useState<Record<string, { fixedItems: Record<string, number>; freeText: string }>>({})
@@ -77,7 +92,7 @@ export default function OrderSummary() {
     }
 
     load()
-  }, [orderDate, stores])
+  }, [selectedDate, stores])
 
   const productsByCategory = useMemo(() => {
     const map = new Map<string, typeof storeProducts>()
@@ -105,6 +120,35 @@ export default function OrderSummary() {
   return (
     <div className="page-container !pb-4">
       <TopNav title="各店叫貨總表" />
+
+      {/* 日期選擇器 */}
+      <div className="no-print flex items-center justify-center gap-3 px-4 py-2 bg-white border-b border-gray-100">
+        <button onClick={() => shiftDate(-1)} className="p-1 rounded-full hover:bg-gray-100 active:bg-gray-200">
+          <ChevronLeft size={20} className="text-brand-oak" />
+        </button>
+        <input
+          type="date"
+          value={selectedDate}
+          max={today}
+          onChange={e => { if (e.target.value && e.target.value <= today) setSelectedDate(e.target.value) }}
+          className="text-sm font-semibold text-brand-oak bg-transparent text-center"
+        />
+        <button
+          onClick={() => shiftDate(1)}
+          disabled={isToday}
+          className="p-1 rounded-full hover:bg-gray-100 active:bg-gray-200 disabled:opacity-30"
+        >
+          <ChevronRight size={20} className="text-brand-oak" />
+        </button>
+        {!isToday && (
+          <button
+            onClick={() => setSelectedDate(today)}
+            className="text-xs text-brand-amber underline"
+          >
+            回到今天
+          </button>
+        )}
+      </div>
 
       {loading ? (
         <div className="flex items-center justify-center py-20 text-sm text-brand-lotus">載入中...</div>
@@ -202,7 +246,7 @@ export default function OrderSummary() {
       <div className="print-only" style={{ display: 'none' }}>
         <div className="print-header">
           <h1>阿爸的芋圓 — 各店叫貨總表</h1>
-          <span className="print-date">{formatDate(getTodayString())}</span>
+          <span className="print-date">{formatDate(selectedDate)}</span>
         </div>
 
         <table className="print-table">
