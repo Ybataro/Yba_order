@@ -1,4 +1,4 @@
-import { Package, Warehouse, Users, Store, Receipt, QrCode, Layers, ClipboardList, FileText, DollarSign, CloudSun, ChefHat, LayoutDashboard, LogOut, KeyRound, ScrollText } from 'lucide-react'
+import { Package, Warehouse, Users, Store, Receipt, QrCode, Layers, ClipboardList, FileText, DollarSign, CloudSun, ChefHat, LayoutDashboard, LogOut, KeyRound, ScrollText, Wallet, TrendingUp } from 'lucide-react'
 import { getTodayString, formatDate } from '@/lib/utils'
 import { useStoreStore } from '@/stores/useStoreStore'
 import { clearSession } from '@/lib/auth'
@@ -17,6 +17,8 @@ const menuItems = [
   { icon: DollarSign, label: '叫貨價格統計', desc: '品項成本與加盟價格統計', path: '/admin/order-pricing', color: 'bg-brand-oak' },
   { icon: CloudSun, label: '天氣用量分析', desc: '天氣與營業額、叫貨量關聯分析', path: '/admin/weather-analysis', color: 'bg-brand-amber' },
   { icon: KeyRound, label: 'PIN 碼管理', desc: '人員 PIN 碼、角色與授權門市', path: '/admin/pins', color: 'bg-brand-lotus' },
+  { icon: Wallet, label: '雜支管理', desc: '查看/管理各店日常雜支紀錄', path: '/admin/expenses', color: 'bg-brand-camel' },
+  { icon: TrendingUp, label: '盈餘統計', desc: '月/年損益分析與費用管理', path: '/admin/profit-loss', color: 'bg-brand-amber' },
   { icon: ScrollText, label: '操作記錄', desc: '盤點、叫貨、結帳等操作記錄', path: '/admin/audit', color: 'bg-brand-silver' },
 ]
 

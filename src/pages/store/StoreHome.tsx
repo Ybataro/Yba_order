@@ -2,7 +2,7 @@ import { useState, useCallback } from 'react'
 import { useParams } from 'react-router-dom'
 import { useStoreStore } from '@/stores/useStoreStore'
 import { useStaffStore } from '@/stores/useStaffStore'
-import { ClipboardList, DollarSign, Package, PackageCheck, UserCircle, LogOut } from 'lucide-react'
+import { ClipboardList, DollarSign, Package, PackageCheck, UserCircle, LogOut, Receipt } from 'lucide-react'
 import { getTodayString, formatDate } from '@/lib/utils'
 import NotificationBell from '@/components/NotificationBell'
 import CriticalAlertModal from '@/components/CriticalAlertModal'
@@ -14,6 +14,7 @@ const menuItems = [
   { icon: DollarSign, label: '每日結帳', desc: '營收與現金盤點', path: 'settlement', color: 'bg-brand-camel' },
   { icon: Package, label: '叫貨', desc: '明日物料需求', path: 'order', color: 'bg-brand-lotus' },
   { icon: PackageCheck, label: '收貨確認', desc: '確認央廚今日出貨', path: 'receive', color: 'bg-brand-blush' },
+  { icon: Receipt, label: '雜支申報', desc: '記錄日常雜支費用', path: 'expense', color: 'bg-brand-silver' },
 ]
 
 export default function StoreHome() {
@@ -76,12 +77,19 @@ export default function StoreHome() {
         </div>
       </div>
 
+      {!currentStaff && (
+        <div className="mx-4 mb-1 px-3 py-2 rounded-lg bg-status-danger/10 text-status-danger text-xs font-medium text-center">
+          請先選擇當班人員才能進入功能
+        </div>
+      )}
+
       <div className="px-4 space-y-3">
         {menuItems.map((item) => (
           <button
             key={item.path}
-            onClick={() => { window.location.href = `/store/${storeId}/${item.path}${currentStaff ? `?staff=${currentStaff}` : ''}` }}
-            className="card w-full flex items-center gap-4 active:scale-[0.98] transition-transform text-left"
+            disabled={!currentStaff}
+            onClick={() => { window.location.href = `/store/${storeId}/${item.path}?staff=${currentStaff}` }}
+            className={`card w-full flex items-center gap-4 transition-transform text-left ${currentStaff ? 'active:scale-[0.98]' : 'opacity-40 cursor-not-allowed'}`}
           >
             <div className={`${item.color} w-12 h-12 rounded-xl flex items-center justify-center text-white shrink-0`}>
               <item.icon size={24} />

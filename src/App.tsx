@@ -10,6 +10,7 @@ import Settlement from '@/pages/store/Settlement'
 import Usage from '@/pages/store/Usage'
 import Order from '@/pages/store/Order'
 import Receive from '@/pages/store/Receive'
+import StoreDailyExpense from '@/pages/store/DailyExpense'
 
 import KitchenHome from '@/pages/kitchen/KitchenHome'
 import OrderSummary from '@/pages/kitchen/OrderSummary'
@@ -17,6 +18,7 @@ import Shipment from '@/pages/kitchen/Shipment'
 import MaterialStock from '@/pages/kitchen/MaterialStock'
 import ProductStock from '@/pages/kitchen/ProductStock'
 import MaterialOrder from '@/pages/kitchen/MaterialOrder'
+import KitchenDailyExpense from '@/pages/kitchen/DailyExpense'
 
 import AdminHome from '@/pages/admin/AdminHome'
 import ProductManager from '@/pages/admin/ProductManager'
@@ -34,6 +36,8 @@ import BossDashboard from '@/pages/admin/BossDashboard'
 import ProductionSchedule from '@/pages/kitchen/ProductionSchedule'
 import PinManager from '@/pages/admin/PinManager'
 import AuditLog from '@/pages/admin/AuditLog'
+import ExpenseManagement from '@/pages/admin/ExpenseManagement'
+import ProfitLoss from '@/pages/admin/ProfitLoss'
 
 function App() {
   useInitStores()
@@ -55,6 +59,7 @@ function App() {
               <Route path="/store/:storeId/usage" element={<Usage />} />
               <Route path="/store/:storeId/order" element={<Order />} />
               <Route path="/store/:storeId/receive" element={<Receive />} />
+              <Route path="/store/:storeId/expense" element={<StoreDailyExpense />} />
             </Route>
 
             {/* Kitchen routes */}
@@ -66,6 +71,7 @@ function App() {
               <Route path="/kitchen/products" element={<ProductStock />} />
               <Route path="/kitchen/material-orders" element={<MaterialOrder />} />
               <Route path="/kitchen/schedule" element={<ProductionSchedule />} />
+              <Route path="/kitchen/expense" element={<KitchenDailyExpense />} />
             </Route>
 
             {/* Admin routes */}
@@ -85,6 +91,8 @@ function App() {
               <Route path="/admin/weather-analysis" element={<WeatherAnalysis />} />
               <Route path="/admin/pins" element={<PinManager />} />
               <Route path="/admin/audit" element={<AuditLog />} />
+              <Route path="/admin/expenses" element={<ExpenseManagement />} />
+              <Route path="/admin/profit-loss" element={<ProfitLoss />} />
             </Route>
           </Routes>
         </div>
