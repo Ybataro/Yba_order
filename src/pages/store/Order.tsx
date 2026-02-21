@@ -218,6 +218,96 @@ export default function Order() {
     load()
   }, [storeId])
 
+  // 前日用量
+  const [usage, setUsage] = useState<Record<string, number>>({})
+
+  useEffect(() => {
+    if (!supabase || !storeId) return
+
+    const load = async () => {
+      // 今日 & 前日日期
+      const todayDate = getTodayTW()
+      const yesterdayDate = getYesterdayTW()
+
+      // 1) 前日盤點 sessions → 前日庫存 (on_shelf + stock)
+      const { data: prevSessions } = await supabase!
+        .from('inventory_sessions')
+        .select('id')
+        .eq('store_id', storeId)
+        .eq('date', yesterdayDate)
+
+      const prevStock: Record<string, number> = {}
+      if (prevSessions && prevSessions.length > 0) {
+        const prevSids = prevSessions.map(s => s.id)
+        const { data: prevItems } = await supabase!
+          .from('inventory_items')
+          .select('product_id, on_shelf, stock')
+          .in('session_id', prevSids)
+        if (prevItems) {
+          prevItems.forEach(item => {
+            const val = (item.on_shelf || 0) + (item.stock || 0)
+            prevStock[item.product_id] = (prevStock[item.product_id] || 0) + val
+          })
+        }
+      }
+
+      // 2) 今日盤點 sessions → 今日庫存 + discarded
+      const { data: todaySessions } = await supabase!
+        .from('inventory_sessions')
+        .select('id')
+        .eq('store_id', storeId)
+        .eq('date', todayDate)
+
+      const todayStock: Record<string, number> = {}
+      const todayDiscarded: Record<string, number> = {}
+      if (todaySessions && todaySessions.length > 0) {
+        const todaySids = todaySessions.map(s => s.id)
+        const { data: todayItems } = await supabase!
+          .from('inventory_items')
+          .select('product_id, on_shelf, stock, discarded')
+          .in('session_id', todaySids)
+        if (todayItems) {
+          todayItems.forEach(item => {
+            const s = (item.on_shelf || 0) + (item.stock || 0)
+            todayStock[item.product_id] = (todayStock[item.product_id] || 0) + s
+            todayDiscarded[item.product_id] = (todayDiscarded[item.product_id] || 0) + (item.discarded || 0)
+          })
+        }
+      }
+
+      // 3) 今日央廚出貨
+      const shipmentSessionId = `${storeId}_${todayDate}`
+      const { data: shipmentItems } = await supabase!
+        .from('shipment_items')
+        .select('product_id, actual_qty')
+        .eq('session_id', shipmentSessionId)
+
+      const shipment: Record<string, number> = {}
+      if (shipmentItems) {
+        shipmentItems.forEach(item => {
+          shipment[item.product_id] = (shipment[item.product_id] || 0) + (item.actual_qty || 0)
+        })
+      }
+
+      // 4) 計算：用量 = 前日庫存 + 今日出貨 - 今日庫存 - 今日倒掉
+      const result: Record<string, number> = {}
+      const allPids = new Set([...Object.keys(prevStock), ...Object.keys(todayStock)])
+      allPids.forEach(pid => {
+        const prev = prevStock[pid] || 0
+        const ship = shipment[pid] || 0
+        const curr = todayStock[pid] || 0
+        const disc = todayDiscarded[pid] || 0
+        if (prev > 0 || curr > 0) {
+          result[pid] = prev + ship - curr - disc
+        }
+      })
+
+      setUsage(result)
+    }
+
+    load()
+  }, [storeId])
+
   // 近 7 日平均叫貨量
   const [suggested, setSuggested] = useState<Record<string, number>>({})
   const [suggestedLoading, setSuggestedLoading] = useState(true)
@@ -265,13 +355,18 @@ export default function Order() {
         totals[item.product_id] = (totals[item.product_id] || 0) + item.quantity
       })
 
-      // 計算日均 × 天氣係數
+      // 央廚休息日：週三(3)、週日(0) 公休
+      // 週二(2)、週六(6) 叫貨需 ×2（需撐 2 天）
+      const orderDayOfWeek = new Date(today + 'T00:00:00+08:00').getDay()
+      const restDayMultiplier = (orderDayOfWeek === 2 || orderDayOfWeek === 6) ? 2 : 1
+
+      // 計算日均 × 天氣係數 × 休息日倍率
       const result: Record<string, number> = {}
       storeProducts.forEach(p => {
         const total = totals[p.id] || 0
         const avg = total / uniqueDays
         const adjust = impactMap[p.category] || 0
-        const raw = Math.max(0, avg * (1 + adjust / 100))
+        const raw = Math.max(0, avg * (1 + adjust / 100)) * restDayMultiplier
         const unit = getRoundUnit(p)
         result[p.id] = roundToUnit(raw, unit)
       })
@@ -292,6 +387,12 @@ export default function Order() {
     setOrders(newOrders)
     showToast('已套用全部建議叫貨量', 'info')
   }
+
+  // 判斷今日是否為央廚休息日前一天（週二/週六叫貨需 ×2）
+  const isRestDayEve = (() => {
+    const dow = new Date(today + 'T00:00:00+08:00').getDay()
+    return dow === 2 || dow === 6
+  })()
 
   const productsByCategory = useMemo(() => {
     const map = new Map<string, typeof storeProducts>()
@@ -469,7 +570,7 @@ export default function Order() {
 
           <div className="mx-4 mb-2 flex items-center gap-2 bg-status-info/10 text-status-info px-3 py-2 rounded-btn text-xs">
             <Lightbulb size={14} />
-            <span>建議量已結合近7日用量 + 天氣因素計算</span>
+            <span>{isRestDayEve ? '建議量已結合近7日用量 + 天氣因素（×2 央廚休息日備量）' : '建議量已結合近7日用量 + 天氣因素計算'}</span>
           </div>
 
           {!locked && (
@@ -480,6 +581,7 @@ export default function Order() {
 
           <div className="flex items-center px-4 py-1 bg-surface-section text-[11px] text-brand-lotus border-b border-gray-100">
             <span className="flex-1">品項</span>
+            <span className="w-[36px] text-center">用量</span>
             <span className="w-[40px] text-center">庫存</span>
             <span className="w-[40px] text-center text-status-info">建議</span>
             <span className="w-[60px] text-center">叫貨量</span>
@@ -495,6 +597,7 @@ export default function Order() {
                       <span className="text-sm font-medium text-brand-oak">{product.name}</span>
                       <span className="text-[10px] text-brand-lotus ml-1">({product.unit})</span>
                     </div>
+                    <span className="w-[36px] text-center text-xs font-num text-brand-mocha">{usage[product.id] != null ? (usage[product.id] > 0 ? usage[product.id] : 0) : '-'}</span>
                     <span className={`w-[40px] text-center text-xs font-num ${stock[product.id] != null && stock[product.id] === 0 ? 'text-status-danger font-bold' : 'text-brand-oak'}`}>{stock[product.id] != null ? stock[product.id] : '-'}</span>
                     <span className="w-[40px] text-center text-xs font-num text-status-info">{suggested[product.id] > 0 ? suggested[product.id] : '-'}</span>
                     <div className="w-[60px] flex justify-center">
