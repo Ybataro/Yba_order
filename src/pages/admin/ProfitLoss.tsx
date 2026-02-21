@@ -244,61 +244,75 @@ export default function ProfitLoss() {
     <div className="page-container">
       <TopNav title="盈餘統計" backTo="/admin" />
 
-      {/* Entity tabs */}
-      <div className="flex border-b border-gray-200 bg-white">
-        {stores.map((s) => (
+      {/* Control Panel */}
+      <div className="mx-4 mt-3 mb-3 rounded-xl bg-white border border-gray-100 shadow-sm overflow-hidden">
+        {/* Entity selector — pill style */}
+        <div className="flex gap-2 px-3 pt-3 pb-2.5">
+          {stores.map((s) => (
+            <button
+              key={s.id}
+              onClick={() => setEntity(s.id)}
+              className={`flex-1 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                entity === s.id
+                  ? 'bg-brand-mocha text-white shadow-sm'
+                  : 'bg-gray-100 text-brand-lotus active:bg-gray-200'
+              }`}
+            >
+              {s.name}
+            </button>
+          ))}
           <button
-            key={s.id}
-            onClick={() => setEntity(s.id)}
-            className={`flex-1 py-2 text-sm font-medium transition-colors ${
-              entity === s.id ? 'text-brand-mocha border-b-2 border-brand-mocha' : 'text-brand-lotus'
+            onClick={() => setEntity('kitchen')}
+            className={`flex-1 py-1.5 rounded-full text-xs font-medium transition-colors ${
+              entity === 'kitchen'
+                ? 'bg-brand-mocha text-white shadow-sm'
+                : 'bg-gray-100 text-brand-lotus active:bg-gray-200'
             }`}
           >
-            {s.name}
+            央廚
           </button>
-        ))}
-        <button
-          onClick={() => setEntity('kitchen')}
-          className={`flex-1 py-2 text-sm font-medium transition-colors ${
-            entity === 'kitchen' ? 'text-brand-mocha border-b-2 border-brand-mocha' : 'text-brand-lotus'
-          }`}
-        >
-          央廚
-        </button>
-      </div>
+        </div>
 
-      {/* View mode tabs */}
-      <div className="flex border-b border-gray-200 bg-white">
-        {([['month', '月報'], ['year', '年報']] as const).map(([mode, label]) => (
-          <button
-            key={mode}
-            onClick={() => setViewMode(mode)}
-            className={`flex-1 py-2 text-sm font-medium transition-colors ${
-              viewMode === mode ? 'text-brand-mocha border-b-2 border-brand-mocha' : 'text-brand-lotus'
-            }`}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
+        <div className="border-t border-gray-100" />
 
-      {/* Period selector */}
-      <div className="flex items-center justify-between px-4 py-2 bg-white border-b border-gray-100">
-        <button
-          onClick={viewMode === 'month' ? prevMonth : () => setYear((y) => y - 1)}
-          className="p-1 rounded active:bg-gray-100"
-        >
-          <ChevronLeft size={20} className="text-brand-oak" />
-        </button>
-        <span className="text-sm font-semibold text-brand-oak">
-          {viewMode === 'month' ? monthLabel : `${year}年`}
-        </span>
-        <button
-          onClick={viewMode === 'month' ? nextMonth : () => setYear((y) => y + 1)}
-          className="p-1 rounded active:bg-gray-100"
-        >
-          <ChevronRight size={20} className="text-brand-oak" />
-        </button>
+        {/* View mode toggle + Period nav */}
+        <div className="flex items-center justify-between px-3 py-2.5">
+          {/* Segment control */}
+          <div className="flex bg-gray-100 rounded-lg p-0.5">
+            {([['month', '月報'], ['year', '年報']] as const).map(([mode, label]) => (
+              <button
+                key={mode}
+                onClick={() => setViewMode(mode)}
+                className={`px-3 py-1 rounded-md text-xs font-medium transition-all ${
+                  viewMode === mode
+                    ? 'bg-white text-brand-oak shadow-sm'
+                    : 'text-brand-lotus'
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+
+          {/* Period nav */}
+          <div className="flex items-center gap-1">
+            <button
+              onClick={viewMode === 'month' ? prevMonth : () => setYear((y) => y - 1)}
+              className="p-1 rounded-md active:bg-gray-100"
+            >
+              <ChevronLeft size={16} className="text-brand-lotus" />
+            </button>
+            <span className="text-sm font-semibold text-brand-oak min-w-[5rem] text-center">
+              {viewMode === 'month' ? monthLabel : `${year}年`}
+            </span>
+            <button
+              onClick={viewMode === 'month' ? nextMonth : () => setYear((y) => y + 1)}
+              className="p-1 rounded-md active:bg-gray-100"
+            >
+              <ChevronRight size={16} className="text-brand-lotus" />
+            </button>
+          </div>
+        </div>
       </div>
 
       {loading ? (
@@ -307,23 +321,23 @@ export default function ProfitLoss() {
         /* ─── Month view ─── */
         pnl ? (
           <>
-            {/* Export */}
-            <div className="flex items-center justify-end px-4 py-2 bg-white border-b border-gray-100">
-              <ExportButtons onExportExcel={handleMonthExcel} onExportPdf={handleMonthPdf} />
-            </div>
-
-            {/* Revenue (stores only) */}
-            {!isKitchen && (
-              <>
-                <SectionHeader title="營業收入" icon="■" />
-                <div className="bg-white">
-                  <div className="flex items-center justify-between px-4 py-3">
-                    <span className="text-sm text-brand-oak">總營業額</span>
-                    <span className="text-sm font-bold font-num text-brand-oak">{formatCurrency(pnl.revenue)}</span>
-                  </div>
+            {/* Summary card + Export */}
+            <div className="mx-4 mb-3 rounded-xl bg-white border border-gray-100 shadow-sm overflow-hidden">
+              {!isKitchen ? (
+                <div className="px-4 pt-3 pb-2">
+                  <p className="text-xs text-brand-lotus mb-1">營業收入</p>
+                  <p className="text-2xl font-bold font-num text-brand-oak">{formatCurrency(pnl.revenue)}</p>
                 </div>
-              </>
-            )}
+              ) : (
+                <div className="px-4 pt-3 pb-2">
+                  <p className="text-xs text-brand-lotus mb-1">央廚成本</p>
+                  <p className="text-2xl font-bold font-num text-brand-oak">{formatCurrency(pnl.totalExpense)}</p>
+                </div>
+              )}
+              <div className="flex items-center justify-end px-3 pb-2.5">
+                <ExportButtons onExportExcel={handleMonthExcel} onExportPdf={handleMonthPdf} />
+              </div>
+            </div>
 
             {/* Auto expenses */}
             {pnl.autoExpenses.length > 0 && (
@@ -427,12 +441,22 @@ export default function ProfitLoss() {
         /* ─── Year view ─── */
         yearData ? (
           <>
-            {/* Export */}
-            <div className="flex items-center justify-end px-4 py-2 bg-white border-b border-gray-100">
-              <ExportButtons onExportExcel={handleYearExcel} onExportPdf={handleYearPdf} />
+            {/* Year summary header */}
+            <div className="mx-4 mb-3 rounded-xl bg-white border border-gray-100 shadow-sm overflow-hidden">
+              <div className="px-4 pt-3 pb-2">
+                <p className="text-xs text-brand-lotus mb-1">{year}年 {isKitchen ? '總成本' : '總盈餘'}</p>
+                <p className={`text-2xl font-bold font-num ${
+                  isKitchen ? 'text-brand-oak' : yearData.totals.surplus >= 0 ? 'text-status-success' : 'text-status-danger'
+                }`}>
+                  {isKitchen ? formatCurrency(yearData.totals.totalExpense) : formatCurrency(yearData.totals.surplus)}
+                </p>
+              </div>
+              <div className="flex items-center justify-end px-3 pb-2.5">
+                <ExportButtons onExportExcel={handleYearExcel} onExportPdf={handleYearPdf} />
+              </div>
             </div>
 
-            <SectionHeader title={`${year}年 月度摘要`} icon="■" />
+            <SectionHeader title="月度摘要" icon="■" />
             <div className="bg-white">
               {/* Header */}
               <div className="flex items-center px-4 py-2 border-b border-gray-100 bg-gray-50">
