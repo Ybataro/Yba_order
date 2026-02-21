@@ -106,9 +106,9 @@ export default function QRCodePage() {
             value={baseUrl}
             onChange={(e) => setBaseUrl(e.target.value.replace(/\/$/, ''))}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-oak/30"
-            placeholder="https://your-site.netlify.app"
+            placeholder="https://your-site.vercel.app"
           />
-          <p className="text-xs text-brand-lotus mt-1">部署後請填入 Netlify 網址</p>
+          <p className="text-xs text-brand-lotus mt-1">部署後請填入 Vercel 網址</p>
         </div>
 
         {/* Print button */}
