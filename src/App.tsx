@@ -11,6 +11,7 @@ import Usage from '@/pages/store/Usage'
 import Order from '@/pages/store/Order'
 import Receive from '@/pages/store/Receive'
 import StoreDailyExpense from '@/pages/store/DailyExpense'
+import StoreOrderHistory from '@/pages/store/OrderHistory'
 
 import KitchenHome from '@/pages/kitchen/KitchenHome'
 import OrderSummary from '@/pages/kitchen/OrderSummary'
@@ -59,6 +60,7 @@ function App() {
               <Route path="/store/:storeId/usage" element={<Usage />} />
               <Route path="/store/:storeId/order" element={<Order />} />
               <Route path="/store/:storeId/receive" element={<Receive />} />
+              <Route path="/store/:storeId/order-history" element={<StoreOrderHistory />} />
               <Route path="/store/:storeId/expense" element={<StoreDailyExpense />} />
             </Route>
 

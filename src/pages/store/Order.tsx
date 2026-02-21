@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react'
-import { useParams, useSearchParams } from 'react-router-dom'
+import { useParams, useSearchParams, useNavigate } from 'react-router-dom'
 import { TopNav } from '@/components/TopNav'
 import { NumericInput } from '@/components/NumericInput'
 import { SectionHeader } from '@/components/SectionHeader'
@@ -12,7 +12,7 @@ import { orderSessionId, getTodayTW, getYesterdayTW, getOrderDeadline, isPastDea
 import { submitWithOffline } from '@/lib/submitWithOffline'
 import { logAudit } from '@/lib/auditLog'
 import { fetchWeather, type WeatherData, type WeatherCondition } from '@/lib/weather'
-import { Send, Lightbulb, Sun, CloudRain, Cloud, CloudSun, Thermometer, Droplets, TrendingUp, TrendingDown, Lock, RefreshCw } from 'lucide-react'
+import { Send, Lightbulb, Sun, CloudRain, Cloud, CloudSun, Thermometer, Droplets, TrendingUp, TrendingDown, Lock, RefreshCw, History } from 'lucide-react'
 
 const weatherIcons: Record<WeatherCondition, typeof Sun> = {
   sunny: Sun,
@@ -49,6 +49,7 @@ function getWeatherImpacts(weather: WeatherData) {
 export default function Order() {
   const { storeId } = useParams<{ storeId: string }>()
   const [searchParams] = useSearchParams()
+  const navigate = useNavigate()
   const staffId = searchParams.get('staff') || ''
   const { showToast } = useToast()
   const storeName = useStoreStore((s) => s.getName(storeId || ''))
@@ -337,7 +338,18 @@ export default function Order() {
 
   return (
     <div className="page-container">
-      <TopNav title={`${storeName} 叫貨`} />
+      <TopNav
+        title={`${storeName} 叫貨`}
+        rightAction={
+          <button
+            onClick={() => navigate(`/store/${storeId}/order-history?staff=${staffId}`)}
+            className="p-1 active:opacity-70"
+            title="歷史紀錄"
+          >
+            <History size={18} />
+          </button>
+        }
+      />
 
       {/* Locked banner */}
       {locked && (

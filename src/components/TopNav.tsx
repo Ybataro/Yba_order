@@ -6,9 +6,10 @@ interface TopNavProps {
   showBack?: boolean
   backTo?: string
   date?: string
+  rightAction?: React.ReactNode
 }
 
-export function TopNav({ title, showBack = true, backTo, date }: TopNavProps) {
+export function TopNav({ title, showBack = true, backTo, date, rightAction }: TopNavProps) {
   return (
     <div className="top-nav">
       <div className="flex items-center gap-3">
@@ -19,7 +20,10 @@ export function TopNav({ title, showBack = true, backTo, date }: TopNavProps) {
         )}
         <h1 className="text-base font-semibold truncate">{title}</h1>
       </div>
-      <span className="text-sm opacity-80">{formatDate(date || getTodayString())}</span>
+      <div className="flex items-center gap-2">
+        {rightAction}
+        <span className="text-sm opacity-80">{formatDate(date || getTodayString())}</span>
+      </div>
     </div>
   )
 }
