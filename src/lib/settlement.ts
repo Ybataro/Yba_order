@@ -15,23 +15,21 @@ export function computeSession(vals: SettlementValue[]) {
 
   const openCash = getVal(vals, 'openCashBills') + getVal(vals, 'openCashCoins')
   const prevDay = getVal(vals, 'prevDayUndeposited')
-  const refunds = getVal(vals, 'invoiceRefund') + getVal(vals, 'invoiceRefund2')
+  const invoiceRefund = getVal(vals, 'invoiceRefund')
+  const invoiceRefund2 = getVal(vals, 'invoiceRefund2')
   const electronic = getVal(vals, 'easyPay') + getVal(vals, 'taiwanPay') + getVal(vals, 'allPay') + getVal(vals, 'linePay')
   const cashOut = getVal(vals, 'pettyCash') + getVal(vals, 'changeExchange')
   const deliveryFees = getVal(vals, 'uberFee') + getVal(vals, 'pandaFee')
   const otherExpense = getVal(vals, 'otherExpense')
+  const nextDayPettyCash = getVal(vals, 'nextDayPettyCash')
   const otherIncome = getVal(vals, 'otherIncome')
-  // 應結總金額 = POS總額 + 開店找零 + 前日未存入 - 退款 - 電子支付 - 現金支出 - 外送費用 - 其他支出 + 其他收入
-  const expectedTotal = posTotal + openCash + prevDay - refunds - electronic - cashOut - deliveryFees - otherExpense + otherIncome
+  // 應結總金額 = POS + 開店找零 + 前日未存入 - 電腦發票退款 + 發票退款 - 電子支付 - 現金支出 - 外送費用 - 其他支出 - 次日零用金 + 其他收入
+  const expectedTotal = posTotal + openCash + prevDay - invoiceRefund + invoiceRefund2 - electronic - cashOut - deliveryFees - otherExpense - nextDayPettyCash + otherIncome
 
   const cashTotal = getVal(vals, 'cash1000') * 1000 + getVal(vals, 'cash500') * 500 + getVal(vals, 'cash100') * 100 +
     getVal(vals, 'coin50') * 50 + getVal(vals, 'coin10') * 10 + getVal(vals, 'coin5') * 5 + getVal(vals, 'coin1') * 1
 
-  const safeTotal = getVal(vals, 'safe1000') * 1000 + getVal(vals, 'safe100') * 100 +
-    getVal(vals, 'safe50') * 3000 + getVal(vals, 'safe10') * 1000 + getVal(vals, 'safe5') * 500
-
-  const actualTotal = cashTotal + safeTotal
-  const diff = actualTotal - expectedTotal
+  const diff = cashTotal - expectedTotal
 
   const paymentBreakdown = [
     { label: '遊悠付', amount: getVal(vals, 'easyPay') },
@@ -44,5 +42,5 @@ export function computeSession(vals: SettlementValue[]) {
 
   const avgPrice = orderCount > 0 ? Math.round(posTotal / orderCount) : 0
 
-  return { posTotal, orderCount, staffCount, expectedTotal, actualTotal, diff, cashTotal, safeTotal, paymentBreakdown, avgPrice }
+  return { posTotal, orderCount, staffCount, expectedTotal, diff, cashTotal, paymentBreakdown, avgPrice }
 }

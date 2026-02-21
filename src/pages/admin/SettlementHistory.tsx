@@ -297,16 +297,8 @@ export default function SettlementHistory() {
                             <span className="text-sm font-num text-brand-oak">{formatCurrency(c.posTotal)}</span>
                           </div>
                           <div className="flex items-center justify-between px-3 py-2 border-b border-gray-50">
-                            <span className="text-sm text-brand-oak">實收（鈔票+鐵櫃）</span>
-                            <span className="text-sm font-num text-brand-oak">{formatCurrency(c.actualTotal)}</span>
-                          </div>
-                          <div className="flex items-center justify-between px-3 py-2 border-b border-gray-50">
-                            <span className="text-sm text-brand-oak">鈔票總額</span>
-                            <span className="text-xs font-num text-brand-lotus">{formatCurrency(c.cashTotal)}</span>
-                          </div>
-                          <div className="flex items-center justify-between px-3 py-2 border-b border-gray-50">
-                            <span className="text-sm text-brand-oak">鐵櫃總額</span>
-                            <span className="text-xs font-num text-brand-lotus">{formatCurrency(c.safeTotal)}</span>
+                            <span className="text-sm text-brand-oak">當日實收現金</span>
+                            <span className="text-sm font-num text-brand-oak">{formatCurrency(c.cashTotal)}</span>
                           </div>
                           <div className={`flex items-center justify-between px-3 py-2 ${Math.abs(c.diff) <= 10 ? 'bg-status-success/10' : 'bg-status-danger/10'}`}>
                             <span className="text-sm font-semibold text-brand-oak">差額</span>
@@ -364,7 +356,7 @@ export default function SettlementHistory() {
                         '號數': c.orderCount,
                         '客單價': c.avgPrice,
                         '應結金額': c.expectedTotal,
-                        '實收金額': c.actualTotal,
+                        '實收現金': c.cashTotal,
                         '差額': c.diff,
                       }
                     })
@@ -384,7 +376,7 @@ export default function SettlementHistory() {
                         orderCount: c.orderCount,
                         avgPrice: c.avgPrice,
                         expectedTotal: c.expectedTotal,
-                        actualTotal: c.actualTotal,
+                        cashTotal: c.cashTotal,
                         diff: c.diff,
                       }
                     })
@@ -398,7 +390,7 @@ export default function SettlementHistory() {
                         { header: '號數', dataKey: 'orderCount' },
                         { header: '客單價', dataKey: 'avgPrice' },
                         { header: '應結金額', dataKey: 'expectedTotal' },
-                        { header: '實收金額', dataKey: 'actualTotal' },
+                        { header: '實收現金', dataKey: 'cashTotal' },
                         { header: '差額', dataKey: 'diff' },
                       ],
                       data: rows,

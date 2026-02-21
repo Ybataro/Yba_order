@@ -71,27 +71,25 @@ export default function Settlement() {
     const posTotal = num('posTotal')
     const openCash = num('openCashBills') + num('openCashCoins')
     const prevDay = num('prevDayUndeposited')
-    const refunds = num('invoiceRefund') + num('invoiceRefund2')
+    const invoiceRefund = num('invoiceRefund')
+    const invoiceRefund2 = num('invoiceRefund2')
     const electronic = num('easyPay') + num('taiwanPay') + num('allPay') + num('linePay')
     const cashOut = num('pettyCash') + num('changeExchange')
     const deliveryFees = num('uberFee') + num('pandaFee')
     const otherExpense = num('otherExpense')
+    const nextDayPettyCash = num('nextDayPettyCash')
     const otherIncome = num('otherIncome')
-    // 應結總金額 = POS總額 + 開店找零 + 前日未存入 - 退款 - 電子支付 - 現金支出 - 外送費用 - 其他支出 + 其他收入
-    const expectedTotal = posTotal + openCash + prevDay - refunds - electronic - cashOut - deliveryFees - otherExpense + otherIncome
+    // 應結總金額 = POS + 開店找零 + 前日未存入 - 電腦發票退款 + 發票退款 - 電子支付 - 現金支出 - 外送費用 - 其他支出 - 次日零用金 + 其他收入
+    const expectedTotal = posTotal + openCash + prevDay - invoiceRefund + invoiceRefund2 - electronic - cashOut - deliveryFees - otherExpense - nextDayPettyCash + otherIncome
 
     // 鈔票總額（僅紙鈔）
     const billTotal = num('cash1000') * 1000 + num('cash500') * 500 + num('cash100') * 100
     // 當日實收現金（紙鈔 + 硬幣）
     const cashTotal = billTotal + num('coin50') * 50 + num('coin10') * 10 + num('coin5') * 5 + num('coin1') * 1
 
-    const safeTotal = num('safe1000') * 1000 + num('safe100') * 100 +
-      num('safe50') * 3000 + num('safe10') * 1000 + num('safe5') * 500
+    const diff = cashTotal - expectedTotal
 
-    const actualTotal = cashTotal + safeTotal
-    const diff = actualTotal - expectedTotal
-
-    return { expectedTotal, billTotal, cashTotal, safeTotal, actualTotal, diff }
+    return { expectedTotal, billTotal, cashTotal, diff }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [values])
 
@@ -215,7 +213,7 @@ export default function Settlement() {
                     )
                   })}
 
-                  {group === '結帳金額' && (
+                  {group === '其它收支' && (
                     <div className="flex items-center justify-between px-4 py-3 bg-brand-camel/10">
                       <span className="text-sm font-semibold text-brand-amber">應結總金額</span>
                       <span className="text-lg font-bold text-brand-amber font-num">{formatCurrency(computed.expectedTotal)}</span>
@@ -230,18 +228,6 @@ export default function Settlement() {
                       <div className="flex items-center justify-between px-4 py-3 bg-brand-camel/10 border-t border-brand-camel/20">
                         <span className="text-sm font-semibold text-brand-amber">當日實收現金</span>
                         <span className="text-lg font-bold text-brand-amber font-num">{formatCurrency(computed.cashTotal)}</span>
-                      </div>
-                    </>
-                  )}
-                  {group === '鐵櫃內盤點' && (
-                    <>
-                      <div className="flex items-center justify-between px-4 py-3 bg-brand-camel/10">
-                        <span className="text-sm font-semibold text-brand-amber">鐵櫃總額</span>
-                        <span className="text-lg font-bold text-brand-amber font-num">{formatCurrency(computed.safeTotal)}</span>
-                      </div>
-                      <div className="flex items-center justify-between px-4 py-3 bg-brand-camel/10 border-t border-brand-camel/20">
-                        <span className="text-sm font-semibold text-brand-amber">實收總結金額</span>
-                        <span className="text-lg font-bold text-brand-amber font-num">{formatCurrency(computed.actualTotal)}</span>
                       </div>
                     </>
                   )}
