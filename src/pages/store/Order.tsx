@@ -11,8 +11,9 @@ import { supabase } from '@/lib/supabase'
 import { orderSessionId, getTodayTW, getYesterdayTW, getOrderDeadline, isPastDeadline } from '@/lib/session'
 import { submitWithOffline } from '@/lib/submitWithOffline'
 import { logAudit } from '@/lib/auditLog'
+import { formatDate } from '@/lib/utils'
 import { fetchWeather, type WeatherData, type WeatherCondition } from '@/lib/weather'
-import { Send, Lightbulb, Sun, CloudRain, Cloud, CloudSun, Thermometer, Droplets, TrendingUp, TrendingDown, Lock, RefreshCw, History } from 'lucide-react'
+import { Send, Lightbulb, Sun, CloudRain, Cloud, CloudSun, Thermometer, Droplets, TrendingUp, TrendingDown, Lock, RefreshCw, History, ChevronLeft, ChevronRight } from 'lucide-react'
 
 const weatherIcons: Record<WeatherCondition, typeof Sun> = {
   sunny: Sun,
@@ -59,10 +60,24 @@ export default function Order() {
 
   const today = getTodayTW()
   const yesterday = getYesterdayTW()
-  // 若昨日叫貨截止時間（隔日08:00）尚未到，繼續顯示昨日的叫貨單
-  const orderDate = !isPastDeadline(getOrderDeadline(yesterday)) ? yesterday : today
+  // 預設日期：若昨日叫貨截止時間（隔日08:00）尚未到，預設顯示昨日的叫貨單
+  const defaultDate = !isPastDeadline(getOrderDeadline(yesterday)) ? yesterday : today
+  const [selectedDate, setSelectedDate] = useState(defaultDate)
+  const orderDate = selectedDate
   const sessionId = orderSessionId(storeId || '', orderDate)
   const deadline = getOrderDeadline(orderDate)
+  const isToday = selectedDate === today
+
+  const shiftDate = (days: number) => {
+    const d = new Date(selectedDate + 'T00:00:00+08:00')
+    d.setDate(d.getDate() + days)
+    const yyyy = d.getFullYear()
+    const mm = String(d.getMonth() + 1).padStart(2, '0')
+    const dd = String(d.getDate()).padStart(2, '0')
+    const next = `${yyyy}-${mm}-${dd}`
+    if (next > today) return
+    setSelectedDate(next)
+  }
 
   const [orders, setOrders] = useState<Record<string, string>>(() => {
     const init: Record<string, string> = {}
@@ -89,6 +104,12 @@ export default function Order() {
   // Load existing session
   useEffect(() => {
     if (!supabase || !storeId) { setLoading(false); return }
+    // 切換日期時重設表單
+    const init: Record<string, string> = {}
+    storeProducts.forEach(p => { init[p.id] = '' })
+    setOrders(init)
+    setAlmond1000(''); setAlmond300(''); setBowlK520(''); setBowl750('')
+    setNote(''); setIsEdit(false); setLocked(false)
     setLoading(true)
     supabase
       .from('order_sessions')
@@ -121,7 +142,7 @@ export default function Order() {
             setLoading(false)
           })
       })
-  }, [storeId, today])
+  }, [storeId, selectedDate])
 
   const defaultWeather: WeatherData = { date: '明日', condition: 'partly_cloudy', conditionText: '多雲', tempHigh: 28, tempLow: 20, rainProb: 30, humidity: 70 }
   const currentWeather = weather || defaultWeather
@@ -351,6 +372,35 @@ export default function Order() {
         }
       />
 
+      {/* 日期選擇器 */}
+      <div className="flex items-center justify-center gap-3 px-4 py-2 bg-white border-b border-gray-100">
+        <button onClick={() => shiftDate(-1)} className="p-1 rounded-full hover:bg-gray-100 active:bg-gray-200">
+          <ChevronLeft size={20} className="text-brand-oak" />
+        </button>
+        <input
+          type="date"
+          value={selectedDate}
+          max={today}
+          onChange={e => { if (e.target.value && e.target.value <= today) setSelectedDate(e.target.value) }}
+          className="text-sm font-semibold text-brand-oak bg-transparent text-center"
+        />
+        <button
+          onClick={() => shiftDate(1)}
+          disabled={isToday}
+          className="p-1 rounded-full hover:bg-gray-100 active:bg-gray-200 disabled:opacity-30"
+        >
+          <ChevronRight size={20} className="text-brand-oak" />
+        </button>
+        {!isToday && (
+          <button
+            onClick={() => setSelectedDate(today)}
+            className="text-xs text-brand-amber underline"
+          >
+            回到今天
+          </button>
+        )}
+      </div>
+
       {/* Locked banner */}
       {locked && (
         <div className="flex items-center gap-1.5 px-4 py-2 bg-status-danger/10 text-status-danger text-xs">
@@ -363,7 +413,7 @@ export default function Order() {
       {isEdit && !locked && (
         <div className="flex items-center gap-1.5 px-4 py-1.5 bg-status-info/10 text-status-info text-xs">
           <RefreshCw size={12} />
-          <span>已載入今日叫貨紀錄，修改後可重新提交（截止：隔日 08:00）</span>
+          <span>已載入 {formatDate(selectedDate)} 叫貨紀錄，修改後可重新提交</span>
         </div>
       )}
 
