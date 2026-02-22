@@ -13,6 +13,7 @@ interface PinUser {
   staff_name: string
   role: string
   allowed_stores: string[]
+  group_id: string
 }
 
 const roleLabels: Record<string, string> = {
@@ -21,7 +22,12 @@ const roleLabels: Record<string, string> = {
   store: '門店',
 }
 
-const roleOrder: Record<string, number> = { admin: 0, kitchen: 1, store: 2 }
+const groupCards: { key: string; label: string; bg: string; chipBg: string; labelColor: string }[] = [
+  { key: 'admin', label: '管理者', bg: 'from-amber-500/25 to-amber-700/35', chipBg: 'bg-amber-300/15 active:bg-amber-300/30', labelColor: 'text-amber-200' },
+  { key: 'kitchen', label: '央廚', bg: 'from-orange-500/25 to-orange-700/35', chipBg: 'bg-orange-300/15 active:bg-orange-300/30', labelColor: 'text-orange-200' },
+  { key: 'lehua', label: '樂華店', bg: 'from-emerald-500/25 to-emerald-700/35', chipBg: 'bg-emerald-300/15 active:bg-emerald-300/30', labelColor: 'text-emerald-200' },
+  { key: 'xingnan', label: '興南店', bg: 'from-sky-500/25 to-sky-700/35', chipBg: 'bg-sky-300/15 active:bg-sky-300/30', labelColor: 'text-sky-200' },
+]
 
 export default function PinEntry({ onSuccess }: PinEntryProps) {
   const [users, setUsers] = useState<PinUser[]>([])
@@ -36,18 +42,18 @@ export default function PinEntry({ onSuccess }: PinEntryProps) {
     if (!supabase) return
     supabase
       .from('user_pins')
-      .select('id, staff_id, role, allowed_stores, staff:staff_id(name)')
+      .select('id, staff_id, role, allowed_stores, staff:staff_id(name, group_id)')
       .eq('is_active', true)
       .then(({ data }) => {
         if (data) {
           const mapped: PinUser[] = data.map((d: Record<string, unknown>) => ({
             id: d.id as string,
             staff_id: d.staff_id as string,
-            staff_name: (d.staff as { name: string })?.name || (d.staff_id as string),
+            staff_name: (d.staff as { name: string; group_id: string })?.name || (d.staff_id as string),
             role: d.role as string,
             allowed_stores: (d.allowed_stores as string[]) || [],
+            group_id: (d.staff as { name: string; group_id: string })?.group_id || d.role as string,
           }))
-          mapped.sort((a, b) => (roleOrder[a.role] ?? 9) - (roleOrder[b.role] ?? 9))
           setUsers(mapped)
         }
         setLoadingUsers(false)
@@ -137,18 +143,19 @@ export default function PinEntry({ onSuccess }: PinEntryProps) {
 
   // ── Step 1: Select user ──
   if (!selectedUser) {
-    // Group users by role
+    // Group users by group_id (admin / kitchen / lehua / xingnan)
     const grouped = new Map<string, PinUser[]>()
     for (const u of users) {
-      const group = grouped.get(u.role) || []
+      const key = u.group_id || u.role
+      const group = grouped.get(key) || []
       group.push(u)
-      grouped.set(u.role, group)
+      grouped.set(key, group)
     }
 
     return (
       <div className="min-h-screen flex flex-col bg-gradient-to-b from-brand-lotus to-brand-mocha px-6">
-        <div className="text-center pt-16 pb-8">
-          <h1 className="text-3xl font-bold text-white mb-2">阿爸的芋圓</h1>
+        <div className="text-center pt-14 pb-6">
+          <h1 className="text-3xl font-bold text-white mb-1">阿爸的芋圓</h1>
           <p className="text-white/70 text-sm">請選擇您的身分</p>
         </div>
 
@@ -157,31 +164,33 @@ export default function PinEntry({ onSuccess }: PinEntryProps) {
         ) : users.length === 0 ? (
           <p className="text-center text-white/60 text-sm py-10">尚未設定任何 PIN 碼</p>
         ) : (
-          <div className="flex-1 overflow-y-auto pb-8 space-y-4">
-            {Array.from(grouped.entries()).map(([role, members]) => (
-              <div key={role}>
-                <p className="text-white/50 text-xs font-medium mb-2 px-1">
-                  {roleLabels[role] || role}
-                </p>
-                <div className="space-y-2">
-                  {members.map((user) => (
-                    <button
-                      key={user.id}
-                      onClick={() => setSelectedUser(user)}
-                      className="w-full flex items-center gap-3 bg-white/15 backdrop-blur-sm rounded-2xl px-4 py-3.5 text-left active:bg-white/25 transition-colors"
-                    >
-                      <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center shrink-0">
-                        <UserCircle size={24} className="text-white" />
-                      </div>
-                      <div>
-                        <p className="text-white font-semibold text-base">{user.staff_name}</p>
-                        <p className="text-white/50 text-xs">{roleLabels[user.role] || user.role}</p>
-                      </div>
-                    </button>
-                  ))}
+          <div className="flex-1 overflow-y-auto pb-8 space-y-3">
+            {groupCards.map(card => {
+              const members = grouped.get(card.key)
+              if (!members || members.length === 0) return null
+              return (
+                <div key={card.key} className={`rounded-2xl bg-gradient-to-br ${card.bg} backdrop-blur-sm p-4 ring-1 ring-white/10`}>
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className={`text-sm font-bold ${card.labelColor}`}>{card.label}</span>
+                    <span className="text-white/30 text-[11px]">{members.length} 人</span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    {members.map((user) => (
+                      <button
+                        key={user.id}
+                        onClick={() => setSelectedUser(user)}
+                        className={`flex items-center gap-2 ${card.chipBg} rounded-xl px-3 py-2.5 text-left transition-colors`}
+                      >
+                        <div className="w-8 h-8 rounded-full bg-white/15 flex items-center justify-center shrink-0">
+                          <UserCircle size={18} className="text-white/80" />
+                        </div>
+                        <span className="text-white text-sm font-medium truncate">{user.staff_name}</span>
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         )}
       </div>
