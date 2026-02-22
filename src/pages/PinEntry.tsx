@@ -22,11 +22,12 @@ const roleLabels: Record<string, string> = {
   store: '門店',
 }
 
-const groupCards: { key: string; label: string; bg: string; chipBg: string; labelColor: string }[] = [
-  { key: 'admin', label: '管理者', bg: 'from-amber-500/25 to-amber-700/35', chipBg: 'bg-amber-300/15 active:bg-amber-300/30', labelColor: 'text-amber-200' },
-  { key: 'kitchen', label: '央廚', bg: 'from-orange-500/25 to-orange-700/35', chipBg: 'bg-orange-300/15 active:bg-orange-300/30', labelColor: 'text-orange-200' },
-  { key: 'lehua', label: '樂華店', bg: 'from-emerald-500/25 to-emerald-700/35', chipBg: 'bg-emerald-300/15 active:bg-emerald-300/30', labelColor: 'text-emerald-200' },
-  { key: 'xingnan', label: '興南店', bg: 'from-sky-500/25 to-sky-700/35', chipBg: 'bg-sky-300/15 active:bg-sky-300/30', labelColor: 'text-sky-200' },
+// brand 色系：amber #D4A853, camel #C9AC84, oak #6B5D55, lotus #9E9590
+const groupCards: { key: string; label: string; cardBg: string; chipBg: string; chipActive: string; labelColor: string }[] = [
+  { key: 'admin', label: '管理者', cardBg: 'rgba(212,168,83,0.18)', chipBg: 'rgba(212,168,83,0.12)', chipActive: 'rgba(212,168,83,0.28)', labelColor: 'text-brand-amber' },
+  { key: 'kitchen', label: '央廚', cardBg: 'rgba(201,172,132,0.18)', chipBg: 'rgba(201,172,132,0.12)', chipActive: 'rgba(201,172,132,0.28)', labelColor: 'text-brand-camel' },
+  { key: 'lehua', label: '樂華店', cardBg: 'rgba(107,93,85,0.22)', chipBg: 'rgba(107,93,85,0.15)', chipActive: 'rgba(107,93,85,0.32)', labelColor: 'text-brand-camel' },
+  { key: 'xingnan', label: '興南店', cardBg: 'rgba(158,149,144,0.18)', chipBg: 'rgba(158,149,144,0.12)', chipActive: 'rgba(158,149,144,0.28)', labelColor: 'text-brand-lotus' },
 ]
 
 export default function PinEntry({ onSuccess }: PinEntryProps) {
@@ -169,7 +170,7 @@ export default function PinEntry({ onSuccess }: PinEntryProps) {
               const members = grouped.get(card.key)
               if (!members || members.length === 0) return null
               return (
-                <div key={card.key} className={`rounded-2xl bg-gradient-to-br ${card.bg} backdrop-blur-sm p-4 ring-1 ring-white/10`}>
+                <div key={card.key} className="rounded-2xl backdrop-blur-sm p-4 ring-1 ring-white/10" style={{ background: card.cardBg }}>
                   <div className="flex items-center gap-2 mb-3">
                     <span className={`text-sm font-bold ${card.labelColor}`}>{card.label}</span>
                     <span className="text-white/30 text-[11px]">{members.length} 人</span>
@@ -179,7 +180,11 @@ export default function PinEntry({ onSuccess }: PinEntryProps) {
                       <button
                         key={user.id}
                         onClick={() => setSelectedUser(user)}
-                        className={`flex items-center gap-2 ${card.chipBg} rounded-xl px-3 py-2.5 text-left transition-colors`}
+                        className="flex items-center gap-2 rounded-xl px-3 py-2.5 text-left transition-colors"
+                        style={{ background: card.chipBg }}
+                        onPointerDown={(e) => { (e.currentTarget as HTMLElement).style.background = card.chipActive }}
+                        onPointerUp={(e) => { (e.currentTarget as HTMLElement).style.background = card.chipBg }}
+                        onPointerLeave={(e) => { (e.currentTarget as HTMLElement).style.background = card.chipBg }}
                       >
                         <div className="w-8 h-8 rounded-full bg-white/15 flex items-center justify-center shrink-0">
                           <UserCircle size={18} className="text-white/80" />
