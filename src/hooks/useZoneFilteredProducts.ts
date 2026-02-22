@@ -1,4 +1,4 @@
-import { useMemo, useCallback } from 'react'
+import { useMemo, useCallback, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useProductStore } from '@/stores/useProductStore'
 import { useZoneStore } from '@/stores/useZoneStore'
@@ -22,6 +22,23 @@ export function useZoneFilteredProducts(storeId: string): ZoneFilterResult {
 
   const currentZone = searchParams.get('zone')
 
+  // 多樓層時，預設選第一個樓層（而非合併檢視）
+  const storeZones = useMemo(() => {
+    return zones
+      .filter((z) => z.storeId === storeId)
+      .sort((a, b) => a.sortOrder - b.sortOrder)
+  }, [zones, storeId])
+
+  useEffect(() => {
+    if (!currentZone && storeZones.length > 0) {
+      setSearchParams((prev) => {
+        const next = new URLSearchParams(prev)
+        next.set('zone', storeZones[0].zoneCode)
+        return next
+      }, { replace: true })
+    }
+  }, [currentZone, storeZones, setSearchParams])
+
   const setZone = useCallback((zoneCode: string | null) => {
     setSearchParams((prev) => {
       const next = new URLSearchParams(prev)
@@ -33,12 +50,6 @@ export function useZoneFilteredProducts(storeId: string): ZoneFilterResult {
       return next
     }, { replace: true })
   }, [setSearchParams])
-
-  const storeZones = useMemo(() => {
-    return zones
-      .filter((z) => z.storeId === storeId)
-      .sort((a, b) => a.sortOrder - b.sortOrder)
-  }, [zones, storeId])
 
   const matchedZone = useMemo(() => {
     if (!currentZone) return null
