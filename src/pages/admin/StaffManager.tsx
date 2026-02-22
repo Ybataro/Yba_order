@@ -6,8 +6,15 @@ import { SectionHeader } from '@/components/SectionHeader'
 import { useToast } from '@/components/Toast'
 import { useStaffStore } from '@/stores/useStaffStore'
 import { useStoreStore } from '@/stores/useStoreStore'
+import { supabase } from '@/lib/supabase'
 import type { StaffMember } from '@/data/staff'
 import { Plus, Pencil, Trash2, ChevronUp, ChevronDown } from 'lucide-react'
+
+const EMPLOYMENT_OPTIONS = [
+  { value: 'full_time', label: '正職' },
+  { value: 'part_time', label: '兼職' },
+  { value: 'hourly', label: '工讀' },
+]
 
 export default function StaffManager() {
   const { adminStaff, kitchenStaff, storeStaff, addAdmin, updateAdmin, removeAdmin, addKitchen, updateKitchen, removeKitchen, addStore, updateStore, removeStore, reorderGroup } = useStaffStore()
@@ -18,6 +25,8 @@ export default function StaffManager() {
   const [editing, setEditing] = useState<{ member: StaffMember; group: string } | null>(null)
   const [formName, setFormName] = useState('')
   const [formGroup, setFormGroup] = useState('kitchen')
+  const [formEmployment, setFormEmployment] = useState('full_time')
+  const [formHourlyRate, setFormHourlyRate] = useState('')
   const [deleteConfirm, setDeleteConfirm] = useState<{ member: StaffMember; group: string } | null>(null)
 
   const groupOptions = [
@@ -30,17 +39,25 @@ export default function StaffManager() {
     setEditing(null)
     setFormName('')
     setFormGroup('kitchen')
+    setFormEmployment('full_time')
+    setFormHourlyRate('')
     setModalOpen(true)
   }
 
-  const openEdit = (member: StaffMember, group: string) => {
+  const openEdit = async (member: StaffMember, group: string) => {
     setEditing({ member, group })
     setFormName(member.name)
     setFormGroup(group)
+    // Fetch employment_type and hourly_rate from DB
+    if (supabase) {
+      const { data } = await supabase.from('staff').select('employment_type, hourly_rate').eq('id', member.id).single()
+      setFormEmployment(data?.employment_type || 'full_time')
+      setFormHourlyRate(data?.hourly_rate ? String(data.hourly_rate) : '')
+    }
     setModalOpen(true)
   }
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!formName.trim()) {
       showToast('請填寫姓名', 'error')
       return
@@ -53,6 +70,13 @@ export default function StaffManager() {
       } else {
         updateStore(editing.group, editing.member.id, { name: formName })
       }
+      // Update employment_type and hourly_rate
+      if (supabase) {
+        await supabase.from('staff').update({
+          employment_type: formEmployment,
+          hourly_rate: formHourlyRate ? Number(formHourlyRate) : 0,
+        }).eq('id', editing.member.id)
+      }
       showToast('人員已更新')
     } else {
       const newMember: StaffMember = { id: `staff_${Date.now()}`, name: formName }
@@ -62,6 +86,16 @@ export default function StaffManager() {
         addKitchen(newMember)
       } else {
         addStore(formGroup, newMember)
+      }
+      // Set employment_type and hourly_rate for new member
+      if (supabase) {
+        // Small delay to ensure the insert from store has completed
+        setTimeout(async () => {
+          await supabase!.from('staff').update({
+            employment_type: formEmployment,
+            hourly_rate: formHourlyRate ? Number(formHourlyRate) : 0,
+          }).eq('id', newMember.id)
+        }, 500)
       }
       showToast('人員已新增')
     }
@@ -172,6 +206,21 @@ export default function StaffManager() {
             onChange={(v) => setFormGroup(v)}
             options={groupOptions}
             placeholder="請選擇"
+          />
+        </ModalField>
+        <ModalField label="職別">
+          <ModalSelect
+            value={formEmployment}
+            onChange={setFormEmployment}
+            options={EMPLOYMENT_OPTIONS}
+          />
+        </ModalField>
+        <ModalField label="時薪（元）">
+          <ModalInput
+            value={formHourlyRate}
+            onChange={setFormHourlyRate}
+            placeholder="例：183"
+            type="text"
           />
         </ModalField>
       </AdminModal>

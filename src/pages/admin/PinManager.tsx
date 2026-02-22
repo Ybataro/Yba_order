@@ -7,7 +7,7 @@ import { useStaffStore } from '@/stores/useStaffStore'
 import { useStoreStore } from '@/stores/useStoreStore'
 import { supabase } from '@/lib/supabase'
 import { hashPin } from '@/lib/auth'
-import { Plus, Pencil, Shield, ShieldOff } from 'lucide-react'
+import { Plus, Pencil, Shield, ShieldOff, CalendarDays } from 'lucide-react'
 
 interface UserPin {
   id: string
@@ -16,6 +16,7 @@ interface UserPin {
   role: string
   allowed_stores: string[]
   is_active: boolean
+  can_schedule: boolean
   staff?: { name: string }
 }
 
@@ -138,6 +139,22 @@ export default function PinManager() {
     showToast(pin.is_active ? '已停用' : '已啟用')
   }
 
+  const toggleCanSchedule = async (pin: UserPin) => {
+    if (!supabase) return
+    const { error } = await supabase
+      .from('user_pins')
+      .update({ can_schedule: !pin.can_schedule, updated_at: new Date().toISOString() })
+      .eq('id', pin.id)
+
+    if (error) {
+      showToast('更新失敗', 'error')
+      return
+    }
+
+    setPins((prev) => prev.map((p) => p.id === pin.id ? { ...p, can_schedule: !p.can_schedule } : p))
+    showToast(pin.can_schedule ? '已取消排班權限' : '已授予排班權限')
+  }
+
   const roleLabels: Record<string, string> = {
     admin: '管理者',
     kitchen: '央廚',
@@ -198,6 +215,13 @@ export default function PinManager() {
                         </p>
                       </div>
                       <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => toggleCanSchedule(pin)}
+                          className={`p-1.5 rounded-lg ${pin.can_schedule ? 'text-brand-amber bg-amber-50' : 'text-gray-300 bg-gray-50'}`}
+                          title={pin.can_schedule ? '取消排班權限' : '授予排班權限'}
+                        >
+                          <CalendarDays size={16} />
+                        </button>
                         <button
                           onClick={() => toggleActive(pin)}
                           className={`p-1.5 rounded-lg ${pin.is_active ? 'text-green-500 bg-green-50' : 'text-gray-400 bg-gray-100'}`}

@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react'
-import { ClipboardList, Truck, Package, Box, ShoppingCart, LogOut, CalendarClock, UserCircle, Receipt } from 'lucide-react'
+import { ClipboardList, Truck, Package, Box, ShoppingCart, LogOut, CalendarClock, UserCircle, Receipt, CalendarDays } from 'lucide-react'
 import { getTodayString, formatDate } from '@/lib/utils'
 import { useStaffStore } from '@/stores/useStaffStore'
 import NotificationBell from '@/components/NotificationBell'
@@ -15,6 +15,7 @@ const menuItems = [
   { icon: ShoppingCart, label: '原物料叫貨', desc: '向供應商訂購原物料', path: '/kitchen/material-orders', color: 'bg-brand-silver' },
   { icon: CalendarClock, label: '生產排程建議', desc: '今日/明日生產量與本週概覽', path: '/kitchen/schedule', color: 'bg-brand-oak' },
   { icon: Receipt, label: '雜支申報', desc: '記錄日常雜支費用', path: '/kitchen/expense', color: 'bg-brand-camel' },
+  { icon: CalendarDays, label: '排班表', desc: '查看/編輯央廚員工排班', path: '/kitchen/staff-schedule', color: 'bg-brand-amber' },
 ]
 
 export default function KitchenHome() {

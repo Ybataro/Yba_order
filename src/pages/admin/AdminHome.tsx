@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Package, Warehouse, Users, Store, Receipt, QrCode, Layers, ClipboardList, FileText, DollarSign, CloudSun, ChefHat, LayoutDashboard, LogOut, KeyRound, ScrollText, Wallet, TrendingUp, ChevronDown } from 'lucide-react'
+import { Package, Warehouse, Users, Store, Receipt, QrCode, Layers, ClipboardList, FileText, DollarSign, CloudSun, ChefHat, LayoutDashboard, LogOut, KeyRound, ScrollText, Wallet, TrendingUp, ChevronDown, CalendarClock, Clock } from 'lucide-react'
 import { getTodayString, formatDate } from '@/lib/utils'
 import { useStoreStore } from '@/stores/useStoreStore'
 import { clearSession } from '@/lib/auth'
@@ -39,6 +39,7 @@ const menuGroups: MenuGroup[] = [
       { icon: Store, label: '門店管理', desc: '新增/編輯門店資訊', path: '/admin/stores', color: 'bg-brand-blush' },
       { icon: Receipt, label: '結帳欄位管理', desc: '管理每日結帳表單欄位', path: '/admin/settlement-fields', color: 'bg-brand-silver' },
       { icon: Layers, label: '樓層品項管理', desc: '設定門店樓層及品項分配', path: '/admin/zones', color: 'bg-brand-camel' },
+      { icon: CalendarClock, label: '班次類型管理', desc: '設定央廚及各門店班次時段', path: '/admin/shift-types', color: 'bg-brand-oak' },
     ],
   },
   {
@@ -48,6 +49,7 @@ const menuGroups: MenuGroup[] = [
       { icon: DollarSign, label: '叫貨價格統計', desc: '品項成本與加盟價格統計', path: '/admin/order-pricing', color: 'bg-brand-oak' },
       { icon: TrendingUp, label: '盈餘統計', desc: '月/年損益分析與費用管理', path: '/admin/profit-loss', color: 'bg-brand-amber' },
       { icon: CloudSun, label: '天氣用量分析', desc: '天氣與營業額、叫貨量關聯分析', path: '/admin/weather-analysis', color: 'bg-brand-amber' },
+      { icon: Clock, label: '工時統計', desc: '依職別統計每月排班工時與薪資', path: '/admin/schedule-stats', color: 'bg-brand-mocha' },
     ],
   },
   {

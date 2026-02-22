@@ -25,6 +25,10 @@ const ProductStock = lazy(() => import('@/pages/kitchen/ProductStock'))
 const MaterialOrder = lazy(() => import('@/pages/kitchen/MaterialOrder'))
 const ProductionSchedule = lazy(() => import('@/pages/kitchen/ProductionSchedule'))
 const KitchenDailyExpense = lazy(() => import('@/pages/kitchen/DailyExpense'))
+const KitchenSchedules = lazy(() => import('@/pages/kitchen/Schedules'))
+
+// Store pages (schedule)
+const StoreSchedules = lazy(() => import('@/pages/store/Schedules'))
 
 // Admin pages
 const AdminHome = lazy(() => import('@/pages/admin/AdminHome'))
@@ -44,6 +48,8 @@ const PinManager = lazy(() => import('@/pages/admin/PinManager'))
 const AuditLog = lazy(() => import('@/pages/admin/AuditLog'))
 const ExpenseManagement = lazy(() => import('@/pages/admin/ExpenseManagement'))
 const ProfitLoss = lazy(() => import('@/pages/admin/ProfitLoss'))
+const ShiftTypeManager = lazy(() => import('@/pages/admin/ShiftTypeManager'))
+const ScheduleStats = lazy(() => import('@/pages/admin/ScheduleStats'))
 
 function Loading() {
   return (
@@ -77,6 +83,7 @@ function App() {
                 <Route path="/store/:storeId/receive" element={<Receive />} />
                 <Route path="/store/:storeId/order-history" element={<StoreOrderHistory />} />
                 <Route path="/store/:storeId/expense" element={<StoreDailyExpense />} />
+                <Route path="/store/:storeId/schedule" element={<StoreSchedules />} />
               </Route>
 
               {/* Kitchen routes */}
@@ -88,6 +95,7 @@ function App() {
                 <Route path="/kitchen/products" element={<ProductStock />} />
                 <Route path="/kitchen/material-orders" element={<MaterialOrder />} />
                 <Route path="/kitchen/schedule" element={<ProductionSchedule />} />
+                <Route path="/kitchen/staff-schedule" element={<KitchenSchedules />} />
                 <Route path="/kitchen/expense" element={<KitchenDailyExpense />} />
               </Route>
 
@@ -110,6 +118,8 @@ function App() {
                 <Route path="/admin/audit" element={<AuditLog />} />
                 <Route path="/admin/expenses" element={<ExpenseManagement />} />
                 <Route path="/admin/profit-loss" element={<ProfitLoss />} />
+                <Route path="/admin/shift-types" element={<ShiftTypeManager />} />
+                <Route path="/admin/schedule-stats" element={<ScheduleStats />} />
               </Route>
             </Routes>
           </Suspense>

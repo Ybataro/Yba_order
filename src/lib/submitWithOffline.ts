@@ -69,13 +69,23 @@ export async function submitWithOffline({
       return false
     }
 
-    if (items.length > 0) {
-      const itemTable = type === 'settlement' ? 'settlement_values' : `${type}_items`
-      const conflictKey = type === 'settlement' ? 'session_id,field_id' : 'session_id,product_id'
+    // Items: delete existing + insert new（避免 upsert 與 auto-increment id 衝突）
+    const itemTable = type === 'settlement' ? 'settlement_values' : `${type}_items`
 
+    const { error: delErr } = await supabase
+      .from(itemTable)
+      .delete()
+      .eq('session_id', sessionId)
+
+    if (delErr) {
+      onError(`清除舊項目失敗：${delErr.message}`)
+      return false
+    }
+
+    if (items.length > 0) {
       const { error: itemErr } = await supabase
         .from(itemTable)
-        .upsert(items, { onConflict: conflictKey })
+        .insert(items)
 
       if (itemErr) {
         onError(`項目儲存失敗：${itemErr.message}`)

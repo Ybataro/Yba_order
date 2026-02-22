@@ -2,7 +2,7 @@ import { useState, useCallback } from 'react'
 import { useParams } from 'react-router-dom'
 import { useStoreStore } from '@/stores/useStoreStore'
 import { useStaffStore } from '@/stores/useStaffStore'
-import { ClipboardList, DollarSign, Package, PackageCheck, UserCircle, LogOut, Receipt } from 'lucide-react'
+import { ClipboardList, DollarSign, Package, PackageCheck, UserCircle, LogOut, Receipt, CalendarDays } from 'lucide-react'
 import { getTodayString, formatDate } from '@/lib/utils'
 import NotificationBell from '@/components/NotificationBell'
 import CriticalAlertModal from '@/components/CriticalAlertModal'
@@ -15,6 +15,7 @@ const menuItems = [
   { icon: Package, label: '叫貨', desc: '明日物料需求', path: 'order', color: 'bg-brand-lotus' },
   { icon: PackageCheck, label: '收貨確認', desc: '確認央廚今日出貨', path: 'receive', color: 'bg-brand-blush' },
   { icon: Receipt, label: '雜支申報', desc: '記錄日常雜支費用', path: 'expense', color: 'bg-brand-silver' },
+  { icon: CalendarDays, label: '排班表', desc: '查看/編輯門店員工排班', path: 'schedule', color: 'bg-brand-amber' },
 ]
 
 export default function StoreHome() {

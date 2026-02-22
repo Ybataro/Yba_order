@@ -20,22 +20,28 @@ async function replaySubmission(submission: PendingSubmission): Promise<boolean>
       return false
     }
 
-    // 2. Upsert items
+    // 2. Delete existing + insert new items
+    const tableName = submission.type === 'settlement'
+      ? 'settlement_values'
+      : `${submission.type}_items`
+
+    const { error: delErr } = await supabase
+      .from(tableName)
+      .delete()
+      .eq('session_id', submission.sessionId)
+
+    if (delErr) {
+      console.error(`[offlineSync] items delete failed for ${submission.id}:`, delErr.message)
+      return false
+    }
+
     if (submission.payload.items.length > 0) {
-      const tableName = submission.type === 'settlement'
-        ? 'settlement_values'
-        : `${submission.type}_items`
-
-      const conflictKey = submission.type === 'settlement'
-        ? 'session_id,field_id'
-        : 'session_id,product_id'
-
       const { error: itemErr } = await supabase
         .from(tableName)
-        .upsert(submission.payload.items, { onConflict: conflictKey })
+        .insert(submission.payload.items)
 
       if (itemErr) {
-        console.error(`[offlineSync] items upsert failed for ${submission.id}:`, itemErr.message)
+        console.error(`[offlineSync] items insert failed for ${submission.id}:`, itemErr.message)
         return false
       }
     }
