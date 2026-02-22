@@ -23,6 +23,14 @@ const weatherIcons: Record<WeatherCondition, typeof Sun> = {
   rainy: CloudRain,
 }
 
+function parseBaseStock(baseStock?: string): number {
+  if (!baseStock) return 0
+  const str = baseStock.trim()
+  if (/^\d+\.?\d*\s*(g|公斤|ml)/i.test(str)) return 0
+  const match = str.match(/^(\d+\.?\d*)/)
+  return match ? parseFloat(match[1]) : 0
+}
+
 function getWeatherImpacts(weather: WeatherData) {
   const impacts: { category: string; adjust: number; reason: string }[] = []
   const { tempHigh, rainProb, condition } = weather
@@ -306,75 +314,211 @@ export default function Order() {
     load()
   }, [storeId, selectedDate])
 
-  // 近 7 日平均叫貨量
+  // 建議量計算
+  interface SuggestionBreakdown {
+    avgUsage: number
+    dataSource: 'usage' | 'order'
+    weatherAdjustPct: number
+    restDayMultiplier: number
+    safetyStockGap: number
+    rawBeforeRound: number
+  }
   const [suggested, setSuggested] = useState<Record<string, number>>({})
+  const [suggestionBreakdown, setSuggestionBreakdown] = useState<Record<string, SuggestionBreakdown>>({})
+  const [expandedSuggestionId, setExpandedSuggestionId] = useState<string | null>(null)
   const [suggestedLoading, setSuggestedLoading] = useState(true)
 
   useEffect(() => {
-    if (!supabase || !storeId) { setSuggestedLoading(false); return }
+    if (!supabase || !storeId || stockLoading) { if (!stockLoading) setSuggestedLoading(false); return }
 
     const load = async () => {
       setSuggestedLoading(true)
+
       // 計算 7 天前的日期
       const d = new Date()
       d.setDate(d.getDate() - 7)
       const sevenDaysAgo = d.toLocaleDateString('en-CA', { timeZone: 'Asia/Taipei' })
 
-      const { data: sessions } = await supabase!
+      // ── Step 1: 嘗試 usage-based 計算 ──
+      let usageAvg: Record<string, number> = {}
+      let usageValidDays = 0
+
+      const { data: invSessions } = await supabase!
+        .from('inventory_sessions')
+        .select('id, date')
+        .eq('store_id', storeId)
+        .gte('date', sevenDaysAgo)
+        .lte('date', today)
+        .order('date', { ascending: true })
+
+      if (invSessions && invSessions.length > 0) {
+        // 按日期分組
+        const sessionsByDate = new Map<string, string[]>()
+        invSessions.forEach(s => {
+          const list = sessionsByDate.get(s.date) || []
+          list.push(s.id)
+          sessionsByDate.set(s.date, list)
+        })
+
+        const allInvSids = invSessions.map(s => s.id)
+        const { data: invItems } = await supabase!
+          .from('inventory_items')
+          .select('session_id, product_id, on_shelf, stock, discarded')
+          .in('session_id', allInvSids)
+
+        // 查出貨資料
+        const dates = Array.from(sessionsByDate.keys())
+        const shipmentSids = dates.map(dt => `${storeId}_${dt}`)
+        const { data: shipItems } = await supabase!
+          .from('shipment_items')
+          .select('session_id, product_id, actual_qty')
+          .in('session_id', shipmentSids)
+
+        // 建立每日庫存 map: date → pid → totalStock
+        const invBySession: Record<string, { product_id: string; on_shelf: number; stock: number; discarded: number }[]> = {}
+        invItems?.forEach(item => {
+          if (!invBySession[item.session_id]) invBySession[item.session_id] = []
+          invBySession[item.session_id].push({
+            product_id: item.product_id,
+            on_shelf: item.on_shelf || 0,
+            stock: item.stock || 0,
+            discarded: item.discarded || 0,
+          })
+        })
+
+        const dailyStock: Record<string, Record<string, number>> = {}
+        const dailyDiscarded: Record<string, Record<string, number>> = {}
+        for (const [dt, sids] of sessionsByDate.entries()) {
+          const stockMap: Record<string, number> = {}
+          const discMap: Record<string, number> = {}
+          sids.forEach(sid => {
+            (invBySession[sid] || []).forEach(item => {
+              stockMap[item.product_id] = (stockMap[item.product_id] || 0) + item.on_shelf + item.stock
+              discMap[item.product_id] = (discMap[item.product_id] || 0) + item.discarded
+            })
+          })
+          dailyStock[dt] = stockMap
+          dailyDiscarded[dt] = discMap
+        }
+
+        // 出貨 map: date → pid → qty
+        const dailyShipment: Record<string, Record<string, number>> = {}
+        shipItems?.forEach(item => {
+          const dt = item.session_id.replace(`${storeId}_`, '')
+          if (!dailyShipment[dt]) dailyShipment[dt] = {}
+          dailyShipment[dt][item.product_id] = (dailyShipment[dt][item.product_id] || 0) + (item.actual_qty || 0)
+        })
+
+        // 逐日計算用量
+        const sortedDates = dates.sort()
+        const productUsageSums: Record<string, number> = {}
+        const productUsageDays: Record<string, number> = {}
+
+        for (let i = 1; i < sortedDates.length; i++) {
+          const prevDate = sortedDates[i - 1]
+          const currDate = sortedDates[i]
+          const prevStk = dailyStock[prevDate] || {}
+          const currStk = dailyStock[currDate] || {}
+          const currDisc = dailyDiscarded[currDate] || {}
+          const currShip = dailyShipment[currDate] || {}
+
+          const allPids = new Set([...Object.keys(prevStk), ...Object.keys(currStk)])
+          allPids.forEach(pid => {
+            const prev = prevStk[pid] || 0
+            const ship = currShip[pid] || 0
+            const curr = currStk[pid] || 0
+            const disc = currDisc[pid] || 0
+            if (prev > 0 || curr > 0) {
+              const u = Math.max(0, prev + ship - curr - disc)
+              productUsageSums[pid] = (productUsageSums[pid] || 0) + u
+              productUsageDays[pid] = (productUsageDays[pid] || 0) + 1
+            }
+          })
+        }
+
+        usageValidDays = sortedDates.length - 1
+        if (usageValidDays >= 2) {
+          storeProducts.forEach(p => {
+            const days = productUsageDays[p.id]
+            if (days && days >= 2) {
+              usageAvg[p.id] = productUsageSums[p.id] / days
+            }
+          })
+        }
+      }
+
+      // ── Step 2: Fallback 到叫貨量 ──
+      let orderAvg: Record<string, number> = {}
+
+      const { data: ordSessions } = await supabase!
         .from('order_sessions')
         .select('id, date')
         .eq('store_id', storeId)
         .gte('date', sevenDaysAgo)
         .lte('date', today)
 
-      if (!sessions || sessions.length === 0) {
-        setSuggested({})
-        setSuggestedLoading(false)
-        return
+      if (ordSessions && ordSessions.length > 0) {
+        const ordSids = ordSessions.map(s => s.id)
+        const ordUniqueDays = new Set(ordSessions.map(s => s.date)).size
+
+        const { data: ordItems } = await supabase!
+          .from('order_items')
+          .select('product_id, quantity')
+          .in('session_id', ordSids)
+
+        if (ordItems && ordItems.length > 0) {
+          const ordTotals: Record<string, number> = {}
+          ordItems.forEach(item => {
+            ordTotals[item.product_id] = (ordTotals[item.product_id] || 0) + item.quantity
+          })
+          storeProducts.forEach(p => {
+            if (ordTotals[p.id]) {
+              orderAvg[p.id] = ordTotals[p.id] / ordUniqueDays
+            }
+          })
+        }
       }
 
-      const sessionIds = sessions.map(s => s.id)
-      const uniqueDays = new Set(sessions.map(s => s.date)).size
-
-      const { data: items } = await supabase!
-        .from('order_items')
-        .select('product_id, quantity')
-        .in('session_id', sessionIds)
-
-      if (!items || items.length === 0) {
-        setSuggested({})
-        setSuggestedLoading(false)
-        return
-      }
-
-      // 加總各品項
-      const totals: Record<string, number> = {}
-      items.forEach(item => {
-        totals[item.product_id] = (totals[item.product_id] || 0) + item.quantity
-      })
-
-      // 央廚休息日：週三(3)、週日(0) 公休
-      // 週一(1)、週五(5) 叫貨需 ×2（隔天到貨後，再隔天央廚休息無法叫貨，需撐 2 天）
+      // ── Step 3: 套用天氣 + 休息日 + 安全庫存 ──
       const orderDayOfWeek = new Date(today + 'T00:00:00+08:00').getDay()
-      const restDayMultiplier = (orderDayOfWeek === 1 || orderDayOfWeek === 5) ? 2 : 1
+      const restMul = (orderDayOfWeek === 1 || orderDayOfWeek === 5) ? 2 : 1
 
-      // 計算日均 × 天氣係數 × 休息日倍率
       const result: Record<string, number> = {}
+      const breakdowns: Record<string, SuggestionBreakdown> = {}
+
       storeProducts.forEach(p => {
-        const total = totals[p.id] || 0
-        const avg = total / uniqueDays
-        const adjust = impactMap[p.category] || 0
-        const raw = Math.max(0, avg * (1 + adjust / 100)) * restDayMultiplier
+        const hasUsage = usageAvg[p.id] != null
+        const avg = hasUsage ? usageAvg[p.id] : (orderAvg[p.id] || 0)
+        const dataSource: 'usage' | 'order' = hasUsage ? 'usage' : 'order'
+        const weatherPct = impactMap[p.category] || 0
+        const weatherAdj = Math.max(0, avg * (1 + weatherPct / 100))
+        const restDayQty = weatherAdj * restMul
+
+        const parsedBase = parseBaseStock(p.baseStock)
+        const currentStock = stock[p.id] || 0
+        const safetyGap = Math.max(0, parsedBase - currentStock)
+
+        const rawBeforeRound = Math.max(restDayQty, safetyGap)
         const unit = getRoundUnit(p)
-        result[p.id] = roundToUnit(raw, unit)
+        result[p.id] = roundToUnit(rawBeforeRound, unit)
+
+        breakdowns[p.id] = {
+          avgUsage: Math.round(avg * 10) / 10,
+          dataSource,
+          weatherAdjustPct: weatherPct,
+          restDayMultiplier: restMul,
+          safetyStockGap: Math.round(safetyGap * 10) / 10,
+          rawBeforeRound: Math.round(rawBeforeRound * 10) / 10,
+        }
       })
 
       setSuggested(result)
+      setSuggestionBreakdown(breakdowns)
       setSuggestedLoading(false)
     }
 
     load()
-  }, [storeId, today, impactMap])
+  }, [storeId, today, impactMap, stock, stockLoading])
 
   const applyAllSuggestions = () => {
     if (locked) return
@@ -550,7 +694,7 @@ export default function Order() {
 
           <div className="mx-4 mb-2 flex items-center gap-2 bg-status-info/10 text-status-info px-3 py-2 rounded-btn text-xs">
             <Lightbulb size={14} />
-            <span>{isRestDayEve ? '建議量已結合近7日用量 + 天氣因素（×2 央廚休息日備量）' : '建議量已結合近7日用量 + 天氣因素計算'}</span>
+            <span>{isRestDayEve ? '建議量已結合近7日實際用量 + 天氣 + 安全庫存（×2 央廚休息日備量）· 點擊建議數字查看明細' : '建議量已結合近7日實際用量 + 天氣 + 安全庫存計算 · 點擊建議數字查看明細'}</span>
           </div>
 
           {!locked && (
@@ -572,24 +716,68 @@ export default function Order() {
               <SectionHeader title={category} icon="■" />
               <div className="bg-white">
                 {products.map((product, idx) => (
-                  <div key={product.id} className={`flex items-center px-4 py-1.5 ${idx < products.length - 1 ? 'border-b border-gray-50' : ''}`}>
-                    <div className="flex-1 min-w-0 pr-1">
-                      <span className="text-sm font-medium text-brand-oak">{product.name}</span>
-                      <span className="text-[10px] text-brand-lotus ml-1">({product.unit})</span>
+                  <div key={product.id}>
+                    <div className={`flex items-center px-4 py-1.5 ${idx < products.length - 1 && expandedSuggestionId !== product.id ? 'border-b border-gray-50' : ''}`}>
+                      <div className="flex-1 min-w-0 pr-1">
+                        <span className="text-sm font-medium text-brand-oak">{product.name}</span>
+                        <span className="text-[10px] text-brand-lotus ml-1">({product.unit})</span>
+                      </div>
+                      <span className="w-[36px] text-center text-xs font-num text-brand-mocha">{usage[product.id] != null ? (usage[product.id] > 0 ? usage[product.id] : 0) : '-'}</span>
+                      <span className={`w-[40px] text-center text-xs font-num ${stock[product.id] != null && stock[product.id] === 0 ? 'text-status-danger font-bold' : 'text-brand-oak'}`}>{stock[product.id] != null ? stock[product.id] : '-'}</span>
+                      <button
+                        type="button"
+                        className="w-[40px] text-center text-xs font-num text-status-info active:opacity-60"
+                        onClick={() => setExpandedSuggestionId(prev => prev === product.id ? null : product.id)}
+                      >
+                        {suggested[product.id] > 0 ? suggested[product.id] : '-'}
+                      </button>
+                      <div className="w-[60px] flex justify-center">
+                        <NumericInput
+                          value={orders[product.id]}
+                          onChange={(v) => !locked && setOrders(prev => ({ ...prev, [product.id]: v }))}
+                          isFilled
+                          onNext={focusNext}
+                          data-ord=""
+                          disabled={locked}
+                        />
+                      </div>
                     </div>
-                    <span className="w-[36px] text-center text-xs font-num text-brand-mocha">{usage[product.id] != null ? (usage[product.id] > 0 ? usage[product.id] : 0) : '-'}</span>
-                    <span className={`w-[40px] text-center text-xs font-num ${stock[product.id] != null && stock[product.id] === 0 ? 'text-status-danger font-bold' : 'text-brand-oak'}`}>{stock[product.id] != null ? stock[product.id] : '-'}</span>
-                    <span className="w-[40px] text-center text-xs font-num text-status-info">{suggested[product.id] > 0 ? suggested[product.id] : '-'}</span>
-                    <div className="w-[60px] flex justify-center">
-                      <NumericInput
-                        value={orders[product.id]}
-                        onChange={(v) => !locked && setOrders(prev => ({ ...prev, [product.id]: v }))}
-                        isFilled
-                        onNext={focusNext}
-                        data-ord=""
-                        disabled={locked}
-                      />
-                    </div>
+                    {expandedSuggestionId === product.id && suggestionBreakdown[product.id] && (() => {
+                      const bd = suggestionBreakdown[product.id]
+                      return (
+                        <div className={`mx-4 mb-1 px-3 py-2 rounded-lg bg-surface-section text-[11px] text-brand-lotus space-y-1 ${idx < products.length - 1 ? 'border-b border-gray-50' : ''}`}>
+                          <div className="flex justify-between">
+                            <span>7日平均{bd.dataSource === 'usage' ? '用量' : '叫貨量'}</span>
+                            <span className="font-num">{bd.avgUsage} {product.unit}/天</span>
+                          </div>
+                          {bd.weatherAdjustPct !== 0 && (
+                            <div className="flex justify-between">
+                              <span>天氣調整</span>
+                              <span className="font-num">{bd.weatherAdjustPct > 0 ? '+' : ''}{bd.weatherAdjustPct}%</span>
+                            </div>
+                          )}
+                          {bd.restDayMultiplier > 1 && (
+                            <div className="flex justify-between">
+                              <span>休息日備量</span>
+                              <span className="font-num">×{bd.restDayMultiplier}</span>
+                            </div>
+                          )}
+                          {bd.safetyStockGap > 0 && (
+                            <div className="flex justify-between">
+                              <span>安全庫存補充</span>
+                              <span className="font-num">+{bd.safetyStockGap}</span>
+                            </div>
+                          )}
+                          <div className="border-t border-gray-200 pt-1 flex justify-between font-medium text-brand-oak">
+                            <span>建議量</span>
+                            <span className="font-num">{suggested[product.id] > 0 ? suggested[product.id] : 0}</span>
+                          </div>
+                          {bd.dataSource === 'order' && (
+                            <div className="text-[10px] text-status-warning">* 盤點資料不足，以叫貨量估算</div>
+                          )}
+                        </div>
+                      )
+                    })()}
                   </div>
                 ))}
               </div>
