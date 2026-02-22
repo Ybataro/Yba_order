@@ -8,7 +8,8 @@ import { CategoryManager } from '@/components/CategoryManager'
 import { useToast } from '@/components/Toast'
 import { useProductStore } from '@/stores/useProductStore'
 import type { StoreProduct, VisibleIn } from '@/data/storeProducts'
-import { Plus, FolderCog } from 'lucide-react'
+import { translateText } from '@/lib/translate'
+import { Plus, FolderCog, ChevronDown, Languages } from 'lucide-react'
 
 const emptyProduct: StoreProduct = { id: '', name: '', category: '', unit: '', shelfLifeDays: '', baseStock: '', ourCost: 0, franchisePrice: 0, visibleIn: 'both' }
 
@@ -27,6 +28,8 @@ export default function ProductManager() {
   const [form, setForm] = useState<StoreProduct>(emptyProduct)
   const [filterCat, setFilterCat] = useState<string>('')
   const [deleteConfirm, setDeleteConfirm] = useState<StoreProduct | null>(null)
+  const [showTranslation, setShowTranslation] = useState(false)
+  const [isTranslating, setIsTranslating] = useState(false)
 
   const catCounts = useMemo(() => {
     const counts: Record<string, number> = {}
@@ -39,12 +42,14 @@ export default function ProductManager() {
   const openAdd = () => {
     setEditing(null)
     setForm({ ...emptyProduct, id: `p${Date.now()}` })
+    setShowTranslation(false)
     setModalOpen(true)
   }
 
   const openEdit = (item: StoreProduct) => {
     setEditing(item)
     setForm({ ...item })
+    setShowTranslation(!!(item.nameEn || item.nameJa || item.descEn || item.descJa))
     setModalOpen(true)
   }
 
@@ -88,6 +93,27 @@ export default function ProductManager() {
       const globalFrom = items.indexOf(filteredItems[idx])
       const globalTo = items.indexOf(filteredItems[idx + 1])
       reorder(globalFrom, globalTo)
+    }
+  }
+
+  const handleAutoTranslate = async (e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (!form.name.trim() || isTranslating) return
+    setIsTranslating(true)
+    try {
+      const [nameEn, nameJa, descEn, descJa] = await Promise.all([
+        translateText(form.name, 'en'),
+        translateText(form.name, 'ja'),
+        form.description?.trim() ? translateText(form.description, 'en') : Promise.resolve(''),
+        form.description?.trim() ? translateText(form.description, 'ja') : Promise.resolve(''),
+      ])
+      setForm((prev) => ({ ...prev, nameEn, nameJa, descEn, descJa }))
+      setShowTranslation(true)
+      showToast('翻譯完成')
+    } catch {
+      showToast('翻譯失敗，請稍後再試', 'error')
+    } finally {
+      setIsTranslating(false)
     }
   }
 
@@ -254,6 +280,50 @@ export default function ProductManager() {
             options={visibleInOptions}
           />
         </ModalField>
+        <ModalField label="描述">
+          <ModalInput value={form.description ?? ''} onChange={(v) => setForm({ ...form, description: v })} placeholder="品項描述（選填）" />
+        </ModalField>
+
+        {/* Translation section */}
+        <div className="border border-gray-200 rounded-lg overflow-hidden">
+          <button
+            type="button"
+            onClick={() => setShowTranslation(!showTranslation)}
+            className="w-full flex items-center justify-between px-3 py-2.5 bg-gray-50 hover:bg-gray-100 transition-colors"
+          >
+            <div className="flex items-center gap-2">
+              <Languages size={14} className="text-brand-lotus" />
+              <span className="text-sm font-medium text-brand-oak">翻譯</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={handleAutoTranslate}
+                disabled={!form.name.trim() || isTranslating}
+                className="px-2.5 py-1 rounded-full text-xs font-medium transition-colors bg-brand-mocha text-white disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                {isTranslating ? '翻譯中...' : '自動翻譯'}
+              </button>
+              <ChevronDown size={16} className={`text-brand-lotus transition-transform ${showTranslation ? 'rotate-180' : ''}`} />
+            </div>
+          </button>
+          {showTranslation && (
+            <div className="px-3 py-3 space-y-3">
+              <ModalField label="英文品名">
+                <ModalInput value={form.nameEn ?? ''} onChange={(v) => setForm({ ...form, nameEn: v })} placeholder="English name" />
+              </ModalField>
+              <ModalField label="日文品名">
+                <ModalInput value={form.nameJa ?? ''} onChange={(v) => setForm({ ...form, nameJa: v })} placeholder="Japanese name" />
+              </ModalField>
+              <ModalField label="英文描述">
+                <ModalInput value={form.descEn ?? ''} onChange={(v) => setForm({ ...form, descEn: v })} placeholder="English description" />
+              </ModalField>
+              <ModalField label="日文描述">
+                <ModalInput value={form.descJa ?? ''} onChange={(v) => setForm({ ...form, descJa: v })} placeholder="Japanese description" />
+              </ModalField>
+            </div>
+          )}
+        </div>
       </AdminModal>
 
       {/* Delete Confirm */}

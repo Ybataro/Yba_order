@@ -44,6 +44,11 @@ export const useProductStore = create<ProductState>()((set, get) => ({
           ourCost: d.our_cost ?? 0,
           franchisePrice: d.franchise_price ?? 0,
           visibleIn: (d.visible_in as VisibleIn) || 'both',
+          description: d.description ?? undefined,
+          nameEn: d.name_en ?? undefined,
+          nameJa: d.name_ja ?? undefined,
+          descEn: d.desc_en ?? undefined,
+          descJa: d.desc_ja ?? undefined,
         })),
       })
     }
@@ -66,6 +71,11 @@ export const useProductStore = create<ProductState>()((set, get) => ({
         our_cost: item.ourCost ?? 0,
         franchise_price: item.franchisePrice ?? 0,
         visible_in: item.visibleIn || 'both',
+        description: item.description ?? null,
+        name_en: item.nameEn ?? null,
+        name_ja: item.nameJa ?? null,
+        desc_en: item.descEn ?? null,
+        desc_ja: item.descJa ?? null,
         sort_order: get().items.length - 1,
       }).then(({ error }) => {
         if (error) console.error('[store_products] insert failed:', error.message)
@@ -87,6 +97,11 @@ export const useProductStore = create<ProductState>()((set, get) => ({
       if (partial.ourCost !== undefined) db.our_cost = partial.ourCost ?? 0
       if (partial.franchisePrice !== undefined) db.franchise_price = partial.franchisePrice ?? 0
       if (partial.visibleIn !== undefined) db.visible_in = partial.visibleIn || 'both'
+      if (partial.description !== undefined) db.description = partial.description ?? null
+      if (partial.nameEn !== undefined) db.name_en = partial.nameEn ?? null
+      if (partial.nameJa !== undefined) db.name_ja = partial.nameJa ?? null
+      if (partial.descEn !== undefined) db.desc_en = partial.descEn ?? null
+      if (partial.descJa !== undefined) db.desc_ja = partial.descJa ?? null
       if (Object.keys(db).length > 0) {
         supabase.from('store_products').update(db).eq('id', id).then(({ error }) => {
           if (error) console.error('[store_products] update failed:', error.message)

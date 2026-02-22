@@ -10,6 +10,11 @@ export interface StoreProduct {
   ourCost?: number
   franchisePrice?: number
   visibleIn?: VisibleIn
+  description?: string
+  nameEn?: string
+  nameJa?: string
+  descEn?: string
+  descJa?: string
 }
 
 export const productCategories = [
