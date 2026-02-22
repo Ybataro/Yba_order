@@ -14,7 +14,7 @@ import { submitWithOffline } from '@/lib/submitWithOffline'
 import { logAudit } from '@/lib/auditLog'
 import { formatDate } from '@/lib/utils'
 import { fetchWeather, type WeatherData, type WeatherCondition } from '@/lib/weather'
-import { Send, Lightbulb, Sun, CloudRain, Cloud, CloudSun, Thermometer, Droplets, TrendingUp, TrendingDown, Lock, RefreshCw, History } from 'lucide-react'
+import { Send, Lightbulb, Sun, CloudRain, Cloud, CloudSun, Thermometer, Droplets, TrendingUp, TrendingDown, Lock, RefreshCw, History, AlertTriangle } from 'lucide-react'
 
 const weatherIcons: Record<WeatherCondition, typeof Sun> = {
   sunny: Sun,
@@ -68,6 +68,12 @@ export default function Order() {
   const sessionId = orderSessionId(storeId || '', orderDate)
   const deadline = getOrderDeadline(orderDate)
 
+  // 央廚休息日：週三(3)、週日(0) 提示不開放叫貨
+  const isKitchenRestDay = (() => {
+    const dow = new Date(selectedDate + 'T00:00:00+08:00').getDay()
+    return dow === 3 || dow === 0
+  })()
+
   const [orders, setOrders] = useState<Record<string, string>>(() => {
     const init: Record<string, string> = {}
     storeProducts.forEach(p => { init[p.id] = '' })
@@ -108,7 +114,8 @@ export default function Order() {
       .then(({ data: session }) => {
         if (!session) { setLoading(false); return }
         setIsEdit(true)
-        if (isPastDeadline(session.deadline)) setLocked(true)
+        // 只鎖定目前正在生產的叫貨單（昨日），歷史資料可自由編輯
+        if (isPastDeadline(session.deadline) && orderDate >= getYesterdayTW()) setLocked(true)
         setAlmond1000(session.almond_1000 || '')
         setAlmond300(session.almond_300 || '')
         setBowlK520(session.bowl_k520 || '')
@@ -466,6 +473,14 @@ export default function Order() {
 
       {/* 日期選擇器 */}
       <DateNav value={selectedDate} onChange={setSelectedDate} />
+
+      {/* 央廚休息日提示 */}
+      {isKitchenRestDay && (
+        <div className="flex items-center gap-1.5 px-4 py-2 bg-status-warning/10 text-status-warning text-xs font-medium">
+          <AlertTriangle size={12} />
+          <span>此日為央廚休息日（{new Date(selectedDate + 'T00:00:00+08:00').getDay() === 3 ? '週三' : '週日'}），正常不需叫貨</span>
+        </div>
+      )}
 
       {/* Locked banner */}
       {locked && (
