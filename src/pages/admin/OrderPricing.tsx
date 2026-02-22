@@ -496,72 +496,67 @@ export default function OrderPricing() {
                     </Fragment>
                   )
                 })}
+              {/* 摘要分隔列 */}
+              <tr>
+                <td className="sticky left-0 bg-surface-section px-3 py-2 text-xs font-bold text-brand-oak z-10">■ 摘要</td>
+                <td colSpan={dates.length + 5} className="bg-surface-section" />
+              </tr>
+              {/* 營業額 */}
+              <tr className="border-b border-gray-50 bg-white">
+                <td className="sticky left-0 bg-white px-3 py-2 text-sm font-semibold text-brand-oak min-w-[100px] z-10">營業額</td>
+                {dates.map((d) => {
+                  const s = settlementByDate[d]
+                  return (
+                    <td key={d} className="text-center py-2 px-2 font-num text-brand-oak whitespace-nowrap">
+                      {s ? formatCurrency(s.posTotal) : '-'}
+                    </td>
+                  )
+                })}
+                <td className="text-center py-2 px-2 font-num font-semibold text-brand-oak whitespace-nowrap">
+                  {formatCurrency(totalSettlement.posTotal)}
+                </td>
+                <td colSpan={4}></td>
+              </tr>
+              {/* 號數 */}
+              <tr className="border-b border-gray-50 bg-white">
+                <td className="sticky left-0 bg-white px-3 py-2 text-sm font-semibold text-brand-oak z-10">號數</td>
+                {dates.map((d) => {
+                  const s = settlementByDate[d]
+                  return (
+                    <td key={d} className="text-center py-2 font-num text-brand-oak">
+                      {s ? s.orderCount : '-'}
+                    </td>
+                  )
+                })}
+                <td className="text-center py-2 font-num font-semibold text-brand-oak">
+                  {totalSettlement.orderCount}
+                </td>
+                <td colSpan={4}></td>
+              </tr>
+              {/* 客單價 */}
+              <tr className="border-b border-gray-50 bg-white">
+                <td className="sticky left-0 bg-white px-3 py-2 text-sm font-semibold text-brand-oak z-10">客單價</td>
+                {dates.map((d) => {
+                  const s = settlementByDate[d]
+                  const avg = s && s.orderCount > 0 ? Math.round(s.posTotal / s.orderCount) : 0
+                  return (
+                    <td key={d} className="text-center py-2 font-num text-brand-oak">
+                      {avg > 0 ? avg : '-'}
+                    </td>
+                  )
+                })}
+                <td className="text-center py-2 font-num font-semibold text-brand-oak">
+                  {totalSettlement.orderCount > 0
+                    ? Math.round(totalSettlement.posTotal / totalSettlement.orderCount)
+                    : '-'}
+                </td>
+                <td colSpan={4}></td>
+              </tr>
               </tbody>
             </table>
           </div>
 
-          {/* Summary section */}
-          <SectionHeader title="摘要" icon="■" />
           <div className="bg-white">
-            {/* Revenue row per date */}
-            <div className="overflow-x-auto">
-              <table className="w-full text-xs border-collapse min-w-[600px]">
-                <tbody>
-                  {/* 營業額 row */}
-                  <tr className="border-b border-gray-50">
-                    <td className="sticky left-0 bg-white px-3 py-2 text-sm font-semibold text-brand-oak min-w-[100px] z-10">營業額</td>
-                    {dates.map((d) => {
-                      const s = settlementByDate[d]
-                      return (
-                        <td key={d} className="text-center py-2 font-num text-brand-oak min-w-[40px]">
-                          {s ? formatCurrency(s.posTotal) : '-'}
-                        </td>
-                      )
-                    })}
-                    <td className="text-center py-2 font-num font-semibold text-brand-oak min-w-[45px]">
-                      {formatCurrency(totalSettlement.posTotal)}
-                    </td>
-                    <td colSpan={4}></td>
-                  </tr>
-                  {/* 號數 */}
-                  <tr className="border-b border-gray-50">
-                    <td className="sticky left-0 bg-white px-3 py-2 text-sm font-semibold text-brand-oak z-10">號數</td>
-                    {dates.map((d) => {
-                      const s = settlementByDate[d]
-                      return (
-                        <td key={d} className="text-center py-2 font-num text-brand-oak">
-                          {s ? s.orderCount : '-'}
-                        </td>
-                      )
-                    })}
-                    <td className="text-center py-2 font-num font-semibold text-brand-oak">
-                      {totalSettlement.orderCount}
-                    </td>
-                    <td colSpan={4}></td>
-                  </tr>
-                  {/* 客單價 */}
-                  <tr className="border-b border-gray-50">
-                    <td className="sticky left-0 bg-white px-3 py-2 text-sm font-semibold text-brand-oak z-10">客單價</td>
-                    {dates.map((d) => {
-                      const s = settlementByDate[d]
-                      const avg = s && s.orderCount > 0 ? Math.round(s.posTotal / s.orderCount) : 0
-                      return (
-                        <td key={d} className="text-center py-2 font-num text-brand-oak">
-                          {avg > 0 ? avg : '-'}
-                        </td>
-                      )
-                    })}
-                    <td className="text-center py-2 font-num font-semibold text-brand-oak">
-                      {totalSettlement.orderCount > 0
-                        ? Math.round(totalSettlement.posTotal / totalSettlement.orderCount)
-                        : '-'}
-                    </td>
-                    <td colSpan={4}></td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-
             {/* Cost summary cards */}
             <div className="grid grid-cols-2 gap-px bg-gray-100 mt-px">
               <div className="bg-white px-4 py-3">
