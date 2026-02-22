@@ -21,9 +21,17 @@ export default function KitchenHome() {
   const kitchenStaff = useStaffStore((s) => s.kitchenStaff)
   const authSession = getSession()
   const [currentStaff, setCurrentStaff] = useState(() => {
+    const saved = sessionStorage.getItem('kitchen_staff')
+    if (saved && kitchenStaff.some((s) => s.id === saved)) return saved
     const sid = authSession?.staffId || ''
     return kitchenStaff.some((s) => s.id === sid) ? sid : ''
   })
+
+  const handleStaffChange = (id: string) => {
+    setCurrentStaff(id)
+    if (id) sessionStorage.setItem('kitchen_staff', id)
+    else sessionStorage.removeItem('kitchen_staff')
+  }
   const [criticalNotifications, setCriticalNotifications] = useState<Notification[]>([])
   const [criticalDismiss, setCriticalDismiss] = useState<((id: string) => void) | null>(null)
 
@@ -66,7 +74,7 @@ export default function KitchenHome() {
           <span className="text-sm font-medium text-brand-oak shrink-0">當班人員</span>
           <select
             value={currentStaff}
-            onChange={(e) => setCurrentStaff(e.target.value)}
+            onChange={(e) => handleStaffChange(e.target.value)}
             className="flex-1 h-9 rounded-lg border border-gray-200 bg-surface-input px-2.5 text-sm text-brand-oak outline-none focus:border-brand-lotus"
           >
             <option value="">請選擇</option>
