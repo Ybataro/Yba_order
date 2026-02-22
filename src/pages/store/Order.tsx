@@ -225,9 +225,11 @@ export default function Order() {
     if (!supabase || !storeId) return
 
     const load = async () => {
-      // 今日 & 前日日期
-      const todayDate = getTodayTW()
-      const yesterdayDate = getYesterdayTW()
+      // 以 selectedDate 為基準計算前一日
+      const todayDate = selectedDate
+      const prevD = new Date(selectedDate + 'T00:00:00+08:00')
+      prevD.setDate(prevD.getDate() - 1)
+      const yesterdayDate = prevD.toLocaleDateString('en-CA', { timeZone: 'Asia/Taipei' })
 
       // 1) 前日盤點 sessions → 前日庫存 (on_shelf + stock)
       const { data: prevSessions } = await supabase!
@@ -306,7 +308,7 @@ export default function Order() {
     }
 
     load()
-  }, [storeId])
+  }, [storeId, selectedDate])
 
   // 近 7 日平均叫貨量
   const [suggested, setSuggested] = useState<Record<string, number>>({})
