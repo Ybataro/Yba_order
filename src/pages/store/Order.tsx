@@ -300,7 +300,7 @@ export default function Order() {
         const curr = todayStock[pid] || 0
         const disc = todayDiscarded[pid] || 0
         if (prev > 0 || curr > 0) {
-          result[pid] = prev + ship - curr - disc
+          result[pid] = Math.round((prev + ship - curr - disc) * 10) / 10
         }
       })
 
