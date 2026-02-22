@@ -178,11 +178,11 @@ export default function PinEntry({ onSuccess }: PinEntryProps) {
                     onClick={() => setExpandedGroup(prev => prev === card.key ? null : card.key)}
                     className="w-full flex items-center justify-between px-4 py-3.5 active:bg-white/5 transition-colors"
                   >
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-bold text-brand-camel">{card.label}</span>
-                      <span className="text-white/30 text-[11px]">{members.length} 人</span>
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-base font-bold text-brand-camel">{card.label}</span>
+                      <span className="text-white/50 text-sm">{members.length} 人</span>
                     </div>
-                    <ChevronDown size={16} className={`text-white/40 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
+                    <ChevronDown size={18} className={`text-white/50 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
                   </button>
                   {isOpen && (
                     <div className="grid grid-cols-2 gap-2 px-4 pb-4">
