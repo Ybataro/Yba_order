@@ -286,10 +286,9 @@ export default function ProductManager() {
 
         {/* Translation section */}
         <div className="border border-gray-200 rounded-lg overflow-hidden">
-          <button
-            type="button"
+          <div
             onClick={() => setShowTranslation(!showTranslation)}
-            className="w-full flex items-center justify-between px-3 py-2.5 bg-gray-50 hover:bg-gray-100 transition-colors"
+            className="w-full flex items-center justify-between px-3 py-2.5 bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer select-none"
           >
             <div className="flex items-center gap-2">
               <Languages size={14} className="text-brand-lotus" />
@@ -306,7 +305,7 @@ export default function ProductManager() {
               </button>
               <ChevronDown size={16} className={`text-brand-lotus transition-transform ${showTranslation ? 'rotate-180' : ''}`} />
             </div>
-          </button>
+          </div>
           {showTranslation && (
             <div className="px-3 py-3 space-y-3">
               <ModalField label="英文品名">
