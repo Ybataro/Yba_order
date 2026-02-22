@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from 'react'
 import { TopNav } from '@/components/TopNav'
+import { DateNav } from '@/components/DateNav'
 import { NumericInput } from '@/components/NumericInput'
 import { SectionHeader } from '@/components/SectionHeader'
 import { BottomAction } from '@/components/BottomAction'
@@ -7,6 +8,7 @@ import { useToast } from '@/components/Toast'
 import { useMaterialStore } from '@/stores/useMaterialStore'
 import { supabase } from '@/lib/supabase'
 import { materialStockSessionId, getTodayTW } from '@/lib/session'
+import { formatDate } from '@/lib/utils'
 import { Save, AlertTriangle, UserCheck, RefreshCw } from 'lucide-react'
 import { useStaffStore } from '@/stores/useStaffStore'
 
@@ -18,7 +20,12 @@ export default function MaterialStock() {
   const [confirmBy, setConfirmBy] = useState('')
 
   const today = getTodayTW()
-  const sessionId = materialStockSessionId(today)
+  const [selectedDate, setSelectedDate] = useState(today)
+  const isToday = selectedDate === today
+  const sessionId = materialStockSessionId(selectedDate)
+
+  // 歷史編輯確認
+  const [showHistoryConfirm, setShowHistoryConfirm] = useState(false)
 
   const [stock, setStock] = useState<Record<string, string>>(() => {
     const init: Record<string, string> = {}
@@ -40,6 +47,15 @@ export default function MaterialStock() {
   useEffect(() => {
     if (!supabase) { setLoading(false); return }
     setLoading(true)
+    // Reset state for new date
+    const initStock: Record<string, string> = {}
+    const initBulk: Record<string, string> = {}
+    rawMaterials.forEach(m => { initStock[m.id] = ''; initBulk[m.id] = '' })
+    setStock(initStock)
+    setBulk(initBulk)
+    setIsEdit(false)
+    setConfirmBy('')
+
     supabase
       .from('material_stock_sessions')
       .select('*')
@@ -69,7 +85,7 @@ export default function MaterialStock() {
             setLoading(false)
           })
       })
-  }, [today])
+  }, [selectedDate])
 
   // 近 7 日原物料叫貨日均
   const [weeklyUsage, setWeeklyUsage] = useState<Record<string, number>>({})
@@ -138,7 +154,7 @@ export default function MaterialStock() {
     if (idx >= 0 && idx < arr.length - 1) arr[idx + 1].focus()
   }
 
-  const handleSubmit = async () => {
+  const doSubmit = async () => {
     if (!confirmBy) {
       showToast('請先選擇盤點人員', 'error')
       return
@@ -155,7 +171,7 @@ export default function MaterialStock() {
       .from('material_stock_sessions')
       .upsert({
         id: sessionId,
-        date: today,
+        date: selectedDate,
         submitted_by: confirmBy,
         updated_at: new Date().toISOString(),
       }, { onConflict: 'id' })
@@ -193,14 +209,25 @@ export default function MaterialStock() {
     showToast(`原物料庫存已儲存！盤點人：${staffName}`)
   }
 
+  const handleSubmit = () => {
+    if (!isToday) {
+      setShowHistoryConfirm(true)
+    } else {
+      doSubmit()
+    }
+  }
+
   return (
     <div className="page-container">
       <TopNav title="原物料庫存盤點" />
 
+      {/* 日期選擇器 */}
+      <DateNav value={selectedDate} onChange={setSelectedDate} />
+
       {isEdit && (
         <div className="flex items-center gap-1.5 px-4 py-1.5 bg-status-info/10 text-status-info text-xs">
           <RefreshCw size={12} />
-          <span>已載入今日盤點紀錄，可修改後重新提交</span>
+          <span>已載入{isToday ? '今日' : formatDate(selectedDate)}盤點紀錄，可修改後重新提交</span>
         </div>
       )}
 
@@ -270,6 +297,32 @@ export default function MaterialStock() {
             disabled={submitting}
           />
         </>
+      )}
+
+      {/* 歷史編輯確認對話框 */}
+      {showHistoryConfirm && (
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-6">
+          <div className="bg-white rounded-2xl shadow-lg p-6 w-full max-w-sm">
+            <h3 className="text-lg font-bold text-brand-oak text-center mb-2">修改歷史資料</h3>
+            <p className="text-sm text-brand-lotus text-center mb-5">
+              你正在修改 <span className="font-semibold text-brand-oak">{formatDate(selectedDate)}</span> 的原物料庫存紀錄，確定要提交嗎？
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowHistoryConfirm(false)}
+                className="flex-1 h-10 rounded-xl border border-gray-200 text-sm font-medium text-brand-lotus"
+              >
+                取消
+              </button>
+              <button
+                onClick={() => { setShowHistoryConfirm(false); doSubmit() }}
+                className="flex-1 h-10 rounded-xl bg-status-warning text-white text-sm font-semibold"
+              >
+                確定修改
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )

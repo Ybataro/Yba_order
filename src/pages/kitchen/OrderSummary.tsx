@@ -1,12 +1,13 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { TopNav } from '@/components/TopNav'
+import { DateNav } from '@/components/DateNav'
 import { SectionHeader } from '@/components/SectionHeader'
 import { useProductStore } from '@/stores/useProductStore'
 import { useStoreStore } from '@/stores/useStoreStore'
 import { supabase } from '@/lib/supabase'
 import { getTodayTW } from '@/lib/session'
-import { Printer, MessageSquareText, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Printer, MessageSquareText } from 'lucide-react'
 import { formatDate } from '@/lib/utils'
 
 const fixedNoteItems = [
@@ -27,18 +28,6 @@ export default function OrderSummary() {
   const today = getTodayTW()
   const [selectedDate, setSelectedDate] = useState(today)
   const orderDate = selectedDate
-  const isToday = selectedDate === today
-
-  const shiftDate = (days: number) => {
-    const d = new Date(selectedDate + 'T00:00:00+08:00')
-    d.setDate(d.getDate() + days)
-    const yyyy = d.getFullYear()
-    const mm = String(d.getMonth() + 1).padStart(2, '0')
-    const dd = String(d.getDate()).padStart(2, '0')
-    const next = `${yyyy}-${mm}-${dd}`
-    if (next > today) return
-    setSelectedDate(next)
-  }
 
   const [storeOrders, setStoreOrders] = useState<Record<string, Record<string, number>>>({})
   const [storeNotes, setStoreNotes] = useState<Record<string, { fixedItems: Record<string, number>; freeText: string }>>({})
@@ -125,32 +114,8 @@ export default function OrderSummary() {
       <TopNav title="各店叫貨總表" backTo={`/kitchen${staffId ? `?staff=${staffId}` : ''}`} />
 
       {/* 日期選擇器 */}
-      <div className="no-print flex items-center justify-center gap-3 px-4 py-2 bg-white border-b border-gray-100">
-        <button onClick={() => shiftDate(-1)} className="p-1 rounded-full hover:bg-gray-100 active:bg-gray-200">
-          <ChevronLeft size={20} className="text-brand-oak" />
-        </button>
-        <input
-          type="date"
-          value={selectedDate}
-          max={today}
-          onChange={e => { if (e.target.value && e.target.value <= today) setSelectedDate(e.target.value) }}
-          className="text-sm font-semibold text-brand-oak bg-transparent text-center"
-        />
-        <button
-          onClick={() => shiftDate(1)}
-          disabled={isToday}
-          className="p-1 rounded-full hover:bg-gray-100 active:bg-gray-200 disabled:opacity-30"
-        >
-          <ChevronRight size={20} className="text-brand-oak" />
-        </button>
-        {!isToday && (
-          <button
-            onClick={() => setSelectedDate(today)}
-            className="text-xs text-brand-amber underline"
-          >
-            回到今天
-          </button>
-        )}
+      <div className="no-print">
+        <DateNav value={selectedDate} onChange={setSelectedDate} />
       </div>
 
       {loading ? (

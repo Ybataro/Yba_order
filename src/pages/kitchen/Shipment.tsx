@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from 'react'
 import { TopNav } from '@/components/TopNav'
+import { DateNav } from '@/components/DateNav'
 import { NumericInput } from '@/components/NumericInput'
 import { SectionHeader } from '@/components/SectionHeader'
 import { BottomAction } from '@/components/BottomAction'
@@ -9,6 +10,7 @@ import { useStoreStore } from '@/stores/useStoreStore'
 import { useStaffStore } from '@/stores/useStaffStore'
 import { supabase } from '@/lib/supabase'
 import { shipmentSessionId, getTodayTW } from '@/lib/session'
+import { formatDate } from '@/lib/utils'
 import { logAudit } from '@/lib/auditLog'
 import { Truck, AlertTriangle, UserCheck, RefreshCw } from 'lucide-react'
 
@@ -23,7 +25,12 @@ export default function Shipment() {
   const [confirmBy, setConfirmBy] = useState('')
 
   const today = getTodayTW()
-  const orderDate = today // 查今日叫貨（門店今天下單，央廚今天可見，隔日出貨）
+  const [selectedDate, setSelectedDate] = useState(today)
+  const isToday = selectedDate === today
+  const orderDate = selectedDate
+
+  // 歷史編輯確認
+  const [showHistoryConfirm, setShowHistoryConfirm] = useState(false)
 
   // 各店叫貨量（從 order_sessions/order_items 載入）
   const [orderQty, setOrderQty] = useState<Record<string, Record<string, number>>>({})
@@ -53,7 +60,7 @@ export default function Shipment() {
           aqData[store.id][p.id] = ''
         })
 
-        // Load yesterday's order for this store (隔日到貨)
+        // Load order for this store on selected date
         const orderSid = `${store.id}_${orderDate}`
         const { data: orderItems } = await supabase!
           .from('order_items')
@@ -68,7 +75,7 @@ export default function Shipment() {
         }
 
         // Load existing shipment
-        const shipSid = shipmentSessionId(store.id, today)
+        const shipSid = shipmentSessionId(store.id, selectedDate)
         const { data: shipSession } = await supabase!
           .from('shipment_sessions')
           .select('confirmed_by')
@@ -101,7 +108,7 @@ export default function Shipment() {
     }
 
     loadAll()
-  }, [today])
+  }, [selectedDate])
 
   const toggleConfirm = (productId: string) => {
     setConfirmed(prev => ({
@@ -139,7 +146,7 @@ export default function Shipment() {
     if (idx >= 0 && idx < arr.length - 1) arr[idx + 1].focus()
   }
 
-  const handleSubmit = async () => {
+  const doSubmit = async () => {
     if (!confirmBy) {
       showToast('請先選擇確認人員', 'error')
       return
@@ -151,14 +158,14 @@ export default function Shipment() {
     }
 
     setSubmitting(true)
-    const sid = shipmentSessionId(activeStore, today)
+    const sid = shipmentSessionId(activeStore, selectedDate)
 
     const { error: sessionErr } = await supabase
       .from('shipment_sessions')
       .upsert({
         id: sid,
         store_id: activeStore,
-        date: today,
+        date: selectedDate,
         confirmed_by: confirmBy,
         confirmed_at: new Date().toISOString(),
       }, { onConflict: 'id' })
@@ -196,9 +203,20 @@ export default function Shipment() {
     showToast(`${stores.find(s => s.id === activeStore)?.name}出貨已確認！確認人：${staffName}`)
   }
 
+  const handleSubmit = () => {
+    if (!isToday) {
+      setShowHistoryConfirm(true)
+    } else {
+      doSubmit()
+    }
+  }
+
   return (
     <div className="page-container">
       <TopNav title="出貨表" />
+
+      {/* 日期選擇器 */}
+      <DateNav value={selectedDate} onChange={setSelectedDate} />
 
       {/* 門店切換 */}
       <div className="flex border-b border-gray-200 bg-white">
@@ -213,7 +231,7 @@ export default function Shipment() {
       {isEdit[activeStore] && (
         <div className="flex items-center gap-1.5 px-4 py-1.5 bg-status-info/10 text-status-info text-xs">
           <RefreshCw size={12} />
-          <span>已載入今日出貨紀錄，可修改後重新提交</span>
+          <span>已載入{isToday ? '今日' : formatDate(selectedDate)}出貨紀錄，可修改後重新提交</span>
         </div>
       )}
 
@@ -252,7 +270,7 @@ export default function Shipment() {
 
           {items.length === 0 ? (
             <div className="flex items-center justify-center py-20 text-sm text-brand-lotus">
-              此門店今日尚無叫貨紀錄
+              {isToday ? '此門店今日尚無叫貨紀錄' : `此門店 ${formatDate(selectedDate)} 無叫貨紀錄`}
             </div>
           ) : (
             <>
@@ -324,6 +342,32 @@ export default function Shipment() {
             disabled={submitting}
           />
         </>
+      )}
+
+      {/* 歷史編輯確認對話框 */}
+      {showHistoryConfirm && (
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-6">
+          <div className="bg-white rounded-2xl shadow-lg p-6 w-full max-w-sm">
+            <h3 className="text-lg font-bold text-brand-oak text-center mb-2">修改歷史資料</h3>
+            <p className="text-sm text-brand-lotus text-center mb-5">
+              你正在修改 <span className="font-semibold text-brand-oak">{formatDate(selectedDate)}</span> 的出貨紀錄，確定要提交嗎？
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowHistoryConfirm(false)}
+                className="flex-1 h-10 rounded-xl border border-gray-200 text-sm font-medium text-brand-lotus"
+              >
+                取消
+              </button>
+              <button
+                onClick={() => { setShowHistoryConfirm(false); doSubmit() }}
+                className="flex-1 h-10 rounded-xl bg-status-warning text-white text-sm font-semibold"
+              >
+                確定修改
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )

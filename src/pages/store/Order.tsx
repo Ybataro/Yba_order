@@ -7,13 +7,14 @@ import { BottomAction } from '@/components/BottomAction'
 import { useToast } from '@/components/Toast'
 import { useProductStore } from '@/stores/useProductStore'
 import { useStoreStore } from '@/stores/useStoreStore'
+import { DateNav } from '@/components/DateNav'
 import { supabase } from '@/lib/supabase'
 import { orderSessionId, getTodayTW, getYesterdayTW, getOrderDeadline, isPastDeadline } from '@/lib/session'
 import { submitWithOffline } from '@/lib/submitWithOffline'
 import { logAudit } from '@/lib/auditLog'
 import { formatDate } from '@/lib/utils'
 import { fetchWeather, type WeatherData, type WeatherCondition } from '@/lib/weather'
-import { Send, Lightbulb, Sun, CloudRain, Cloud, CloudSun, Thermometer, Droplets, TrendingUp, TrendingDown, Lock, RefreshCw, History, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Send, Lightbulb, Sun, CloudRain, Cloud, CloudSun, Thermometer, Droplets, TrendingUp, TrendingDown, Lock, RefreshCw, History } from 'lucide-react'
 
 const weatherIcons: Record<WeatherCondition, typeof Sun> = {
   sunny: Sun,
@@ -66,18 +67,6 @@ export default function Order() {
   const orderDate = selectedDate
   const sessionId = orderSessionId(storeId || '', orderDate)
   const deadline = getOrderDeadline(orderDate)
-  const isToday = selectedDate === today
-
-  const shiftDate = (days: number) => {
-    const d = new Date(selectedDate + 'T00:00:00+08:00')
-    d.setDate(d.getDate() + days)
-    const yyyy = d.getFullYear()
-    const mm = String(d.getMonth() + 1).padStart(2, '0')
-    const dd = String(d.getDate()).padStart(2, '0')
-    const next = `${yyyy}-${mm}-${dd}`
-    if (next > today) return
-    setSelectedDate(next)
-  }
 
   const [orders, setOrders] = useState<Record<string, string>>(() => {
     const init: Record<string, string> = {}
@@ -476,33 +465,7 @@ export default function Order() {
       />
 
       {/* 日期選擇器 */}
-      <div className="flex items-center justify-center gap-3 px-4 py-2 bg-white border-b border-gray-100">
-        <button onClick={() => shiftDate(-1)} className="p-1 rounded-full hover:bg-gray-100 active:bg-gray-200">
-          <ChevronLeft size={20} className="text-brand-oak" />
-        </button>
-        <input
-          type="date"
-          value={selectedDate}
-          max={today}
-          onChange={e => { if (e.target.value && e.target.value <= today) setSelectedDate(e.target.value) }}
-          className="text-sm font-semibold text-brand-oak bg-transparent text-center"
-        />
-        <button
-          onClick={() => shiftDate(1)}
-          disabled={isToday}
-          className="p-1 rounded-full hover:bg-gray-100 active:bg-gray-200 disabled:opacity-30"
-        >
-          <ChevronRight size={20} className="text-brand-oak" />
-        </button>
-        {!isToday && (
-          <button
-            onClick={() => setSelectedDate(today)}
-            className="text-xs text-brand-amber underline"
-          >
-            回到今天
-          </button>
-        )}
-      </div>
+      <DateNav value={selectedDate} onChange={setSelectedDate} />
 
       {/* Locked banner */}
       {locked && (

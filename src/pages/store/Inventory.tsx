@@ -7,12 +7,13 @@ import { ProgressBar } from '@/components/ProgressBar'
 import { BottomAction } from '@/components/BottomAction'
 import { useToast } from '@/components/Toast'
 import { useStoreStore } from '@/stores/useStoreStore'
+import { DateNav } from '@/components/DateNav'
 import { useZoneFilteredProducts } from '@/hooks/useZoneFilteredProducts'
 import { supabase } from '@/lib/supabase'
 import { inventorySessionId, getTodayTW } from '@/lib/session'
 import { submitWithOffline } from '@/lib/submitWithOffline'
 import { logAudit } from '@/lib/auditLog'
-import { Send, RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Send, RefreshCw } from 'lucide-react'
 
 interface InventoryEntry {
   onShelf: string
@@ -38,17 +39,6 @@ export default function Inventory() {
   const [selectedDate, setSelectedDate] = useState(today)
   const isToday = selectedDate === today
   const sessionId = inventorySessionId(storeId || '', selectedDate, currentZone || '')
-
-  const shiftDate = (days: number) => {
-    const d = new Date(selectedDate + 'T00:00:00+08:00')
-    d.setDate(d.getDate() + days)
-    const yyyy = d.getFullYear()
-    const mm = String(d.getMonth() + 1).padStart(2, '0')
-    const dd = String(d.getDate()).padStart(2, '0')
-    const next = `${yyyy}-${mm}-${dd}`
-    if (next > today) return
-    setSelectedDate(next)
-  }
 
   const [data, setData] = useState<Record<string, InventoryEntry>>({})
   const originalData = useRef<Record<string, InventoryEntry>>({})
@@ -297,34 +287,8 @@ export default function Inventory() {
     <div className="page-container">
       <TopNav title={`${storeName}${zoneLabel} 物料盤點`} />
 
-      {/* Date selector */}
-      <div className="flex items-center justify-center gap-3 px-4 py-2 bg-white border-b border-gray-100">
-        <button onClick={() => shiftDate(-1)} className="p-1 rounded-full hover:bg-gray-100 active:bg-gray-200">
-          <ChevronLeft size={20} className="text-brand-oak" />
-        </button>
-        <input
-          type="date"
-          value={selectedDate}
-          max={today}
-          onChange={e => { if (e.target.value && e.target.value <= today) setSelectedDate(e.target.value) }}
-          className="text-sm font-semibold text-brand-oak bg-transparent text-center"
-        />
-        <button
-          onClick={() => shiftDate(1)}
-          disabled={isToday}
-          className="p-1 rounded-full hover:bg-gray-100 active:bg-gray-200 disabled:opacity-30"
-        >
-          <ChevronRight size={20} className="text-brand-oak" />
-        </button>
-        {!isToday && (
-          <button
-            onClick={() => setSelectedDate(today)}
-            className="text-xs text-brand-amber underline"
-          >
-            回到今天
-          </button>
-        )}
-      </div>
+      {/* 日期選擇器 */}
+      <DateNav value={selectedDate} onChange={setSelectedDate} />
 
       {/* Edit badge */}
       {isEdit && !isMergedView && (
