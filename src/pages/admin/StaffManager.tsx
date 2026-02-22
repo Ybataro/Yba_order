@@ -7,10 +7,10 @@ import { useToast } from '@/components/Toast'
 import { useStaffStore } from '@/stores/useStaffStore'
 import { useStoreStore } from '@/stores/useStoreStore'
 import type { StaffMember } from '@/data/staff'
-import { Plus, Pencil, Trash2 } from 'lucide-react'
+import { Plus, Pencil, Trash2, ChevronUp, ChevronDown } from 'lucide-react'
 
 export default function StaffManager() {
-  const { adminStaff, kitchenStaff, storeStaff, addAdmin, updateAdmin, removeAdmin, addKitchen, updateKitchen, removeKitchen, addStore, updateStore, removeStore } = useStaffStore()
+  const { adminStaff, kitchenStaff, storeStaff, addAdmin, updateAdmin, removeAdmin, addKitchen, updateKitchen, removeKitchen, addStore, updateStore, removeStore, reorderGroup } = useStaffStore()
   const stores = useStoreStore((s) => s.items)
   const { showToast } = useToast()
 
@@ -86,6 +86,20 @@ export default function StaffManager() {
     }
   }
 
+  const moveUp = (members: StaffMember[], idx: number, group: string) => {
+    if (idx === 0) return
+    const arr = [...members]
+    ;[arr[idx - 1], arr[idx]] = [arr[idx], arr[idx - 1]]
+    reorderGroup(group, arr)
+  }
+
+  const moveDown = (members: StaffMember[], idx: number, group: string) => {
+    if (idx >= members.length - 1) return
+    const arr = [...members]
+    ;[arr[idx], arr[idx + 1]] = [arr[idx + 1], arr[idx]]
+    reorderGroup(group, arr)
+  }
+
   const renderStaffList = (members: StaffMember[], group: string) => (
     <div className="bg-white">
       {members.length === 0 && (
@@ -96,9 +110,19 @@ export default function StaffManager() {
           key={member.id}
           className={`flex items-center justify-between px-4 py-3 ${idx < members.length - 1 ? 'border-b border-gray-50' : ''}`}
         >
-          <div>
-            <p className="text-sm font-medium text-brand-oak">{member.name}</p>
-            <p className="text-[10px] text-brand-lotus">ID: {member.id}</p>
+          <div className="flex items-center gap-2">
+            <div className="flex flex-col">
+              <button onClick={() => moveUp(members, idx, group)} disabled={idx === 0} className="p-0.5 text-brand-lotus disabled:opacity-20 active:text-brand-oak">
+                <ChevronUp size={14} />
+              </button>
+              <button onClick={() => moveDown(members, idx, group)} disabled={idx >= members.length - 1} className="p-0.5 text-brand-lotus disabled:opacity-20 active:text-brand-oak">
+                <ChevronDown size={14} />
+              </button>
+            </div>
+            <div>
+              <p className="text-sm font-medium text-brand-oak">{member.name}</p>
+              <p className="text-[10px] text-brand-lotus">ID: {member.id}</p>
+            </div>
           </div>
           <div className="flex items-center gap-1">
             <button onClick={() => openEdit(member, group)} className="p-1.5 rounded-lg hover:bg-blue-50 active:bg-blue-100">

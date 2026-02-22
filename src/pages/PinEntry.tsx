@@ -14,6 +14,7 @@ interface PinUser {
   role: string
   allowed_stores: string[]
   group_id: string
+  sort_order: number
 }
 
 const roleLabels: Record<string, string> = {
@@ -44,18 +45,20 @@ export default function PinEntry({ onSuccess }: PinEntryProps) {
     if (!supabase) return
     supabase
       .from('user_pins')
-      .select('id, staff_id, role, allowed_stores, staff:staff_id(name, group_id)')
+      .select('id, staff_id, role, allowed_stores, staff:staff_id(name, group_id, sort_order)')
       .eq('is_active', true)
       .then(({ data }) => {
         if (data) {
           const mapped: PinUser[] = data.map((d: Record<string, unknown>) => ({
             id: d.id as string,
             staff_id: d.staff_id as string,
-            staff_name: (d.staff as { name: string; group_id: string })?.name || (d.staff_id as string),
+            staff_name: (d.staff as { name: string; group_id: string; sort_order: number })?.name || (d.staff_id as string),
             role: d.role as string,
             allowed_stores: (d.allowed_stores as string[]) || [],
             group_id: (d.staff as { name: string; group_id: string })?.group_id || d.role as string,
+            sort_order: (d.staff as { sort_order: number })?.sort_order ?? 999,
           }))
+          mapped.sort((a, b) => a.sort_order - b.sort_order)
           setUsers(mapped)
         }
         setLoadingUsers(false)

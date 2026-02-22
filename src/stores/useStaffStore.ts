@@ -19,6 +19,7 @@ interface StaffState {
   updateStore: (storeId: string, id: string, partial: Partial<StaffMember>) => void
   removeStore: (storeId: string, id: string) => void
   getStoreStaff: (storeId: string) => StaffMember[]
+  reorderGroup: (groupId: string, members: StaffMember[]) => void
 }
 
 export const useStaffStore = create<StaffState>()((set, get) => ({
@@ -156,4 +157,19 @@ export const useStaffStore = create<StaffState>()((set, get) => ({
   },
 
   getStoreStaff: (storeId) => get().storeStaff[storeId] || [],
+
+  reorderGroup: (groupId, members) => {
+    if (groupId === 'admin') {
+      set({ adminStaff: members })
+    } else if (groupId === 'kitchen') {
+      set({ kitchenStaff: members })
+    } else {
+      set((s) => ({ storeStaff: { ...s.storeStaff, [groupId]: members } }))
+    }
+    if (supabase) {
+      members.forEach((m, i) => {
+        supabase!.from('staff').update({ sort_order: i }).eq('id', m.id).then()
+      })
+    }
+  },
 }))
