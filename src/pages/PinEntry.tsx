@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { hashPin, setSession, type AuthSession } from '@/lib/auth'
 import { supabase } from '@/lib/supabase'
-import { UserCircle } from 'lucide-react'
+import { UserCircle, ChevronDown } from 'lucide-react'
 
 interface PinEntryProps {
   onSuccess: (session: AuthSession) => void
@@ -22,12 +22,12 @@ const roleLabels: Record<string, string> = {
   store: '門店',
 }
 
-// brand 色系：amber #D4A853, camel #C9AC84, oak #6B5D55, lotus #9E9590
-const groupCards: { key: string; label: string; cardBg: string; chipBg: string; chipActive: string; labelColor: string }[] = [
-  { key: 'admin', label: '管理者', cardBg: 'rgba(212,168,83,0.18)', chipBg: 'rgba(212,168,83,0.12)', chipActive: 'rgba(212,168,83,0.28)', labelColor: 'text-brand-amber' },
-  { key: 'kitchen', label: '央廚', cardBg: 'rgba(201,172,132,0.18)', chipBg: 'rgba(201,172,132,0.12)', chipActive: 'rgba(201,172,132,0.28)', labelColor: 'text-brand-camel' },
-  { key: 'lehua', label: '樂華店', cardBg: 'rgba(107,93,85,0.22)', chipBg: 'rgba(107,93,85,0.15)', chipActive: 'rgba(107,93,85,0.32)', labelColor: 'text-brand-camel' },
-  { key: 'xingnan', label: '興南店', cardBg: 'rgba(158,149,144,0.18)', chipBg: 'rgba(158,149,144,0.12)', chipActive: 'rgba(158,149,144,0.28)', labelColor: 'text-brand-lotus' },
+// 統一使用 oak #6B5D55 色系
+const groupCards: { key: string; label: string }[] = [
+  { key: 'admin', label: '管理者' },
+  { key: 'kitchen', label: '央廚' },
+  { key: 'lehua', label: '樂華店' },
+  { key: 'xingnan', label: '興南店' },
 ]
 
 export default function PinEntry({ onSuccess }: PinEntryProps) {
@@ -37,6 +37,7 @@ export default function PinEntry({ onSuccess }: PinEntryProps) {
   const [error, setError] = useState('')
   const [checking, setChecking] = useState(false)
   const [loadingUsers, setLoadingUsers] = useState(true)
+  const [expandedGroup, setExpandedGroup] = useState<string | null>(null)
 
   // Load active users (NO pin_hash exposed to frontend)
   useEffect(() => {
@@ -169,30 +170,37 @@ export default function PinEntry({ onSuccess }: PinEntryProps) {
             {groupCards.map(card => {
               const members = grouped.get(card.key)
               if (!members || members.length === 0) return null
+              const isOpen = expandedGroup === card.key
               return (
-                <div key={card.key} className="rounded-2xl backdrop-blur-sm p-4 ring-1 ring-white/10" style={{ background: card.cardBg }}>
-                  <div className="flex items-center gap-2 mb-3">
-                    <span className={`text-sm font-bold ${card.labelColor}`}>{card.label}</span>
-                    <span className="text-white/30 text-[11px]">{members.length} 人</span>
-                  </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    {members.map((user) => (
-                      <button
-                        key={user.id}
-                        onClick={() => setSelectedUser(user)}
-                        className="flex items-center gap-2 rounded-xl px-3 py-2.5 text-left transition-colors"
-                        style={{ background: card.chipBg }}
-                        onPointerDown={(e) => { (e.currentTarget as HTMLElement).style.background = card.chipActive }}
-                        onPointerUp={(e) => { (e.currentTarget as HTMLElement).style.background = card.chipBg }}
-                        onPointerLeave={(e) => { (e.currentTarget as HTMLElement).style.background = card.chipBg }}
-                      >
-                        <div className="w-8 h-8 rounded-full bg-white/15 flex items-center justify-center shrink-0">
-                          <UserCircle size={18} className="text-white/80" />
-                        </div>
-                        <span className="text-white text-sm font-medium truncate">{user.staff_name}</span>
-                      </button>
-                    ))}
-                  </div>
+                <div key={card.key} className="rounded-2xl backdrop-blur-sm ring-1 ring-white/10 overflow-hidden" style={{ background: 'rgba(107,93,85,0.22)' }}>
+                  <button
+                    type="button"
+                    onClick={() => setExpandedGroup(prev => prev === card.key ? null : card.key)}
+                    className="w-full flex items-center justify-between px-4 py-3.5 active:bg-white/5 transition-colors"
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-bold text-brand-camel">{card.label}</span>
+                      <span className="text-white/30 text-[11px]">{members.length} 人</span>
+                    </div>
+                    <ChevronDown size={16} className={`text-white/40 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
+                  </button>
+                  {isOpen && (
+                    <div className="grid grid-cols-2 gap-2 px-4 pb-4">
+                      {members.map((user) => (
+                        <button
+                          key={user.id}
+                          onClick={() => setSelectedUser(user)}
+                          className="flex items-center gap-2 rounded-xl px-3 py-2.5 text-left transition-colors active:bg-white/15"
+                          style={{ background: 'rgba(107,93,85,0.25)' }}
+                        >
+                          <div className="w-8 h-8 rounded-full bg-white/15 flex items-center justify-center shrink-0">
+                            <UserCircle size={18} className="text-white/80" />
+                          </div>
+                          <span className="text-white text-sm font-medium truncate">{user.staff_name}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )
             })}
