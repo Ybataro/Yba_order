@@ -334,8 +334,8 @@ export default function Order() {
     const load = async () => {
       setSuggestedLoading(true)
 
-      // 計算 7 天前的日期
-      const d = new Date()
+      // 以 selectedDate 為基準計算 7 天前的日期
+      const d = new Date(selectedDate + 'T00:00:00+08:00')
       d.setDate(d.getDate() - 7)
       const sevenDaysAgo = d.toLocaleDateString('en-CA', { timeZone: 'Asia/Taipei' })
 
@@ -348,7 +348,7 @@ export default function Order() {
         .select('id, date')
         .eq('store_id', storeId)
         .gte('date', sevenDaysAgo)
-        .lte('date', today)
+        .lte('date', selectedDate)
         .order('date', { ascending: true })
 
       if (invSessions && invSessions.length > 0) {
@@ -455,7 +455,7 @@ export default function Order() {
         .select('id, date')
         .eq('store_id', storeId)
         .gte('date', sevenDaysAgo)
-        .lte('date', today)
+        .lte('date', selectedDate)
 
       if (ordSessions && ordSessions.length > 0) {
         const ordSids = ordSessions.map(s => s.id)
@@ -480,7 +480,7 @@ export default function Order() {
       }
 
       // ── Step 3: 套用天氣 + 休息日 + 安全庫存 ──
-      const orderDayOfWeek = new Date(today + 'T00:00:00+08:00').getDay()
+      const orderDayOfWeek = new Date(selectedDate + 'T00:00:00+08:00').getDay()
       const restMul = (orderDayOfWeek === 1 || orderDayOfWeek === 5) ? 2 : 1
 
       const result: Record<string, number> = {}
@@ -518,7 +518,7 @@ export default function Order() {
     }
 
     load()
-  }, [storeId, today, impactMap, stock, stockLoading])
+  }, [storeId, selectedDate, impactMap, stock, stockLoading])
 
   const applyAllSuggestions = () => {
     if (locked) return
@@ -530,9 +530,9 @@ export default function Order() {
     showToast('已套用全部建議叫貨量', 'info')
   }
 
-  // 判斷今日是否為央廚休息日前一天（週一/週五叫貨需 ×2）
+  // 判斷所選日期是否為央廚休息日前一天（週一/週五叫貨需 ×2）
   const isRestDayEve = (() => {
-    const dow = new Date(today + 'T00:00:00+08:00').getDay()
+    const dow = new Date(selectedDate + 'T00:00:00+08:00').getDay()
     return dow === 1 || dow === 5
   })()
 
