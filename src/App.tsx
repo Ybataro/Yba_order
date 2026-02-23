@@ -50,6 +50,7 @@ const ExpenseManagement = lazy(() => import('@/pages/admin/ExpenseManagement'))
 const ProfitLoss = lazy(() => import('@/pages/admin/ProfitLoss'))
 const ShiftTypeManager = lazy(() => import('@/pages/admin/ShiftTypeManager'))
 const ScheduleStats = lazy(() => import('@/pages/admin/ScheduleStats'))
+const FrozenStats = lazy(() => import('@/pages/admin/FrozenStats'))
 
 function Loading() {
   return (
@@ -120,6 +121,7 @@ function App() {
                 <Route path="/admin/profit-loss" element={<ProfitLoss />} />
                 <Route path="/admin/shift-types" element={<ShiftTypeManager />} />
                 <Route path="/admin/schedule-stats" element={<ScheduleStats />} />
+                <Route path="/admin/frozen-stats" element={<FrozenStats />} />
               </Route>
             </Routes>
           </Suspense>

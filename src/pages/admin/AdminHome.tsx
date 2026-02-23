@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Package, Warehouse, Users, Store, Receipt, QrCode, Layers, ClipboardList, FileText, DollarSign, CloudSun, ChefHat, LayoutDashboard, LogOut, KeyRound, ScrollText, Wallet, TrendingUp, ChevronDown, CalendarClock, Clock } from 'lucide-react'
+import { Package, Warehouse, Users, Store, Receipt, QrCode, Layers, ClipboardList, FileText, DollarSign, CloudSun, ChefHat, LayoutDashboard, LogOut, KeyRound, ScrollText, Wallet, TrendingUp, ChevronDown, CalendarClock, Clock, Snowflake } from 'lucide-react'
 import { getTodayString, formatDate } from '@/lib/utils'
 import { useStoreStore } from '@/stores/useStoreStore'
 import { clearSession } from '@/lib/auth'
@@ -50,6 +50,7 @@ const menuGroups: MenuGroup[] = [
       { icon: TrendingUp, label: '盈餘統計', desc: '月/年損益分析與費用管理', path: '/admin/profit-loss', color: 'bg-brand-amber' },
       { icon: CloudSun, label: '天氣用量分析', desc: '天氣與營業額、叫貨量關聯分析', path: '/admin/weather-analysis', color: 'bg-brand-amber' },
       { icon: Clock, label: '工時統計', desc: '依職別統計每月排班工時與薪資', path: '/admin/schedule-stats', color: 'bg-brand-mocha' },
+      { icon: Snowflake, label: '冷凍品統計', desc: '冷凍產品銷售數量與金額統計', path: '/admin/frozen-stats', color: 'bg-brand-blush' },
     ],
   },
   {

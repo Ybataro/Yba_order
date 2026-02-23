@@ -4,13 +4,15 @@ import { AdminModal, ModalField, ModalInput } from '@/components/AdminModal'
 import { useToast } from '@/components/Toast'
 import { useStoreStore } from '@/stores/useStoreStore'
 import { useProductStore } from '@/stores/useProductStore'
+import { useFrozenProductStore } from '@/stores/useFrozenProductStore'
 import { useZoneStore } from '@/stores/useZoneStore'
-import { Plus, Trash2, ChevronDown, ChevronRight, AlertTriangle } from 'lucide-react'
+import { Plus, Trash2, ChevronDown, ChevronRight, AlertTriangle, Snowflake } from 'lucide-react'
 
 export default function ZoneManager() {
   const stores = useStoreStore((s) => s.items)
   const products = useProductStore((s) => s.items)
   const categories = useProductStore((s) => s.categories)
+  const frozenProducts = useFrozenProductStore((s) => s.items)
   const { zones, getStoreZones, getZoneProductIds, addZone, removeZone, assignProduct, unassignProduct } = useZoneStore()
   const { showToast } = useToast()
 
@@ -28,6 +30,7 @@ export default function ZoneManager() {
     storeZones.flatMap((z) => getZoneProductIds(z.id))
   )
   const unassignedProducts = products.filter((p) => !allAssignedIds.has(p.id))
+  const unassignedFrozen = frozenProducts.filter((p) => !allAssignedIds.has(p.key))
 
   const handleAddZone = () => {
     if (!formZoneCode.trim() || !formZoneName.trim()) {
@@ -92,16 +95,16 @@ export default function ZoneManager() {
       </div>
 
       {/* Unassigned warning */}
-      {unassignedProducts.length > 0 && (
+      {(unassignedProducts.length > 0 || unassignedFrozen.length > 0) && (
         <div className="mx-4 mt-3 p-3 bg-amber-50 border border-amber-200 rounded-xl flex items-start gap-2">
           <AlertTriangle size={16} className="text-amber-600 mt-0.5 shrink-0" />
           <div>
             <p className="text-sm font-medium text-amber-800">
-              {unassignedProducts.length} 個品項未分配樓層
+              {unassignedProducts.length + unassignedFrozen.length} 個品項未分配樓層
             </p>
             <p className="text-xs text-amber-700 mt-0.5">
-              {unassignedProducts.slice(0, 5).map((p) => p.name).join('、')}
-              {unassignedProducts.length > 5 && `...等`}
+              {[...unassignedProducts.slice(0, 5).map((p) => p.name), ...unassignedFrozen.slice(0, 3).map((p) => p.name)].slice(0, 5).join('、')}
+              {unassignedProducts.length + unassignedFrozen.length > 5 && `...等`}
             </p>
           </div>
         </div>
@@ -115,6 +118,7 @@ export default function ZoneManager() {
         {storeZones.map((zone) => {
           const isExpanded = expandedZone === zone.id
           const assignedIds = new Set(getZoneProductIds(zone.id))
+          const frozenCount = frozenProducts.filter((fp) => assignedIds.has(fp.key)).length
 
           return (
             <div key={zone.id} className="bg-white rounded-card overflow-hidden shadow-sm">
@@ -131,7 +135,7 @@ export default function ZoneManager() {
                   )}
                   <span className="text-base font-semibold text-brand-oak">{zone.zoneName}</span>
                   <span className="text-xs text-brand-lotus">({zone.zoneCode})</span>
-                  <span className="ml-auto text-xs text-brand-lotus">{assignedIds.size} 品項</span>
+                  <span className="ml-auto text-xs text-brand-lotus">{assignedIds.size} 品項{frozenCount > 0 ? ` + ${frozenCount} 冷凍` : ''}</span>
                 </button>
                 <button
                   onClick={() => setDeleteConfirm(zone.id)}
@@ -168,6 +172,30 @@ export default function ZoneManager() {
                       </div>
                     )
                   })}
+                  {/* Frozen products */}
+                  {frozenProducts.length > 0 && (
+                    <div className="mb-2">
+                      <p className="text-xs font-semibold text-brand-lotus py-1 flex items-center gap-1">
+                        <Snowflake size={11} />
+                        冷凍品
+                      </p>
+                      {frozenProducts.map((fp) => (
+                        <label
+                          key={fp.key}
+                          className="flex items-center gap-2 py-1.5 px-1 cursor-pointer active:bg-gray-50 rounded"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={assignedIds.has(fp.key)}
+                            onChange={(e) => toggleProduct(zone.id, fp.key, e.target.checked)}
+                            className="w-4 h-4 rounded border-gray-300 text-brand-oak focus:ring-brand-oak/30"
+                          />
+                          <span className="text-sm text-brand-oak">{fp.name}</span>
+                          <span className="text-[10px] text-brand-lotus">({fp.spec})</span>
+                        </label>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
             </div>

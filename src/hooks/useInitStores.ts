@@ -5,6 +5,7 @@ import { useMaterialStore } from '@/stores/useMaterialStore'
 import { useStaffStore } from '@/stores/useStaffStore'
 import { useSettlementStore } from '@/stores/useSettlementStore'
 import { useZoneStore } from '@/stores/useZoneStore'
+import { useFrozenProductStore } from '@/stores/useFrozenProductStore'
 
 export function useInitStores() {
   useEffect(() => {
@@ -14,5 +15,6 @@ export function useInitStores() {
     useStaffStore.getState().initialize()
     useSettlementStore.getState().initialize()
     useZoneStore.getState().initialize()
+    useFrozenProductStore.getState().initialize()
   }, [])
 }
