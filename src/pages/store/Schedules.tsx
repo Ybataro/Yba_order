@@ -18,7 +18,8 @@ export default function StoreSchedules() {
   const storeName = useStoreStore((s) => s.getName(storeId || ''))
   const [refDate, setRefDate] = useState(getTodayString())
   const staffList = useStaffStore((s) => s.getStoreStaff(storeId || ''))
-  const { shiftTypes, schedules, fetchShiftTypes, fetchSchedules, upsertSchedule, removeSchedule } = useScheduleStore()
+  const staffInitialized = useStaffStore((s) => s.initialized)
+  const { shiftTypes, schedules, positions, fetchShiftTypes, fetchSchedules, fetchPositions, upsertSchedule, removeSchedule } = useScheduleStore()
   const canSchedule = useCanSchedule()
 
   const weekDates = useMemo(() => getWeekDates(refDate), [refDate])
@@ -31,14 +32,17 @@ export default function StoreSchedules() {
   const [pickerExisting, setPickerExisting] = useState<Schedule | undefined>()
 
   useEffect(() => {
-    if (storeId) fetchShiftTypes(storeId)
-  }, [storeId, fetchShiftTypes])
+    if (storeId) {
+      fetchShiftTypes(storeId)
+      fetchPositions(storeId)
+    }
+  }, [storeId, fetchShiftTypes, fetchPositions])
 
   useEffect(() => {
-    if (staffIds.length > 0) {
+    if (staffInitialized && staffIds.length > 0) {
       fetchSchedules(staffIds, weekDates[0], weekDates[6])
     }
-  }, [staffIds, weekDates, fetchSchedules])
+  }, [staffInitialized, staffIds, weekDates, fetchSchedules])
 
   const handleCellClick = (staffId: string, date: string, existing?: Schedule) => {
     setPickerStaffId(staffId)
@@ -47,7 +51,14 @@ export default function StoreSchedules() {
     setPickerOpen(true)
   }
 
-  const handleSelect = (data: { shift_type_id: string | null; custom_start: string | null; custom_end: string | null; note: string }) => {
+  const handleSelect = (data: {
+    shift_type_id: string | null
+    custom_start: string | null
+    custom_end: string | null
+    note: string
+    attendance_type: string
+    position_id: string | null
+  }) => {
     const session = getSession()
     upsertSchedule({
       staff_id: pickerStaffId,
@@ -89,11 +100,14 @@ export default function StoreSchedules() {
         open={pickerOpen}
         onClose={() => setPickerOpen(false)}
         shiftTypes={shiftTypes}
+        positions={positions}
         current={pickerExisting ? {
           shift_type_id: pickerExisting.shift_type_id,
           custom_start: pickerExisting.custom_start,
           custom_end: pickerExisting.custom_end,
           note: pickerExisting.note,
+          attendance_type: pickerExisting.attendance_type,
+          position_id: pickerExisting.position_id,
         } : undefined}
         staffName={pickerStaffName}
         date={pickerDate}

@@ -12,7 +12,7 @@ import type { StoreProduct, VisibleIn } from '@/data/storeProducts'
 import type { FrozenProduct } from '@/lib/frozenProducts'
 import { Plus, FolderCog, Snowflake } from 'lucide-react'
 
-const emptyProduct: StoreProduct = { id: '', name: '', category: '', unit: '', shelfLifeDays: '', baseStock: '', ourCost: 0, franchisePrice: 0, visibleIn: 'both' }
+const emptyProduct: StoreProduct = { id: '', name: '', category: '', unit: '', shelfLifeDays: '', baseStock: '', ourCost: 0, franchisePrice: 0, visibleIn: 'both', linkable: false, linkedInventoryIds: [] }
 
 const visibleInOptions: { value: VisibleIn; label: string }[] = [
   { value: 'both', label: '盤點＋叫貨' },
@@ -101,6 +101,11 @@ export default function ProductManager() {
       reorder(globalFrom, globalTo)
     }
   }
+
+  const linkableProducts = useMemo(() =>
+    items.filter(p => p.linkable),
+    [items]
+  )
 
   const categoryOptions = categories.map((c) => ({ value: c, label: c }))
 
@@ -307,6 +312,42 @@ export default function ProductManager() {
             options={visibleInOptions}
           />
         </ModalField>
+        <ModalField label="可被關聯">
+          <label className="flex items-center gap-2 text-sm text-brand-oak cursor-pointer">
+            <input
+              type="checkbox"
+              checked={form.linkable || false}
+              onChange={(e) => setForm({ ...form, linkable: e.target.checked })}
+              className="rounded border-gray-300"
+            />
+            允許其他品項關聯此品項的庫存
+          </label>
+        </ModalField>
+        {linkableProducts.filter(p => p.id !== form.id).length > 0 && (
+          <ModalField label="關聯盤點品項">
+            <div className="space-y-1.5 max-h-40 overflow-y-auto">
+              {linkableProducts.filter(p => p.id !== form.id).map(p => (
+                <label key={p.id} className="flex items-center gap-2 text-sm text-brand-oak cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={form.linkedInventoryIds?.includes(p.id) || false}
+                    onChange={(e) => {
+                      const ids = form.linkedInventoryIds || []
+                      setForm({
+                        ...form,
+                        linkedInventoryIds: e.target.checked
+                          ? [...ids, p.id]
+                          : ids.filter(id => id !== p.id),
+                      })
+                    }}
+                    className="rounded border-gray-300"
+                  />
+                  {p.name} <span className="text-xs text-brand-lotus">({p.unit})</span>
+                </label>
+              ))}
+            </div>
+          </ModalField>
+        )}
       </AdminModal>
 
       {/* Delete Confirm */}

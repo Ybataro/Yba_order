@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Package, Warehouse, Users, Store, Receipt, QrCode, Layers, ClipboardList, FileText, DollarSign, CloudSun, ChefHat, LayoutDashboard, LogOut, KeyRound, ScrollText, Wallet, TrendingUp, ChevronDown, CalendarClock, Clock, Snowflake } from 'lucide-react'
+import { Package, Warehouse, Users, Store, Receipt, QrCode, Layers, ClipboardList, FileText, DollarSign, CloudSun, ChefHat, LayoutDashboard, LogOut, KeyRound, ScrollText, Wallet, TrendingUp, ChevronDown, CalendarClock, Clock, Snowflake, CalendarDays } from 'lucide-react'
 import { getTodayString, formatDate } from '@/lib/utils'
 import { useStoreStore } from '@/stores/useStoreStore'
 import { clearSession } from '@/lib/auth'
@@ -39,7 +39,8 @@ const menuGroups: MenuGroup[] = [
       { icon: Store, label: '門店管理', desc: '新增/編輯門店資訊', path: '/admin/stores', color: 'bg-brand-blush' },
       { icon: Receipt, label: '結帳欄位管理', desc: '管理每日結帳表單欄位', path: '/admin/settlement-fields', color: 'bg-brand-silver' },
       { icon: Layers, label: '樓層品項管理', desc: '設定門店樓層及品項分配', path: '/admin/zones', color: 'bg-brand-camel' },
-      { icon: CalendarClock, label: '班次類型管理', desc: '設定央廚及各門店班次時段', path: '/admin/shift-types', color: 'bg-brand-oak' },
+      { icon: CalendarDays, label: '排班管理', desc: 'PC 全寬行事曆排班、快速排班模式', path: '/admin/schedule', color: 'bg-brand-lotus' },
+      { icon: CalendarClock, label: '班次與職位管理', desc: '設定班次時段、職位與標籤', path: '/admin/shift-types', color: 'bg-brand-oak' },
     ],
   },
   {

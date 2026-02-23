@@ -10,6 +10,8 @@ export interface StoreProduct {
   ourCost?: number
   franchisePrice?: number
   visibleIn?: VisibleIn
+  linkable?: boolean
+  linkedInventoryIds?: string[]
 }
 
 export const productCategories = [

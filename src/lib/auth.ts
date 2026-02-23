@@ -43,9 +43,11 @@ export function clearSession(): void {
 
 // ── Authorization check ──
 
+export type RoleRequirement = 'admin' | 'kitchen' | 'store' | Array<'admin' | 'kitchen' | 'store'>
+
 export function isAuthorized(
   session: AuthSession | null,
-  requiredRole: 'admin' | 'kitchen' | 'store',
+  requiredRole: RoleRequirement,
   storeId?: string,
 ): boolean {
   if (!session) return false
@@ -53,11 +55,13 @@ export function isAuthorized(
   // admin can access everything
   if (session.role === 'admin') return true
 
-  // Role must match
-  if (session.role !== requiredRole) return false
+  const roles = Array.isArray(requiredRole) ? requiredRole : [requiredRole]
+
+  // Role must be in allowed list
+  if (!roles.includes(session.role)) return false
 
   // For store role, check allowed stores
-  if (requiredRole === 'store' && storeId) {
+  if (session.role === 'store' && storeId) {
     if (session.allowedStores.length > 0 && !session.allowedStores.includes(storeId)) {
       return false
     }

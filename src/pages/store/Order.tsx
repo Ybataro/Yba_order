@@ -56,6 +56,14 @@ function getWeatherImpacts(weather: WeatherData) {
   return impacts
 }
 
+function getLinkedSum(data: Record<string, number>, ids: string[]): number | null {
+  let sum = 0, found = false
+  for (const id of ids) {
+    if (data[id] != null) { sum += data[id]; found = true }
+  }
+  return found ? Math.round(sum * 10) / 10 : null
+}
+
 export default function Order() {
   const { storeId } = useParams<{ storeId: string }>()
   const [searchParams] = useSearchParams()
@@ -66,6 +74,14 @@ export default function Order() {
   const allProducts = useProductStore((s) => s.items)
   const storeProducts = useMemo(() => allProducts.filter(p => !p.visibleIn || p.visibleIn === 'both' || p.visibleIn === 'order_only'), [allProducts])
   const productCategories = useProductStore((s) => s.categories)
+
+  const inventoryIdMap = useMemo(() => {
+    const m: Record<string, string[]> = {}
+    storeProducts.forEach(p => {
+      m[p.id] = p.linkedInventoryIds?.length ? p.linkedInventoryIds : [p.id]
+    })
+    return m
+  }, [storeProducts])
 
   const today = getTodayTW()
   const yesterday = getYesterdayTW()
@@ -192,15 +208,21 @@ export default function Order() {
         return
       }
 
-      // 取最新日期的所有 sessions（可能同一天有 1F + 2F）
-      const latestDate = sessions[0].date
-      const latestSessions = sessions.filter(s => s.date === latestDate)
-      const sids = latestSessions.map(s => s.id)
+      // 按日期分組，從最新日期開始找有品項資料的
+      const uniqueDates = [...new Set(sessions.map(s => s.date))]
+      let items: { product_id: string; on_shelf: number | null; stock: number | null }[] | null = null
 
-      const { data: items } = await supabase!
-        .from('inventory_items')
-        .select('product_id, on_shelf, stock')
-        .in('session_id', sids)
+      for (const date of uniqueDates) {
+        const sids = sessions.filter(s => s.date === date).map(s => s.id)
+        const { data } = await supabase!
+          .from('inventory_items')
+          .select('product_id, on_shelf, stock')
+          .in('session_id', sids)
+        if (data && data.length > 0) {
+          items = data
+          break
+        }
+      }
 
       if (!items || items.length === 0) {
         setStock({})
@@ -296,7 +318,12 @@ export default function Order() {
       }
 
       // 4) 計算：用量 = 前日庫存 + 今日出貨 - 今日庫存 - 今日倒掉
+      //    前提：前日＋今日都要有盤點資料才有意義
       const result: Record<string, number> = {}
+      if (!prevSessions?.length || !todaySessions?.length) {
+        setUsage(result)
+        return
+      }
       const allPids = new Set([...Object.keys(prevStock), ...Object.keys(todayStock)])
       allPids.forEach(pid => {
         const prev = prevStock[pid] || 0
@@ -487,15 +514,17 @@ export default function Order() {
       const breakdowns: Record<string, SuggestionBreakdown> = {}
 
       storeProducts.forEach(p => {
-        const hasUsage = usageAvg[p.id] != null
-        const avg = hasUsage ? usageAvg[p.id] : (orderAvg[p.id] || 0)
+        const ids = p.linkedInventoryIds?.length ? p.linkedInventoryIds : [p.id]
+        const linkedUsageAvg = getLinkedSum(usageAvg, ids)
+        const hasUsage = linkedUsageAvg != null
+        const avg = hasUsage ? linkedUsageAvg : (orderAvg[p.id] || 0)
         const dataSource: 'usage' | 'order' = hasUsage ? 'usage' : 'order'
         const weatherPct = impactMap[p.category] || 0
         const weatherAdj = Math.max(0, avg * (1 + weatherPct / 100))
         const restDayQty = weatherAdj * restMul
 
         const parsedBase = parseBaseStock(p.baseStock)
-        const currentStock = stock[p.id] || 0
+        const currentStock = getLinkedSum(stock, ids) || 0
         const safetyGap = Math.max(0, parsedBase - currentStock)
 
         const rawBeforeRound = Math.max(restDayQty, safetyGap)
@@ -616,7 +645,7 @@ export default function Order() {
       />
 
       {/* 日期選擇器 */}
-      <DateNav value={selectedDate} onChange={setSelectedDate} />
+      <DateNav value={selectedDate} onChange={setSelectedDate} maxDate="tomorrow" />
 
       {/* 央廚休息日提示 */}
       {isKitchenRestDay && (
@@ -722,8 +751,8 @@ export default function Order() {
                         <span className="text-sm font-medium text-brand-oak">{product.name}</span>
                         <span className="text-[10px] text-brand-lotus ml-1">({product.unit})</span>
                       </div>
-                      <span className="w-[36px] text-center text-xs font-num text-brand-mocha">{usage[product.id] != null ? (usage[product.id] > 0 ? usage[product.id] : 0) : '-'}</span>
-                      <span className={`w-[40px] text-center text-xs font-num ${stock[product.id] != null && stock[product.id] === 0 ? 'text-status-danger font-bold' : 'text-brand-oak'}`}>{stock[product.id] != null ? stock[product.id] : '-'}</span>
+                      <span className="w-[36px] text-center text-xs font-num text-brand-mocha">{(() => { const v = getLinkedSum(usage, inventoryIdMap[product.id]); return v != null ? (v > 0 ? v : 0) : '-' })()}</span>
+                      <span className={`w-[40px] text-center text-xs font-num ${(() => { const v = getLinkedSum(stock, inventoryIdMap[product.id]); return v != null && v === 0 ? 'text-status-danger font-bold' : 'text-brand-oak' })()}`}>{(() => { const v = getLinkedSum(stock, inventoryIdMap[product.id]); return v != null ? v : '-' })()}</span>
                       <button
                         type="button"
                         className="w-[40px] text-center text-xs font-num text-status-info active:opacity-60"

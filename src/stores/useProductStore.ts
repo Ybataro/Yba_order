@@ -44,6 +44,8 @@ export const useProductStore = create<ProductState>()((set, get) => ({
           ourCost: d.our_cost ?? 0,
           franchisePrice: d.franchise_price ?? 0,
           visibleIn: (d.visible_in as VisibleIn) || 'both',
+          linkable: d.linkable || false,
+          linkedInventoryIds: d.linked_inventory_ids || [],
         })),
       })
     }
@@ -66,6 +68,8 @@ export const useProductStore = create<ProductState>()((set, get) => ({
         our_cost: item.ourCost ?? 0,
         franchise_price: item.franchisePrice ?? 0,
         visible_in: item.visibleIn || 'both',
+        linkable: item.linkable || false,
+        linked_inventory_ids: item.linkedInventoryIds || [],
         sort_order: get().items.length - 1,
       }).then(({ error }) => {
         if (error) console.error('[store_products] insert failed:', error.message)
@@ -87,6 +91,8 @@ export const useProductStore = create<ProductState>()((set, get) => ({
       if (partial.ourCost !== undefined) db.our_cost = partial.ourCost ?? 0
       if (partial.franchisePrice !== undefined) db.franchise_price = partial.franchisePrice ?? 0
       if (partial.visibleIn !== undefined) db.visible_in = partial.visibleIn || 'both'
+      if (partial.linkable !== undefined) db.linkable = partial.linkable
+      if (partial.linkedInventoryIds !== undefined) db.linked_inventory_ids = partial.linkedInventoryIds
       if (Object.keys(db).length > 0) {
         supabase.from('store_products').update(db).eq('id', id).then(({ error }) => {
           if (error) console.error('[store_products] update failed:', error.message)

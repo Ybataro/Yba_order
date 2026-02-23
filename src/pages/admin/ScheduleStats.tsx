@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { TopNav } from '@/components/TopNav'
 import { SectionHeader } from '@/components/SectionHeader'
 import { supabase } from '@/lib/supabase'
-import { calcHours, getMonthDates } from '@/lib/schedule'
+import { calcHours, getMonthDates, getAttendanceType } from '@/lib/schedule'
 import type { ShiftType, Schedule } from '@/lib/schedule'
 import { useStaffStore } from '@/stores/useStaffStore'
 import { useStoreStore } from '@/stores/useStoreStore'
@@ -89,7 +89,14 @@ export default function ScheduleStats() {
       const ext = staffExtra[staff.id] || { employment_type: 'full_time', hourly_rate: 0 }
       const staffSchedules = schedules.filter((s) => s.staff_id === staff.id)
       let totalHours = 0
+      let workShifts = 0
       staffSchedules.forEach((s) => {
+        // 只計算 countsAsWork 的出勤類型
+        const at = (s as Schedule & { attendance_type?: string }).attendance_type || 'work'
+        const atDef = getAttendanceType(at)
+        if (atDef && !atDef.countsAsWork) return // 假別不計工時
+
+        workShifts++
         if (s.shift_type_id && shiftMap[s.shift_type_id]) {
           const st = shiftMap[s.shift_type_id]
           totalHours += calcHours(st.start_time, st.end_time)
@@ -103,7 +110,7 @@ export default function ScheduleStats() {
         group: staff.group,
         employment_type: ext.employment_type,
         hourly_rate: ext.hourly_rate,
-        shifts: staffSchedules.length,
+        shifts: workShifts,
         hours: Math.round(totalHours * 10) / 10,
         estimated_pay: Math.round(totalHours * ext.hourly_rate),
       }

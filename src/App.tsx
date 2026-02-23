@@ -1,8 +1,9 @@
 import { lazy, Suspense } from 'react'
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom'
 import { ToastProvider } from '@/components/Toast'
 import { useInitStores } from '@/hooks/useInitStores'
 import AuthGuard from '@/components/AuthGuard'
+import ScheduleGuard from '@/components/ScheduleGuard'
 import ErrorBoundary from '@/components/ErrorBoundary'
 import OfflineBanner from '@/components/OfflineBanner'
 
@@ -51,11 +52,32 @@ const ProfitLoss = lazy(() => import('@/pages/admin/ProfitLoss'))
 const ShiftTypeManager = lazy(() => import('@/pages/admin/ShiftTypeManager'))
 const ScheduleStats = lazy(() => import('@/pages/admin/ScheduleStats'))
 const FrozenStats = lazy(() => import('@/pages/admin/FrozenStats'))
+const AdminSchedule = lazy(() => import('@/pages/admin/AdminSchedule'))
 
 function Loading() {
   return (
     <div className="flex items-center justify-center py-20 text-sm text-brand-lotus">
       載入中...
+    </div>
+  )
+}
+
+/** 全寬佈局（PC 排班等大螢幕頁面） */
+function WideLayout() {
+  return (
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--color-page-bg)' }}>
+      <OfflineBanner />
+      <Outlet />
+    </div>
+  )
+}
+
+/** 手機寬度佈局（現有全部頁面） */
+function NarrowLayout() {
+  return (
+    <div className="max-w-lg mx-auto min-h-screen" style={{ backgroundColor: 'var(--color-page-bg)' }}>
+      <OfflineBanner />
+      <Outlet />
     </div>
   )
 }
@@ -67,10 +89,19 @@ function App() {
     <ErrorBoundary>
     <BrowserRouter>
       <ToastProvider>
-        <div className="max-w-lg mx-auto min-h-screen" style={{ backgroundColor: 'var(--color-page-bg)' }}>
-          <OfflineBanner />
-          <Suspense fallback={<Loading />}>
-            <Routes>
+        <Suspense fallback={<Loading />}>
+          <Routes>
+            {/* 全寬路由（排班管理：需 can_schedule 權限） */}
+            <Route element={<WideLayout />}>
+              <Route element={<AuthGuard requiredRole={['admin', 'kitchen', 'store']} />}>
+                <Route element={<ScheduleGuard />}>
+                  <Route path="/admin/schedule" element={<AdminSchedule />} />
+                </Route>
+              </Route>
+            </Route>
+
+            {/* 手機寬度路由（現有全部） */}
+            <Route element={<NarrowLayout />}>
               {/* Default redirect */}
               <Route path="/" element={<Navigate to="/store/lehua" replace />} />
 
@@ -100,6 +131,14 @@ function App() {
                 <Route path="/kitchen/expense" element={<KitchenDailyExpense />} />
               </Route>
 
+              {/* 排班相關：需 can_schedule 權限（任何角色） */}
+              <Route element={<AuthGuard requiredRole={['admin', 'kitchen', 'store']} />}>
+                <Route element={<ScheduleGuard />}>
+                  <Route path="/admin/shift-types" element={<ShiftTypeManager />} />
+                  <Route path="/admin/schedule-stats" element={<ScheduleStats />} />
+                </Route>
+              </Route>
+
               {/* Admin routes */}
               <Route element={<AuthGuard requiredRole="admin" />}>
                 <Route path="/admin" element={<AdminHome />} />
@@ -119,13 +158,11 @@ function App() {
                 <Route path="/admin/audit" element={<AuditLog />} />
                 <Route path="/admin/expenses" element={<ExpenseManagement />} />
                 <Route path="/admin/profit-loss" element={<ProfitLoss />} />
-                <Route path="/admin/shift-types" element={<ShiftTypeManager />} />
-                <Route path="/admin/schedule-stats" element={<ScheduleStats />} />
                 <Route path="/admin/frozen-stats" element={<FrozenStats />} />
               </Route>
-            </Routes>
-          </Suspense>
-        </div>
+            </Route>
+          </Routes>
+        </Suspense>
       </ToastProvider>
     </BrowserRouter>
     </ErrorBoundary>

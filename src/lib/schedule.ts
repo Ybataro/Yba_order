@@ -1,5 +1,48 @@
 // 排班系統型別與工具函式
 
+// ── 出勤類型常數 ────────────────────────────────────
+export interface AttendanceTypeDef {
+  id: string
+  name: string
+  color: string        // 背景色
+  textColor: string    // 文字色
+  category: 'work' | 'leave' | 'special'
+  countsAsWork: boolean
+}
+
+export const ATTENDANCE_TYPES: AttendanceTypeDef[] = [
+  { id: 'work',              name: '上班',       color: '#E8F5E9', textColor: '#2E7D32', category: 'work',    countsAsWork: true  },
+  { id: 'rest_day',          name: '休息日',     color: '#E0E0E0', textColor: '#666',    category: 'leave',   countsAsWork: false },
+  { id: 'regular_leave',     name: '例假日',     color: '#BDBDBD', textColor: '#555',    category: 'leave',   countsAsWork: false },
+  { id: 'national_holiday',  name: '國定假日',   color: '#FFCDD2', textColor: '#C62828', category: 'leave',   countsAsWork: false },
+  { id: 'annual_leave',      name: '特休',       color: '#B3E5FC', textColor: '#0277BD', category: 'leave',   countsAsWork: false },
+  { id: 'sick_leave',        name: '病假',       color: '#FFE0B2', textColor: '#E65100', category: 'leave',   countsAsWork: false },
+  { id: 'personal_leave',    name: '事假',       color: '#E1BEE7', textColor: '#6A1B9A', category: 'leave',   countsAsWork: false },
+  { id: 'menstrual_leave',   name: '生理假',     color: '#F8BBD0', textColor: '#AD1457', category: 'leave',   countsAsWork: false },
+  { id: 'family_care_leave', name: '家庭照顧假', color: '#C8E6C9', textColor: '#2E7D32', category: 'leave',   countsAsWork: false },
+  { id: 'official_leave',    name: '公假',       color: '#BBDEFB', textColor: '#1565C0', category: 'leave',   countsAsWork: false },
+  { id: 'marriage_leave',    name: '婚假',       color: '#FFCDD2', textColor: '#C62828', category: 'leave',   countsAsWork: false },
+  { id: 'bereavement_leave', name: '喪假',       color: '#CFD8DC', textColor: '#37474F', category: 'leave',   countsAsWork: false },
+  { id: 'maternity_leave',   name: '產假',       color: '#FFF9C4', textColor: '#F57F17', category: 'leave',   countsAsWork: false },
+  { id: 'prenatal_leave',    name: '產檢假',     color: '#FFF9C4', textColor: '#F57F17', category: 'leave',   countsAsWork: false },
+  { id: 'late_early',        name: '遲到早退',   color: '#FFCCBC', textColor: '#BF360C', category: 'special', countsAsWork: true  },
+]
+
+export function getAttendanceType(id: string): AttendanceTypeDef | undefined {
+  return ATTENDANCE_TYPES.find((t) => t.id === id)
+}
+
+// ── 職位 ────────────────────────────────────────────
+export interface Position {
+  id: string
+  name: string
+  color: string
+  group_id: string
+  sort_order: number
+  is_active: boolean
+}
+
+// ── 班次類型 ────────────────────────────────────────
 export interface ShiftType {
   id: string
   name: string
@@ -9,8 +52,10 @@ export interface ShiftType {
   group_id: string
   sort_order: number
   is_active: boolean
+  tags: string[]
 }
 
+// ── 排班記錄 ────────────────────────────────────────
 export interface Schedule {
   id: string
   staff_id: string
@@ -20,6 +65,9 @@ export interface Schedule {
   custom_end: string | null
   note: string
   created_by: string | null
+  position_id: string | null
+  attendance_type: string  // 預設 'work'
+  tags: string[]           // 排班獨立標籤
 }
 
 const WEEKDAYS = ['日', '一', '二', '三', '四', '五', '六']

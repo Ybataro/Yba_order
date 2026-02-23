@@ -1,11 +1,11 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, Outlet } from 'react-router-dom'
-import { getSession, isAuthorized, clearSession, type AuthSession } from '@/lib/auth'
+import { getSession, isAuthorized, clearSession, type AuthSession, type RoleRequirement } from '@/lib/auth'
 import { supabase } from '@/lib/supabase'
 import PinEntry from '@/pages/PinEntry'
 
 interface AuthGuardProps {
-  requiredRole: 'admin' | 'kitchen' | 'store'
+  requiredRole: RoleRequirement
 }
 
 const HASPINS_KEY = 'yba_has_pins'

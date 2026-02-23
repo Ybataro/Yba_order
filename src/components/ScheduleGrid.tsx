@@ -41,6 +41,18 @@ export function ScheduleGrid({ refDate, staff, schedules, shiftTypes, canSchedul
     return '班'
   }
 
+  const getTime = (s: Schedule): string | null => {
+    if (s.shift_type_id && shiftMap[s.shift_type_id]) {
+      const st = shiftMap[s.shift_type_id]
+      return `${formatTime(st.start_time)}-${formatTime(st.end_time)}`
+    }
+    return null
+  }
+
+  const getTags = (s: Schedule): string[] => {
+    return s.tags?.length ? s.tags : []
+  }
+
   const getColor = (s: Schedule): string => {
     if (s.shift_type_id && shiftMap[s.shift_type_id]) {
       return shiftMap[s.shift_type_id].color
@@ -93,16 +105,24 @@ export function ScheduleGrid({ refDate, staff, schedules, shiftTypes, canSchedul
                     key={date}
                     className={`px-1 py-1.5 text-center ${isToday ? 'bg-brand-lotus/5' : ''}`}
                   >
-                    {sch ? (
-                      <button
-                        onClick={() => canSchedule && onCellClick?.(member.id, date, sch)}
-                        className={`inline-block px-2 py-1 rounded-md text-xs font-medium text-white truncate max-w-full ${canSchedule ? 'active:opacity-70' : ''}`}
-                        style={{ backgroundColor: getColor(sch) }}
-                        disabled={!canSchedule}
-                      >
-                        {getLabel(sch)}
-                      </button>
-                    ) : canSchedule ? (
+                    {sch ? (() => {
+                      const time = getTime(sch)
+                      const tags = getTags(sch)
+                      return (
+                        <button
+                          onClick={() => canSchedule && onCellClick?.(member.id, date, sch)}
+                          className={`inline-block px-2 py-1 rounded-md text-xs font-medium text-white max-w-full ${canSchedule ? 'active:opacity-70' : ''}`}
+                          style={{ backgroundColor: getColor(sch) }}
+                          disabled={!canSchedule}
+                        >
+                          <div className="truncate">{getLabel(sch)}</div>
+                          {time && <div className="text-[9px] opacity-80 truncate">{time}</div>}
+                          {tags.length > 0 && (
+                            <div className="text-[8px] opacity-70 truncate">{tags.join('·')}</div>
+                          )}
+                        </button>
+                      )
+                    })() : canSchedule ? (
                       <button
                         onClick={() => onCellClick?.(member.id, date)}
                         className="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center mx-auto active:bg-gray-100"
