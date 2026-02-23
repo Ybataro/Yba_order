@@ -8,7 +8,7 @@ import { useProductStore } from '@/stores/useProductStore'
 
 export interface Notification {
   id: string
-  type: 'low_stock' | 'order_reminder' | 'shipment_pending' | 'settlement_reminder' | 'shift_change'
+  type: 'low_stock' | 'order_reminder' | 'shipment_pending' | 'settlement_reminder' | 'shift_change' | 'receive_discrepancy' | 'kitchen_reply'
   severity: 'warning' | 'info' | 'critical'
   icon: string
   title: string
@@ -270,6 +270,79 @@ export function useNotifications(
       }
     } catch (err) {
       console.error('[useNotifications] shipment_pending query error:', err)
+    }
+
+    // ── 3b. 收貨差異（央廚端）─────────────────────────
+    if (context === 'kitchen') {
+      try {
+        const { data: receivedSessions } = await supabase
+          .from('shipment_sessions')
+          .select('id, store_id, receive_note, kitchen_reply')
+          .eq('date', today)
+          .not('received_at', 'is', null)
+
+        if (receivedSessions) {
+          for (const session of receivedSessions) {
+            // 檢查是否有未收到的品項
+            const { data: unreceivedItems } = await supabase
+              .from('shipment_items')
+              .select('product_id')
+              .eq('session_id', session.id)
+              .eq('received', false)
+
+            const hasUnreceived = unreceivedItems && unreceivedItems.length > 0
+            const hasNote = session.receive_note && session.receive_note.trim()
+            const hasReply = session.kitchen_reply && session.kitchen_reply.trim()
+
+            if ((hasUnreceived || hasNote) && !hasReply) {
+              const storeName = stores.find(s => s.id === session.store_id)?.name || session.store_id
+              const parts: string[] = []
+              if (hasUnreceived) parts.push(`${unreceivedItems!.length} 項未確認收到`)
+              if (hasNote) parts.push(`備註：${session.receive_note}`)
+
+              results.push({
+                id: `receive_discrepancy_${session.store_id}_${today}`,
+                type: 'receive_discrepancy',
+                severity: 'warning',
+                icon: '⚠️',
+                title: `${storeName} 收貨有差異`,
+                message: parts.join('\n'),
+                link: '/kitchen/shipments',
+              })
+            }
+          }
+        }
+      } catch (err) {
+        console.error('[useNotifications] receive_discrepancy query error:', err)
+      }
+    }
+
+    // ── 3c. 央廚回覆通知（門店端）───────────────────────
+    if (context === 'store' && storeId) {
+      try {
+        const { data: repliedSession } = await supabase
+          .from('shipment_sessions')
+          .select('kitchen_reply, kitchen_reply_at')
+          .eq('store_id', storeId)
+          .eq('date', today)
+          .not('kitchen_reply', 'eq', '')
+          .not('kitchen_reply', 'is', null)
+          .maybeSingle()
+
+        if (repliedSession && repliedSession.kitchen_reply) {
+          results.push({
+            id: `kitchen_reply_${storeId}_${today}`,
+            type: 'kitchen_reply',
+            severity: 'info',
+            icon: '💬',
+            title: '央廚已回覆收貨差異',
+            message: `回覆：${repliedSession.kitchen_reply}`,
+            link: `/store/${storeId}/receive`,
+          })
+        }
+      } catch (err) {
+        console.error('[useNotifications] kitchen_reply query error:', err)
+      }
     }
 
     // ── 4. 結帳提醒（21:00 後尚未結帳）─ critical ────

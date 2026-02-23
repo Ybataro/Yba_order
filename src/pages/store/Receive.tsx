@@ -9,7 +9,7 @@ import { useStoreStore } from '@/stores/useStoreStore'
 import { supabase } from '@/lib/supabase'
 import { shipmentSessionId, getTodayTW } from '@/lib/session'
 import { logAudit } from '@/lib/auditLog'
-import { CheckCircle, AlertTriangle, ArrowRight, RefreshCw } from 'lucide-react'
+import { CheckCircle, AlertTriangle, ArrowRight, RefreshCw, MessageSquare } from 'lucide-react'
 
 interface ShipmentItem {
   productId: string
@@ -42,6 +42,9 @@ export default function Receive() {
   const [isEdit, setIsEdit] = useState(false)
   const [loading, setLoading] = useState(true)
   const [hasShipment, setHasShipment] = useState(false)
+  const [kitchenReply, setKitchenReply] = useState('')
+  const [kitchenReplyAt, setKitchenReplyAt] = useState<string | null>(null)
+  const [kitchenReplyBy, setKitchenReplyBy] = useState<string | null>(null)
 
   // Load shipment data
   useEffect(() => {
@@ -64,6 +67,11 @@ export default function Receive() {
       setHasShipment(true)
       if (session.received_at) setIsEdit(true)
       if (session.receive_note) setNote(session.receive_note)
+      if (session.kitchen_reply) {
+        setKitchenReply(session.kitchen_reply)
+        setKitchenReplyAt(session.kitchen_reply_at || null)
+        setKitchenReplyBy(session.kitchen_reply_by || null)
+      }
 
       const { data: items } = await supabase!
         .from('shipment_items')
@@ -191,6 +199,25 @@ export default function Receive() {
               )}
             </div>
           </div>
+
+          {/* 央廚回覆 */}
+          {kitchenReply && (
+            <div className="mx-4 mt-3 mb-1 flex items-start gap-2 bg-status-info/10 px-3 py-2.5 rounded-btn">
+              <MessageSquare size={14} className="text-brand-mocha shrink-0 mt-0.5" />
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-1.5 text-xs text-brand-lotus mb-0.5">
+                  <span className="font-medium text-brand-oak">央廚回覆</span>
+                  {kitchenReplyAt && (
+                    <span>
+                      {new Date(kitchenReplyAt).toLocaleString('zh-TW', { timeZone: 'Asia/Taipei', hour: '2-digit', minute: '2-digit', hour12: false })}
+                    </span>
+                  )}
+                  {kitchenReplyBy && <span>{kitchenReplyBy}</span>}
+                </div>
+                <p className="text-sm text-brand-oak font-medium">「{kitchenReply}」</p>
+              </div>
+            </div>
+          )}
 
           {diffCount > 0 && (
             <div className="mx-4 mt-3 mb-1 flex items-start gap-2 bg-status-warning/10 text-status-warning px-3 py-2.5 rounded-btn text-xs">

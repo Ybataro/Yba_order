@@ -12,7 +12,7 @@ import { supabase } from '@/lib/supabase'
 import { shipmentSessionId, getTodayTW } from '@/lib/session'
 import { formatDate } from '@/lib/utils'
 import { logAudit } from '@/lib/auditLog'
-import { Truck, AlertTriangle, UserCheck, RefreshCw } from 'lucide-react'
+import { Truck, AlertTriangle, UserCheck, RefreshCw, MessageSquare, Clock, Send } from 'lucide-react'
 
 export default function Shipment() {
   const { showToast } = useToast()
@@ -40,6 +40,19 @@ export default function Shipment() {
   const [isEdit, setIsEdit] = useState<Record<string, boolean>>({})
   const [loading, setLoading] = useState(true)
 
+  // 收貨回饋
+  const [receiveStatus, setReceiveStatus] = useState<Record<string, {
+    received_at: string | null
+    received_by: string | null
+    receive_note: string
+    kitchen_reply: string
+    kitchen_reply_at: string | null
+    kitchen_reply_by: string | null
+    unreceived_items: { name: string; unit: string; order_qty: number; actual_qty: number }[]
+  }>>({})
+  const [replyText, setReplyText] = useState<Record<string, string>>({})
+  const [replySubmitting, setReplySubmitting] = useState(false)
+
   // Load order data + existing shipment for all stores
   useEffect(() => {
     if (!supabase) { setLoading(false); return }
@@ -50,6 +63,9 @@ export default function Shipment() {
       const aqData: Record<string, Record<string, string>> = {}
       const cfData: Record<string, Record<string, boolean>> = {}
       const editData: Record<string, boolean> = {}
+      const rcvData: typeof receiveStatus = {}
+      const rplyData: Record<string, string> = {}
+      const productMap = new Map(storeProducts.map(p => [p.id, p]))
 
       for (const store of stores) {
         oqData[store.id] = {}
@@ -74,11 +90,11 @@ export default function Shipment() {
           })
         }
 
-        // Load existing shipment
+        // Load existing shipment (含收貨回饋欄位)
         const shipSid = shipmentSessionId(store.id, selectedDate)
         const { data: shipSession } = await supabase!
           .from('shipment_sessions')
-          .select('confirmed_by')
+          .select('confirmed_by, received_at, received_by, receive_note, kitchen_reply, kitchen_reply_at, kitchen_reply_by')
           .eq('id', shipSid)
           .maybeSingle()
 
@@ -91,11 +107,40 @@ export default function Shipment() {
             .select('*')
             .eq('session_id', shipSid)
 
+          const unreceived: typeof rcvData[string]['unreceived_items'] = []
+
           if (shipItems) {
             shipItems.forEach(item => {
               aqData[store.id][item.product_id] = item.actual_qty > 0 ? String(item.actual_qty) : ''
               cfData[store.id][item.product_id] = item.received || false
+
+              // 收集未收到的品項
+              if (shipSession.received_at && !item.received) {
+                const product = productMap.get(item.product_id)
+                if (product) {
+                  unreceived.push({
+                    name: product.name,
+                    unit: product.unit,
+                    order_qty: item.order_qty || 0,
+                    actual_qty: item.actual_qty || 0,
+                  })
+                }
+              }
             })
+          }
+
+          rcvData[store.id] = {
+            received_at: shipSession.received_at || null,
+            received_by: shipSession.received_by || null,
+            receive_note: shipSession.receive_note || '',
+            kitchen_reply: shipSession.kitchen_reply || '',
+            kitchen_reply_at: shipSession.kitchen_reply_at || null,
+            kitchen_reply_by: shipSession.kitchen_reply_by || null,
+            unreceived_items: unreceived,
+          }
+
+          if (shipSession.kitchen_reply) {
+            rplyData[store.id] = shipSession.kitchen_reply
           }
         }
       }
@@ -104,6 +149,8 @@ export default function Shipment() {
       setActualQty(aqData)
       setConfirmed(cfData)
       setIsEdit(editData)
+      setReceiveStatus(rcvData)
+      setReplyText(rplyData)
       setLoading(false)
     }
 
@@ -184,10 +231,13 @@ export default function Shipment() {
       received: false,
     }))
 
+    // Delete old shipment items first (handles removed order items)
+    await supabase.from('shipment_items').delete().eq('session_id', sid)
+
     if (shipItems.length > 0) {
       const { error: itemErr } = await supabase
         .from('shipment_items')
-        .upsert(shipItems, { onConflict: 'session_id,product_id' })
+        .insert(shipItems)
 
       if (itemErr) {
         showToast('提交失敗：' + itemErr.message, 'error')
@@ -209,6 +259,61 @@ export default function Shipment() {
     } else {
       doSubmit()
     }
+  }
+
+  // 央廚回覆收貨差異
+  const handleReply = async (storeId: string) => {
+    const text = replyText[storeId]?.trim()
+    if (!text) {
+      showToast('請輸入回覆內容', 'error')
+      return
+    }
+    if (!supabase) return
+
+    setReplySubmitting(true)
+    const sid = shipmentSessionId(storeId, selectedDate)
+
+    const { error } = await supabase
+      .from('shipment_sessions')
+      .update({
+        kitchen_reply: text,
+        kitchen_reply_at: new Date().toISOString(),
+        kitchen_reply_by: confirmBy || null,
+      })
+      .eq('id', sid)
+
+    if (error) {
+      showToast('回覆失敗：' + error.message, 'error')
+      setReplySubmitting(false)
+      return
+    }
+
+    setReceiveStatus(prev => ({
+      ...prev,
+      [storeId]: {
+        ...prev[storeId],
+        kitchen_reply: text,
+        kitchen_reply_at: new Date().toISOString(),
+        kitchen_reply_by: confirmBy || null,
+      }
+    }))
+    setReplySubmitting(false)
+    logAudit('shipment_reply', storeId, sid)
+    showToast('回覆已送出')
+  }
+
+  const quickReplies = ['下次補出', '已知悉', '已補出']
+
+  const formatTime = (isoStr: string | null) => {
+    if (!isoStr) return ''
+    const d = new Date(isoStr)
+    return d.toLocaleString('zh-TW', { timeZone: 'Asia/Taipei', hour: '2-digit', minute: '2-digit', hour12: false })
+  }
+
+  const getStaffName = (staffId: string | null) => {
+    if (!staffId) return ''
+    const staff = kitchenStaff.find(s => s.id === staffId)
+    return staff?.name || staffId
   }
 
   return (
@@ -332,6 +437,123 @@ export default function Shipment() {
                 </div>
               ))}
             </>
+          )}
+
+          {/* 收貨回饋區 */}
+          {isEdit[activeStore] && (
+            <div className="mx-4 mt-4 mb-2 rounded-xl border border-gray-200 bg-white overflow-hidden">
+              <div className="flex items-center gap-2 px-4 py-2.5 bg-surface-section border-b border-gray-100">
+                <MessageSquare size={16} className="text-brand-mocha" />
+                <span className="text-sm font-semibold text-brand-oak">收貨回饋</span>
+              </div>
+
+              {(() => {
+                const status = receiveStatus[activeStore]
+                if (!status || !status.received_at) {
+                  return (
+                    <div className="px-4 py-4 flex items-center gap-2 text-sm text-brand-lotus">
+                      <Clock size={14} />
+                      <span>{stores.find(s => s.id === activeStore)?.name} 尚未確認收貨</span>
+                    </div>
+                  )
+                }
+
+                const hasDiscrepancy = status.unreceived_items.length > 0 || status.receive_note
+
+                return (
+                  <div className="divide-y divide-gray-100">
+                    {/* 收貨確認狀態 */}
+                    <div className="px-4 py-2.5 flex items-center gap-2 text-sm text-status-success">
+                      <span>✅</span>
+                      <span>{stores.find(s => s.id === activeStore)?.name} 已確認收貨</span>
+                      <span className="text-xs text-brand-lotus ml-auto">
+                        {formatTime(status.received_at)}
+                      </span>
+                    </div>
+
+                    {/* 未收到品項 */}
+                    {status.unreceived_items.length > 0 && (
+                      <div className="px-4 py-2.5">
+                        <p className="flex items-center gap-1.5 text-sm font-medium text-status-warning mb-1.5">
+                          <AlertTriangle size={14} />
+                          未收到品項：
+                        </p>
+                        <ul className="space-y-1 pl-5">
+                          {status.unreceived_items.map((item, i) => (
+                            <li key={i} className="text-sm text-brand-oak list-disc">
+                              {item.name}({item.unit}) — 叫{item.order_qty}/出{item.actual_qty}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    {/* 門店備註 */}
+                    {status.receive_note && (
+                      <div className="px-4 py-2.5">
+                        <p className="text-xs text-brand-lotus mb-0.5">門店備註</p>
+                        <p className="text-sm text-brand-oak">{status.receive_note}</p>
+                      </div>
+                    )}
+
+                    {/* 已回覆顯示 */}
+                    {status.kitchen_reply && (
+                      <div className="px-4 py-2.5 bg-status-info/5">
+                        <div className="flex items-center gap-1.5 text-xs text-brand-lotus mb-0.5">
+                          <span>已回覆</span>
+                          <span>{formatTime(status.kitchen_reply_at)}</span>
+                          {status.kitchen_reply_by && (
+                            <span>{getStaffName(status.kitchen_reply_by)}</span>
+                          )}
+                        </div>
+                        <p className="text-sm text-brand-oak font-medium">「{status.kitchen_reply}」</p>
+                      </div>
+                    )}
+
+                    {/* 回覆輸入區（有差異或已有回覆才顯示） */}
+                    {(hasDiscrepancy || status.kitchen_reply) && (
+                      <div className="px-4 py-3">
+                        <p className="text-xs text-brand-lotus mb-2">
+                          {status.kitchen_reply ? '修改回覆：' : '回覆處理方式：'}
+                        </p>
+                        <div className="flex flex-wrap gap-1.5 mb-2">
+                          {quickReplies.map(text => (
+                            <button
+                              key={text}
+                              onClick={() => setReplyText(prev => ({ ...prev, [activeStore]: text }))}
+                              className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+                                replyText[activeStore] === text
+                                  ? 'bg-brand-mocha text-white border-brand-mocha'
+                                  : 'bg-white text-brand-oak border-gray-200 hover:border-brand-lotus'
+                              }`}
+                            >
+                              {text}
+                            </button>
+                          ))}
+                        </div>
+                        <div className="flex gap-2">
+                          <input
+                            type="text"
+                            value={replyText[activeStore] || ''}
+                            onChange={e => setReplyText(prev => ({ ...prev, [activeStore]: e.target.value }))}
+                            placeholder="自訂回覆..."
+                            className="flex-1 h-9 rounded-lg border border-gray-200 bg-surface-input px-3 text-sm text-brand-oak outline-none focus:border-brand-lotus"
+                          />
+                          <button
+                            onClick={() => handleReply(activeStore)}
+                            disabled={replySubmitting || !replyText[activeStore]?.trim()}
+                            className="h-9 px-4 rounded-lg bg-brand-mocha text-white text-sm font-medium flex items-center gap-1.5 disabled:opacity-50"
+                          >
+                            <Send size={14} />
+                            送出
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )
+              })()}
+            </div>
           )}
 
           <BottomAction
