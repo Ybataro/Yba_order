@@ -31,3 +31,6 @@ yba_order.env
 
 # Local Netlify folder
 .netlify
+
+# Vercel
+.vercel
