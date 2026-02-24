@@ -244,6 +244,76 @@ export default function Order() {
     load()
   }, [storeId])
 
+  // 前日用量（同盤點頁公式）
+  const [prevUsage, setPrevUsage] = useState<Record<string, number>>({})
+
+  useEffect(() => {
+    if (!supabase || !storeId) return
+    setPrevUsage({})
+
+    const load = async () => {
+      try {
+        const d = new Date(selectedDate + 'T00:00:00+08:00')
+        d.setDate(d.getDate() - 1)
+        const prevDate = d.toLocaleDateString('en-CA', { timeZone: 'Asia/Taipei' })
+
+        const { data: prevSessions } = await supabase!
+          .from('inventory_sessions').select('id')
+          .eq('store_id', storeId).eq('date', prevDate)
+
+        const prevInv: Record<string, number> = {}
+        if (prevSessions && prevSessions.length > 0) {
+          const { data: items } = await supabase!
+            .from('inventory_items').select('product_id, on_shelf, stock')
+            .in('session_id', prevSessions.map(s => s.id))
+          items?.forEach(item => {
+            prevInv[item.product_id] = (prevInv[item.product_id] || 0) + (item.on_shelf || 0) + (item.stock || 0)
+          })
+        }
+
+        const { data: orderSessions } = await supabase!
+          .from('order_sessions').select('id')
+          .eq('store_id', storeId).eq('date', selectedDate)
+
+        const orderQty: Record<string, number> = {}
+        if (orderSessions && orderSessions.length > 0) {
+          const { data: ordItems } = await supabase!
+            .from('order_items').select('product_id, quantity')
+            .in('session_id', orderSessions.map(s => s.id))
+          ordItems?.forEach(item => {
+            orderQty[item.product_id] = (orderQty[item.product_id] || 0) + (item.quantity || 0)
+          })
+        }
+
+        const { data: todaySessions } = await supabase!
+          .from('inventory_sessions').select('id')
+          .eq('store_id', storeId).eq('date', selectedDate)
+
+        const todayInv: Record<string, number> = {}
+        const todayDisc: Record<string, number> = {}
+        if (todaySessions && todaySessions.length > 0) {
+          const { data: items } = await supabase!
+            .from('inventory_items').select('product_id, on_shelf, stock, discarded')
+            .in('session_id', todaySessions.map(s => s.id))
+          items?.forEach(item => {
+            todayInv[item.product_id] = (todayInv[item.product_id] || 0) + (item.on_shelf || 0) + (item.stock || 0)
+            todayDisc[item.product_id] = (todayDisc[item.product_id] || 0) + (item.discarded || 0)
+          })
+        }
+
+        const allPids = new Set([...Object.keys(prevInv), ...Object.keys(orderQty), ...Object.keys(todayInv)])
+        const usage: Record<string, number> = {}
+        allPids.forEach(pid => {
+          if (prevInv[pid] !== undefined && todayInv[pid] !== undefined) {
+            usage[pid] = Math.round(((prevInv[pid] || 0) + (orderQty[pid] || 0) - (todayInv[pid] || 0) - (todayDisc[pid] || 0)) * 10) / 10
+          }
+        })
+        setPrevUsage(usage)
+      } catch { /* ignore */ }
+    }
+    load()
+  }, [storeId, selectedDate])
+
   // 央廚成品庫存（D-1）
   const [kitchenStock, setKitchenStock] = useState<Record<string, number>>({})
 
@@ -706,6 +776,7 @@ export default function Order() {
           <div className="flex items-center px-4 py-1 bg-surface-section text-[11px] text-brand-lotus border-b border-gray-100">
             <span className="flex-1">品項</span>
             <span className="w-[32px] text-center">央廚</span>
+            <span className="w-[36px] text-center text-[9px]">前日用量</span>
             <span className="w-[40px] text-center">庫存</span>
             <span className="w-[40px] text-center text-status-info">建議</span>
             <span className="w-[60px] text-center">叫貨量</span>
@@ -723,6 +794,7 @@ export default function Order() {
                         <span className="text-[10px] text-brand-lotus ml-1">({product.unit})</span>
                       </div>
                       <span className="w-[32px] text-center text-xs font-num text-brand-lotus">{kitchenStock[product.id] != null ? kitchenStock[product.id] : '-'}</span>
+                      <span className={`w-[36px] text-center text-xs font-num ${(() => { const v = getLinkedSum(prevUsage, inventoryIdMap[product.id]); return v != null && v < 0 ? 'text-status-danger' : 'text-brand-mocha' })()}`}>{(() => { const v = getLinkedSum(prevUsage, inventoryIdMap[product.id]); return v != null ? v : '-' })()}</span>
                       <span className={`w-[40px] text-center text-xs font-num ${(() => { const v = getLinkedSum(stock, inventoryIdMap[product.id]); return v != null && v === 0 ? 'text-status-danger font-bold' : 'text-brand-oak' })()}`}>{(() => { const v = getLinkedSum(stock, inventoryIdMap[product.id]); return v != null ? v : '-' })()}</span>
                       <button
                         type="button"

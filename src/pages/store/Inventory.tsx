@@ -614,7 +614,7 @@ export default function Inventory() {
                 <span className="w-[60px] text-center">架上</span>
                 <span className="w-[60px] text-center">庫存</span>
                 <span className="w-[60px] text-center">倒掉</span>
-                <span className="w-[50px] text-center">用量</span>
+                <span className="w-[50px] text-center text-[9px]">前日用量</span>
               </div>
               <div className="bg-white">
                 {products.map((product, idx) => {
