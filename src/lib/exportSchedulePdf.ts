@@ -20,14 +20,7 @@ export interface SchedulePdfOptions {
   fileName: string
 }
 
-let fontRegistered = false
-
 async function registerFont(doc: jsPDF): Promise<boolean> {
-  if (fontRegistered) {
-    doc.setFont('NotoSansTC')
-    return true
-  }
-
   const fontData = await loadNotoSansTC()
   if (!fontData) return false
 
@@ -35,7 +28,6 @@ async function registerFont(doc: jsPDF): Promise<boolean> {
     doc.addFileToVFS('NotoSansTC-Regular.ttf', fontData)
     doc.addFont('NotoSansTC-Regular.ttf', 'NotoSansTC', 'normal')
     doc.setFont('NotoSansTC')
-    fontRegistered = true
     return true
   } catch (e) {
     console.warn('[exportSchedulePdf] Font registration failed:', e)
