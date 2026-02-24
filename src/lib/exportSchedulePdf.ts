@@ -6,6 +6,7 @@ import {
   getWeekdayLabel,
   formatTime,
   getAttendanceType,
+  getTagColor,
 } from '@/lib/schedule'
 import type { ShiftType, Schedule } from '@/lib/schedule'
 import type { StaffMember } from '@/data/staff'
@@ -35,7 +36,6 @@ async function registerFont(doc: jsPDF): Promise<boolean> {
   }
 }
 
-/** Parse hex color string to [r, g, b] */
 function hexToRgb(hex: string): [number, number, number] {
   const h = hex.replace('#', '')
   return [
@@ -45,83 +45,72 @@ function hexToRgb(hex: string): [number, number, number] {
   ]
 }
 
-/** Determine if a color is light (needs dark text) or dark (needs light text) */
 function isLightColor(r: number, g: number, b: number): boolean {
-  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
-  return luminance > 0.6
+  return (0.299 * r + 0.587 * g + 0.114 * b) / 255 > 0.6
 }
 
-interface CellColor {
-  fill: [number, number, number]
+// ── Per-cell render data ──
+interface TagRender {
+  name: string
+  bg: [number, number, number]
   text: [number, number, number]
 }
 
-function getCellText(
-  schedule: Schedule | undefined,
-  shiftMap: Record<string, ShiftType>,
-): string {
-  if (!schedule) return '-'
-
-  const at = schedule.attendance_type || 'work'
-  if (at !== 'work') {
-    const leave = getAttendanceType(at)
-    return leave?.name ?? at
-  }
-
-  const lines: string[] = []
-
-  if (schedule.shift_type_id && shiftMap[schedule.shift_type_id]) {
-    const st = shiftMap[schedule.shift_type_id]
-    lines.push(st.name)
-    lines.push(`${formatTime(st.start_time)}-${formatTime(st.end_time)}`)
-  } else if (schedule.custom_start && schedule.custom_end) {
-    lines.push(`${formatTime(schedule.custom_start)}-${formatTime(schedule.custom_end)}`)
-  }
-
-  if (schedule.tags?.length) {
-    lines.push(schedule.tags.join('、'))
-  }
-
-  return lines.length > 0 ? lines.join('\n') : '班'
+interface CellRender {
+  shiftName: string | null
+  timeRange: string | null
+  tags: TagRender[]
+  badgeFill: [number, number, number] | null
+  badgeText: [number, number, number]
 }
 
-function getCellColor(
-  schedule: Schedule | undefined,
+function buildCellRender(
+  sch: Schedule | undefined,
   shiftMap: Record<string, ShiftType>,
-): CellColor | null {
-  if (!schedule) return null
+): CellRender | null {
+  if (!sch) return null
 
-  const at = schedule.attendance_type || 'work'
+  const at = sch.attendance_type || 'work'
 
-  // Leave types
+  // ── Leave ──
   if (at !== 'work') {
     const leave = getAttendanceType(at)
-    if (leave) {
-      const fill = hexToRgb(leave.color)
-      const text = hexToRgb(leave.textColor)
-      return { fill, text }
-    }
-    return { fill: [224, 224, 224], text: [100, 100, 100] }
-  }
-
-  // Shift types with color
-  if (schedule.shift_type_id && shiftMap[schedule.shift_type_id]) {
-    const st = shiftMap[schedule.shift_type_id]
-    if (st.color) {
-      const fill = hexToRgb(st.color)
-      const text: [number, number, number] = isLightColor(...fill)
-        ? [60, 46, 38] // dark brown text for light backgrounds
-        : [255, 255, 255] // white text for dark backgrounds
-      return { fill, text }
+    if (!leave) return null
+    return {
+      shiftName: leave.name,
+      timeRange: null,
+      tags: [],
+      badgeFill: hexToRgb(leave.color),
+      badgeText: hexToRgb(leave.textColor),
     }
   }
 
-  // Tags only, no shift
-  if (schedule.tags?.length && !schedule.shift_type_id) {
-    return null // no special color, just text
+  // ── Work ──
+  let shiftName: string | null = null
+  let timeRange: string | null = null
+  let badgeFill: [number, number, number] | null = null
+
+  if (sch.shift_type_id && shiftMap[sch.shift_type_id]) {
+    const st = shiftMap[sch.shift_type_id]
+    shiftName = st.name
+    timeRange = `${formatTime(st.start_time)}-${formatTime(st.end_time)}`
+    if (st.color) badgeFill = hexToRgb(st.color)
+  } else if (sch.custom_start && sch.custom_end) {
+    timeRange = `${formatTime(sch.custom_start)}-${formatTime(sch.custom_end)}`
   }
 
-  return null
+  const tags: TagRender[] = (sch.tags || []).map((t) => {
+    const tc = getTagColor(t)
+    return { name: t, bg: hexToRgb(tc.bg), text: hexToRgb(tc.text) }
+  })
+
+  if (!shiftName && !timeRange && tags.length === 0) return null
+
+  const badgeText: [number, number, number] = badgeFill
+    ? (isLightColor(...badgeFill) ? [60, 46, 38] : [255, 255, 255])
+    : [60, 46, 38]
+
+  return { shiftName, timeRange, tags, badgeFill, badgeText }
 }
 
 export async function exportScheduleToPdf({
@@ -145,10 +134,22 @@ export async function exportScheduleToPdf({
   const scheduleMap: Record<string, Schedule> = {}
   schedules.forEach((s) => { scheduleMap[`${s.staff_id}_${s.date}`] = s })
 
+  // ── Build cell render data ──
+  const renderMap: Record<string, CellRender> = {}
+  staff.forEach((member, rowIdx) => {
+    weekDates.forEach((date, colIdx) => {
+      const sch = scheduleMap[`${member.id}_${date}`]
+      const render = buildCellRender(sch, shiftMap)
+      if (render) {
+        renderMap[`${rowIdx}_${colIdx + 1}`] = render
+      }
+    })
+  })
+
   // ── Brand header ──
   doc.setFontSize(16)
   doc.setFont(fontName, 'normal')
-  doc.setTextColor(139, 115, 85) // brand-mocha
+  doc.setTextColor(139, 115, 85)
   doc.text('\u963F\u7238\u7684\u828B\u5713', 14, 15) // 阿爸的芋圓
 
   doc.setFontSize(12)
@@ -166,26 +167,21 @@ export async function exportScheduleToPdf({
     ...weekDates.map((d) => `${getWeekdayLabel(d)} ${formatShortDate(d)}`),
   ]
 
-  // ── Table rows ──
-  const body = staff.map((member) => [
+  // ── Body: placeholder text for row height calculation ──
+  const body = staff.map((member, rowIdx) => [
     member.name,
-    ...weekDates.map((date) => {
-      const sch = scheduleMap[`${member.id}_${date}`]
-      return getCellText(sch, shiftMap)
+    ...weekDates.map((_date, colIdx) => {
+      const key = `${rowIdx}_${colIdx + 1}`
+      const r = renderMap[key]
+      if (!r) return '-'
+      // Placeholder lines so autotable calculates enough row height
+      const lines: string[] = []
+      if (r.shiftName) lines.push(r.shiftName)
+      if (r.timeRange) lines.push(r.timeRange)
+      if (r.tags.length > 0) lines.push(r.tags.map((t) => t.name).join(' '))
+      return lines.join('\n') || '-'
     }),
   ])
-
-  // ── Build color map: "rowIdx_colIdx" -> CellColor ──
-  const colorMap: Record<string, CellColor> = {}
-  staff.forEach((member, rowIdx) => {
-    weekDates.forEach((date, colIdx) => {
-      const sch = scheduleMap[`${member.id}_${date}`]
-      const color = getCellColor(sch, shiftMap)
-      if (color) {
-        colorMap[`${rowIdx}_${colIdx + 1}`] = color // +1 because col 0 is staff name
-      }
-    })
-  })
 
   // ── Render table ──
   autoTable(doc, {
@@ -194,38 +190,132 @@ export async function exportScheduleToPdf({
     body,
     styles: {
       font: fontName,
-      fontSize: 8,
-      cellPadding: 3,
+      fontSize: 7.5,
+      cellPadding: 2.5,
       halign: 'center',
       valign: 'middle',
-      lineWidth: 0.2,
-      lineColor: [220, 215, 210],
+      lineWidth: 0.15,
+      lineColor: [230, 225, 220],
+      minCellHeight: 14,
     },
     headStyles: {
-      fillColor: [139, 115, 85], // brand-mocha
+      fillColor: [139, 115, 85],
       textColor: 255,
       fontStyle: 'normal',
       font: fontName,
       halign: 'center',
-      cellPadding: 3,
+      cellPadding: 2.5,
+      fontSize: 7.5,
     },
     columnStyles: {
-      0: { halign: 'left', cellWidth: 24 },
+      0: { halign: 'left', cellWidth: 22 },
     },
     alternateRowStyles: {
-      fillColor: [250, 248, 245],
+      fillColor: [252, 250, 248],
     },
     margin: { left: 14, right: 14 },
+
     willDrawCell: (hookData) => {
-      if (hookData.section === 'body') {
-        const key = `${hookData.row.index}_${hookData.column.index}`
-        const color = colorMap[key]
-        if (color) {
-          hookData.cell.styles.fillColor = color.fill
-          hookData.cell.styles.textColor = color.text
-        }
+      if (hookData.section !== 'body') return
+      const key = `${hookData.row.index}_${hookData.column.index}`
+      if (renderMap[key]) {
+        // Suppress autotable's own text — we draw it custom in didDrawCell
+        hookData.cell.text = []
       }
     },
+
+    didDrawCell: (hookData) => {
+      if (hookData.section !== 'body') return
+
+      // Staff name column (col 0): draw with proper color
+      if (hookData.column.index === 0) {
+        // already handled by autotable
+        return
+      }
+
+      const key = `${hookData.row.index}_${hookData.column.index}`
+      const r = renderMap[key]
+      if (!r) return // '-' already drawn by autotable
+
+      const cell = hookData.cell
+      const cx = cell.x
+      const cy = cell.y
+      const cw = cell.width
+      const ch = cell.height
+      const pad = 1.5
+      const radius = 2
+
+      // ── Draw rounded badge ──
+      const badgeX = cx + pad
+      const badgeY = cy + pad
+      const badgeW = cw - pad * 2
+      const badgeH = ch - pad * 2
+
+      if (r.badgeFill) {
+        doc.setFillColor(...r.badgeFill)
+        doc.roundedRect(badgeX, badgeY, badgeW, badgeH, radius, radius, 'F')
+      }
+
+      // ── Draw text lines ──
+      doc.setFont(fontName, 'normal')
+      const centerX = cx + cw / 2
+      const hasTags = r.tags.length > 0
+      const lineCount = (r.shiftName ? 1 : 0) + (r.timeRange ? 1 : 0)
+      const tagHeight = hasTags ? 4.5 : 0
+      const textBlockHeight = lineCount * 3.8 + tagHeight
+      let textY = cy + (ch - textBlockHeight) / 2 + 3
+
+      // Shift name
+      if (r.shiftName) {
+        doc.setFontSize(8)
+        doc.setTextColor(...r.badgeText)
+        doc.text(r.shiftName, centerX, textY, { align: 'center' })
+        textY += 3.8
+      }
+
+      // Time range
+      if (r.timeRange) {
+        doc.setFontSize(6.5)
+        // Slightly transparent for time
+        const timeColor: [number, number, number] = r.badgeFill
+          ? r.badgeText
+          : [120, 110, 100]
+        doc.setTextColor(...timeColor)
+        doc.text(r.timeRange, centerX, textY, { align: 'center' })
+        textY += 3.8
+      }
+
+      // ── Draw tag pills ──
+      if (hasTags) {
+        doc.setFontSize(5.5)
+        const tagPillH = 3.2
+        const tagGap = 1
+        // Measure total width of all tags
+        let totalTagW = 0
+        const tagWidths: number[] = []
+        r.tags.forEach((tag) => {
+          const tw = doc.getTextWidth(tag.name) + 2.5
+          tagWidths.push(tw)
+          totalTagW += tw
+        })
+        totalTagW += (r.tags.length - 1) * tagGap
+
+        let tagX = centerX - totalTagW / 2
+        const tagY = textY
+
+        r.tags.forEach((tag, i) => {
+          const tw = tagWidths[i]
+          // Tag pill background
+          doc.setFillColor(...tag.bg)
+          doc.roundedRect(tagX, tagY - 2.4, tw, tagPillH, 1, 1, 'F')
+          // Tag text
+          doc.setTextColor(...tag.text)
+          doc.text(tag.name, tagX + tw / 2, tagY, { align: 'center' })
+          tagX += tw + tagGap
+        })
+      }
+    },
+
     didDrawPage: (hookData) => {
       const pageCount = doc.getNumberOfPages()
       const pageNum = hookData.pageNumber
