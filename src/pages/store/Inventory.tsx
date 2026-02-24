@@ -13,7 +13,8 @@ import { supabase } from '@/lib/supabase'
 import { inventorySessionId, getTodayTW } from '@/lib/session'
 import { submitWithOffline } from '@/lib/submitWithOffline'
 import { logAudit } from '@/lib/auditLog'
-import { Send, RefreshCw } from 'lucide-react'
+import { Send, RefreshCw, ChevronDown, ChevronUp } from 'lucide-react'
+import { StockEntryPanel, type StockEntry } from '@/components/StockEntryPanel'
 import { useFrozenProductStore } from '@/stores/useFrozenProductStore'
 import { useZoneStore } from '@/stores/useZoneStore'
 
@@ -68,6 +69,11 @@ export default function Inventory() {
   const [isEdit, setIsEdit] = useState(false)
   const [loading, setLoading] = useState(true)
 
+  // Stock entries (到期日批次) state
+  const [stockEntries, setStockEntries] = useState<Record<string, StockEntry[]>>({})
+  const originalStockEntries = useRef<Record<string, StockEntry[]>>({})
+  const [expandedStockId, setExpandedStockId] = useState<string | null>(null)
+
   // Frozen product sales state (takeout + delivery)
   interface FrozenEntry { takeout: string; delivery: string }
   const emptyFrozenEntry: FrozenEntry = { takeout: '', delivery: '' }
@@ -92,6 +98,9 @@ export default function Inventory() {
     setIsEdit(false)
     setData({})
     originalData.current = {}
+    setStockEntries({})
+    originalStockEntries.current = {}
+    setExpandedStockId(null)
 
     const load = async () => {
       try {
@@ -121,6 +130,26 @@ export default function Inventory() {
           originalData.current = JSON.parse(JSON.stringify(loaded))
           setData(loaded)
         }
+
+        // Load stock entries (到期日批次)
+        const { data: seRows } = await supabase!
+          .from('inventory_stock_entries')
+          .select('product_id, expiry_date, quantity')
+          .eq('session_id', sid)
+          .order('expiry_date', { ascending: true })
+
+        if (seRows && seRows.length > 0) {
+          const grouped: Record<string, StockEntry[]> = {}
+          seRows.forEach((r) => {
+            if (!grouped[r.product_id]) grouped[r.product_id] = []
+            grouped[r.product_id].push({
+              expiryDate: r.expiry_date,
+              quantity: r.quantity != null ? String(r.quantity) : '',
+            })
+          })
+          originalStockEntries.current = JSON.parse(JSON.stringify(grouped))
+          setStockEntries(grouped)
+        }
       } catch {
         // ignore fetch errors
       }
@@ -129,6 +158,22 @@ export default function Inventory() {
 
     load()
   }, [storeId, currentZone, selectedDate])
+
+  // Auto-sum stock entries → data[productId].stock
+  const updateStockFromEntries = useCallback((productId: string, entries: StockEntry[]) => {
+    const sum = entries.reduce((acc, e) => {
+      const n = parseFloat(e.quantity)
+      return acc + (isNaN(n) ? 0 : n)
+    }, 0)
+    const sumStr = entries.length > 0 ? String(Math.round(sum * 10) / 10) : ''
+    setData(prev => ({
+      ...prev,
+      [productId]: {
+        ...(prev[productId] ?? { onShelf: '', stock: '', discarded: '' }),
+        stock: sumStr,
+      },
+    }))
+  }, [])
 
   // Load frozen product sales data
   useEffect(() => {
@@ -514,8 +559,33 @@ export default function Inventory() {
             onConflict: 'store_id,date,zone_code,product_key',
           })
         }
+        // Save stock entries (到期日批次): delete + insert
+        if (supabase) {
+          await supabase
+            .from('inventory_stock_entries')
+            .delete()
+            .eq('session_id', sessionId)
+
+          const seInserts: { session_id: string; product_id: string; expiry_date: string; quantity: number }[] = []
+          Object.entries(stockEntries).forEach(([pid, entries]) => {
+            entries.forEach((e) => {
+              if (e.expiryDate && e.quantity !== '') {
+                seInserts.push({
+                  session_id: sessionId,
+                  product_id: pid,
+                  expiry_date: e.expiryDate,
+                  quantity: parseFloat(e.quantity) || 0,
+                })
+              }
+            })
+          })
+          if (seInserts.length > 0) {
+            await supabase.from('inventory_stock_entries').insert(seInserts)
+          }
+        }
         originalData.current = JSON.parse(JSON.stringify(data))
         originalFrozenData.current = JSON.parse(JSON.stringify(frozenData))
+        originalStockEntries.current = JSON.parse(JSON.stringify(stockEntries))
         setIsEdit(true)
         logAudit('inventory_submit', storeId, sessionId, { itemCount: items.length, frozenCount: frozenItems.length })
         showToast(msg || (isEdit ? '盤點資料已更新！' : '盤點資料已提交成功！'))
@@ -527,6 +597,7 @@ export default function Inventory() {
       // offline success — still mark as submitted locally
       originalData.current = JSON.parse(JSON.stringify(data))
       originalFrozenData.current = JSON.parse(JSON.stringify(frozenData))
+      originalStockEntries.current = JSON.parse(JSON.stringify(stockEntries))
       setIsEdit(true)
     }
 
@@ -621,59 +692,138 @@ export default function Inventory() {
                   const entry = getEntry(product.id)
                   const isFilled = entry.onShelf !== '' || entry.stock !== '' || entry.discarded !== ''
                   const modified = isItemModified(product.id)
+                  const hasStockEntries = (stockEntries[product.id]?.length ?? 0) > 0
+                  const isExpanded = expandedStockId === product.id
 
                   return (
-                    <div
-                      key={product.id}
-                      className={`flex items-center px-4 py-2 ${idx < products.length - 1 ? 'border-b border-gray-50' : ''} ${modified ? 'bg-amber-100 border-l-3 border-l-amber-500' : isFilled ? 'bg-surface-filled/30' : ''}`}
-                    >
-                      <div className="flex-1 min-w-0 pr-2">
-                        <p className="text-sm font-semibold text-brand-oak leading-tight">{product.name}</p>
-                        <p className="text-[10px] text-brand-lotus leading-tight">
-                          {product.shelfLifeDays ? `期效${product.shelfLifeDays}` : ''}
-                          {product.baseStock ? ` · ${product.baseStock}` : ''}
-                        </p>
+                    <div key={product.id}>
+                      <div
+                        className={`flex items-center px-4 py-2 ${idx < products.length - 1 && !isExpanded ? 'border-b border-gray-50' : ''} ${modified ? 'bg-amber-100 border-l-3 border-l-amber-500' : isFilled ? 'bg-surface-filled/30' : ''}`}
+                      >
+                        <div className="flex-1 min-w-0 pr-2">
+                          <p className="text-sm font-semibold text-brand-oak leading-tight">{product.name}</p>
+                          <p className="text-[10px] text-brand-lotus leading-tight">
+                            {product.shelfLifeDays ? `期效${product.shelfLifeDays}` : ''}
+                            {product.baseStock ? ` · ${product.baseStock}` : ''}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          {isMergedView ? (
+                            <>
+                              <span className="w-[60px] text-center text-sm text-brand-oak">{entry.onShelf || '-'}</span>
+                              <span className="w-[60px] text-center text-sm text-brand-oak">{entry.stock || '-'}</span>
+                              <span className={`w-[60px] text-center text-sm ${entry.discarded && parseFloat(entry.discarded) > 0 ? 'text-status-danger' : 'text-brand-oak'}`}>{entry.discarded || '-'}</span>
+                              <span className={`w-[50px] text-center text-sm ${prevUsage[product.id] !== undefined ? (prevUsage[product.id] < 0 ? 'text-status-danger' : 'text-brand-oak') : 'text-brand-lotus'}`}>
+                                {prevUsage[product.id] !== undefined ? prevUsage[product.id] : '-'}
+                              </span>
+                            </>
+                          ) : (
+                            <>
+                              <NumericInput
+                                value={entry.onShelf}
+                                onChange={(v) => updateField(product.id, 'onShelf', v)}
+                                isFilled
+                                onNext={focusNext}
+                                data-inv=""
+                              />
+                              {/* 庫存欄：有到期日資料 → 顯示合計+展開按鈕；否則原始輸入 */}
+                              {hasStockEntries || isExpanded ? (
+                                <button
+                                  type="button"
+                                  onClick={() => setExpandedStockId(isExpanded ? null : product.id)}
+                                  className={`w-[56px] h-9 rounded-lg flex items-center justify-center gap-0.5 text-base font-semibold transition-colors ${
+                                    entry.stock !== '' ? 'bg-green-50 text-brand-oak' : 'bg-gray-50 text-brand-lotus'
+                                  } border border-gray-200`}
+                                >
+                                  <span className="text-sm">{entry.stock || '0'}</span>
+                                  {isExpanded
+                                    ? <ChevronUp size={12} className="text-brand-lotus" />
+                                    : <ChevronDown size={12} className="text-brand-lotus" />
+                                  }
+                                </button>
+                              ) : (
+                                <div className="relative">
+                                  <NumericInput
+                                    value={entry.stock}
+                                    onChange={(v) => updateField(product.id, 'stock', v)}
+                                    isFilled
+                                    onNext={focusNext}
+                                    data-inv=""
+                                  />
+                                  <button
+                                    type="button"
+                                    title="依到期日分批輸入"
+                                    onClick={() => {
+                                      setStockEntries(prev => ({
+                                        ...prev,
+                                        [product.id]: [{ expiryDate: '', quantity: entry.stock || '' }],
+                                      }))
+                                      setExpandedStockId(product.id)
+                                    }}
+                                    className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-brand-oak/70 text-white flex items-center justify-center text-[10px] leading-none"
+                                  >
+                                    +
+                                  </button>
+                                </div>
+                              )}
+                              <NumericInput
+                                value={entry.discarded}
+                                onChange={(v) => updateField(product.id, 'discarded', v)}
+                                isFilled
+                                className={entry.discarded && parseFloat(entry.discarded) > 0 ? '!text-status-danger' : ''}
+                                onNext={focusNext}
+                                data-inv=""
+                              />
+                              <span className={`w-[50px] text-center text-sm ${prevUsage[product.id] !== undefined ? (prevUsage[product.id] < 0 ? 'text-status-danger' : 'text-brand-oak') : 'text-brand-lotus'}`}>
+                                {prevUsage[product.id] !== undefined ? prevUsage[product.id] : '-'}
+                              </span>
+                            </>
+                          )}
+                        </div>
                       </div>
-                      <div className="flex items-center gap-1">
-                        {isMergedView ? (
-                          <>
-                            <span className="w-[60px] text-center text-sm text-brand-oak">{entry.onShelf || '-'}</span>
-                            <span className="w-[60px] text-center text-sm text-brand-oak">{entry.stock || '-'}</span>
-                            <span className={`w-[60px] text-center text-sm ${entry.discarded && parseFloat(entry.discarded) > 0 ? 'text-status-danger' : 'text-brand-oak'}`}>{entry.discarded || '-'}</span>
-                            <span className={`w-[50px] text-center text-sm ${prevUsage[product.id] !== undefined ? (prevUsage[product.id] < 0 ? 'text-status-danger' : 'text-brand-oak') : 'text-brand-lotus'}`}>
-                              {prevUsage[product.id] !== undefined ? prevUsage[product.id] : '-'}
-                            </span>
-                          </>
-                        ) : (
-                          <>
-                            <NumericInput
-                              value={entry.onShelf}
-                              onChange={(v) => updateField(product.id, 'onShelf', v)}
-                              isFilled
-                              onNext={focusNext}
-                              data-inv=""
-                            />
-                            <NumericInput
-                              value={entry.stock}
-                              onChange={(v) => updateField(product.id, 'stock', v)}
-                              isFilled
-                              onNext={focusNext}
-                              data-inv=""
-                            />
-                            <NumericInput
-                              value={entry.discarded}
-                              onChange={(v) => updateField(product.id, 'discarded', v)}
-                              isFilled
-                              className={entry.discarded && parseFloat(entry.discarded) > 0 ? '!text-status-danger' : ''}
-                              onNext={focusNext}
-                              data-inv=""
-                            />
-                            <span className={`w-[50px] text-center text-sm ${prevUsage[product.id] !== undefined ? (prevUsage[product.id] < 0 ? 'text-status-danger' : 'text-brand-oak') : 'text-brand-lotus'}`}>
-                              {prevUsage[product.id] !== undefined ? prevUsage[product.id] : '-'}
-                            </span>
-                          </>
-                        )}
-                      </div>
+                      {/* 展開到期日面板 */}
+                      {isExpanded && !isMergedView && (
+                        <StockEntryPanel
+                          entries={stockEntries[product.id] || []}
+                          onChange={(entries) => {
+                            if (entries.length === 0) {
+                              // All entries removed → revert to plain input mode
+                              setStockEntries(prev => {
+                                const next = { ...prev }
+                                delete next[product.id]
+                                return next
+                              })
+                              setExpandedStockId(null)
+                              // Reset stock to empty so user can type directly
+                              updateField(product.id, 'stock', '')
+                              return
+                            }
+                            setStockEntries(prev => ({ ...prev, [product.id]: entries }))
+                            updateStockFromEntries(product.id, entries)
+                          }}
+                          onCollapse={() => {
+                            setExpandedStockId(null)
+                            // Focus next discard input after collapse
+                            requestAnimationFrame(() => {
+                              const allInputs = document.querySelectorAll<HTMLInputElement>('[data-inv]')
+                              const arr = Array.from(allInputs)
+                              // Find the discard input for this product (3rd input in the product's group)
+                              // Since stock is a button when expanded, the discard is next data-inv after onShelf
+                              for (let i = 0; i < arr.length; i++) {
+                                const row = arr[i].closest('[data-product-id]')
+                                if (row?.getAttribute('data-product-id') === product.id) {
+                                  // This is the onShelf, next one should be discard
+                                  if (arr[i + 1]) arr[i + 1].focus()
+                                  break
+                                }
+                              }
+                            })
+                          }}
+                        />
+                      )}
+                      {isExpanded && idx < products.length - 1 && (
+                        <div className="border-b border-gray-50" />
+                      )}
                     </div>
                   )
                 })}

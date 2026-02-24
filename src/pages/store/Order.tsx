@@ -244,7 +244,7 @@ export default function Order() {
     load()
   }, [storeId])
 
-  // 前日用量（同盤點頁公式）
+  // 前日用量：叫貨頁用 D = selectedDate - 1（顯示昨日用量）
   const [prevUsage, setPrevUsage] = useState<Record<string, number>>({})
 
   useEffect(() => {
@@ -253,9 +253,15 @@ export default function Order() {
 
     const load = async () => {
       try {
-        const d = new Date(selectedDate + 'T00:00:00+08:00')
-        d.setDate(d.getDate() - 1)
-        const prevDate = d.toLocaleDateString('en-CA', { timeZone: 'Asia/Taipei' })
+        // D = selectedDate - 1（叫貨頁要看的是前一天的用量）
+        const dObj = new Date(selectedDate + 'T00:00:00+08:00')
+        dObj.setDate(dObj.getDate() - 1)
+        const usageDate = dObj.toLocaleDateString('en-CA', { timeZone: 'Asia/Taipei' })
+
+        // (D-1) 庫存
+        const dPrev = new Date(usageDate + 'T00:00:00+08:00')
+        dPrev.setDate(dPrev.getDate() - 1)
+        const prevDate = dPrev.toLocaleDateString('en-CA', { timeZone: 'Asia/Taipei' })
 
         const { data: prevSessions } = await supabase!
           .from('inventory_sessions').select('id')
@@ -271,9 +277,10 @@ export default function Order() {
           })
         }
 
+        // (D) 叫貨量
         const { data: orderSessions } = await supabase!
           .from('order_sessions').select('id')
-          .eq('store_id', storeId).eq('date', selectedDate)
+          .eq('store_id', storeId).eq('date', usageDate)
 
         const orderQty: Record<string, number> = {}
         if (orderSessions && orderSessions.length > 0) {
@@ -285,9 +292,10 @@ export default function Order() {
           })
         }
 
+        // (D) 庫存 + 倒掉
         const { data: todaySessions } = await supabase!
           .from('inventory_sessions').select('id')
-          .eq('store_id', storeId).eq('date', selectedDate)
+          .eq('store_id', storeId).eq('date', usageDate)
 
         const todayInv: Record<string, number> = {}
         const todayDisc: Record<string, number> = {}
