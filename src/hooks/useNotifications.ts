@@ -60,6 +60,17 @@ function getTaiwanHour(): number {
   return parseInt(twStr, 10)
 }
 
+function getTaiwanMinute(): number {
+  const now = new Date()
+  const twStr = now.toLocaleString('en-US', { timeZone: 'Asia/Taipei', minute: 'numeric' })
+  return parseInt(twStr, 10)
+}
+
+const SETTLEMENT_REMINDER_TIME: Record<string, { hour: number; minute: number }> = {
+  lehua: { hour: 23, minute: 30 },
+  xingnan: { hour: 22, minute: 30 },
+}
+
 // ── Hook ───────────────────────────────────────────────
 
 export function useNotifications(
@@ -345,10 +356,22 @@ export function useNotifications(
       }
     }
 
-    // ── 4. 結帳提醒（21:00 後尚未結帳）─ critical ────
-    if (hour >= 21) {
+    // ── 4. 結帳提醒（依門市設定時間後尚未結帳）─ critical ────
+    const minute = getTaiwanMinute()
+    const isSettlementTime = (sid: string) => {
+      const t = SETTLEMENT_REMINDER_TIME[sid] || { hour: 22, minute: 30 }
+      return hour > t.hour || (hour === t.hour && minute >= t.minute)
+    }
+
+    const shouldCheckSettlement = context === 'store' && storeId
+      ? isSettlementTime(storeId)
+      : context === 'kitchen' && stores.some((s) => isSettlementTime(s.id))
+
+    if (shouldCheckSettlement) {
       try {
         if (context === 'store' && storeId) {
+          const t = SETTLEMENT_REMINDER_TIME[storeId] || { hour: 22, minute: 30 }
+          const timeLabel = `${t.hour}:${String(t.minute).padStart(2, '0')}`
           const { data: todaySettlement } = await supabase
             .from('settlement_sessions')
             .select('id')
@@ -363,7 +386,7 @@ export function useNotifications(
               severity: 'critical',
               icon: '🔴',
               title: '尚未結帳！',
-              message: '已過 21:00，今日尚未提交結帳資料\n請盡快完成每日結帳',
+              message: `已過 ${timeLabel}，今日尚未提交結帳資料\n請盡快完成每日結帳`,
               link: `/store/${storeId}/settlement`,
             })
           }
@@ -374,7 +397,7 @@ export function useNotifications(
             .eq('date', today)
 
           const settledIds = new Set(todaySettlements?.map((s) => s.store_id) || [])
-          const unsettledStores = stores.filter((s) => !settledIds.has(s.id))
+          const unsettledStores = stores.filter((s) => !settledIds.has(s.id) && isSettlementTime(s.id))
 
           if (unsettledStores.length > 0) {
             const names = unsettledStores.map((s) => s.name).join('、')
