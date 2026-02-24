@@ -50,7 +50,7 @@ export function ScheduleGrid({ refDate, staff, schedules, shiftTypes, canSchedul
     if (s.custom_start && s.custom_end) {
       return `${formatTime(s.custom_start)}-${formatTime(s.custom_end)}`
     }
-    return '班'
+    return s.tags?.length ? '' : '班'
   }
 
   const getTime = (s: Schedule): string | null => {
