@@ -98,7 +98,7 @@ export default function Receive() {
             hasDiff: orderQty !== actualQty,
             diff: Math.round((actualQty - orderQty) * 10) / 10,
           })
-          loadedConfirmed[item.product_id] = item.received || false
+          loadedConfirmed[item.product_id] = item.received ?? false
         })
 
         setShipmentItems(loaded)
@@ -303,12 +303,17 @@ export default function Receive() {
               style={{ backgroundColor: 'var(--color-input-bg)' }} />
           </div>
 
+          {!isEdit && confirmedCount === 0 && (
+            <div className="mx-4 mb-2 text-center text-xs text-status-warning">
+              請先逐項勾選已收到的品項，才能確認收貨
+            </div>
+          )}
           <BottomAction
             label={submitting ? '提交中...' : isEdit ? '更新收貨確認' : '確認收貨完成'}
             onClick={handleSubmit}
             variant="success"
             icon={<CheckCircle size={18} />}
-            disabled={submitting}
+            disabled={submitting || (!isEdit && confirmedCount === 0)}
           />
         </>
       )}
