@@ -244,112 +244,6 @@ export default function Order() {
     load()
   }, [storeId])
 
-  // 前日用量
-  const [usage, setUsage] = useState<Record<string, number>>({})
-
-  useEffect(() => {
-    if (!supabase || !storeId) return
-
-    const load = async () => {
-      // D = selectedDate, D-1, D-2
-      // 用量 = (D-2)庫存 + (D-2)叫貨量(隔日到貨) - (D-1)庫存 - (D-1)倒掉
-      const d1 = new Date(selectedDate + 'T00:00:00+08:00')
-      d1.setDate(d1.getDate() - 1)
-      const prevDate = d1.toLocaleDateString('en-CA', { timeZone: 'Asia/Taipei' })
-
-      const d2 = new Date(selectedDate + 'T00:00:00+08:00')
-      d2.setDate(d2.getDate() - 2)
-      const prevPrevDate = d2.toLocaleDateString('en-CA', { timeZone: 'Asia/Taipei' })
-
-      // 1) D-2 庫存 (on_shelf + stock)
-      const { data: ppSessions } = await supabase!
-        .from('inventory_sessions')
-        .select('id')
-        .eq('store_id', storeId)
-        .eq('date', prevPrevDate)
-
-      const ppStock: Record<string, number> = {}
-      if (ppSessions && ppSessions.length > 0) {
-        const sids = ppSessions.map(s => s.id)
-        const { data: items } = await supabase!
-          .from('inventory_items')
-          .select('product_id, on_shelf, stock')
-          .in('session_id', sids)
-        if (items) {
-          items.forEach(item => {
-            ppStock[item.product_id] = (ppStock[item.product_id] || 0) + (item.on_shelf || 0) + (item.stock || 0)
-          })
-        }
-      }
-
-      // 2) D-2 叫貨量（隔日到貨 = D-1 收貨）
-      const { data: ordSessions } = await supabase!
-        .from('order_sessions')
-        .select('id')
-        .eq('store_id', storeId)
-        .eq('date', prevPrevDate)
-
-      const orderQty: Record<string, number> = {}
-      if (ordSessions && ordSessions.length > 0) {
-        const ordSids = ordSessions.map(s => s.id)
-        const { data: ordItems } = await supabase!
-          .from('order_items')
-          .select('product_id, quantity')
-          .in('session_id', ordSids)
-        if (ordItems) {
-          ordItems.forEach(item => {
-            orderQty[item.product_id] = (orderQty[item.product_id] || 0) + (item.quantity || 0)
-          })
-        }
-      }
-
-      // 3) D-1 庫存 + 倒掉
-      const { data: pSessions } = await supabase!
-        .from('inventory_sessions')
-        .select('id')
-        .eq('store_id', storeId)
-        .eq('date', prevDate)
-
-      const pStock: Record<string, number> = {}
-      const pDiscarded: Record<string, number> = {}
-      if (pSessions && pSessions.length > 0) {
-        const sids = pSessions.map(s => s.id)
-        const { data: items } = await supabase!
-          .from('inventory_items')
-          .select('product_id, on_shelf, stock, discarded')
-          .in('session_id', sids)
-        if (items) {
-          items.forEach(item => {
-            pStock[item.product_id] = (pStock[item.product_id] || 0) + (item.on_shelf || 0) + (item.stock || 0)
-            pDiscarded[item.product_id] = (pDiscarded[item.product_id] || 0) + (item.discarded || 0)
-          })
-        }
-      }
-
-      // 4) 用量 = (D-2)庫存 + (D-2)叫貨量 - (D-1)庫存 - (D-1)倒掉
-      //    前提：D-2 和 D-1 都要有盤點資料
-      const result: Record<string, number> = {}
-      if (!ppSessions?.length || !pSessions?.length) {
-        setUsage(result)
-        return
-      }
-      const allPids = new Set([...Object.keys(ppStock), ...Object.keys(pStock)])
-      allPids.forEach(pid => {
-        const pp = ppStock[pid] || 0
-        const ord = orderQty[pid] || 0
-        const p = pStock[pid] || 0
-        const disc = pDiscarded[pid] || 0
-        if (pp > 0 || p > 0) {
-          result[pid] = Math.round((pp + ord - p - disc) * 10) / 10
-        }
-      })
-
-      setUsage(result)
-    }
-
-    load()
-  }, [storeId, selectedDate])
-
   // 央廚成品庫存（D-1）
   const [kitchenStock, setKitchenStock] = useState<Record<string, number>>({})
 
@@ -812,7 +706,6 @@ export default function Order() {
           <div className="flex items-center px-4 py-1 bg-surface-section text-[11px] text-brand-lotus border-b border-gray-100">
             <span className="flex-1">品項</span>
             <span className="w-[32px] text-center">央廚</span>
-            <span className="w-[36px] text-center">用量</span>
             <span className="w-[40px] text-center">庫存</span>
             <span className="w-[40px] text-center text-status-info">建議</span>
             <span className="w-[60px] text-center">叫貨量</span>
@@ -830,7 +723,6 @@ export default function Order() {
                         <span className="text-[10px] text-brand-lotus ml-1">({product.unit})</span>
                       </div>
                       <span className="w-[32px] text-center text-xs font-num text-brand-lotus">{kitchenStock[product.id] != null ? kitchenStock[product.id] : '-'}</span>
-                      <span className={`w-[36px] text-center text-xs font-num ${(() => { const v = getLinkedSum(usage, inventoryIdMap[product.id]); return v != null && v < 0 ? 'text-status-danger' : 'text-brand-mocha' })()}`}>{(() => { const v = getLinkedSum(usage, inventoryIdMap[product.id]); return v != null ? v : '-' })()}</span>
                       <span className={`w-[40px] text-center text-xs font-num ${(() => { const v = getLinkedSum(stock, inventoryIdMap[product.id]); return v != null && v === 0 ? 'text-status-danger font-bold' : 'text-brand-oak' })()}`}>{(() => { const v = getLinkedSum(stock, inventoryIdMap[product.id]); return v != null ? v : '-' })()}</span>
                       <button
                         type="button"

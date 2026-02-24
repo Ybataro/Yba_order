@@ -81,6 +81,9 @@ export default function Inventory() {
   const [zoneStatuses, setZoneStatuses] = useState<Record<string, boolean>>({})
   const [mergedLoading, setMergedLoading] = useState(false)
 
+  // Previous day usage (前日用量)
+  const [prevUsage, setPrevUsage] = useState<Record<string, number>>({})
+
   // Load existing session
   useEffect(() => {
     if (!supabase || !storeId) { setLoading(false); return }
@@ -266,6 +269,110 @@ export default function Inventory() {
 
     load()
   }, [storeId, isMergedView, storeZones, selectedDate])
+
+  // Calculate previous day usage (前日用量)
+  useEffect(() => {
+    if (!supabase || !storeId) return
+    setPrevUsage({})
+
+    const load = async () => {
+      try {
+        // prevDate = selectedDate - 1 day (timezone-safe)
+        const d = new Date(selectedDate + 'T00:00:00+08:00')
+        d.setDate(d.getDate() - 1)
+        const prevDate = d.toLocaleDateString('en-CA', { timeZone: 'Asia/Taipei' })
+
+        // 1. Previous day inventory (all zones merged)
+        const { data: prevSessions } = await supabase!
+          .from('inventory_sessions')
+          .select('id')
+          .eq('store_id', storeId)
+          .eq('date', prevDate)
+
+        const prevInv: Record<string, number> = {}
+        if (prevSessions && prevSessions.length > 0) {
+          const sids = prevSessions.map(s => s.id)
+          const { data: prevItems } = await supabase!
+            .from('inventory_items')
+            .select('product_id, on_shelf, stock')
+            .in('session_id', sids)
+          if (prevItems) {
+            prevItems.forEach(item => {
+              const val = (item.on_shelf || 0) + (item.stock || 0)
+              prevInv[item.product_id] = (prevInv[item.product_id] || 0) + val
+            })
+          }
+        }
+
+        // 2. Today's order quantity (order_sessions.date = selectedDate)
+        const { data: orderSessions } = await supabase!
+          .from('order_sessions')
+          .select('id')
+          .eq('store_id', storeId)
+          .eq('date', selectedDate)
+
+        const orderQty: Record<string, number> = {}
+        if (orderSessions && orderSessions.length > 0) {
+          const osids = orderSessions.map(s => s.id)
+          const { data: orderItems } = await supabase!
+            .from('order_items')
+            .select('product_id, quantity')
+            .in('session_id', osids)
+          if (orderItems) {
+            orderItems.forEach(item => {
+              orderQty[item.product_id] = (orderQty[item.product_id] || 0) + (item.quantity || 0)
+            })
+          }
+        }
+
+        // 3. Today's inventory + discarded (all zones merged)
+        const { data: todaySessions } = await supabase!
+          .from('inventory_sessions')
+          .select('id')
+          .eq('store_id', storeId)
+          .eq('date', selectedDate)
+
+        const todayInv: Record<string, number> = {}
+        const todayDisc: Record<string, number> = {}
+        if (todaySessions && todaySessions.length > 0) {
+          const tsids = todaySessions.map(s => s.id)
+          const { data: todayItems } = await supabase!
+            .from('inventory_items')
+            .select('product_id, on_shelf, stock, discarded')
+            .in('session_id', tsids)
+          if (todayItems) {
+            todayItems.forEach(item => {
+              const inv = (item.on_shelf || 0) + (item.stock || 0)
+              todayInv[item.product_id] = (todayInv[item.product_id] || 0) + inv
+              todayDisc[item.product_id] = (todayDisc[item.product_id] || 0) + (item.discarded || 0)
+            })
+          }
+        }
+
+        // Calculate: usage = prevInv + orderQty - todayInv - todayDisc
+        const allProductIds = new Set([
+          ...Object.keys(prevInv),
+          ...Object.keys(orderQty),
+          ...Object.keys(todayInv),
+        ])
+        const usage: Record<string, number> = {}
+        allProductIds.forEach(pid => {
+          const prev = prevInv[pid] || 0
+          const order = orderQty[pid] || 0
+          const today = todayInv[pid] || 0
+          const disc = todayDisc[pid] || 0
+          // Only calculate if we have both prev and today inventory data
+          if (prevInv[pid] !== undefined && todayInv[pid] !== undefined) {
+            usage[pid] = Math.round((prev + order - today - disc) * 10) / 10
+          }
+        })
+        setPrevUsage(usage)
+      } catch {
+        // ignore
+      }
+    }
+    load()
+  }, [storeId, selectedDate])
 
   const getEntry = useCallback((productId: string): InventoryEntry => {
     if (isMergedView) return mergedData[productId] ?? { onShelf: '', stock: '', discarded: '' }
@@ -507,6 +614,7 @@ export default function Inventory() {
                 <span className="w-[60px] text-center">架上</span>
                 <span className="w-[60px] text-center">庫存</span>
                 <span className="w-[60px] text-center">倒掉</span>
+                <span className="w-[50px] text-center">用量</span>
               </div>
               <div className="bg-white">
                 {products.map((product, idx) => {
@@ -532,6 +640,9 @@ export default function Inventory() {
                             <span className="w-[60px] text-center text-sm text-brand-oak">{entry.onShelf || '-'}</span>
                             <span className="w-[60px] text-center text-sm text-brand-oak">{entry.stock || '-'}</span>
                             <span className={`w-[60px] text-center text-sm ${entry.discarded && parseFloat(entry.discarded) > 0 ? 'text-status-danger' : 'text-brand-oak'}`}>{entry.discarded || '-'}</span>
+                            <span className={`w-[50px] text-center text-sm ${prevUsage[product.id] !== undefined ? (prevUsage[product.id] < 0 ? 'text-status-danger' : 'text-brand-oak') : 'text-brand-lotus'}`}>
+                              {prevUsage[product.id] !== undefined ? prevUsage[product.id] : '-'}
+                            </span>
                           </>
                         ) : (
                           <>
@@ -557,6 +668,9 @@ export default function Inventory() {
                               onNext={focusNext}
                               data-inv=""
                             />
+                            <span className={`w-[50px] text-center text-sm ${prevUsage[product.id] !== undefined ? (prevUsage[product.id] < 0 ? 'text-status-danger' : 'text-brand-oak') : 'text-brand-lotus'}`}>
+                              {prevUsage[product.id] !== undefined ? prevUsage[product.id] : '-'}
+                            </span>
                           </>
                         )}
                       </div>

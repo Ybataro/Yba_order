@@ -20,7 +20,8 @@ export function useZoneFilteredProducts(storeId: string): ZoneFilterResult {
   const zones = useZoneStore((s) => s.zones)
   const zoneProducts = useZoneStore((s) => s.zoneProducts)
 
-  const currentZone = searchParams.get('zone')
+  const rawZone = searchParams.get('zone')
+  const currentZone = rawZone === 'all' ? null : rawZone
 
   // 多樓層時，預設選第一個樓層（而非合併檢視）
   const storeZones = useMemo(() => {
@@ -30,23 +31,19 @@ export function useZoneFilteredProducts(storeId: string): ZoneFilterResult {
   }, [zones, storeId])
 
   useEffect(() => {
-    if (!currentZone && storeZones.length > 0) {
+    if (!rawZone && storeZones.length > 0) {
       setSearchParams((prev) => {
         const next = new URLSearchParams(prev)
         next.set('zone', storeZones[0].zoneCode)
         return next
       }, { replace: true })
     }
-  }, [currentZone, storeZones, setSearchParams])
+  }, [rawZone, storeZones, setSearchParams])
 
   const setZone = useCallback((zoneCode: string | null) => {
     setSearchParams((prev) => {
       const next = new URLSearchParams(prev)
-      if (zoneCode) {
-        next.set('zone', zoneCode)
-      } else {
-        next.delete('zone')
-      }
+      next.set('zone', zoneCode || 'all')
       return next
     }, { replace: true })
   }, [setSearchParams])

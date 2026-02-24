@@ -19,7 +19,7 @@ export function formatNumber(num: number): string {
 }
 
 export function getTodayString(): string {
-  return new Date().toISOString().split('T')[0]
+  return new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Taipei' })
 }
 
 const WEEKDAYS = ['日', '一', '二', '三', '四', '五', '六']

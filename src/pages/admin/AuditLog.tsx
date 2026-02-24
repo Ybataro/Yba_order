@@ -25,14 +25,14 @@ function getStartDate(range: DateRange, customStart: string): string {
   switch (range) {
     case 'today': return today
     case 'week': {
-      const d = new Date(today + 'T00:00:00')
+      const d = new Date(today + 'T00:00:00+08:00')
       d.setDate(d.getDate() - 7)
-      return d.toISOString().split('T')[0]
+      return d.toLocaleDateString('en-CA', { timeZone: 'Asia/Taipei' })
     }
     case 'month': {
-      const d = new Date(today + 'T00:00:00')
+      const d = new Date(today + 'T00:00:00+08:00')
       d.setMonth(d.getMonth() - 1)
-      return d.toISOString().split('T')[0]
+      return d.toLocaleDateString('en-CA', { timeZone: 'Asia/Taipei' })
     }
     case 'custom': return customStart || today
   }
