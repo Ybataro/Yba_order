@@ -251,87 +251,96 @@ export default function Order() {
     if (!supabase || !storeId) return
 
     const load = async () => {
-      // 以 selectedDate 為基準計算前一日
-      const todayDate = selectedDate
-      const prevD = new Date(selectedDate + 'T00:00:00+08:00')
-      prevD.setDate(prevD.getDate() - 1)
-      const yesterdayDate = prevD.toLocaleDateString('en-CA', { timeZone: 'Asia/Taipei' })
+      // D = selectedDate, D-1, D-2
+      // 用量 = (D-2)庫存 + (D-2)叫貨量(隔日到貨) - (D-1)庫存 - (D-1)倒掉
+      const d1 = new Date(selectedDate + 'T00:00:00+08:00')
+      d1.setDate(d1.getDate() - 1)
+      const prevDate = d1.toLocaleDateString('en-CA', { timeZone: 'Asia/Taipei' })
 
-      // 1) 前日盤點 sessions → 前日庫存 (on_shelf + stock)
-      const { data: prevSessions } = await supabase!
+      const d2 = new Date(selectedDate + 'T00:00:00+08:00')
+      d2.setDate(d2.getDate() - 2)
+      const prevPrevDate = d2.toLocaleDateString('en-CA', { timeZone: 'Asia/Taipei' })
+
+      // 1) D-2 庫存 (on_shelf + stock)
+      const { data: ppSessions } = await supabase!
         .from('inventory_sessions')
         .select('id')
         .eq('store_id', storeId)
-        .eq('date', yesterdayDate)
+        .eq('date', prevPrevDate)
 
-      const prevStock: Record<string, number> = {}
-      if (prevSessions && prevSessions.length > 0) {
-        const prevSids = prevSessions.map(s => s.id)
-        const { data: prevItems } = await supabase!
+      const ppStock: Record<string, number> = {}
+      if (ppSessions && ppSessions.length > 0) {
+        const sids = ppSessions.map(s => s.id)
+        const { data: items } = await supabase!
           .from('inventory_items')
           .select('product_id, on_shelf, stock')
-          .in('session_id', prevSids)
-        if (prevItems) {
-          prevItems.forEach(item => {
-            const val = (item.on_shelf || 0) + (item.stock || 0)
-            prevStock[item.product_id] = (prevStock[item.product_id] || 0) + val
+          .in('session_id', sids)
+        if (items) {
+          items.forEach(item => {
+            ppStock[item.product_id] = (ppStock[item.product_id] || 0) + (item.on_shelf || 0) + (item.stock || 0)
           })
         }
       }
 
-      // 2) 今日盤點 sessions → 今日庫存 + discarded
-      const { data: todaySessions } = await supabase!
+      // 2) D-2 叫貨量（隔日到貨 = D-1 收貨）
+      const { data: ordSessions } = await supabase!
+        .from('order_sessions')
+        .select('id')
+        .eq('store_id', storeId)
+        .eq('date', prevPrevDate)
+
+      const orderQty: Record<string, number> = {}
+      if (ordSessions && ordSessions.length > 0) {
+        const ordSids = ordSessions.map(s => s.id)
+        const { data: ordItems } = await supabase!
+          .from('order_items')
+          .select('product_id, quantity')
+          .in('session_id', ordSids)
+        if (ordItems) {
+          ordItems.forEach(item => {
+            orderQty[item.product_id] = (orderQty[item.product_id] || 0) + (item.quantity || 0)
+          })
+        }
+      }
+
+      // 3) D-1 庫存 + 倒掉
+      const { data: pSessions } = await supabase!
         .from('inventory_sessions')
         .select('id')
         .eq('store_id', storeId)
-        .eq('date', todayDate)
+        .eq('date', prevDate)
 
-      const todayStock: Record<string, number> = {}
-      const todayDiscarded: Record<string, number> = {}
-      if (todaySessions && todaySessions.length > 0) {
-        const todaySids = todaySessions.map(s => s.id)
-        const { data: todayItems } = await supabase!
+      const pStock: Record<string, number> = {}
+      const pDiscarded: Record<string, number> = {}
+      if (pSessions && pSessions.length > 0) {
+        const sids = pSessions.map(s => s.id)
+        const { data: items } = await supabase!
           .from('inventory_items')
           .select('product_id, on_shelf, stock, discarded')
-          .in('session_id', todaySids)
-        if (todayItems) {
-          todayItems.forEach(item => {
-            const s = (item.on_shelf || 0) + (item.stock || 0)
-            todayStock[item.product_id] = (todayStock[item.product_id] || 0) + s
-            todayDiscarded[item.product_id] = (todayDiscarded[item.product_id] || 0) + (item.discarded || 0)
+          .in('session_id', sids)
+        if (items) {
+          items.forEach(item => {
+            pStock[item.product_id] = (pStock[item.product_id] || 0) + (item.on_shelf || 0) + (item.stock || 0)
+            pDiscarded[item.product_id] = (pDiscarded[item.product_id] || 0) + (item.discarded || 0)
           })
         }
       }
 
-      // 3) 今日央廚出貨
-      const shipmentSessionId = `${storeId}_${todayDate}`
-      const { data: shipmentItems } = await supabase!
-        .from('shipment_items')
-        .select('product_id, actual_qty')
-        .eq('session_id', shipmentSessionId)
-
-      const shipment: Record<string, number> = {}
-      if (shipmentItems) {
-        shipmentItems.forEach(item => {
-          shipment[item.product_id] = (shipment[item.product_id] || 0) + (item.actual_qty || 0)
-        })
-      }
-
-      // 4) 計算：用量 = 前日庫存 + 今日出貨 - 今日庫存 - 今日倒掉
-      //    前提：前日＋今日都要有盤點資料才有意義
+      // 4) 用量 = (D-2)庫存 + (D-2)叫貨量 - (D-1)庫存 - (D-1)倒掉
+      //    前提：D-2 和 D-1 都要有盤點資料
       const result: Record<string, number> = {}
-      if (!prevSessions?.length || !todaySessions?.length) {
+      if (!ppSessions?.length || !pSessions?.length) {
         setUsage(result)
         return
       }
-      const allPids = new Set([...Object.keys(prevStock), ...Object.keys(todayStock)])
+      const allPids = new Set([...Object.keys(ppStock), ...Object.keys(pStock)])
       allPids.forEach(pid => {
-        const prev = prevStock[pid] || 0
-        const ship = shipment[pid] || 0
-        const curr = todayStock[pid] || 0
-        const disc = todayDiscarded[pid] || 0
-        if (prev > 0 || curr > 0) {
-          result[pid] = Math.round((prev + ship - curr - disc) * 10) / 10
+        const pp = ppStock[pid] || 0
+        const ord = orderQty[pid] || 0
+        const p = pStock[pid] || 0
+        const disc = pDiscarded[pid] || 0
+        if (pp > 0 || p > 0) {
+          result[pid] = Math.round((pp + ord - p - disc) * 10) / 10
         }
       })
 
@@ -393,13 +402,34 @@ export default function Order() {
           .select('session_id, product_id, on_shelf, stock, discarded')
           .in('session_id', allInvSids)
 
-        // 查出貨資料
+        // 查叫貨量（date = D 的叫貨，隔日到貨 = D+1 收貨）
         const dates = Array.from(sessionsByDate.keys())
-        const shipmentSids = dates.map(dt => `${storeId}_${dt}`)
-        const { data: shipItems } = await supabase!
-          .from('shipment_items')
-          .select('session_id, product_id, actual_qty')
-          .in('session_id', shipmentSids)
+        const { data: ordSessionsAll } = await supabase!
+          .from('order_sessions')
+          .select('id, date')
+          .eq('store_id', storeId)
+          .in('date', dates)
+
+        let dailyOrderQty: Record<string, Record<string, number>> = {}
+        if (ordSessionsAll && ordSessionsAll.length > 0) {
+          const ordSidsAll = ordSessionsAll.map(s => s.id)
+          const { data: ordItemsAll } = await supabase!
+            .from('order_items')
+            .select('session_id, product_id, quantity')
+            .in('session_id', ordSidsAll)
+
+          // 建立 order session → date 對照
+          const ordSessionDateMap: Record<string, string> = {}
+          ordSessionsAll.forEach(s => { ordSessionDateMap[s.id] = s.date })
+
+          if (ordItemsAll) {
+            ordItemsAll.forEach(item => {
+              const dt = ordSessionDateMap[item.session_id]
+              if (!dailyOrderQty[dt]) dailyOrderQty[dt] = {}
+              dailyOrderQty[dt][item.product_id] = (dailyOrderQty[dt][item.product_id] || 0) + (item.quantity || 0)
+            })
+          }
+        }
 
         // 建立每日庫存 map: date → pid → totalStock
         const invBySession: Record<string, { product_id: string; on_shelf: number; stock: number; discarded: number }[]> = {}
@@ -428,15 +458,7 @@ export default function Order() {
           dailyDiscarded[dt] = discMap
         }
 
-        // 出貨 map: date → pid → qty
-        const dailyShipment: Record<string, Record<string, number>> = {}
-        shipItems?.forEach(item => {
-          const dt = item.session_id.replace(`${storeId}_`, '')
-          if (!dailyShipment[dt]) dailyShipment[dt] = {}
-          dailyShipment[dt][item.product_id] = (dailyShipment[dt][item.product_id] || 0) + (item.actual_qty || 0)
-        })
-
-        // 逐日計算用量
+        // 逐日計算用量：(D-1)庫存 + (D-1)叫貨量 - (D)庫存 - (D)倒掉
         const sortedDates = dates.sort()
         const productUsageSums: Record<string, number> = {}
         const productUsageDays: Record<string, number> = {}
@@ -447,16 +469,16 @@ export default function Order() {
           const prevStk = dailyStock[prevDate] || {}
           const currStk = dailyStock[currDate] || {}
           const currDisc = dailyDiscarded[currDate] || {}
-          const currShip = dailyShipment[currDate] || {}
+          const prevOrd = dailyOrderQty[prevDate] || {}
 
           const allPids = new Set([...Object.keys(prevStk), ...Object.keys(currStk)])
           allPids.forEach(pid => {
             const prev = prevStk[pid] || 0
-            const ship = currShip[pid] || 0
+            const ord = prevOrd[pid] || 0
             const curr = currStk[pid] || 0
             const disc = currDisc[pid] || 0
             if (prev > 0 || curr > 0) {
-              const u = Math.max(0, prev + ship - curr - disc)
+              const u = Math.max(0, prev + ord - curr - disc)
               productUsageSums[pid] = (productUsageSums[pid] || 0) + u
               productUsageDays[pid] = (productUsageDays[pid] || 0) + 1
             }
@@ -508,7 +530,7 @@ export default function Order() {
 
       // ── Step 3: 套用天氣 + 休息日 + 安全庫存 ──
       const orderDayOfWeek = new Date(selectedDate + 'T00:00:00+08:00').getDay()
-      const restMul = (orderDayOfWeek === 1 || orderDayOfWeek === 5) ? 2 : 1
+      const restMul = (orderDayOfWeek === 2 || orderDayOfWeek === 6) ? 2 : 1
 
       const result: Record<string, number> = {}
       const breakdowns: Record<string, SuggestionBreakdown> = {}
@@ -559,10 +581,10 @@ export default function Order() {
     showToast('已套用全部建議叫貨量', 'info')
   }
 
-  // 判斷所選日期是否為央廚休息日前一天（週一/週五叫貨需 ×2）
+  // 判斷所選日期是否為央廚休息日前一天（週二/週六叫貨需 ×2）
   const isRestDayEve = (() => {
     const dow = new Date(selectedDate + 'T00:00:00+08:00').getDay()
-    return dow === 1 || dow === 5
+    return dow === 2 || dow === 6
   })()
 
   const productsByCategory = useMemo(() => {
