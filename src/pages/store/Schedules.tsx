@@ -13,6 +13,7 @@ import { getTodayString } from '@/lib/utils'
 import { getSession } from '@/lib/auth'
 import { exportScheduleToPdf } from '@/lib/exportSchedulePdf'
 import { supabase } from '@/lib/supabase'
+import { useToast } from '@/components/Toast'
 import { FileText, Printer } from 'lucide-react'
 import type { Schedule } from '@/lib/schedule'
 
@@ -24,6 +25,7 @@ export default function StoreSchedules() {
   const staffInitialized = useStaffStore((s) => s.initialized)
   const { shiftTypes, schedules, positions, fetchShiftTypes, fetchSchedules, fetchPositions, upsertSchedule, removeSchedule } = useScheduleStore()
   const canSchedule = useCanSchedule()
+  const { showToast } = useToast()
 
   const weekDates = useMemo(() => getWeekDates(refDate), [refDate])
   const staffIds = useMemo(() => staffList.map((s) => s.id), [staffList])
@@ -89,44 +91,49 @@ export default function StoreSchedules() {
       <div className="flex items-center justify-end gap-1.5 px-4 py-2 no-print">
         <button
           onClick={async () => {
-            // 計算 2 週日期
-            const week1 = weekDates
-            const nextMon = new Date(week1[6] + 'T00:00:00')
-            nextMon.setDate(nextMon.getDate() + 1)
-            const week2 = getWeekDates(toLocalDateString(nextMon))
-            const allDates = [...week1, ...week2]
+            try {
+              // 計算 2 週日期
+              const week1 = weekDates
+              const nextMon = new Date(week1[6] + 'T00:00:00+08:00')
+              nextMon.setDate(nextMon.getDate() + 1)
+              const week2 = getWeekDates(toLocalDateString(nextMon))
+              const allDates = [...week1, ...week2]
 
-            // 抓取 2 週排班資料
-            let allSchedules = schedules
-            if (supabase && staffIds.length > 0) {
-              const { data } = await supabase
-                .from('schedules')
-                .select('*')
-                .in('staff_id', staffIds)
-                .gte('date', allDates[0])
-                .lte('date', allDates[allDates.length - 1])
-              if (data) {
-                allSchedules = data.map((s: Record<string, unknown>) => ({
-                  ...s,
-                  position_id: (s.position_id as string) ?? null,
-                  attendance_type: (s.attendance_type as string) ?? 'work',
-                  tags: (s.tags as string[]) || [],
-                })) as Schedule[]
+              // 抓取 2 週排班資料
+              let allSchedules = schedules
+              if (supabase && staffIds.length > 0) {
+                const { data } = await supabase
+                  .from('schedules')
+                  .select('*')
+                  .in('staff_id', staffIds)
+                  .gte('date', allDates[0])
+                  .lte('date', allDates[allDates.length - 1])
+                if (data) {
+                  allSchedules = data.map((s: Record<string, unknown>) => ({
+                    ...s,
+                    position_id: (s.position_id as string) ?? null,
+                    attendance_type: (s.attendance_type as string) ?? 'work',
+                    tags: (s.tags as string[]) || [],
+                  })) as Schedule[]
+                }
               }
-            }
 
-            const first = allDates[0]
-            const last = allDates[allDates.length - 1]
-            const range = `${formatShortDate(first)}（${getWeekdayLabel(first)}）～ ${formatShortDate(last)}（${getWeekdayLabel(last)}）`
-            exportScheduleToPdf({
-              title: `${storeName} 排班表`,
-              dateRange: range,
-              weekDates: allDates,
-              staff: staffList,
-              schedules: allSchedules,
-              shiftTypes,
-              fileName: `${storeName}_排班表_${first}_${last}.pdf`,
-            })
+              const first = allDates[0]
+              const last = allDates[allDates.length - 1]
+              const range = `${formatShortDate(first)}（${getWeekdayLabel(first)}）～ ${formatShortDate(last)}（${getWeekdayLabel(last)}）`
+              await exportScheduleToPdf({
+                title: `${storeName} 排班表`,
+                dateRange: range,
+                weekDates: allDates,
+                staff: staffList,
+                schedules: allSchedules,
+                shiftTypes,
+                fileName: `${storeName}_排班表_${first}_${last}.pdf`,
+              })
+            } catch (e) {
+              console.error('[PDF export error]', e)
+              showToast('PDF 匯出失敗', 'error')
+            }
           }}
           className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-brand-lotus text-white text-xs font-medium active:scale-95 transition-transform"
         >
