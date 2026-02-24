@@ -218,7 +218,7 @@ export async function exportScheduleToPdf({
       cellPadding: 3,
     },
     columnStyles: {
-      0: { halign: 'left', cellWidth: 24, fontStyle: 'bold' },
+      0: { halign: 'left', cellWidth: 24 },
     },
     alternateRowStyles: {
       fillColor: [250, 248, 245],
