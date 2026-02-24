@@ -82,7 +82,7 @@ export function AdminScheduleGrid({
       }
     }
     return {
-      label: '班',
+      label: scheduleTags ? '' : '班',
       sub: null,
       tags: scheduleTags,
       bg: '#E8F5E9',

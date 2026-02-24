@@ -1,7 +1,7 @@
-import { useState, useRef, useEffect, useMemo } from 'react'
+import { useMemo } from 'react'
 import type { ShiftType, Position, AttendanceTypeDef } from '@/lib/schedule'
 import { ATTENDANCE_TYPES, formatTime } from '@/lib/schedule'
-import { Paintbrush, X, Tag, ChevronDown } from 'lucide-react'
+import { Paintbrush, X } from 'lucide-react'
 
 export interface PaintBrush {
   shiftTypeId: string | null
@@ -17,110 +17,6 @@ interface AdminScheduleToolbarProps {
   paintBrush: PaintBrush | null
   onStartPaint: (brush: PaintBrush) => void
   onClearPaint: () => void
-}
-
-/** 多選標籤下拉元件 */
-function TagMultiSelect({
-  allTags,
-  selected,
-  onChange,
-}: {
-  allTags: string[]
-  selected: string[]
-  onChange: (tags: string[]) => void
-}) {
-  const [open, setOpen] = useState(false)
-  const [draft, setDraft] = useState<string[]>([])
-  const ref = useRef<HTMLDivElement>(null)
-
-  // 點外面關閉 = 放棄變更
-  useEffect(() => {
-    const handle = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
-    }
-    document.addEventListener('mousedown', handle)
-    return () => document.removeEventListener('mousedown', handle)
-  }, [])
-
-  // 開啟時用目前 selected 初始化 draft
-  const handleOpen = () => {
-    if (!open) setDraft([...selected])
-    setOpen(!open)
-  }
-
-  const toggleDraft = (tag: string) => {
-    setDraft((prev) =>
-      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
-    )
-  }
-
-  const handleConfirm = () => {
-    onChange(draft)
-    setOpen(false)
-  }
-
-  const handleClear = () => {
-    onChange([])
-    setDraft([])
-    setOpen(false)
-  }
-
-  return (
-    <div className="relative" ref={ref}>
-      <button
-        type="button"
-        onClick={handleOpen}
-        className="h-9 rounded-lg border border-gray-200 bg-surface-input px-2 text-sm text-brand-oak outline-none focus:border-brand-lotus flex items-center gap-1.5 min-w-[90px]"
-      >
-        <Tag size={14} className="text-brand-mocha shrink-0" />
-        <span className="truncate">
-          {selected.length > 0 ? `${selected.length} 標籤` : '選標籤'}
-        </span>
-        <ChevronDown size={14} className={`text-brand-mocha shrink-0 transition-transform ${open ? 'rotate-180' : ''}`} />
-      </button>
-      {open && (
-        <div className="absolute top-10 left-0 z-30 bg-white rounded-lg shadow-lg border border-gray-200 min-w-[180px] max-h-[300px] flex flex-col">
-          <div className="flex-1 overflow-y-auto py-1">
-          {allTags.length === 0 ? (
-            <div className="px-3 py-2 text-xs text-gray-400">尚無標籤（請至班次管理新增）</div>
-          ) : (
-            allTags.map((tag) => (
-              <label
-                key={tag}
-                className="flex items-center gap-2 px-3 py-1.5 hover:bg-gray-50 cursor-pointer"
-              >
-                <input
-                  type="checkbox"
-                  checked={draft.includes(tag)}
-                  onChange={() => toggleDraft(tag)}
-                  className="w-4 h-4 rounded border-gray-300 text-brand-lotus accent-brand-lotus"
-                />
-                <span className="text-sm text-brand-oak">{tag}</span>
-              </label>
-            ))
-          )}
-          </div>
-          {/* 確認 / 清除 按鈕列 */}
-          <div className="flex items-center gap-2 px-3 py-2 border-t border-gray-100">
-            <button
-              type="button"
-              onClick={handleClear}
-              className="flex-1 py-1.5 rounded-lg text-xs font-medium text-brand-mocha bg-gray-100 hover:bg-gray-200"
-            >
-              清除
-            </button>
-            <button
-              type="button"
-              onClick={handleConfirm}
-              className="flex-1 py-1.5 rounded-lg text-xs font-medium text-white bg-brand-lotus hover:opacity-90"
-            >
-              確認
-            </button>
-          </div>
-        </div>
-      )}
-    </div>
-  )
 }
 
 export function AdminScheduleToolbar({
@@ -165,10 +61,15 @@ export function AdminScheduleToolbar({
     }
   }
 
-  const handleTagsChange = (tags: string[]) => {
-    if (paintBrush) {
-      onStartPaint({ ...paintBrush, tags })
-    }
+  const handleTagSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const val = e.target.value
+    if (!val) return
+    onStartPaint({
+      shiftTypeId: null,
+      attendanceType: 'work',
+      positionId: null,
+      tags: [val],
+    })
   }
 
   const getLabel = (): string => {
@@ -229,11 +130,16 @@ export function AdminScheduleToolbar({
             ))}
           </select>
         )}
-        <TagMultiSelect
-          allTags={allTags}
-          selected={paintBrush?.tags ?? []}
-          onChange={handleTagsChange}
-        />
+        <select
+          onChange={handleTagSelect}
+          value=""
+          className="h-9 rounded-lg border border-gray-200 bg-surface-input px-2 text-sm text-brand-oak outline-none focus:border-brand-lotus"
+        >
+          <option value="">選標籤</option>
+          {allTags.map((tag) => (
+            <option key={tag} value={tag}>{tag}</option>
+          ))}
+        </select>
       </div>
 
       {paintBrush && (

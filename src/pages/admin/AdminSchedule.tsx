@@ -97,18 +97,41 @@ export default function AdminSchedule() {
     if (paintBrush) {
       // Quick paint mode - directly upsert
       const session = getSession()
-      upsertSchedule({
-        staff_id: staffId,
-        date,
-        shift_type_id: paintBrush.shiftTypeId,
-        custom_start: null,
-        custom_end: null,
-        note: '',
-        attendance_type: paintBrush.attendanceType,
-        position_id: paintBrush.positionId,
-        tags: paintBrush.tags,
-        created_by: session?.staffId ?? null,
-      })
+      const isTagOnly = !paintBrush.shiftTypeId && paintBrush.attendanceType === 'work' && paintBrush.tags.length > 0
+
+      if (isTagOnly && existing) {
+        // 標籤模式：追加/移除標籤到現有排班（toggle）
+        const newTag = paintBrush.tags[0]
+        const existingTags = existing.tags || []
+        const mergedTags = existingTags.includes(newTag)
+          ? existingTags.filter((t) => t !== newTag)
+          : [...existingTags, newTag]
+        upsertSchedule({
+          staff_id: staffId,
+          date,
+          shift_type_id: existing.shift_type_id,
+          custom_start: existing.custom_start,
+          custom_end: existing.custom_end,
+          note: existing.note,
+          attendance_type: existing.attendance_type,
+          position_id: existing.position_id,
+          tags: mergedTags,
+          created_by: session?.staffId ?? null,
+        })
+      } else {
+        upsertSchedule({
+          staff_id: staffId,
+          date,
+          shift_type_id: paintBrush.shiftTypeId,
+          custom_start: null,
+          custom_end: null,
+          note: '',
+          attendance_type: paintBrush.attendanceType,
+          position_id: paintBrush.positionId,
+          tags: paintBrush.tags,
+          created_by: session?.staffId ?? null,
+        })
+      }
     } else {
       // Normal mode - open modal
       setModalStaffId(staffId)

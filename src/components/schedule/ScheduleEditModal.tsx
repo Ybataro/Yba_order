@@ -123,6 +123,19 @@ export function ScheduleEditModal({
     onClose()
   }
 
+  const handleSelectTag = (tag: string) => {
+    onSave({
+      shift_type_id: null,
+      custom_start: null,
+      custom_end: null,
+      note,
+      attendance_type: 'work',
+      position_id: positionId,
+      tags: [tag],
+    })
+    onClose()
+  }
+
   const handleRemove = () => {
     onRemove?.()
     onClose()
@@ -249,8 +262,29 @@ export function ScheduleEditModal({
             </div>
           )}
 
-          {/* 標籤選擇（上班 tab 才顯示） */}
-          {tab !== 'leave' && allTags.length > 0 && (
+          {/* 標籤選擇 */}
+          {tab === 'preset' && allTags.length > 0 && (
+            <div>
+              <label className="text-xs font-medium text-brand-oak block mb-1.5">僅選標籤（不排班次）</label>
+              <div className="grid grid-cols-3 gap-2">
+                {allTags.map((tag) => (
+                  <button
+                    key={tag}
+                    type="button"
+                    onClick={() => handleSelectTag(tag)}
+                    className={`px-2 py-2.5 rounded-lg text-xs font-medium text-center cursor-pointer active:scale-[0.96] transition-transform border ${
+                      existing?.tags?.includes(tag) && !existing?.shift_type_id
+                        ? 'border-brand-lotus ring-1 ring-brand-lotus bg-brand-lotus/10 text-brand-lotus'
+                        : 'border-gray-200 bg-gray-50 text-brand-mocha hover:bg-gray-100'
+                    }`}
+                  >
+                    {tag}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+          {tab === 'custom' && allTags.length > 0 && (
             <div>
               <label className="text-xs font-medium text-brand-oak block mb-1.5">標籤（選填，可多選）</label>
               <div className="flex flex-wrap gap-2">
