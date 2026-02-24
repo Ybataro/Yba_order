@@ -23,13 +23,26 @@ export default function AdminSchedule() {
   const stores = useStoreStore((s) => s.items)
   const kitchenStaff = useStaffStore((s) => s.kitchenStaff)
   const storeStaff = useStaffStore((s) => s.storeStaff)
+  const session = getSession()
 
-  const groups = useMemo(
-    () => [KITCHEN_GROUP, ...stores.map((s) => ({ id: s.id, label: s.name }))],
-    [stores]
-  )
+  // 根據角色過濾可見群組：admin 全部、kitchen 僅央廚、store 僅允許門店
+  const groups = useMemo(() => {
+    const allGroups = [KITCHEN_GROUP, ...stores.map((s) => ({ id: s.id, label: s.name }))]
+    if (!session || session.role === 'admin') return allGroups
+    if (session.role === 'kitchen') return [KITCHEN_GROUP]
+    // store role: 只顯示 allowedStores 內的門店
+    if (session.role === 'store') {
+      if (session.allowedStores.length === 0) {
+        return stores.map((s) => ({ id: s.id, label: s.name }))
+      }
+      return stores
+        .filter((s) => session.allowedStores.includes(s.id))
+        .map((s) => ({ id: s.id, label: s.name }))
+    }
+    return allGroups
+  }, [stores, session?.role, session?.allowedStores])
 
-  const [activeGroup, setActiveGroup] = useState('kitchen')
+  const [activeGroup, setActiveGroup] = useState(groups[0]?.id || 'kitchen')
   const [refDate, setRefDate] = useState(getTodayString())
 
   const {
