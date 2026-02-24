@@ -6,10 +6,11 @@ import { ShiftPickerModal } from '@/components/ShiftPickerModal'
 import { useScheduleStore } from '@/stores/useScheduleStore'
 import { useStaffStore } from '@/stores/useStaffStore'
 import { useCanSchedule } from '@/hooks/useCanSchedule'
-import { getWeekDates, formatShortDate, getWeekdayLabel } from '@/lib/schedule'
+import { getWeekDates, formatShortDate, getWeekdayLabel, toLocalDateString } from '@/lib/schedule'
 import { getTodayString } from '@/lib/utils'
 import { getSession } from '@/lib/auth'
 import { exportScheduleToPdf } from '@/lib/exportSchedulePdf'
+import { supabase } from '@/lib/supabase'
 import { FileText, Printer } from 'lucide-react'
 import type { Schedule } from '@/lib/schedule'
 
@@ -81,18 +82,42 @@ export default function KitchenSchedules() {
 
       <div className="flex items-center justify-end gap-1.5 px-4 py-2 no-print">
         <button
-          onClick={() => {
-            const mon = weekDates[0]
-            const sun = weekDates[6]
-            const range = `${formatShortDate(mon)}（${getWeekdayLabel(mon)}）～ ${formatShortDate(sun)}（${getWeekdayLabel(sun)}）`
+          onClick={async () => {
+            const week1 = weekDates
+            const nextMon = new Date(week1[6] + 'T00:00:00')
+            nextMon.setDate(nextMon.getDate() + 1)
+            const week2 = getWeekDates(toLocalDateString(nextMon))
+            const allDates = [...week1, ...week2]
+
+            let allSchedules = schedules
+            if (supabase && staffIds.length > 0) {
+              const { data } = await supabase
+                .from('schedules')
+                .select('*')
+                .in('staff_id', staffIds)
+                .gte('date', allDates[0])
+                .lte('date', allDates[allDates.length - 1])
+              if (data) {
+                allSchedules = data.map((s: Record<string, unknown>) => ({
+                  ...s,
+                  position_id: (s.position_id as string) ?? null,
+                  attendance_type: (s.attendance_type as string) ?? 'work',
+                  tags: (s.tags as string[]) || [],
+                })) as Schedule[]
+              }
+            }
+
+            const first = allDates[0]
+            const last = allDates[allDates.length - 1]
+            const range = `${formatShortDate(first)}（${getWeekdayLabel(first)}）～ ${formatShortDate(last)}（${getWeekdayLabel(last)}）`
             exportScheduleToPdf({
               title: '央廚排班表',
               dateRange: range,
-              weekDates,
+              weekDates: allDates,
               staff: kitchenStaff,
-              schedules,
+              schedules: allSchedules,
               shiftTypes,
-              fileName: `央廚_排班表_${mon}_${sun}.pdf`,
+              fileName: `央廚_排班表_${first}_${last}.pdf`,
             })
           }}
           className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-brand-lotus text-white text-xs font-medium active:scale-95 transition-transform"
