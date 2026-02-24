@@ -1,7 +1,7 @@
 {
-  "name": "yba-order-temp",
+  "name": "yba-order",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
