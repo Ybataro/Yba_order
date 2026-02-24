@@ -9,7 +9,7 @@ import { useProductStore } from '@/stores/useProductStore'
 import { useStoreStore } from '@/stores/useStoreStore'
 import { DateNav } from '@/components/DateNav'
 import { supabase } from '@/lib/supabase'
-import { orderSessionId, getTodayTW, getYesterdayTW, getOrderDeadline, isPastDeadline } from '@/lib/session'
+import { orderSessionId, productStockSessionId, getTodayTW, getYesterdayTW, getOrderDeadline, isPastDeadline } from '@/lib/session'
 import { submitWithOffline } from '@/lib/submitWithOffline'
 import { logAudit } from '@/lib/auditLog'
 import { formatDate } from '@/lib/utils'
@@ -350,10 +350,34 @@ export default function Order() {
     load()
   }, [storeId, selectedDate])
 
+  // 央廚成品庫存（D-1）
+  const [kitchenStock, setKitchenStock] = useState<Record<string, number>>({})
+
+  useEffect(() => {
+    if (!supabase) return
+    const d1 = new Date(selectedDate + 'T00:00:00+08:00')
+    d1.setDate(d1.getDate() - 1)
+    const prevDate = d1.toLocaleDateString('en-CA', { timeZone: 'Asia/Taipei' })
+    const sessionId = productStockSessionId(prevDate)
+
+    supabase
+      .from('product_stock_items')
+      .select('product_id, stock_qty')
+      .eq('session_id', sessionId)
+      .then(({ data }) => {
+        const m: Record<string, number> = {}
+        data?.forEach(item => {
+          m[item.product_id] = (m[item.product_id] || 0) + (item.stock_qty || 0)
+        })
+        setKitchenStock(m)
+      })
+  }, [selectedDate])
+
   // 建議量計算
   interface SuggestionBreakdown {
     avgUsage: number
     dataSource: 'usage' | 'order'
+    dayType: 'weekday' | 'weekend' | 'all'
     weatherAdjustPct: number
     restDayMultiplier: number
     safetyStockGap: number
@@ -377,6 +401,7 @@ export default function Order() {
 
       // ── Step 1: 嘗試 usage-based 計算 ──
       let usageAvg: Record<string, number> = {}
+      let usageDayType: Record<string, 'weekday' | 'weekend' | 'all'> = {}
       let usageValidDays = 0
 
       const { data: invSessions } = await supabase!
@@ -459,9 +484,17 @@ export default function Order() {
         }
 
         // 逐日計算用量：(D-1)庫存 + (D-1)叫貨量 - (D)庫存 - (D)倒掉
+        // 分平日(週一~四)和假日(週五~日)分別計算平均
+        const isWeekend = (dateStr: string) => {
+          const dow = new Date(dateStr + 'T00:00:00+08:00').getDay()
+          return dow === 5 || dow === 6 || dow === 0 // 週五六日
+        }
+
         const sortedDates = dates.sort()
-        const productUsageSums: Record<string, number> = {}
-        const productUsageDays: Record<string, number> = {}
+        const wdSums: Record<string, number> = {} // 平日
+        const wdDays: Record<string, number> = {}
+        const weSums: Record<string, number> = {} // 假日
+        const weDays: Record<string, number> = {}
 
         for (let i = 1; i < sortedDates.length; i++) {
           const prevDate = sortedDates[i - 1]
@@ -470,6 +503,7 @@ export default function Order() {
           const currStk = dailyStock[currDate] || {}
           const currDisc = dailyDiscarded[currDate] || {}
           const prevOrd = dailyOrderQty[prevDate] || {}
+          const we = isWeekend(currDate)
 
           const allPids = new Set([...Object.keys(prevStk), ...Object.keys(currStk)])
           allPids.forEach(pid => {
@@ -479,18 +513,38 @@ export default function Order() {
             const disc = currDisc[pid] || 0
             if (prev > 0 || curr > 0) {
               const u = Math.max(0, prev + ord - curr - disc)
-              productUsageSums[pid] = (productUsageSums[pid] || 0) + u
-              productUsageDays[pid] = (productUsageDays[pid] || 0) + 1
+              if (we) {
+                weSums[pid] = (weSums[pid] || 0) + u
+                weDays[pid] = (weDays[pid] || 0) + 1
+              } else {
+                wdSums[pid] = (wdSums[pid] || 0) + u
+                wdDays[pid] = (wdDays[pid] || 0) + 1
+              }
             }
           })
         }
 
+        // 根據叫貨日是平日還是假日選擇對應平均
+        const selectedIsWeekend = isWeekend(selectedDate)
+        const primarySums = selectedIsWeekend ? weSums : wdSums
+        const primaryDays = selectedIsWeekend ? weDays : wdDays
+        const fallbackSums = selectedIsWeekend ? wdSums : weSums
+        const fallbackDays = selectedIsWeekend ? wdDays : weDays
+
         usageValidDays = sortedDates.length - 1
         if (usageValidDays >= 2) {
           storeProducts.forEach(p => {
-            const days = productUsageDays[p.id]
-            if (days && days >= 2) {
-              usageAvg[p.id] = productUsageSums[p.id] / days
+            // 優先用同類型（平日/假日）平均，不足則用另一類型平均
+            const pd = primaryDays[p.id]
+            if (pd && pd >= 1) {
+              usageAvg[p.id] = primarySums[p.id] / pd
+              usageDayType[p.id] = selectedIsWeekend ? 'weekend' : 'weekday'
+            } else {
+              const fd = fallbackDays[p.id]
+              if (fd && fd >= 1) {
+                usageAvg[p.id] = fallbackSums[p.id] / fd
+                usageDayType[p.id] = selectedIsWeekend ? 'weekday' : 'weekend'
+              }
             }
           })
         }
@@ -556,6 +610,7 @@ export default function Order() {
         breakdowns[p.id] = {
           avgUsage: Math.round(avg * 10) / 10,
           dataSource,
+          dayType: hasUsage ? (usageDayType[p.id] || 'all') : 'all',
           weatherAdjustPct: weatherPct,
           restDayMultiplier: restMul,
           safetyStockGap: Math.round(safetyGap * 10) / 10,
@@ -756,6 +811,7 @@ export default function Order() {
 
           <div className="flex items-center px-4 py-1 bg-surface-section text-[11px] text-brand-lotus border-b border-gray-100">
             <span className="flex-1">品項</span>
+            <span className="w-[32px] text-center">央廚</span>
             <span className="w-[36px] text-center">用量</span>
             <span className="w-[40px] text-center">庫存</span>
             <span className="w-[40px] text-center text-status-info">建議</span>
@@ -773,6 +829,7 @@ export default function Order() {
                         <span className="text-sm font-medium text-brand-oak">{product.name}</span>
                         <span className="text-[10px] text-brand-lotus ml-1">({product.unit})</span>
                       </div>
+                      <span className="w-[32px] text-center text-xs font-num text-brand-lotus">{kitchenStock[product.id] != null ? kitchenStock[product.id] : '-'}</span>
                       <span className="w-[36px] text-center text-xs font-num text-brand-mocha">{(() => { const v = getLinkedSum(usage, inventoryIdMap[product.id]); return v != null ? (v > 0 ? v : 0) : '-' })()}</span>
                       <span className={`w-[40px] text-center text-xs font-num ${(() => { const v = getLinkedSum(stock, inventoryIdMap[product.id]); return v != null && v === 0 ? 'text-status-danger font-bold' : 'text-brand-oak' })()}`}>{(() => { const v = getLinkedSum(stock, inventoryIdMap[product.id]); return v != null ? v : '-' })()}</span>
                       <button
@@ -798,7 +855,7 @@ export default function Order() {
                       return (
                         <div className={`mx-4 mb-1 px-3 py-2 rounded-lg bg-surface-section text-[11px] text-brand-lotus space-y-1 ${idx < products.length - 1 ? 'border-b border-gray-50' : ''}`}>
                           <div className="flex justify-between">
-                            <span>7日平均{bd.dataSource === 'usage' ? '用量' : '叫貨量'}</span>
+                            <span>7日{bd.dayType === 'weekday' ? '平日' : bd.dayType === 'weekend' ? '假日' : ''}平均{bd.dataSource === 'usage' ? '用量' : '叫貨量'}</span>
                             <span className="font-num">{bd.avgUsage} {product.unit}/天</span>
                           </div>
                           {bd.weatherAdjustPct !== 0 && (
