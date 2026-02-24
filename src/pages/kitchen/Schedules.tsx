@@ -6,9 +6,11 @@ import { ShiftPickerModal } from '@/components/ShiftPickerModal'
 import { useScheduleStore } from '@/stores/useScheduleStore'
 import { useStaffStore } from '@/stores/useStaffStore'
 import { useCanSchedule } from '@/hooks/useCanSchedule'
-import { getWeekDates } from '@/lib/schedule'
+import { getWeekDates, formatShortDate, getWeekdayLabel } from '@/lib/schedule'
 import { getTodayString } from '@/lib/utils'
 import { getSession } from '@/lib/auth'
+import { exportScheduleToPdf } from '@/lib/exportSchedulePdf'
+import { FileText, Printer } from 'lucide-react'
 import type { Schedule } from '@/lib/schedule'
 
 export default function KitchenSchedules() {
@@ -73,7 +75,39 @@ export default function KitchenSchedules() {
   return (
     <div className="page-container">
       <TopNav title="央廚排班表" backTo="/kitchen" />
-      <WeekNav refDate={refDate} onChange={setRefDate} />
+      <div className="no-print">
+        <WeekNav refDate={refDate} onChange={setRefDate} />
+      </div>
+
+      <div className="flex items-center justify-end gap-1.5 px-4 py-2 no-print">
+        <button
+          onClick={() => {
+            const mon = weekDates[0]
+            const sun = weekDates[6]
+            const range = `${formatShortDate(mon)}（${getWeekdayLabel(mon)}）～ ${formatShortDate(sun)}（${getWeekdayLabel(sun)}）`
+            exportScheduleToPdf({
+              title: '央廚排班表',
+              dateRange: range,
+              weekDates,
+              staff: kitchenStaff,
+              schedules,
+              shiftTypes,
+              fileName: `央廚_排班表_${mon}_${sun}.pdf`,
+            })
+          }}
+          className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-brand-lotus text-white text-xs font-medium active:scale-95 transition-transform"
+        >
+          <FileText size={14} />
+          PDF
+        </button>
+        <button
+          onClick={() => window.print()}
+          className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-brand-mocha text-white text-xs font-medium active:scale-95 transition-transform"
+        >
+          <Printer size={14} />
+          列印
+        </button>
+      </div>
 
       <ScheduleGrid
         refDate={refDate}
