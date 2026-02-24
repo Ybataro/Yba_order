@@ -43,6 +43,27 @@ async function registerFont(doc: jsPDF): Promise<boolean> {
   }
 }
 
+/** Parse hex color string to [r, g, b] */
+function hexToRgb(hex: string): [number, number, number] {
+  const h = hex.replace('#', '')
+  return [
+    parseInt(h.substring(0, 2), 16),
+    parseInt(h.substring(2, 4), 16),
+    parseInt(h.substring(4, 6), 16),
+  ]
+}
+
+/** Determine if a color is light (needs dark text) or dark (needs light text) */
+function isLightColor(r: number, g: number, b: number): boolean {
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
+  return luminance > 0.6
+}
+
+interface CellColor {
+  fill: [number, number, number]
+  text: [number, number, number]
+}
+
 function getCellText(
   schedule: Schedule | undefined,
   shiftMap: Record<string, ShiftType>,
@@ -72,10 +93,43 @@ function getCellText(
   return lines.length > 0 ? lines.join('\n') : '班'
 }
 
-function isLeaveCell(schedule: Schedule | undefined): boolean {
-  if (!schedule) return false
+function getCellColor(
+  schedule: Schedule | undefined,
+  shiftMap: Record<string, ShiftType>,
+): CellColor | null {
+  if (!schedule) return null
+
   const at = schedule.attendance_type || 'work'
-  return at !== 'work'
+
+  // Leave types
+  if (at !== 'work') {
+    const leave = getAttendanceType(at)
+    if (leave) {
+      const fill = hexToRgb(leave.color)
+      const text = hexToRgb(leave.textColor)
+      return { fill, text }
+    }
+    return { fill: [224, 224, 224], text: [100, 100, 100] }
+  }
+
+  // Shift types with color
+  if (schedule.shift_type_id && shiftMap[schedule.shift_type_id]) {
+    const st = shiftMap[schedule.shift_type_id]
+    if (st.color) {
+      const fill = hexToRgb(st.color)
+      const text: [number, number, number] = isLightColor(...fill)
+        ? [60, 46, 38] // dark brown text for light backgrounds
+        : [255, 255, 255] // white text for dark backgrounds
+      return { fill, text }
+    }
+  }
+
+  // Tags only, no shift
+  if (schedule.tags?.length && !schedule.shift_type_id) {
+    return null // no special color, just text
+  }
+
+  return null
 }
 
 export async function exportScheduleToPdf({
@@ -102,9 +156,11 @@ export async function exportScheduleToPdf({
   // ── Brand header ──
   doc.setFontSize(16)
   doc.setFont(fontName, 'normal')
+  doc.setTextColor(139, 115, 85) // brand-mocha
   doc.text('\u963F\u7238\u7684\u828B\u5713', 14, 15) // 阿爸的芋圓
 
   doc.setFontSize(12)
+  doc.setTextColor(60, 46, 38)
   doc.text(title, 14, 23)
 
   doc.setFontSize(9)
@@ -127,13 +183,14 @@ export async function exportScheduleToPdf({
     }),
   ])
 
-  // ── Track leave cells for gray background ──
-  const leaveCells: Set<string> = new Set()
+  // ── Build color map: "rowIdx_colIdx" -> CellColor ──
+  const colorMap: Record<string, CellColor> = {}
   staff.forEach((member, rowIdx) => {
     weekDates.forEach((date, colIdx) => {
       const sch = scheduleMap[`${member.id}_${date}`]
-      if (isLeaveCell(sch)) {
-        leaveCells.add(`${rowIdx}_${colIdx + 1}`) // +1 because col 0 is staff name
+      const color = getCellColor(sch, shiftMap)
+      if (color) {
+        colorMap[`${rowIdx}_${colIdx + 1}`] = color // +1 because col 0 is staff name
       }
     })
   })
@@ -146,9 +203,11 @@ export async function exportScheduleToPdf({
     styles: {
       font: fontName,
       fontSize: 8,
-      cellPadding: 2,
+      cellPadding: 3,
       halign: 'center',
       valign: 'middle',
+      lineWidth: 0.2,
+      lineColor: [220, 215, 210],
     },
     headStyles: {
       fillColor: [139, 115, 85], // brand-mocha
@@ -156,20 +215,22 @@ export async function exportScheduleToPdf({
       fontStyle: 'normal',
       font: fontName,
       halign: 'center',
+      cellPadding: 3,
     },
     columnStyles: {
-      0: { halign: 'left', cellWidth: 28 },
+      0: { halign: 'left', cellWidth: 24, fontStyle: 'bold' },
     },
     alternateRowStyles: {
-      fillColor: [248, 246, 243],
+      fillColor: [250, 248, 245],
     },
     margin: { left: 14, right: 14 },
     willDrawCell: (hookData) => {
       if (hookData.section === 'body') {
         const key = `${hookData.row.index}_${hookData.column.index}`
-        if (leaveCells.has(key)) {
-          hookData.cell.styles.fillColor = [224, 224, 224] // gray for leave
-          hookData.cell.styles.textColor = [100, 100, 100]
+        const color = colorMap[key]
+        if (color) {
+          hookData.cell.styles.fillColor = color.fill
+          hookData.cell.styles.textColor = color.text
         }
       }
     },
