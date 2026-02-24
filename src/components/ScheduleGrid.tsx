@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { getWeekDates, formatShortDate, getWeekdayLabel, formatTime, getAttendanceType } from '@/lib/schedule'
+import { getWeekDates, formatShortDate, getWeekdayLabel, formatTime, getAttendanceType, getTagColor } from '@/lib/schedule'
 import type { ShiftType, Schedule } from '@/lib/schedule'
 import type { StaffMember } from '@/data/staff'
 import { getTodayString } from '@/lib/utils'
@@ -134,7 +134,14 @@ export function ScheduleGrid({ refDate, staff, schedules, shiftTypes, canSchedul
                           <div className="truncate">{getLabel(sch)}</div>
                           {time && <div className="text-[9px] opacity-80 truncate">{time}</div>}
                           {tags.length > 0 && (
-                            <div className="text-[8px] opacity-70 truncate">{tags.join('·')}</div>
+                            <div className="flex flex-wrap gap-0.5 mt-0.5 justify-center">
+                              {tags.map((t) => {
+                                const tc = getTagColor(t)
+                                return (
+                                  <span key={t} className="px-1 py-0.5 rounded text-[8px] font-medium" style={{ backgroundColor: tc.bg, color: tc.text }}>{t}</span>
+                                )
+                              })}
+                            </div>
                           )}
                         </button>
                       )

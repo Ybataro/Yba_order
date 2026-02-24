@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { getWeekDates, formatShortDate, getWeekdayLabel, formatTime, getAttendanceType } from '@/lib/schedule'
+import { getWeekDates, formatShortDate, getWeekdayLabel, formatTime, getAttendanceType, getTagColor } from '@/lib/schedule'
 import type { ShiftType, Schedule, Position } from '@/lib/schedule'
 import type { StaffMember } from '@/data/staff'
 import { getTodayString } from '@/lib/utils'
@@ -159,9 +159,12 @@ export function AdminScheduleGrid({
                           )}
                           {cell.tags && (
                             <div className="flex flex-wrap gap-0.5 mt-0.5">
-                              {cell.tags.map((t) => (
-                                <span key={t} className="px-1 py-0.5 rounded bg-white/50 text-[9px]">{t}</span>
-                              ))}
+                              {cell.tags.map((t) => {
+                                const tc = getTagColor(t)
+                                return (
+                                  <span key={t} className="px-1 py-0.5 rounded text-[9px] font-medium" style={{ backgroundColor: tc.bg, color: tc.text }}>{t}</span>
+                                )
+                              })}
                             </div>
                           )}
                           {sch.note && (

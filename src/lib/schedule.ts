@@ -32,6 +32,26 @@ export function getAttendanceType(id: string): AttendanceTypeDef | undefined {
   return ATTENDANCE_TYPES.find((t) => t.id === id)
 }
 
+// ── 標籤顏色（自動分配） ─────────────────────────────
+const TAG_COLORS = [
+  { bg: '#E3F2FD', text: '#1565C0' },  // 藍
+  { bg: '#FFF3E0', text: '#E65100' },  // 橘
+  { bg: '#E8F5E9', text: '#2E7D32' },  // 綠
+  { bg: '#FCE4EC', text: '#AD1457' },  // 粉
+  { bg: '#F3E5F5', text: '#6A1B9A' },  // 紫
+  { bg: '#E0F7FA', text: '#00695C' },  // 青
+  { bg: '#FFF8E1', text: '#F57F17' },  // 琥珀
+  { bg: '#EFEBE9', text: '#4E342E' },  // 棕
+]
+
+export function getTagColor(name: string): { bg: string; text: string } {
+  let hash = 0
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash)
+  }
+  return TAG_COLORS[Math.abs(hash) % TAG_COLORS.length]
+}
+
 // ── 職位 ────────────────────────────────────────────
 export interface Position {
   id: string
