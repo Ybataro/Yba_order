@@ -830,7 +830,7 @@ export default function Order() {
                         <span className="text-[10px] text-brand-lotus ml-1">({product.unit})</span>
                       </div>
                       <span className="w-[32px] text-center text-xs font-num text-brand-lotus">{kitchenStock[product.id] != null ? kitchenStock[product.id] : '-'}</span>
-                      <span className="w-[36px] text-center text-xs font-num text-brand-mocha">{(() => { const v = getLinkedSum(usage, inventoryIdMap[product.id]); return v != null ? (v > 0 ? v : 0) : '-' })()}</span>
+                      <span className={`w-[36px] text-center text-xs font-num ${(() => { const v = getLinkedSum(usage, inventoryIdMap[product.id]); return v != null && v < 0 ? 'text-status-danger' : 'text-brand-mocha' })()}`}>{(() => { const v = getLinkedSum(usage, inventoryIdMap[product.id]); return v != null ? v : '-' })()}</span>
                       <span className={`w-[40px] text-center text-xs font-num ${(() => { const v = getLinkedSum(stock, inventoryIdMap[product.id]); return v != null && v === 0 ? 'text-status-danger font-bold' : 'text-brand-oak' })()}`}>{(() => { const v = getLinkedSum(stock, inventoryIdMap[product.id]); return v != null ? v : '-' })()}</span>
                       <button
                         type="button"
