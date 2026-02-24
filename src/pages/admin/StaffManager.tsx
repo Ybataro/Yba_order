@@ -87,7 +87,7 @@ export default function StaffManager() {
       } else {
         addStore(formGroup, newMember)
       }
-      // Set employment_type and hourly_rate for new member
+      // Set employment_type/hourly_rate and auto-create user_pins record
       if (supabase) {
         // Small delay to ensure the insert from store has completed
         setTimeout(async () => {
@@ -95,6 +95,20 @@ export default function StaffManager() {
             employment_type: formEmployment,
             hourly_rate: formHourlyRate ? Number(formHourlyRate) : 0,
           }).eq('id', newMember.id)
+          // Auto-create user_pins record (is_active=false, admin needs to set PIN later)
+          const role = formGroup === 'admin' ? 'admin' : formGroup === 'kitchen' ? 'kitchen' : 'store'
+          const allowed_stores = role === 'store' ? [formGroup] : []
+          await supabase!.from('user_pins').insert({
+            id: `pin_${newMember.id}`,
+            staff_id: newMember.id,
+            role,
+            allowed_stores,
+            pin_hash: '',
+            is_active: false,
+            can_schedule: false,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          })
         }, 500)
       }
       showToast('人員已新增')
