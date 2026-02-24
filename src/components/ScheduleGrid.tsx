@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { getWeekDates, formatShortDate, getWeekdayLabel, formatTime } from '@/lib/schedule'
+import { getWeekDates, formatShortDate, getWeekdayLabel, formatTime, getAttendanceType } from '@/lib/schedule'
 import type { ShiftType, Schedule } from '@/lib/schedule'
 import type { StaffMember } from '@/data/staff'
 import { getTodayString } from '@/lib/utils'
@@ -31,7 +31,19 @@ export function ScheduleGrid({ refDate, staff, schedules, shiftTypes, canSchedul
     return m
   }, [schedules])
 
+  const isLeave = (s: Schedule): boolean => {
+    const at = s.attendance_type || 'work'
+    return at !== 'work'
+  }
+
+  const getLeaveType = (s: Schedule) => {
+    const at = s.attendance_type || 'work'
+    return at !== 'work' ? getAttendanceType(at) : undefined
+  }
+
   const getLabel = (s: Schedule): string => {
+    const leave = getLeaveType(s)
+    if (leave) return leave.name
     if (s.shift_type_id && shiftMap[s.shift_type_id]) {
       return shiftMap[s.shift_type_id].name
     }
@@ -42,6 +54,7 @@ export function ScheduleGrid({ refDate, staff, schedules, shiftTypes, canSchedul
   }
 
   const getTime = (s: Schedule): string | null => {
+    if (isLeave(s)) return null
     if (s.shift_type_id && shiftMap[s.shift_type_id]) {
       const st = shiftMap[s.shift_type_id]
       return `${formatTime(st.start_time)}-${formatTime(st.end_time)}`
@@ -53,11 +66,13 @@ export function ScheduleGrid({ refDate, staff, schedules, shiftTypes, canSchedul
     return s.tags?.length ? s.tags : []
   }
 
-  const getColor = (s: Schedule): string => {
+  const getColor = (s: Schedule): { bg: string; text?: string } => {
+    const leave = getLeaveType(s)
+    if (leave) return { bg: leave.color, text: leave.textColor }
     if (s.shift_type_id && shiftMap[s.shift_type_id]) {
-      return shiftMap[s.shift_type_id].color
+      return { bg: shiftMap[s.shift_type_id].color }
     }
-    return '#6B5D55'
+    return { bg: '#6B5D55' }
   }
 
   if (staff.length === 0) {
@@ -108,11 +123,12 @@ export function ScheduleGrid({ refDate, staff, schedules, shiftTypes, canSchedul
                     {sch ? (() => {
                       const time = getTime(sch)
                       const tags = getTags(sch)
+                      const color = getColor(sch)
                       return (
                         <button
                           onClick={() => canSchedule && onCellClick?.(member.id, date, sch)}
-                          className={`inline-block px-2 py-1 rounded-md text-xs font-medium text-white max-w-full ${canSchedule ? 'active:opacity-70' : ''}`}
-                          style={{ backgroundColor: getColor(sch) }}
+                          className={`inline-block px-2 py-1 rounded-md text-xs font-medium max-w-full ${canSchedule ? 'active:opacity-70' : ''}`}
+                          style={{ backgroundColor: color.bg, color: color.text || '#fff' }}
                           disabled={!canSchedule}
                         >
                           <div className="truncate">{getLabel(sch)}</div>
