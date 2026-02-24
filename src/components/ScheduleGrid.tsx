@@ -72,6 +72,7 @@ export function ScheduleGrid({ refDate, staff, schedules, shiftTypes, canSchedul
     if (s.shift_type_id && shiftMap[s.shift_type_id]) {
       return { bg: shiftMap[s.shift_type_id].color }
     }
+    if (s.tags?.length) return { bg: 'transparent', text: '#6B5D55' }
     return { bg: '#6B5D55' }
   }
 
