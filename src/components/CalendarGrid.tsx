@@ -184,6 +184,8 @@ export function CalendarGrid({ year, month, staff, schedules, shiftTypes, canSch
 
   return (
     <div className="overflow-x-auto px-2 pb-4">
+      {/* min-w ensures badges stay side-by-side; overflows horizontally on mobile */}
+      <div className="min-w-[700px]">
       {/* Weekday header */}
       <div className="grid grid-cols-7 border-b border-gray-200">
         {WEEKDAY_LABELS.map((label, i) => (
@@ -276,6 +278,7 @@ export function CalendarGrid({ year, month, staff, schedules, shiftTypes, canSch
           })}
         </div>
       ))}
+      </div>
     </div>
   )
 }
