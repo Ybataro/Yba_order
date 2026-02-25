@@ -34,3 +34,6 @@ yba_order.env
 
 # Vercel
 .vercel
+
+# Backup
+backup
