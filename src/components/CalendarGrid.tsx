@@ -127,6 +127,15 @@ export function CalendarGrid({ year, month, staff, schedules, shiftTypes, canSch
     { bg: '#F0F4C3', text: '#9E9D24' },
   ]
 
+  const staffOrderMap = useMemo(() => {
+    const m: Record<string, number> = {}
+    staff.forEach((s, i) => { m[s.id] = i })
+    return m
+  }, [staff])
+
+  const sortByStaff = (arr: Schedule[]) =>
+    arr.sort((a, b) => (staffOrderMap[a.staff_id] ?? 999) - (staffOrderMap[b.staff_id] ?? 999))
+
   const staffColorMap = useMemo(() => {
     const m: Record<string, { bg: string; text: string }> = {}
     staff.forEach((s, i) => {
@@ -136,11 +145,7 @@ export function CalendarGrid({ year, month, staff, schedules, shiftTypes, canSch
   }, [staff])
 
   const getBadgeColor = (sch: Schedule): { bg: string; text: string } => {
-    const at = sch.attendance_type || 'work'
-    if (at !== 'work') {
-      const leave = getAttendanceType(at)
-      if (leave) return { bg: leave.color, text: leave.textColor }
-    }
+    // Always use staff-fixed color for consistency
     return staffColorMap[sch.staff_id] || { bg: '#6B5D55', text: '#ffffff' }
   }
 
@@ -153,7 +158,6 @@ export function CalendarGrid({ year, month, staff, schedules, shiftTypes, canSch
     const color = getBadgeColor(sch)
     const shortName = getShortName(member.name)
     const fullLabel = getFullLabel(sch)
-
     return (
       <button
         key={sch.id}
@@ -206,17 +210,20 @@ export function CalendarGrid({ year, month, staff, schedules, shiftTypes, canSch
             const daySchedules = dateSchedules[date] || []
             const dayNum = new Date(date + 'T00:00:00').getDate()
 
-            // Split schedules into afternoon / evening / leave (spans both)
+            // Split work schedules into afternoon / evening (skip leaves)
             const afternoon: Schedule[] = []
             const evening: Schedule[] = []
-            const leaves: Schedule[] = []
 
             daySchedules.forEach((sch) => {
+              const at = sch.attendance_type || 'work'
+              if (at !== 'work') return // hide leaves from calendar
               const period = isAfternoonShift(sch, shiftMap)
-              if (period === null) leaves.push(sch)
-              else if (period) afternoon.push(sch)
-              else evening.push(sch)
+              if (period === false) evening.push(sch)
+              else afternoon.push(sch)
             })
+
+            sortByStaff(afternoon)
+            sortByStaff(evening)
 
             return (
               <div
@@ -232,21 +239,23 @@ export function CalendarGrid({ year, month, staff, schedules, shiftTypes, canSch
                   {dayNum}
                 </div>
 
-                {/* Leave badges — span full width */}
-                {leaves.length > 0 && (
-                  <div className="flex flex-wrap gap-[2px] px-0.5">
-                    {leaves.map(renderBadge)}
-                  </div>
-                )}
-
                 {/* Afternoon (午班) — top half */}
-                <div className="flex-1 flex flex-wrap gap-[2px] px-0.5 py-px content-start border-b border-dashed border-gray-200/60">
-                  {afternoon.map(renderBadge)}
+                <div className="flex items-start min-h-[14px]">
+                  <span className="text-[7px] text-brand-mocha/40 leading-none pt-0.5 pl-px shrink-0">午</span>
+                  <div className="flex-1 flex flex-wrap gap-[2px] px-0.5 py-px content-start">
+                    {afternoon.map(renderBadge)}
+                  </div>
                 </div>
 
+                {/* Divider */}
+                <div className="mx-0.5 border-t border-brand-mocha/30" />
+
                 {/* Evening (晚班) — bottom half */}
-                <div className="flex-1 flex flex-wrap gap-[2px] px-0.5 py-px content-start">
-                  {evening.map(renderBadge)}
+                <div className="flex items-start min-h-[14px]">
+                  <span className="text-[7px] text-brand-mocha/40 leading-none pt-0.5 pl-px shrink-0">晚</span>
+                  <div className="flex-1 flex flex-wrap gap-[2px] px-0.5 py-px content-start">
+                    {evening.map(renderBadge)}
+                  </div>
                 </div>
 
                 {/* Add button for empty cells */}
