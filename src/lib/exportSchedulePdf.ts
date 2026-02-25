@@ -440,6 +440,26 @@ export async function exportCalendarScheduleToPdf({
   const staffMap: Record<string, StaffMember> = {}
   staff.forEach((s) => { staffMap[s.id] = s })
 
+  // Staff-based color palette (matches CalendarGrid.tsx)
+  const STAFF_PALETTE: { bg: [number, number, number]; text: [number, number, number] }[] = [
+    { bg: [232, 213, 196], text: [93, 64, 55] },   // 奶茶
+    { bg: [200, 230, 201], text: [46, 125, 50] },   // 抹茶
+    { bg: [187, 222, 251], text: [21, 101, 192] },   // 天藍
+    { bg: [248, 187, 208], text: [173, 20, 87] },   // 櫻粉
+    { bg: [209, 196, 233], text: [69, 39, 160] },   // 薰衣草
+    { bg: [255, 224, 178], text: [230, 81, 0] },    // 橘果
+    { bg: [178, 223, 219], text: [0, 105, 92] },    // 薄荷
+    { bg: [255, 205, 210], text: [200, 40, 40] },   // 莓紅
+    { bg: [255, 249, 196], text: [245, 127, 23] },  // 檸檬
+    { bg: [207, 216, 220], text: [55, 71, 79] },    // 灰藍
+    { bg: [220, 237, 200], text: [85, 139, 47] },   // 青蘋果
+    { bg: [240, 244, 195], text: [158, 157, 36] },  // 萊姆
+  ]
+  const staffColorMap: Record<string, { bg: [number, number, number]; text: [number, number, number] }> = {}
+  staff.forEach((s, i) => {
+    staffColorMap[s.id] = STAFF_PALETTE[i % STAFF_PALETTE.length]
+  })
+
   // date → Schedule[]
   const dateSchedules: Record<string, Schedule[]> = {}
   schedules.forEach((s) => {
@@ -495,10 +515,16 @@ export async function exportCalendarScheduleToPdf({
   )
 
   // Render map for custom cell drawing: `row_col` → { date, schedules, renders }
+  interface CalendarEntry {
+    staffName: string
+    staffId: string
+    isLeave: boolean
+    render: CellRender
+  }
   interface CalendarCellData {
     date: string
     dayNum: number
-    entries: { staffName: string; render: CellRender }[]
+    entries: CalendarEntry[]
   }
   const cellDataMap: Record<string, CalendarCellData> = {}
 
@@ -506,12 +532,13 @@ export async function exportCalendarScheduleToPdf({
     week.forEach((date, colIdx) => {
       if (!date) return
       const daySchedules = dateSchedules[date] || []
-      const entries: { staffName: string; render: CellRender }[] = []
+      const entries: CalendarEntry[] = []
       daySchedules.forEach((sch) => {
         const member = staffMap[sch.staff_id]
         if (!member) return
         const render = buildCellRender(sch, shiftMap)
-        if (render) entries.push({ staffName: member.name, render })
+        const at = sch.attendance_type || 'work'
+        if (render) entries.push({ staffName: member.name, staffId: sch.staff_id, isLeave: at !== 'work', render })
       })
       cellDataMap[`${rowIdx}_${colIdx}`] = {
         date,
@@ -603,16 +630,22 @@ export async function exportCalendarScheduleToPdf({
       data.entries.slice(0, maxEntries).forEach((entry) => {
         const r = entry.render
 
+        // Staff-based color for work, leave-type color for leaves
+        const staffColor = staffColorMap[entry.staffId]
+        const badgeBg: [number, number, number] = entry.isLeave
+          ? (r.badgeFill || [207, 216, 220])
+          : (staffColor?.bg || r.badgeFill || [107, 93, 85])
+        const badgeText: [number, number, number] = entry.isLeave
+          ? r.badgeText
+          : (staffColor?.text || r.badgeText)
+
         // Badge background
-        if (r.badgeFill) {
-          doc.setFillColor(...r.badgeFill)
-          doc.roundedRect(cx, cy - 0.5, cell.width - 2, entryH - 0.3, 0.8, 0.8, 'F')
-        }
+        doc.setFillColor(...badgeBg)
+        doc.roundedRect(cx, cy - 0.5, cell.width - 2, entryH - 0.3, 0.8, 0.8, 'F')
 
         // Text
         doc.setFontSize(5)
-        const textColor = r.badgeFill ? r.badgeText : ([60, 46, 38] as [number, number, number])
-        doc.setTextColor(...textColor)
+        doc.setTextColor(...badgeText)
 
         let label = entry.staffName
         if (r.shiftName) label += ` ${r.shiftName}`
