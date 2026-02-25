@@ -1,5 +1,5 @@
-import { useState, useCallback } from 'react'
-import { ClipboardList, Truck, Package, Box, ShoppingCart, LogOut, CalendarClock, UserCircle, Receipt, CalendarDays, Settings } from 'lucide-react'
+import { useState, useCallback, useEffect } from 'react'
+import { ClipboardList, Truck, Package, Box, ShoppingCart, LogOut, CalendarClock, UserCircle, Receipt, CalendarDays, Settings, KeyRound } from 'lucide-react'
 import { getTodayString, formatDate } from '@/lib/utils'
 import { useStaffStore } from '@/stores/useStaffStore'
 import NotificationBell from '@/components/NotificationBell'
@@ -7,6 +7,7 @@ import CriticalAlertModal from '@/components/CriticalAlertModal'
 import type { Notification } from '@/hooks/useNotifications'
 import { clearSession, getSession } from '@/lib/auth'
 import { useCanSchedule } from '@/hooks/useCanSchedule'
+import ChangePinModal from '@/components/ChangePinModal'
 
 const menuItems = [
   { icon: ClipboardList, label: '各店叫貨總表', desc: '查看各店叫貨需求與加總', path: '/kitchen/orders', color: 'bg-brand-mocha' },
@@ -29,17 +30,36 @@ export default function KitchenHome() {
   const authSession = getSession()
   const canSchedule = useCanSchedule()
   const [currentStaff, setCurrentStaff] = useState(() => {
-    const saved = sessionStorage.getItem('kitchen_staff')
-    if (saved && kitchenStaff.some((s) => s.id === saved)) return saved
-    const sid = authSession?.staffId || ''
-    return kitchenStaff.some((s) => s.id === sid) ? sid : ''
+    // 先信任 sessionStorage（kitchenStaff 可能尚未載入）
+    return sessionStorage.getItem('kitchen_staff') || ''
   })
+
+  // kitchenStaff 載入後：驗證 sessionStorage 值，或自動補值
+  useEffect(() => {
+    if (kitchenStaff.length === 0) return
+    // 已有有效選擇 → 不動
+    if (currentStaff && kitchenStaff.some((s) => s.id === currentStaff)) return
+    // 嘗試用登入者 staffId
+    const sid = authSession?.staffId || ''
+    if (kitchenStaff.some((s) => s.id === sid)) {
+      setCurrentStaff(sid)
+      sessionStorage.setItem('kitchen_staff', sid)
+      return
+    }
+    // Admin 不在央廚名單 → 自動選第一位
+    if (authSession?.role === 'admin') {
+      setCurrentStaff(kitchenStaff[0].id)
+      sessionStorage.setItem('kitchen_staff', kitchenStaff[0].id)
+      return
+    }
+  }, [kitchenStaff, authSession])
 
   const handleStaffChange = (id: string) => {
     setCurrentStaff(id)
     if (id) sessionStorage.setItem('kitchen_staff', id)
     else sessionStorage.removeItem('kitchen_staff')
   }
+  const [changePinOpen, setChangePinOpen] = useState(false)
   const [criticalNotifications, setCriticalNotifications] = useState<Notification[]>([])
   const [criticalDismiss, setCriticalDismiss] = useState<((id: string) => void) | null>(null)
 
@@ -68,6 +88,9 @@ export default function KitchenHome() {
               className="text-white"
               onCriticalNotifications={handleCriticalNotifications}
             />
+            <button onClick={() => setChangePinOpen(true)} className="p-2 rounded-full text-white/80 hover:bg-white/20" title="修改 PIN">
+              <KeyRound size={20} />
+            </button>
             <button onClick={handleLogout} className="p-2 rounded-full text-white/80 hover:bg-white/20" title="登出">
               <LogOut size={20} />
             </button>
@@ -147,6 +170,8 @@ export default function KitchenHome() {
           onDismiss={criticalDismiss}
         />
       )}
+
+      <ChangePinModal open={changePinOpen} onClose={() => setChangePinOpen(false)} />
     </div>
   )
 }

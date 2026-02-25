@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { getWeekDates, formatShortDate, getWeekdayLabel, formatTime, getAttendanceType, getTagColor } from '@/lib/schedule'
+import { formatShortDate, getWeekdayLabel, formatTime, getAttendanceType, getTagColor } from '@/lib/schedule'
 import type { ShiftType, Schedule, Position } from '@/lib/schedule'
 import type { StaffMember } from '@/data/staff'
 import { getTodayString } from '@/lib/utils'
@@ -7,7 +7,7 @@ import { Plus } from 'lucide-react'
 import type { PaintBrush } from './AdminScheduleToolbar'
 
 interface AdminScheduleGridProps {
-  refDate: string
+  dates: string[]
   staff: StaffMember[]
   schedules: Schedule[]
   shiftTypes: ShiftType[]
@@ -17,9 +17,8 @@ interface AdminScheduleGridProps {
 }
 
 export function AdminScheduleGrid({
-  refDate, staff, schedules, shiftTypes, positions, paintBrush, onCellClick,
+  dates, staff, schedules, shiftTypes, positions, paintBrush, onCellClick,
 }: AdminScheduleGridProps) {
-  const weekDates = getWeekDates(refDate)
   const today = getTodayString()
 
   const shiftMap = useMemo(() => {
@@ -53,10 +52,8 @@ export function AdminScheduleGrid({
         borderColor: undefined as string | undefined,
       }
     }
-    // 排班記錄自帶的標籤（優先）
     const scheduleTags = sch.tags?.length ? sch.tags : null
 
-    // Work
     if (sch.shift_type_id && shiftMap[sch.shift_type_id]) {
       const st = shiftMap[sch.shift_type_id]
       const posName = sch.position_id ? positionMap[sch.position_id]?.name : null
@@ -99,28 +96,31 @@ export function AdminScheduleGrid({
     )
   }
 
+  const colWidth = 54
+  const nameColWidth = 90
+  const minWidth = nameColWidth + dates.length * colWidth
+
   return (
-    <div className="flex-1 overflow-x-auto">
-      <table className="w-full border-collapse table-fixed" style={{ minWidth: '900px' }}>
-        <colgroup>
-          <col style={{ width: '110px' }} />
-          {weekDates.map((date) => (
-            <col key={date} />
-          ))}
-        </colgroup>
+    <div className="flex-1 overflow-auto" style={{ touchAction: 'pan-x pan-y pinch-zoom', WebkitOverflowScrolling: 'touch' }}>
+      <table className="border-collapse" style={{ minWidth: `${minWidth}px` }}>
         <thead>
           <tr className="bg-surface-section">
-            <th className="sticky left-0 z-10 bg-surface-section px-3 py-3 text-left text-sm font-semibold text-brand-oak border-r border-gray-100">
+            <th
+              className="sticky left-0 z-10 bg-surface-section px-2 py-2 text-left text-xs font-semibold text-brand-oak border-r border-gray-100"
+              style={{ width: nameColWidth, minWidth: nameColWidth }}
+            >
               員工
             </th>
-            {weekDates.map((date) => (
+            {dates.map((date) => (
               <th
                 key={date}
-                className={`px-1 py-3 text-center text-sm font-medium ${
+                className={`px-0.5 py-2 text-center text-[10px] font-medium ${
                   date === today ? 'text-brand-lotus bg-brand-lotus/5' : 'text-brand-mocha'
                 }`}
+                style={{ width: colWidth, minWidth: colWidth }}
               >
-                <div>{formatShortDate(date)}({getWeekdayLabel(date)})</div>
+                <div>{getWeekdayLabel(date)}</div>
+                <div>{formatShortDate(date)}</div>
               </th>
             ))}
           </tr>
@@ -128,10 +128,13 @@ export function AdminScheduleGrid({
         <tbody>
           {staff.map((member) => (
             <tr key={member.id} className="border-t border-gray-100 hover:bg-gray-50/50">
-              <td className="sticky left-0 z-10 bg-white px-3 py-3 text-sm font-medium text-brand-oak border-r border-gray-100 truncate">
+              <td
+                className="sticky left-0 z-10 bg-white px-2 py-2 text-xs font-medium text-brand-oak border-r border-gray-100 truncate"
+                style={{ width: nameColWidth, minWidth: nameColWidth }}
+              >
                 {member.name}
               </td>
-              {weekDates.map((date) => {
+              {dates.map((date) => {
                 const key = `${member.id}_${date}`
                 const sch = scheduleMap[key]
                 const isToday = date === today
@@ -139,42 +142,40 @@ export function AdminScheduleGrid({
                 return (
                   <td
                     key={date}
-                    className={`px-1 py-2 text-center ${isToday ? 'bg-brand-lotus/5' : ''} ${paintBrush ? 'cursor-crosshair' : 'cursor-pointer'}`}
+                    className={`px-0.5 py-1 text-center ${isToday ? 'bg-brand-lotus/5' : ''} ${paintBrush ? 'cursor-crosshair' : 'cursor-pointer'}`}
+                    style={{ width: colWidth, minWidth: colWidth }}
                     onClick={() => onCellClick(member.id, date, sch)}
                   >
                     {sch ? (() => {
                       const cell = getCellContent(sch)
                       return (
                         <div
-                          className="flex flex-col items-start px-2 py-1.5 rounded-lg text-left w-full"
+                          className="flex flex-col items-start px-1 py-0.5 rounded text-left w-full"
                           style={{
                             backgroundColor: cell.bg,
                             color: cell.textColor,
-                            borderLeft: cell.borderColor ? `4px solid ${cell.borderColor}` : undefined,
+                            borderLeft: cell.borderColor ? `3px solid ${cell.borderColor}` : undefined,
                           }}
                         >
-                          <span className="text-xs font-medium truncate w-full">{cell.label}</span>
+                          <span className="text-[9px] font-medium truncate w-full">{cell.label}</span>
                           {cell.sub && (
-                            <span className="text-[10px] opacity-75 mt-0.5 truncate w-full">{cell.sub}</span>
+                            <span className="text-[8px] opacity-75 truncate w-full">{cell.sub}</span>
                           )}
                           {cell.tags && (
                             <div className="flex flex-wrap gap-0.5 mt-0.5">
                               {cell.tags.map((t) => {
                                 const tc = getTagColor(t)
                                 return (
-                                  <span key={t} className="px-1 py-0.5 rounded text-[9px] font-medium" style={{ backgroundColor: tc.bg, color: tc.text }}>{t}</span>
+                                  <span key={t} className="px-0.5 py-0 rounded text-[7px] font-medium" style={{ backgroundColor: tc.bg, color: tc.text }}>{t}</span>
                                 )
                               })}
                             </div>
                           )}
-                          {sch.note && (
-                            <span className="text-[9px] opacity-60 mt-0.5 truncate w-full">{sch.note}</span>
-                          )}
                         </div>
                       )
                     })() : (
-                      <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors mx-auto">
-                        <Plus size={14} className="text-gray-300" />
+                      <div className="flex items-center justify-center w-6 h-6 rounded bg-gray-50 hover:bg-gray-100 transition-colors mx-auto">
+                        <Plus size={10} className="text-gray-300" />
                       </div>
                     )}
                   </td>

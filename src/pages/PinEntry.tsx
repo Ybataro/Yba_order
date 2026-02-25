@@ -7,14 +7,14 @@ interface PinEntryProps {
   onSuccess: (session: AuthSession) => void
 }
 
-interface PinUser {
-  id: string
+interface DisplayUser {
   staff_id: string
   staff_name: string
-  role: string
-  allowed_stores: string[]
   group_id: string
   sort_order: number
+  pin_id: string | null // null = no PIN set
+  role: string
+  allowed_stores: string[]
 }
 
 const roleLabels: Record<string, string> = {
@@ -23,7 +23,6 @@ const roleLabels: Record<string, string> = {
   store: '門店',
 }
 
-// 統一使用 oak #6B5D55 色系
 const groupCards: { key: string; label: string }[] = [
   { key: 'admin', label: '管理者' },
   { key: 'kitchen', label: '央廚' },
@@ -31,38 +30,66 @@ const groupCards: { key: string; label: string }[] = [
   { key: 'xingnan', label: '興南店' },
 ]
 
+/** Derive role from group_id */
+function deriveRole(groupId: string): string {
+  if (groupId === 'admin') return 'admin'
+  if (groupId === 'kitchen') return 'kitchen'
+  return 'store'
+}
+
+/** Derive allowed_stores from group_id */
+function deriveStores(groupId: string): string[] {
+  if (groupId === 'admin' || groupId === 'kitchen') return []
+  return [groupId]
+}
+
 export default function PinEntry({ onSuccess }: PinEntryProps) {
-  const [users, setUsers] = useState<PinUser[]>([])
-  const [selectedUser, setSelectedUser] = useState<PinUser | null>(null)
+  const [users, setUsers] = useState<DisplayUser[]>([])
+  const [selectedUser, setSelectedUser] = useState<DisplayUser | null>(null)
   const [pin, setPin] = useState('')
   const [error, setError] = useState('')
   const [checking, setChecking] = useState(false)
   const [loadingUsers, setLoadingUsers] = useState(true)
   const [expandedGroup, setExpandedGroup] = useState<string | null>(null)
 
-  // Load active users (NO pin_hash exposed to frontend)
+  // Load all staff + match with user_pins
   useEffect(() => {
     if (!supabase) return
-    supabase
-      .from('user_pins')
-      .select('id, staff_id, role, allowed_stores, staff:staff_id(name, group_id, sort_order)')
-      .eq('is_active', true)
-      .then(({ data }) => {
-        if (data) {
-          const mapped: PinUser[] = data.map((d: Record<string, unknown>) => ({
-            id: d.id as string,
-            staff_id: d.staff_id as string,
-            staff_name: (d.staff as { name: string; group_id: string; sort_order: number })?.name || (d.staff_id as string),
-            role: d.role as string,
-            allowed_stores: (d.allowed_stores as string[]) || [],
-            group_id: (d.staff as { name: string; group_id: string })?.group_id || d.role as string,
-            sort_order: (d.staff as { sort_order: number })?.sort_order ?? 999,
-          }))
-          mapped.sort((a, b) => a.sort_order - b.sort_order)
-          setUsers(mapped)
+
+    Promise.all([
+      supabase.from('staff').select('id, name, group_id, sort_order').order('sort_order'),
+      supabase.from('user_pins').select('id, staff_id, role, allowed_stores').eq('is_active', true),
+    ]).then(([staffRes, pinRes]) => {
+      const staffData = staffRes.data || []
+      const pinData = pinRes.data || []
+
+      // Build pin lookup: staff_id → pin record
+      const pinMap = new Map<string, { id: string; role: string; allowed_stores: string[] }>()
+      for (const p of pinData) {
+        pinMap.set(p.staff_id, {
+          id: p.id,
+          role: p.role,
+          allowed_stores: p.allowed_stores || [],
+        })
+      }
+
+      const merged: DisplayUser[] = staffData.map((s) => {
+        const pin = pinMap.get(s.id)
+        return {
+          staff_id: s.id,
+          staff_name: s.name,
+          group_id: s.group_id || 'kitchen',
+          sort_order: s.sort_order ?? 999,
+          pin_id: pin?.id || null,
+          role: pin?.role || deriveRole(s.group_id),
+          allowed_stores: pin?.allowed_stores || deriveStores(s.group_id),
         }
-        setLoadingUsers(false)
       })
+
+      merged.sort((a, b) => a.sort_order - b.sort_order)
+      setUsers(merged)
+      setLoadingUsers(false)
+    })
   }, [])
 
   const handleDigit = (digit: string) => {
@@ -83,11 +110,10 @@ export default function PinEntry({ onSuccess }: PinEntryProps) {
   }
 
   const verify = useCallback(async (fullPin: string) => {
-    if (!selectedUser || !supabase) return
+    if (!selectedUser || !supabase || !selectedUser.pin_id) return
 
     setChecking(true)
     try {
-      // Check crypto.subtle availability
       if (!crypto?.subtle) {
         setError('此瀏覽器不支援加密功能，請用 Chrome 或 Safari 開啟')
         setPin('')
@@ -97,11 +123,10 @@ export default function PinEntry({ onSuccess }: PinEntryProps) {
 
       const hashed = await hashPin(fullPin)
 
-      // Verify via Supabase query (server-side hash comparison)
       const { data, error: dbErr } = await supabase
         .from('user_pins')
         .select('id')
-        .eq('id', selectedUser.id)
+        .eq('id', selectedUser.pin_id)
         .eq('pin_hash', hashed)
         .eq('is_active', true)
         .maybeSingle()
@@ -148,8 +173,8 @@ export default function PinEntry({ onSuccess }: PinEntryProps) {
 
   // ── Step 1: Select user ──
   if (!selectedUser) {
-    // Group users by group_id (admin / kitchen / lehua / xingnan)
-    const grouped = new Map<string, PinUser[]>()
+    // Group users by group_id
+    const grouped = new Map<string, DisplayUser[]>()
     for (const u of users) {
       const key = u.group_id || u.role
       const group = grouped.get(key) || []
@@ -167,7 +192,7 @@ export default function PinEntry({ onSuccess }: PinEntryProps) {
         {loadingUsers ? (
           <p className="text-center text-white/60 text-sm py-10">載入中...</p>
         ) : users.length === 0 ? (
-          <p className="text-center text-white/60 text-sm py-10">尚未設定任何 PIN 碼</p>
+          <p className="text-center text-white/60 text-sm py-10">尚未設定任何人員</p>
         ) : (
           <div className="flex-1 overflow-y-auto pb-8 space-y-3">
             {groupCards.map(card => {
@@ -189,19 +214,34 @@ export default function PinEntry({ onSuccess }: PinEntryProps) {
                   </button>
                   {isOpen && (
                     <div className="grid grid-cols-2 gap-2 px-4 pb-4">
-                      {members.map((user) => (
-                        <button
-                          key={user.id}
-                          onClick={() => setSelectedUser(user)}
-                          className="flex items-center gap-2 rounded-xl px-3 py-2.5 text-left transition-colors active:bg-white/15"
-                          style={{ background: 'rgba(107,93,85,0.25)' }}
-                        >
-                          <div className="w-8 h-8 rounded-full bg-white/15 flex items-center justify-center shrink-0">
-                            <UserCircle size={18} className="text-white/80" />
-                          </div>
-                          <span className="text-white text-sm font-medium truncate">{user.staff_name}</span>
-                        </button>
-                      ))}
+                      {members.map((user) => {
+                        const hasPin = !!user.pin_id
+                        return (
+                          <button
+                            key={user.staff_id}
+                            onClick={() => {
+                              if (hasPin) setSelectedUser(user)
+                            }}
+                            disabled={!hasPin}
+                            className={`flex items-center gap-2 rounded-xl px-3 py-2.5 text-left transition-colors ${
+                              hasPin ? 'active:bg-white/15' : 'opacity-40 cursor-not-allowed'
+                            }`}
+                            style={{ background: 'rgba(107,93,85,0.25)' }}
+                          >
+                            <div className="w-8 h-8 rounded-full bg-white/15 flex items-center justify-center shrink-0">
+                              <UserCircle size={18} className="text-white/80" />
+                            </div>
+                            <div className="min-w-0">
+                              <span className={`text-sm font-medium truncate block ${hasPin ? 'text-white' : 'text-white/50'}`}>
+                                {user.staff_name}
+                              </span>
+                              {!hasPin && (
+                                <span className="text-[10px] text-red-300/80 leading-none">未設定PIN</span>
+                              )}
+                            </div>
+                          </button>
+                        )
+                      })}
                     </div>
                   )}
                 </div>

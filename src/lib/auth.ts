@@ -39,6 +39,24 @@ export function setSession(session: AuthSession): void {
 
 export function clearSession(): void {
   sessionStorage.removeItem(SESSION_KEY)
+  // 清除所有 app 相關快取，避免殘留到下一位登入者
+  sessionStorage.removeItem('kitchen_staff')
+  sessionStorage.removeItem('yba_has_pins')
+  sessionStorage.removeItem('yba_can_schedule')
+  const keys = Object.keys(sessionStorage).filter((k) => k.startsWith('store_') && k.endsWith('_staff'))
+  for (const k of keys) sessionStorage.removeItem(k)
+}
+
+// ── Role home path ──
+
+export function getRoleHomePath(session: AuthSession | null): string {
+  if (!session) return '/'
+  switch (session.role) {
+    case 'admin': return '/admin'
+    case 'kitchen': return '/kitchen'
+    case 'store': return `/store/${session.allowedStores[0] || 'lehua'}`
+    default: return '/'
+  }
 }
 
 // ── Authorization check ──

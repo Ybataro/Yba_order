@@ -6,6 +6,7 @@ import { SectionHeader } from '@/components/SectionHeader'
 import { BottomAction } from '@/components/BottomAction'
 import { useToast } from '@/components/Toast'
 import { useProductStore } from '@/stores/useProductStore'
+import { useZoneStore } from '@/stores/useZoneStore'
 import { supabase } from '@/lib/supabase'
 import { productStockSessionId, getTodayTW } from '@/lib/session'
 import { formatDate } from '@/lib/utils'
@@ -14,9 +15,26 @@ import { useStaffStore } from '@/stores/useStaffStore'
 
 export default function ProductStock() {
   const { showToast } = useToast()
-  const storeProducts = useProductStore((s) => s.items)
-  const productCategories = useProductStore((s) => s.categories)
+  const allProducts = useProductStore((s) => s.items)
+  const allCategories = useProductStore((s) => s.categories)
+  const zones = useZoneStore((s) => s.zones)
+  const zoneProducts = useZoneStore((s) => s.zoneProducts)
   const kitchenStaff = useStaffStore((s) => s.kitchenStaff)
+
+  // 如果央廚有設定區域，只顯示已分配的成品；否則顯示全部
+  const { storeProducts, productCategories } = useMemo(() => {
+    const kitchenZones = zones.filter((z) => z.storeId === 'kitchen')
+    if (kitchenZones.length === 0) {
+      return { storeProducts: allProducts, productCategories: allCategories }
+    }
+    const kitchenZoneIds = new Set(kitchenZones.map((z) => z.id))
+    const assignedIds = new Set(
+      zoneProducts.filter((zp) => kitchenZoneIds.has(zp.zoneId)).map((zp) => zp.productId)
+    )
+    const filtered = allProducts.filter((p) => assignedIds.has(p.id))
+    const cats = new Set(filtered.map((p) => p.category))
+    return { storeProducts: filtered, productCategories: allCategories.filter((c) => cats.has(c)) }
+  }, [allProducts, allCategories, zones, zoneProducts])
   const [confirmBy, setConfirmBy] = useState('')
 
   const today = getTodayTW()
@@ -82,7 +100,7 @@ export default function ProductStock() {
       map.set(cat, storeProducts.filter(p => p.category === cat))
     }
     return map
-  }, [])
+  }, [storeProducts, productCategories])
 
   const focusNext = () => {
     const allInputs = document.querySelectorAll<HTMLInputElement>('[data-pst]')

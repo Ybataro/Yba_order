@@ -3,6 +3,7 @@ import { Package, Warehouse, Users, Store, Receipt, QrCode, Layers, ClipboardLis
 import { getTodayString, formatDate } from '@/lib/utils'
 import { useStoreStore } from '@/stores/useStoreStore'
 import { clearSession } from '@/lib/auth'
+import ChangePinModal from '@/components/ChangePinModal'
 
 interface MenuItem {
   icon: React.ComponentType<{ size?: number }>
@@ -67,6 +68,7 @@ const menuGroups: MenuGroup[] = [
 
 export default function AdminHome() {
   const stores = useStoreStore((s) => s.items)
+  const [changePinOpen, setChangePinOpen] = useState(false)
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => {
     const init: Record<string, boolean> = {}
     menuGroups.forEach((g) => { init[g.title] = g.defaultOpen })
@@ -86,13 +88,18 @@ export default function AdminHome() {
             <h1 className="text-2xl font-bold">阿爸的芋圓</h1>
             <p className="text-base opacity-90 mt-1">後台管理系統</p>
           </div>
-          <button
-            onClick={() => { clearSession(); window.location.reload() }}
-            className="p-2 rounded-full text-white/80 hover:bg-white/20"
-            title="登出"
-          >
-            <LogOut size={20} />
-          </button>
+          <div className="flex items-center gap-1">
+            <button onClick={() => setChangePinOpen(true)} className="p-2 rounded-full text-white/80 hover:bg-white/20" title="修改 PIN">
+              <KeyRound size={20} />
+            </button>
+            <button
+              onClick={() => { clearSession(); window.location.reload() }}
+              className="p-2 rounded-full text-white/80 hover:bg-white/20"
+              title="登出"
+            >
+              <LogOut size={20} />
+            </button>
+          </div>
         </div>
       </div>
 
@@ -170,6 +177,8 @@ export default function AdminHome() {
           </button>
         </div>
       </div>
+
+      <ChangePinModal open={changePinOpen} onClose={() => setChangePinOpen(false)} />
     </div>
   )
 }

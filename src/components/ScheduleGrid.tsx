@@ -1,12 +1,12 @@
 import { useMemo } from 'react'
-import { getWeekDates, formatShortDate, getWeekdayLabel, formatTime, getAttendanceType, getTagColor } from '@/lib/schedule'
+import { formatShortDate, getWeekdayLabel, formatTime, getAttendanceType, getTagColor } from '@/lib/schedule'
 import type { ShiftType, Schedule } from '@/lib/schedule'
 import type { StaffMember } from '@/data/staff'
 import { getTodayString } from '@/lib/utils'
 import { Plus } from 'lucide-react'
 
 interface ScheduleGridProps {
-  refDate: string
+  dates: string[]
   staff: StaffMember[]
   schedules: Schedule[]
   shiftTypes: ShiftType[]
@@ -14,8 +14,7 @@ interface ScheduleGridProps {
   onCellClick?: (staffId: string, date: string, existing?: Schedule) => void
 }
 
-export function ScheduleGrid({ refDate, staff, schedules, shiftTypes, canSchedule, onCellClick }: ScheduleGridProps) {
-  const weekDates = getWeekDates(refDate)
+export function ScheduleGrid({ dates, staff, schedules, shiftTypes, canSchedule, onCellClick }: ScheduleGridProps) {
   const today = getTodayString()
 
   const shiftMap = useMemo(() => {
@@ -84,20 +83,26 @@ export function ScheduleGrid({ refDate, staff, schedules, shiftTypes, canSchedul
     )
   }
 
+  // Calculate min-width based on number of dates
+  const colWidth = 54
+  const nameColWidth = 72
+  const minWidth = nameColWidth + dates.length * colWidth
+
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full border-collapse min-w-[520px]">
+    <div className="overflow-auto" style={{ touchAction: 'pan-x pan-y pinch-zoom', WebkitOverflowScrolling: 'touch' }}>
+      <table className="border-collapse" style={{ minWidth: `${minWidth}px` }}>
         <thead>
           <tr className="bg-surface-section">
-            <th className="sticky left-0 z-10 bg-surface-section px-3 py-2 text-left text-xs font-semibold text-brand-oak w-[72px] min-w-[72px]">
+            <th className="sticky left-0 z-10 bg-surface-section px-2 py-2 text-left text-xs font-semibold text-brand-oak" style={{ width: nameColWidth, minWidth: nameColWidth }}>
               員工
             </th>
-            {weekDates.map((date) => (
+            {dates.map((date) => (
               <th
                 key={date}
-                className={`px-1 py-2 text-center text-xs font-medium min-w-[60px] ${
+                className={`px-0.5 py-2 text-center text-xs font-medium ${
                   date === today ? 'text-brand-lotus bg-brand-lotus/5' : 'text-brand-mocha'
                 }`}
+                style={{ width: colWidth, minWidth: colWidth }}
               >
                 <div>{getWeekdayLabel(date)}</div>
                 <div className="text-[10px]">{formatShortDate(date)}</div>
@@ -108,10 +113,10 @@ export function ScheduleGrid({ refDate, staff, schedules, shiftTypes, canSchedul
         <tbody>
           {staff.map((member) => (
             <tr key={member.id} className="border-t border-gray-50">
-              <td className="sticky left-0 z-10 bg-white px-3 py-2 text-sm font-medium text-brand-oak w-[72px] min-w-[72px]">
+              <td className="sticky left-0 z-10 bg-white px-2 py-2 text-xs font-medium text-brand-oak" style={{ width: nameColWidth, minWidth: nameColWidth }}>
                 {member.name}
               </td>
-              {weekDates.map((date) => {
+              {dates.map((date) => {
                 const key = `${member.id}_${date}`
                 const sch = scheduleMap[key]
                 const isToday = date === today
@@ -119,7 +124,8 @@ export function ScheduleGrid({ refDate, staff, schedules, shiftTypes, canSchedul
                 return (
                   <td
                     key={date}
-                    className={`px-1 py-1.5 text-center ${isToday ? 'bg-brand-lotus/5' : ''}`}
+                    className={`px-0.5 py-1 text-center ${isToday ? 'bg-brand-lotus/5' : ''}`}
+                    style={{ width: colWidth, minWidth: colWidth }}
                   >
                     {sch ? (() => {
                       const time = getTime(sch)
@@ -128,18 +134,18 @@ export function ScheduleGrid({ refDate, staff, schedules, shiftTypes, canSchedul
                       return (
                         <button
                           onClick={() => canSchedule && onCellClick?.(member.id, date, sch)}
-                          className={`inline-block px-2 py-1 rounded-md text-xs font-medium max-w-full ${canSchedule ? 'active:opacity-70' : ''}`}
+                          className={`inline-block px-1.5 py-0.5 rounded-md text-[10px] font-medium max-w-full ${canSchedule ? 'active:opacity-70' : ''}`}
                           style={{ backgroundColor: color.bg, color: color.text || '#fff' }}
                           disabled={!canSchedule}
                         >
                           <div className="truncate">{getLabel(sch)}</div>
-                          {time && <div className="text-[9px] opacity-80 truncate">{time}</div>}
+                          {time && <div className="text-[8px] opacity-80 truncate">{time}</div>}
                           {tags.length > 0 && (
                             <div className="flex flex-wrap gap-0.5 mt-0.5 justify-center">
                               {tags.map((t) => {
                                 const tc = getTagColor(t)
                                 return (
-                                  <span key={t} className="px-1 py-0.5 rounded text-[8px] font-medium" style={{ backgroundColor: tc.bg, color: tc.text }}>{t}</span>
+                                  <span key={t} className="px-0.5 py-0 rounded text-[7px] font-medium" style={{ backgroundColor: tc.bg, color: tc.text }}>{t}</span>
                                 )
                               })}
                             </div>
@@ -149,9 +155,9 @@ export function ScheduleGrid({ refDate, staff, schedules, shiftTypes, canSchedul
                     })() : canSchedule ? (
                       <button
                         onClick={() => onCellClick?.(member.id, date)}
-                        className="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center mx-auto active:bg-gray-100"
+                        className="w-7 h-7 rounded-lg bg-gray-50 flex items-center justify-center mx-auto active:bg-gray-100"
                       >
-                        <Plus size={14} className="text-gray-300" />
+                        <Plus size={12} className="text-gray-300" />
                       </button>
                     ) : (
                       <span className="text-gray-200 text-xs">-</span>

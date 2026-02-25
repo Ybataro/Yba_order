@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { TopNav } from '@/components/TopNav'
 import { SectionHeader } from '@/components/SectionHeader'
 import { AdminModal, ModalField, ModalInput, ModalSelect } from '@/components/AdminModal'
@@ -8,6 +8,7 @@ import { useScheduleStore } from '@/stores/useScheduleStore'
 import { supabase } from '@/lib/supabase'
 import type { ShiftType, Position } from '@/lib/schedule'
 import { formatTime } from '@/lib/schedule'
+import { getSession, getRoleHomePath } from '@/lib/auth'
 import { Plus, Pencil, Trash2, X, Tag } from 'lucide-react'
 
 const GROUPS = [
@@ -28,6 +29,7 @@ const COLORS = [
 export default function ShiftTypeManager() {
   const { showToast } = useToast()
   const stores = useStoreStore((s) => s.items)
+  const backPath = useMemo(() => getRoleHomePath(getSession()), [])
   const { tagPresets, fetchTagPresets, addTagPreset, removeTagPreset } = useScheduleStore()
   const groups = [...GROUPS, ...stores.map((s) => ({ id: s.id, label: s.name }))]
 
@@ -218,7 +220,7 @@ export default function ShiftTypeManager() {
   if (!supabase) {
     return (
       <div className="page-container">
-        <TopNav title="班次與職位管理" backTo="/admin" />
+        <TopNav title="班次與職位管理" backTo={backPath} />
         <div className="flex items-center justify-center py-20 text-sm text-brand-lotus">需連接 Supabase</div>
       </div>
     )
@@ -226,7 +228,7 @@ export default function ShiftTypeManager() {
 
   return (
     <div className="page-container">
-      <TopNav title="班次與職位管理" backTo="/admin" />
+      <TopNav title="班次與職位管理" backTo={backPath} />
 
       {loading ? (
         <div className="flex items-center justify-center py-20 text-sm text-brand-lotus">載入中...</div>

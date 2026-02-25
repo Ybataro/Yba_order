@@ -6,6 +6,7 @@ import { SectionHeader } from '@/components/SectionHeader'
 import { BottomAction } from '@/components/BottomAction'
 import { useToast } from '@/components/Toast'
 import { useMaterialStore } from '@/stores/useMaterialStore'
+import { useZoneStore } from '@/stores/useZoneStore'
 import { supabase } from '@/lib/supabase'
 import { materialStockSessionId, getTodayTW } from '@/lib/session'
 import { formatDate } from '@/lib/utils'
@@ -14,9 +15,26 @@ import { useStaffStore } from '@/stores/useStaffStore'
 
 export default function MaterialStock() {
   const { showToast } = useToast()
-  const rawMaterials = useMaterialStore((s) => s.items)
-  const materialCategories = useMaterialStore((s) => s.categories)
+  const allMaterials = useMaterialStore((s) => s.items)
+  const allMaterialCategories = useMaterialStore((s) => s.categories)
+  const zones = useZoneStore((s) => s.zones)
+  const zoneProducts = useZoneStore((s) => s.zoneProducts)
   const kitchenStaff = useStaffStore((s) => s.kitchenStaff)
+
+  // 如果央廚有設定區域，只顯示已分配的原物料；否則顯示全部
+  const { rawMaterials, materialCategories } = useMemo(() => {
+    const kitchenZones = zones.filter((z) => z.storeId === 'kitchen')
+    if (kitchenZones.length === 0) {
+      return { rawMaterials: allMaterials, materialCategories: allMaterialCategories }
+    }
+    const kitchenZoneIds = new Set(kitchenZones.map((z) => z.id))
+    const assignedIds = new Set(
+      zoneProducts.filter((zp) => kitchenZoneIds.has(zp.zoneId)).map((zp) => zp.productId)
+    )
+    const filtered = allMaterials.filter((m) => assignedIds.has(m.id))
+    const cats = new Set(filtered.map((m) => m.category))
+    return { rawMaterials: filtered, materialCategories: allMaterialCategories.filter((c) => cats.has(c)) }
+  }, [allMaterials, allMaterialCategories, zones, zoneProducts])
   const [confirmBy, setConfirmBy] = useState('')
 
   const today = getTodayTW()
@@ -137,7 +155,7 @@ export default function MaterialStock() {
       map.set(cat, rawMaterials.filter(m => m.category === cat))
     }
     return map
-  }, [])
+  }, [rawMaterials, materialCategories])
 
   const getStatus = (id: string): 'ok' | 'low' | 'danger' => {
     const qty = parseFloat(stock[id]) || 0

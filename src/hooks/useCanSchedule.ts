@@ -6,8 +6,13 @@ const CACHE_KEY = 'yba_can_schedule'
 
 export function useCanSchedule(): boolean {
   const [canSchedule, setCanSchedule] = useState(() => {
+    // 快取必須搭配當前 session 才有效，無 session 一律 false
+    const session = getSession()
+    if (!session) return false
+    if (session.role === 'admin') return true
     const cached = sessionStorage.getItem(CACHE_KEY)
-    return cached === 'true'
+    if (cached !== null) return cached === 'true'
+    return false
   })
 
   useEffect(() => {
@@ -20,6 +25,7 @@ export function useCanSchedule(): boolean {
     }
     if (!supabase) return
 
+    // 非 admin 每次都查 DB 確認（快取僅用於初始 render 避免閃爍）
     supabase
       .from('user_pins')
       .select('can_schedule')

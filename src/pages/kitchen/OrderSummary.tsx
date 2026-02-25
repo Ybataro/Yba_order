@@ -3,12 +3,13 @@ import { useSearchParams } from 'react-router-dom'
 import { TopNav } from '@/components/TopNav'
 import { DateNav } from '@/components/DateNav'
 import { SectionHeader } from '@/components/SectionHeader'
+import { useToast } from '@/components/Toast'
 import { useProductStore } from '@/stores/useProductStore'
 import { useStoreStore } from '@/stores/useStoreStore'
 import { supabase } from '@/lib/supabase'
 import { getTodayTW } from '@/lib/session'
-import { Printer, MessageSquareText } from 'lucide-react'
-import { formatDate } from '@/lib/utils'
+import { FileText, MessageSquareText, Package } from 'lucide-react'
+import { exportOrderSummaryToPdf } from '@/lib/exportOrderSummaryPdf'
 
 const fixedNoteItems = [
   { id: 'almond1000', label: '杏仁茶瓶 1000ml', unit: '個' },
@@ -18,6 +19,7 @@ const fixedNoteItems = [
 ]
 
 export default function OrderSummary() {
+  const { showToast } = useToast()
   const [searchParams] = useSearchParams()
   const staffId = searchParams.get('staff') || ''
   const allProducts = useProductStore((s) => s.items)
@@ -31,7 +33,9 @@ export default function OrderSummary() {
 
   const [storeOrders, setStoreOrders] = useState<Record<string, Record<string, number>>>({})
   const [storeNotes, setStoreNotes] = useState<Record<string, { fixedItems: Record<string, number>; freeText: string }>>({})
+  const [productStock, setProductStock] = useState<Record<string, number>>({})
   const [loading, setLoading] = useState(true)
+  const [pdfLoading, setPdfLoading] = useState(false)
 
   useEffect(() => {
     if (!supabase) { setLoading(false); return }
@@ -78,8 +82,34 @@ export default function OrderSummary() {
         })
       }
 
+      // 查最近一筆成品庫存盤點（含當日及之前，因週三/日休息無盤點）
+      const stockData: Record<string, number> = {}
+      const { data: latestSession } = await supabase!
+        .from('product_stock_sessions')
+        .select('id, date')
+        .lte('date', selectedDate)
+        .order('date', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+
+      if (latestSession) {
+        const { data: stockItems } = await supabase!
+          .from('product_stock_items')
+          .select('product_id, stock_qty')
+          .eq('session_id', latestSession.id)
+
+        if (stockItems) {
+          stockItems.forEach(item => {
+            if (item.stock_qty != null) {
+              stockData[item.product_id] = item.stock_qty
+            }
+          })
+        }
+      }
+
       setStoreOrders(ordersData)
       setStoreNotes(notesData)
+      setProductStock(stockData)
       setLoading(false)
     }
 
@@ -92,14 +122,19 @@ export default function OrderSummary() {
       map.set(cat, storeProducts.filter(p => p.category === cat))
     }
     return map
-  }, [])
+  }, [storeProducts, productCategories])
 
   const getTotal = (productId: string) =>
     Math.round(stores.reduce((sum, s) => sum + (storeOrders[s.id]?.[productId] || 0), 0) * 10) / 10
 
-  const handlePrint = () => {
-    window.print()
-  }
+  // 統計有叫貨的品項數
+  const orderedCount = useMemo(() => {
+    let count = 0
+    storeProducts.forEach(p => {
+      if (getTotal(p.id) > 0) count++
+    })
+    return count
+  }, [storeProducts, storeOrders, stores])
 
   // 檢查某店是否有任何備註內容
   const hasNotes = (storeId: string) => {
@@ -109,176 +144,165 @@ export default function OrderSummary() {
     return Object.values(n.fixedItems).some(v => v > 0)
   }
 
+  const handleExportPdf = async () => {
+    setPdfLoading(true)
+    try {
+      await exportOrderSummaryToPdf({
+        date: selectedDate,
+        stores,
+        products: storeProducts,
+        categories: productCategories,
+        storeOrders,
+        storeNotes,
+        fixedNoteItems,
+        productStock,
+      })
+      showToast('PDF 已下載', 'success')
+    } catch (e) {
+      console.error('[OrderSummary] PDF export failed:', e)
+      showToast('PDF 匯出失敗', 'error')
+    } finally {
+      setPdfLoading(false)
+    }
+  }
+
   return (
     <div className="page-container !pb-4">
       <TopNav title="各店叫貨總表" backTo={`/kitchen${staffId ? `?staff=${staffId}` : ''}`} />
 
       {/* 日期選擇器 */}
-      <div className="no-print">
-        <DateNav value={selectedDate} onChange={setSelectedDate} />
-      </div>
+      <DateNav value={selectedDate} onChange={setSelectedDate} />
 
       {loading ? (
         <div className="flex items-center justify-center py-20 text-sm text-brand-lotus">載入中...</div>
       ) : (
       <>
-      {/* 列印按鈕 */}
-      <div className="no-print px-4 pt-3 pb-1">
+      {/* 摘要 banner + PDF 按鈕 */}
+      <div className="px-4 pt-3 pb-2 flex items-center gap-2">
+        <div className="flex-1 flex items-center gap-2 bg-brand-amber/10 rounded-xl px-3 py-2">
+          <Package size={16} className="text-brand-amber" />
+          <span className="text-sm font-semibold text-brand-oak">
+            {orderedCount} / {storeProducts.length}
+          </span>
+          <span className="text-xs text-brand-lotus">品項有叫貨</span>
+        </div>
         <button
-          onClick={handlePrint}
-          className="btn-secondary !h-9 !text-sm flex items-center justify-center gap-2"
+          onClick={handleExportPdf}
+          disabled={pdfLoading}
+          className="h-9 px-3 rounded-lg border border-gray-300 text-sm text-brand-oak flex items-center gap-1.5 shrink-0 active:scale-95 transition-transform"
         >
-          <Printer size={16} />
-          列印 A4 叫貨總表
+          <FileText size={14} />
+          {pdfLoading ? '...' : 'PDF'}
         </button>
       </div>
 
-      {/* ===== 螢幕版（手機瀏覽） ===== */}
-      <div className="screen-only">
-        <div className="sticky top-14 z-10 flex items-center justify-end gap-1 px-4 py-2 bg-white border-b border-gray-100 text-xs text-brand-lotus">
-          <span className="flex-1">品項</span>
+      {/* ===== 表格 ===== */}
+      <div>
+        {/* 表頭 sticky */}
+        <div className="sticky top-14 z-10 flex items-center gap-0.5 px-3 py-2.5 bg-[#5A4632] text-white text-xs">
+          <span className="flex-1 font-semibold">品項</span>
+          <span className="w-9 text-center font-semibold bg-yellow-400/20 rounded py-0.5">庫存</span>
           {stores.map(s => (
-            <span key={s.id} className="w-[55px] text-center font-semibold">{s.name.replace('店', '')}</span>
+            <span key={s.id} className="w-10 text-center font-semibold">{s.name.replace('店', '')}</span>
           ))}
-          <span className="w-[60px] text-center font-bold text-brand-oak bg-brand-amber/15 rounded-md py-0.5">加總</span>
+          <span className="w-10 text-center font-bold bg-white/15 rounded py-0.5">加總</span>
+          <span className="w-11 text-center font-semibold text-[10px] leading-tight bg-white/10 rounded py-0.5">剩餘庫存</span>
         </div>
 
-        {Array.from(productsByCategory.entries()).map(([category, products]) => (
-          <div key={category}>
-            <SectionHeader title={category} icon="■" />
-            <div className="bg-white">
-              {products.map((product, idx) => {
-                const total = getTotal(product.id)
-                return (
-                  <div key={product.id} className={`flex items-center justify-end gap-1 px-4 py-1.5 ${idx < products.length - 1 ? 'border-b border-gray-50' : ''}`}>
-                    <div className="flex-1 min-w-0">
-                      <span className="text-sm font-medium text-brand-oak">{product.name}</span>
-                      <span className="text-[10px] text-brand-lotus ml-1">({product.unit})</span>
-                    </div>
-                    {stores.map(store => {
-                      const qty = storeOrders[store.id]?.[product.id] || 0
-                      return (
-                        <span key={store.id} className={`w-[55px] text-center text-sm font-num ${qty === 0 ? 'text-gray-300' : 'text-brand-oak'}`}>
-                          {qty || '-'}
-                        </span>
-                      )
-                    })}
-                    <span className={`w-[60px] text-center text-sm font-num font-bold rounded-md py-0.5 ${total > 0 ? 'text-brand-amber bg-brand-amber/10' : 'text-gray-300'}`}>
-                      {total || '-'}
-                    </span>
-                  </div>
-                )
-              })}
-            </div>
-          </div>
-        ))}
-
-        {/* 各店叫貨備註 */}
-        <SectionHeader title="各店叫貨備註" icon="■" />
-        <div className="bg-white">
-          {stores.map((store, sIdx) => (
-            <div key={store.id} className={`px-4 py-2.5 ${sIdx < stores.length - 1 ? 'border-b border-gray-100' : ''}`}>
-              <div className="flex items-center gap-1.5 mb-1.5">
-                <MessageSquareText size={14} className="text-brand-mocha" />
-                <span className="text-sm font-semibold text-brand-oak">{store.name}</span>
-                {!hasNotes(store.id) && <span className="text-xs text-brand-lotus">（無備註）</span>}
-              </div>
-              {hasNotes(store.id) && (
-                <div className="pl-5">
-                  {/* 固定項目 */}
-                  {fixedNoteItems.map(item => {
-                    const qty = storeNotes[store.id]?.fixedItems[item.id] || 0
-                    if (qty === 0) return null
-                    return (
-                      <div key={item.id} className="flex items-center gap-2 text-sm text-brand-oak py-0.5">
-                        <span className="text-brand-lotus">{item.label}：</span>
-                        <span className="font-semibold font-num">{qty}</span>
-                        <span className="text-xs text-brand-lotus">{item.unit}</span>
-                      </div>
-                    )
-                  })}
-                  {/* 自由備註 */}
-                  {storeNotes[store.id]?.freeText && (
-                    <p className="text-sm text-brand-oak mt-1 bg-status-warning/5 px-2 py-1 rounded-lg">
-                      {storeNotes[store.id].freeText}
-                    </p>
-                  )}
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* ===== 列印版（A4 表格） ===== */}
-      <div className="print-only" style={{ display: 'none' }}>
-        <div className="print-header">
-          <h1>阿爸的芋圓 — 各店叫貨總表</h1>
-          <span className="print-date">{formatDate(selectedDate)}</span>
-        </div>
-
-        <table className="print-table">
-          <thead>
-            <tr>
-              <th>品項</th>
-              <th>單位</th>
-              {stores.map(s => (
-                <th key={s.id}>{s.name}</th>
-              ))}
-              <th>加總</th>
-              <th>備註</th>
-            </tr>
-          </thead>
-          <tbody>
-            {Array.from(productsByCategory.entries()).map(([category, products]) => (
-              <>
-                <tr key={`cat-${category}`} className="cat-row">
-                  <td colSpan={stores.length + 4}>{category}</td>
-                </tr>
-                {products.map(product => {
+        {Array.from(productsByCategory.entries()).map(([category, products]) => {
+          if (products.length === 0) return null
+          return (
+            <div key={category}>
+              <SectionHeader title={category} icon="■" />
+              <div className="bg-white">
+                {products.map((product, idx) => {
                   const total = getTotal(product.id)
+                  const hasOrder = total > 0
+                  const stock = productStock[product.id]
                   return (
-                    <tr key={product.id}>
-                      <td>{product.name}</td>
-                      <td>{product.unit}</td>
+                    <div
+                      key={product.id}
+                      className={`flex items-center gap-0.5 px-3 py-1.5 ${
+                        idx < products.length - 1 ? 'border-b border-gray-50' : ''
+                      } ${hasOrder ? 'bg-amber-50/40' : ''}`}
+                    >
+                      <div className="flex-1 min-w-0 truncate">
+                        <span className={`text-sm font-medium ${hasOrder ? 'text-brand-oak' : 'text-gray-400'}`}>
+                          {product.name}
+                        </span>
+                        <span className="text-[10px] text-brand-lotus ml-0.5">({product.unit})</span>
+                      </div>
+                      <span className={`w-9 text-center text-sm font-num rounded py-0.5 ${
+                        stock != null ? 'text-brand-oak bg-yellow-100 font-semibold' : 'text-gray-300'
+                      }`}>
+                        {stock != null ? stock : '-'}
+                      </span>
                       {stores.map(store => {
                         const qty = storeOrders[store.id]?.[product.id] || 0
                         return (
-                          <td key={store.id} className={qty === 0 ? 'zero' : ''}>
+                          <span key={store.id} className={`w-10 text-center text-sm font-num ${qty === 0 ? 'text-gray-300' : 'text-blue-700 font-semibold'}`}>
                             {qty || '-'}
-                          </td>
+                          </span>
                         )
                       })}
-                      <td className="total-col">{total || '-'}</td>
-                      <td></td>
-                    </tr>
+                      <span className={`w-10 text-center text-sm font-num font-bold rounded py-0.5 ${
+                        hasOrder ? 'text-red-600 bg-red-50 ring-1 ring-red-200' : 'text-gray-300'
+                      }`}>
+                        {total || '-'}
+                      </span>
+                      {(() => {
+                        const remaining = stock != null ? Math.round((stock - total) * 10) / 10 : null
+                        return (
+                          <span className={`w-11 text-center text-xs font-num font-semibold rounded py-0.5 ${
+                            remaining != null ? (remaining < 0 ? 'text-red-600 bg-red-50' : 'text-green-700 bg-green-50') : 'text-gray-300'
+                          }`}>
+                            {remaining != null ? remaining.toFixed(1) : '-'}
+                          </span>
+                        )
+                      })()}
+                    </div>
                   )
                 })}
-              </>
-            ))}
-          </tbody>
-        </table>
-
-        {/* 列印版備註區 */}
-        <div style={{ marginTop: '8px', borderTop: '1px solid #ccc', paddingTop: '6px' }}>
-          <p style={{ fontSize: '11px', fontWeight: 600, color: '#6B5D55', marginBottom: '4px' }}>各店叫貨備註</p>
-          {stores.map(store => (
-            <div key={store.id} style={{ marginBottom: '4px' }}>
-              <span style={{ fontSize: '10px', fontWeight: 600, color: '#7A6E5F' }}>{store.name}：</span>
-              {hasNotes(store.id) ? (
-                <span style={{ fontSize: '10px', color: '#6B5D55' }}>
-                  {fixedNoteItems
-                    .filter(item => (storeNotes[store.id]?.fixedItems[item.id] || 0) > 0)
-                    .map(item => `${item.label} ${storeNotes[store.id].fixedItems[item.id]}${item.unit}`)
-                    .join('、')}
-                  {storeNotes[store.id]?.freeText ? `。${storeNotes[store.id].freeText}` : ''}
-                </span>
-              ) : (
-                <span style={{ fontSize: '10px', color: '#aaa' }}>無備註</span>
-              )}
+              </div>
             </div>
-          ))}
-        </div>
+          )
+        })}
+      </div>
+
+      {/* 各店叫貨備註 */}
+      <SectionHeader title="各店叫貨備註" icon="■" />
+      <div className="mx-4 mb-4 space-y-2">
+        {stores.map(store => (
+          <div key={store.id} className="bg-white rounded-xl border border-gray-100 px-4 py-3 shadow-sm">
+            <div className="flex items-center gap-1.5 mb-1.5">
+              <MessageSquareText size={14} className="text-brand-mocha" />
+              <span className="text-sm font-semibold text-brand-oak">{store.name}</span>
+              {!hasNotes(store.id) && <span className="text-xs text-brand-lotus">（無備註）</span>}
+            </div>
+            {hasNotes(store.id) && (
+              <div className="pl-5">
+                {/* 固定項目 */}
+                {fixedNoteItems.map(item => {
+                  const qty = storeNotes[store.id]?.fixedItems[item.id] || 0
+                  if (qty === 0) return null
+                  return (
+                    <div key={item.id} className="flex items-center gap-2 text-sm text-brand-oak py-0.5">
+                      <span className="text-brand-lotus">{item.label}：</span>
+                      <span className="font-semibold font-num">{qty}</span>
+                      <span className="text-xs text-brand-lotus">{item.unit}</span>
+                    </div>
+                  )
+                })}
+                {/* 自由備註 */}
+                {storeNotes[store.id]?.freeText && (
+                  <p className="text-sm text-brand-oak mt-1 bg-status-warning/5 px-2 py-1 rounded-lg">
+                    {storeNotes[store.id].freeText}
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
+        ))}
       </div>
       </>
       )}

@@ -5,13 +5,12 @@ import { AdminScheduleToolbar, type PaintBrush } from '@/components/schedule/Adm
 import { AdminScheduleGrid } from '@/components/schedule/AdminScheduleGrid'
 import { ScheduleEditModal } from '@/components/schedule/ScheduleEditModal'
 import { ScheduleLegend } from '@/components/schedule/ScheduleLegend'
-import { WeekNav } from '@/components/WeekNav'
+import { MonthNav } from '@/components/MonthNav'
 import { useScheduleStore } from '@/stores/useScheduleStore'
 import { useStaffStore } from '@/stores/useStaffStore'
 import { useStoreStore } from '@/stores/useStoreStore'
-import { getWeekDates } from '@/lib/schedule'
-import { getTodayString } from '@/lib/utils'
-import { getSession } from '@/lib/auth'
+import { getMonthDates } from '@/lib/schedule'
+import { getSession, getRoleHomePath } from '@/lib/auth'
 import type { Schedule } from '@/lib/schedule'
 import type { StaffMember } from '@/data/staff'
 import { ArrowLeft } from 'lucide-react'
@@ -43,7 +42,11 @@ export default function AdminSchedule() {
   }, [stores, session?.role, session?.allowedStores])
 
   const [activeGroup, setActiveGroup] = useState(groups[0]?.id || 'kitchen')
-  const [refDate, setRefDate] = useState(getTodayString())
+
+  // Month state
+  const now = new Date()
+  const [calYear, setCalYear] = useState(now.getFullYear())
+  const [calMonth, setCalMonth] = useState(now.getMonth() + 1)
 
   const {
     shiftTypes, schedules, positions, tagPresets,
@@ -57,23 +60,24 @@ export default function AdminSchedule() {
     return storeStaff[activeGroup] || []
   }, [activeGroup, kitchenStaff, storeStaff])
 
-  const weekDates = useMemo(() => getWeekDates(refDate), [refDate])
+  const monthDates = useMemo(() => getMonthDates(calYear, calMonth), [calYear, calMonth])
   const staffIds = useMemo(() => currentStaff.map((s) => s.id), [currentStaff])
 
   // Fetch tag presets once
   useEffect(() => { fetchTagPresets() }, [fetchTagPresets])
 
-  // Fetch data when group/week changes
+  // Fetch data when group changes
   useEffect(() => {
     fetchShiftTypes(activeGroup)
     fetchPositions(activeGroup)
   }, [activeGroup, fetchShiftTypes, fetchPositions])
 
+  // Fetch schedules for month
   useEffect(() => {
-    if (staffIds.length > 0) {
-      fetchSchedules(staffIds, weekDates[0], weekDates[6])
+    if (staffIds.length > 0 && monthDates.length > 0) {
+      fetchSchedules(staffIds, monthDates[0], monthDates[monthDates.length - 1])
     }
-  }, [staffIds, weekDates, fetchSchedules])
+  }, [staffIds, monthDates, fetchSchedules])
 
   // Paint brush mode
   const [paintBrush, setPaintBrush] = useState<PaintBrush | null>(null)
@@ -171,7 +175,7 @@ export default function AdminSchedule() {
     <div className="min-h-screen flex flex-col" style={{ backgroundColor: 'var(--color-page-bg)' }}>
       {/* Top bar */}
       <div className="flex items-center gap-3 px-4 py-3 bg-brand-oak text-white">
-        <button onClick={() => navigate('/admin')} className="p-1 rounded-lg hover:bg-white/20">
+        <button onClick={() => navigate(getRoleHomePath(getSession()))} className="p-1 rounded-lg hover:bg-white/20">
           <ArrowLeft size={20} />
         </button>
         <h1 className="text-lg font-bold">排班管理</h1>
@@ -180,8 +184,8 @@ export default function AdminSchedule() {
       {/* Group tabs */}
       <GroupTabs groups={groups} activeGroup={activeGroup} onChange={setActiveGroup} />
 
-      {/* Week navigation */}
-      <WeekNav refDate={refDate} onChange={setRefDate} />
+      {/* Month navigation */}
+      <MonthNav year={calYear} month={calMonth} onChange={(y, m) => { setCalYear(y); setCalMonth(m) }} />
 
       {/* Toolbar */}
       <AdminScheduleToolbar
@@ -195,7 +199,7 @@ export default function AdminSchedule() {
 
       {/* Grid */}
       <AdminScheduleGrid
-        refDate={refDate}
+        dates={monthDates}
         staff={currentStaff}
         schedules={schedules}
         shiftTypes={shiftTypes}

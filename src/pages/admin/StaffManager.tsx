@@ -27,6 +27,7 @@ export default function StaffManager() {
   const [formGroup, setFormGroup] = useState('kitchen')
   const [formEmployment, setFormEmployment] = useState('full_time')
   const [formHourlyRate, setFormHourlyRate] = useState('')
+  const [formMonthlySalary, setFormMonthlySalary] = useState('')
   const [deleteConfirm, setDeleteConfirm] = useState<{ member: StaffMember; group: string } | null>(null)
 
   const groupOptions = [
@@ -41,6 +42,7 @@ export default function StaffManager() {
     setFormGroup('kitchen')
     setFormEmployment('full_time')
     setFormHourlyRate('')
+    setFormMonthlySalary('')
     setModalOpen(true)
   }
 
@@ -50,9 +52,10 @@ export default function StaffManager() {
     setFormGroup(group)
     // Fetch employment_type and hourly_rate from DB
     if (supabase) {
-      const { data } = await supabase.from('staff').select('employment_type, hourly_rate').eq('id', member.id).single()
+      const { data } = await supabase.from('staff').select('employment_type, hourly_rate, monthly_salary').eq('id', member.id).single()
       setFormEmployment(data?.employment_type || 'full_time')
       setFormHourlyRate(data?.hourly_rate ? String(data.hourly_rate) : '')
+      setFormMonthlySalary(data?.monthly_salary ? String(data.monthly_salary) : '')
     }
     setModalOpen(true)
   }
@@ -70,11 +73,12 @@ export default function StaffManager() {
       } else {
         updateStore(editing.group, editing.member.id, { name: formName })
       }
-      // Update employment_type and hourly_rate
+      // Update employment_type, hourly_rate, monthly_salary
       if (supabase) {
         await supabase.from('staff').update({
           employment_type: formEmployment,
           hourly_rate: formHourlyRate ? Number(formHourlyRate) : 0,
+          monthly_salary: formMonthlySalary ? Number(formMonthlySalary) : 0,
         }).eq('id', editing.member.id)
       }
       showToast('人員已更新')
@@ -94,6 +98,7 @@ export default function StaffManager() {
           await supabase!.from('staff').update({
             employment_type: formEmployment,
             hourly_rate: formHourlyRate ? Number(formHourlyRate) : 0,
+            monthly_salary: formMonthlySalary ? Number(formMonthlySalary) : 0,
           }).eq('id', newMember.id)
           // Auto-create user_pins record (is_active=false, admin needs to set PIN later)
           const role = formGroup === 'admin' ? 'admin' : formGroup === 'kitchen' ? 'kitchen' : 'store'
@@ -120,18 +125,22 @@ export default function StaffManager() {
     setDeleteConfirm({ member, group })
   }
 
-  const confirmDelete = () => {
-    if (deleteConfirm) {
-      if (deleteConfirm.group === 'admin') {
-        removeAdmin(deleteConfirm.member.id)
-      } else if (deleteConfirm.group === 'kitchen') {
-        removeKitchen(deleteConfirm.member.id)
-      } else {
-        removeStore(deleteConfirm.group, deleteConfirm.member.id)
-      }
-      showToast('人員已刪除')
-      setDeleteConfirm(null)
+  const confirmDelete = async () => {
+    if (!deleteConfirm) return
+    let err: string | null = null
+    if (deleteConfirm.group === 'admin') {
+      err = await removeAdmin(deleteConfirm.member.id)
+    } else if (deleteConfirm.group === 'kitchen') {
+      err = await removeKitchen(deleteConfirm.member.id)
+    } else {
+      err = await removeStore(deleteConfirm.group, deleteConfirm.member.id)
     }
+    if (err) {
+      showToast('刪除失敗：' + err, 'error')
+    } else {
+      showToast('人員已刪除')
+    }
+    setDeleteConfirm(null)
   }
 
   const moveUp = (members: StaffMember[], idx: number, group: string) => {
@@ -229,14 +238,25 @@ export default function StaffManager() {
             options={EMPLOYMENT_OPTIONS}
           />
         </ModalField>
-        <ModalField label="時薪（元）">
-          <ModalInput
-            value={formHourlyRate}
-            onChange={setFormHourlyRate}
-            placeholder="例：183"
-            type="text"
-          />
-        </ModalField>
+        {formEmployment === 'full_time' ? (
+          <ModalField label="月薪（元）">
+            <ModalInput
+              value={formMonthlySalary}
+              onChange={setFormMonthlySalary}
+              placeholder="例：30000"
+              type="text"
+            />
+          </ModalField>
+        ) : (
+          <ModalField label="時薪（元）">
+            <ModalInput
+              value={formHourlyRate}
+              onChange={setFormHourlyRate}
+              placeholder="例：183"
+              type="text"
+            />
+          </ModalField>
+        )}
       </AdminModal>
 
       {deleteConfirm && (

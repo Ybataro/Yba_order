@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, Outlet } from 'react-router-dom'
-import { getSession, isAuthorized, clearSession, type AuthSession, type RoleRequirement } from '@/lib/auth'
+import { getSession, isAuthorized, clearSession, getRoleHomePath, type AuthSession, type RoleRequirement } from '@/lib/auth'
 import { supabase } from '@/lib/supabase'
 import PinEntry from '@/pages/PinEntry'
 
@@ -28,16 +28,6 @@ function setCachedHasPins(val: boolean) {
   } catch { /* ignore */ }
 }
 
-// Get the home path for a given role
-function getRoleHomePath(role: string, allowedStores: string[]): string {
-  switch (role) {
-    case 'admin': return '/admin'
-    case 'kitchen': return '/kitchen'
-    case 'store': return `/store/${allowedStores[0] || 'lehua'}`
-    default: return '/'
-  }
-}
-
 export default function AuthGuard({ requiredRole }: AuthGuardProps) {
   const { storeId } = useParams<{ storeId: string }>()
   const [session, setSessionState] = useState<AuthSession | null>(() => getSession())
@@ -46,7 +36,7 @@ export default function AuthGuard({ requiredRole }: AuthGuardProps) {
   const handleSuccess = useCallback((s: AuthSession) => {
     setSessionState(s)
     if (!isAuthorized(s, requiredRole, storeId)) {
-      window.location.href = getRoleHomePath(s.role, s.allowedStores)
+      window.location.href = getRoleHomePath(s)
     }
   }, [requiredRole, storeId])
 
@@ -93,7 +83,7 @@ export default function AuthGuard({ requiredRole }: AuthGuardProps) {
   }
 
   if (!isAuthorized(session, requiredRole, storeId)) {
-    const homePath = getRoleHomePath(session.role, session.allowedStores)
+    const homePath = getRoleHomePath(session)
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-surface-page px-6">
         <div className="text-center">
@@ -108,7 +98,7 @@ export default function AuthGuard({ requiredRole }: AuthGuardProps) {
               前往我的首頁
             </button>
             <button
-              onClick={() => { clearSession(); setSessionState(null) }}
+              onClick={() => { clearSession(); window.location.reload() }}
               className="px-6 py-2 rounded-xl bg-brand-lotus text-white text-sm font-medium active:scale-95 transition-transform"
             >
               切換帳號

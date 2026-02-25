@@ -1,14 +1,15 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { useParams } from 'react-router-dom'
 import { useStoreStore } from '@/stores/useStoreStore'
 import { useStaffStore } from '@/stores/useStaffStore'
-import { ClipboardList, DollarSign, Package, PackageCheck, UserCircle, LogOut, Receipt, CalendarDays, Settings } from 'lucide-react'
+import { ClipboardList, DollarSign, Package, PackageCheck, UserCircle, LogOut, Receipt, CalendarDays, Settings, KeyRound } from 'lucide-react'
 import { getTodayString, formatDate } from '@/lib/utils'
 import NotificationBell from '@/components/NotificationBell'
 import CriticalAlertModal from '@/components/CriticalAlertModal'
 import type { Notification } from '@/hooks/useNotifications'
 import { clearSession, getSession } from '@/lib/auth'
 import { useCanSchedule } from '@/hooks/useCanSchedule'
+import ChangePinModal from '@/components/ChangePinModal'
 
 const menuItems = [
   { icon: ClipboardList, label: '物料盤點', desc: '門店打烊物料清點', path: 'inventory', color: 'bg-brand-mocha' },
@@ -31,17 +32,36 @@ export default function StoreHome() {
   const authSession = getSession()
   const canSchedule = useCanSchedule()
   const [currentStaff, setCurrentStaff] = useState(() => {
-    const saved = sessionStorage.getItem(`store_${storeId}_staff`)
-    if (saved && staffList.some((s) => s.id === saved)) return saved
-    const sid = authSession?.staffId || ''
-    return staffList.some((s) => s.id === sid) ? sid : ''
+    // 先信任 sessionStorage（staffList 可能尚未載入）
+    return sessionStorage.getItem(`store_${storeId}_staff`) || ''
   })
+
+  // staffList 載入後：驗證 sessionStorage 值，或自動補值
+  useEffect(() => {
+    if (staffList.length === 0) return
+    // 已有有效選擇 → 不動
+    if (currentStaff && staffList.some((s) => s.id === currentStaff)) return
+    // 嘗試用登入者 staffId
+    const sid = authSession?.staffId || ''
+    if (staffList.some((s) => s.id === sid)) {
+      setCurrentStaff(sid)
+      sessionStorage.setItem(`store_${storeId}_staff`, sid)
+      return
+    }
+    // Admin 不在門店名單 → 自動選第一位
+    if (authSession?.role === 'admin') {
+      setCurrentStaff(staffList[0].id)
+      sessionStorage.setItem(`store_${storeId}_staff`, staffList[0].id)
+      return
+    }
+  }, [staffList, authSession, storeId])
 
   const handleStaffChange = (id: string) => {
     setCurrentStaff(id)
     if (id) sessionStorage.setItem(`store_${storeId}_staff`, id)
     else sessionStorage.removeItem(`store_${storeId}_staff`)
   }
+  const [changePinOpen, setChangePinOpen] = useState(false)
   const [criticalNotifications, setCriticalNotifications] = useState<Notification[]>([])
   const [criticalDismiss, setCriticalDismiss] = useState<((id: string) => void) | null>(null)
 
@@ -71,6 +91,9 @@ export default function StoreHome() {
               className="text-white"
               onCriticalNotifications={handleCriticalNotifications}
             />
+            <button onClick={() => setChangePinOpen(true)} className="p-2 rounded-full text-white/80 hover:bg-white/20" title="修改 PIN">
+              <KeyRound size={20} />
+            </button>
             <button onClick={handleLogout} className="p-2 rounded-full text-white/80 hover:bg-white/20" title="登出">
               <LogOut size={20} />
             </button>
@@ -150,6 +173,8 @@ export default function StoreHome() {
           onDismiss={criticalDismiss}
         />
       )}
+
+      <ChangePinModal open={changePinOpen} onClose={() => setChangePinOpen(false)} />
     </div>
   )
 }

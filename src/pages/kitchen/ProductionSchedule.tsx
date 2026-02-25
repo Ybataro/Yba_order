@@ -3,7 +3,7 @@ import { TopNav } from '@/components/TopNav'
 import { SectionHeader } from '@/components/SectionHeader'
 import { useProductStore } from '@/stores/useProductStore'
 import { supabase } from '@/lib/supabase'
-import { getTodayTW, getYesterdayTW } from '@/lib/session'
+import { getTodayTW } from '@/lib/session'
 import {
   parseShelfLifeDays,
   getProductionUrgency,
@@ -28,9 +28,18 @@ interface ProductScheduleItem {
 }
 
 function getDateNDaysAgo(n: number): string {
-  const d = new Date(getTodayTW() + 'T00:00:00')
+  const d = new Date(getTodayTW() + 'T00:00:00+08:00')
   d.setDate(d.getDate() - n)
-  return d.toISOString().split('T')[0]
+  return d.toLocaleDateString('en-CA', { timeZone: 'Asia/Taipei' })
+}
+
+/** 取最近的工作日（往前跳過央廚休息日：週三/日） */
+function getEffectiveYesterday(): string {
+  const d = new Date(getTodayTW() + 'T00:00:00+08:00')
+  do {
+    d.setDate(d.getDate() - 1)
+  } while (d.getDay() === 0 || d.getDay() === 3)
+  return d.toLocaleDateString('en-CA', { timeZone: 'Asia/Taipei' })
 }
 
 function getDateNDaysAhead(n: number): string {
@@ -52,7 +61,7 @@ export default function ProductionSchedule() {
   const products = useProductStore((s) => s.items)
 
   const today = getTodayTW()
-  const yesterday = getYesterdayTW()
+  const yesterday = getEffectiveYesterday()
   const sevenDaysAgo = getDateNDaysAgo(7)
 
   // Data states

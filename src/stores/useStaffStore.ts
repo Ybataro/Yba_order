@@ -11,13 +11,13 @@ interface StaffState {
   initialize: () => Promise<void>
   addAdmin: (member: StaffMember) => void
   updateAdmin: (id: string, partial: Partial<StaffMember>) => void
-  removeAdmin: (id: string) => void
+  removeAdmin: (id: string) => Promise<string | null>
   addKitchen: (member: StaffMember) => void
   updateKitchen: (id: string, partial: Partial<StaffMember>) => void
-  removeKitchen: (id: string) => void
+  removeKitchen: (id: string) => Promise<string | null>
   addStore: (storeId: string, member: StaffMember) => void
   updateStore: (storeId: string, id: string, partial: Partial<StaffMember>) => void
-  removeStore: (storeId: string, id: string) => void
+  removeStore: (storeId: string, id: string) => Promise<string | null>
   getStoreStaff: (storeId: string) => StaffMember[]
   reorderGroup: (groupId: string, members: StaffMember[]) => void
 }
@@ -77,11 +77,13 @@ export const useStaffStore = create<StaffState>()((set, get) => ({
     }
   },
 
-  removeAdmin: (id) => {
+  removeAdmin: async (id) => {
+    if (!supabase) { set((s) => ({ adminStaff: s.adminStaff.filter((m) => m.id !== id) })); return null }
+    // FK CASCADE 會自動刪除 schedules + user_pins
+    const { error } = await supabase.from('staff').delete().eq('id', id)
+    if (error) return error.message
     set((s) => ({ adminStaff: s.adminStaff.filter((m) => m.id !== id) }))
-    if (supabase) {
-      supabase.from('staff').delete().eq('id', id).then()
-    }
+    return null
   },
 
   addKitchen: (member) => {
@@ -105,11 +107,12 @@ export const useStaffStore = create<StaffState>()((set, get) => ({
     }
   },
 
-  removeKitchen: (id) => {
+  removeKitchen: async (id) => {
+    if (!supabase) { set((s) => ({ kitchenStaff: s.kitchenStaff.filter((m) => m.id !== id) })); return null }
+    const { error } = await supabase.from('staff').delete().eq('id', id)
+    if (error) return error.message
     set((s) => ({ kitchenStaff: s.kitchenStaff.filter((m) => m.id !== id) }))
-    if (supabase) {
-      supabase.from('staff').delete().eq('id', id).then()
-    }
+    return null
   },
 
   addStore: (storeId, member) => {
@@ -144,16 +147,15 @@ export const useStaffStore = create<StaffState>()((set, get) => ({
     }
   },
 
-  removeStore: (storeId, id) => {
-    set((s) => ({
-      storeStaff: {
-        ...s.storeStaff,
-        [storeId]: (s.storeStaff[storeId] || []).filter((m) => m.id !== id),
-      },
-    }))
-    if (supabase) {
-      supabase.from('staff').delete().eq('id', id).then()
+  removeStore: async (storeId, id) => {
+    if (!supabase) {
+      set((s) => ({ storeStaff: { ...s.storeStaff, [storeId]: (s.storeStaff[storeId] || []).filter((m) => m.id !== id) } }))
+      return null
     }
+    const { error } = await supabase.from('staff').delete().eq('id', id)
+    if (error) return error.message
+    set((s) => ({ storeStaff: { ...s.storeStaff, [storeId]: (s.storeStaff[storeId] || []).filter((m) => m.id !== id) } }))
+    return null
   },
 
   getStoreStaff: (storeId) => get().storeStaff[storeId] || [],

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { TopNav } from '@/components/TopNav'
 import { AdminModal, ModalField, ModalInput, ModalSelect } from '@/components/AdminModal'
 import { SectionHeader } from '@/components/SectionHeader'
@@ -17,15 +17,37 @@ interface UserPin {
   allowed_stores: string[]
   is_active: boolean
   can_schedule: boolean
-  staff?: { name: string }
 }
+
+interface StaffRow {
+  id: string
+  name: string
+  group_id: string
+  sort_order: number
+}
+
+/** Derive role from group_id */
+function deriveRole(groupId: string): string {
+  if (groupId === 'admin') return 'admin'
+  if (groupId === 'kitchen') return 'kitchen'
+  return 'store'
+}
+
+/** Derive allowed_stores from group_id */
+function deriveStores(groupId: string): string[] {
+  if (groupId === 'admin' || groupId === 'kitchen') return []
+  return [groupId]
+}
+
+const GROUP_ORDER: Record<string, number> = { admin: 0, kitchen: 1, lehua: 2, xingnan: 3 }
 
 export default function PinManager() {
   const { showToast } = useToast()
-  const { kitchenStaff, storeStaff } = useStaffStore()
+  const { adminStaff, kitchenStaff, storeStaff } = useStaffStore()
   const stores = useStoreStore((s) => s.items)
 
   const [pins, setPins] = useState<UserPin[]>([])
+  const [allStaffRows, setAllStaffRows] = useState<StaffRow[]>([])
   const [loading, setLoading] = useState(true)
   const [modalOpen, setModalOpen] = useState(false)
   const [editing, setEditing] = useState<UserPin | null>(null)
@@ -36,37 +58,61 @@ export default function PinManager() {
   const [formPin, setFormPin] = useState('')
   const [formAllowedStores, setFormAllowedStores] = useState<string[]>([])
 
-  // Fetch pins
+  // Fetch pins + all staff
   useEffect(() => {
     if (!supabase) { setLoading(false); return }
-    supabase
-      .from('user_pins')
-      .select('*, staff:staff_id(name)')
-      .order('role')
-      .then(({ data }) => {
-        setPins((data as UserPin[] | null) || [])
-        setLoading(false)
-      })
+    Promise.all([
+      supabase.from('user_pins').select('*').order('role'),
+      supabase.from('staff').select('id, name, group_id, sort_order').order('sort_order'),
+    ]).then(([pinRes, staffRes]) => {
+      setPins((pinRes.data as UserPin[] | null) || [])
+      setAllStaffRows((staffRes.data as StaffRow[] | null) || [])
+      setLoading(false)
+    })
   }, [])
 
-  const adminStaff = useStaffStore((s) => s.adminStaff)
+  // Build pin lookup: staff_id → UserPin
+  const pinMap = useMemo(() => {
+    const m = new Map<string, UserPin>()
+    for (const p of pins) m.set(p.staff_id, p)
+    return m
+  }, [pins])
 
-  // All staff flat list
-  const allStaff = [
+  // Group labels
+  const groupLabels: Record<string, string> = useMemo(() => {
+    const m: Record<string, string> = { admin: '管理者', kitchen: '央廚' }
+    for (const s of stores) m[s.id] = s.name
+    return m
+  }, [stores])
+
+  // Group staff by group_id, sorted
+  const grouped = useMemo(() => {
+    const m = new Map<string, StaffRow[]>()
+    for (const s of allStaffRows) {
+      const key = s.group_id || 'kitchen'
+      const list = m.get(key) || []
+      list.push(s)
+      m.set(key, list)
+    }
+    return Array.from(m.entries()).sort((a, b) => (GROUP_ORDER[a[0]] ?? 99) - (GROUP_ORDER[b[0]] ?? 99))
+  }, [allStaffRows])
+
+  // All staff flat list for modal dropdown
+  const allStaffOptions = useMemo(() => [
     ...adminStaff.map((s) => ({ id: s.id, name: s.name, group: '管理者' })),
     ...kitchenStaff.map((s) => ({ id: s.id, name: s.name, group: '央廚' })),
     ...Object.entries(storeStaff).flatMap(([storeId, members]) => {
       const storeName = stores.find((s) => s.id === storeId)?.name || storeId
       return members.map((s) => ({ id: s.id, name: s.name, group: storeName }))
     }),
-  ]
+  ], [adminStaff, kitchenStaff, storeStaff, stores])
 
-  const openAdd = () => {
+  const openAdd = (staffId?: string, groupId?: string) => {
     setEditing(null)
-    setFormStaffId('')
-    setFormRole('store')
+    setFormStaffId(staffId || '')
+    setFormRole(groupId ? deriveRole(groupId) : 'store')
     setFormPin('')
-    setFormAllowedStores([])
+    setFormAllowedStores(groupId ? deriveStores(groupId) : [])
     setModalOpen(true)
   }
 
@@ -77,6 +123,12 @@ export default function PinManager() {
     setFormPin('')
     setFormAllowedStores(pin.allowed_stores || [])
     setModalOpen(true)
+  }
+
+  const refreshPins = async () => {
+    if (!supabase) return
+    const { data } = await supabase.from('user_pins').select('*').order('role')
+    setPins((data as UserPin[] | null) || [])
   }
 
   const handleSubmit = async () => {
@@ -112,13 +164,7 @@ export default function PinManager() {
       return
     }
 
-    // Refresh list
-    const { data } = await supabase
-      .from('user_pins')
-      .select('*, staff:staff_id(name)')
-      .order('role')
-    setPins((data as UserPin[] | null) || [])
-
+    await refreshPins()
     setModalOpen(false)
     showToast(editing ? 'PIN 已更新' : 'PIN 已新增')
   }
@@ -130,11 +176,7 @@ export default function PinManager() {
       .update({ is_active: !pin.is_active, updated_at: new Date().toISOString() })
       .eq('id', pin.id)
 
-    if (error) {
-      showToast('更新失敗', 'error')
-      return
-    }
-
+    if (error) { showToast('更新失敗', 'error'); return }
     setPins((prev) => prev.map((p) => p.id === pin.id ? { ...p, is_active: !p.is_active } : p))
     showToast(pin.is_active ? '已停用' : '已啟用')
   }
@@ -146,19 +188,9 @@ export default function PinManager() {
       .update({ can_schedule: !pin.can_schedule, updated_at: new Date().toISOString() })
       .eq('id', pin.id)
 
-    if (error) {
-      showToast('更新失敗', 'error')
-      return
-    }
-
+    if (error) { showToast('更新失敗', 'error'); return }
     setPins((prev) => prev.map((p) => p.id === pin.id ? { ...p, can_schedule: !p.can_schedule } : p))
     showToast(pin.can_schedule ? '已取消排班權限' : '已授予排班權限')
-  }
-
-  const roleLabels: Record<string, string> = {
-    admin: '管理者',
-    kitchen: '央廚',
-    store: '門店',
   }
 
   const roleOptions = [
@@ -167,20 +199,11 @@ export default function PinManager() {
     { value: 'admin', label: '管理者' },
   ]
 
-  // Group pins by role
-  const grouped = {
-    admin: pins.filter((p) => p.role === 'admin'),
-    kitchen: pins.filter((p) => p.role === 'kitchen'),
-    store: pins.filter((p) => p.role === 'store'),
-  }
-
   if (!supabase) {
     return (
       <div className="page-container">
         <TopNav title="PIN 碼管理" backTo="/admin" />
-        <div className="flex items-center justify-center py-20 text-sm text-brand-lotus">
-          需連接 Supabase
-        </div>
+        <div className="flex items-center justify-center py-20 text-sm text-brand-lotus">需連接 Supabase</div>
       </div>
     )
   }
@@ -193,52 +216,65 @@ export default function PinManager() {
         <div className="flex items-center justify-center py-20 text-sm text-brand-lotus">載入中...</div>
       ) : (
         <>
-          {/* Groups */}
-          {Object.entries(grouped).map(([role, items]) => (
-            <div key={role}>
-              <SectionHeader title={`${roleLabels[role]} (${items.length})`} icon="■" />
+          {grouped.map(([groupId, staffRows]) => (
+            <div key={groupId}>
+              <SectionHeader title={`${groupLabels[groupId] || groupId} (${staffRows.length})`} icon="■" />
               <div className="bg-white divide-y divide-gray-50">
-                {items.length === 0 ? (
-                  <div className="px-4 py-6 text-center text-sm text-gray-400">尚無人員</div>
-                ) : (
-                  items.map((pin) => (
-                    <div key={pin.id} className="flex items-center px-4 py-3">
+                {staffRows.map((staff) => {
+                  const pin = pinMap.get(staff.id)
+                  return (
+                    <div key={staff.id} className="flex items-center px-4 py-3">
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-brand-oak">
-                          {(pin.staff as unknown as { name: string })?.name || pin.staff_id}
+                        <p className={`text-sm font-medium ${pin ? 'text-brand-oak' : 'text-brand-oak/50'}`}>
+                          {staff.name}
                         </p>
-                        <p className="text-[11px] text-brand-lotus">
-                          {roleLabels[pin.role]}
-                          {pin.allowed_stores?.length > 0 && (
-                            <> · {pin.allowed_stores.map((sid) => stores.find((s) => s.id === sid)?.name || sid).join('、')}</>
-                          )}
-                        </p>
+                        {pin ? (
+                          <p className="text-[11px] text-brand-lotus">
+                            {pin.is_active ? '啟用中' : '已停用'}
+                            {pin.allowed_stores?.length > 0 && (
+                              <> · {pin.allowed_stores.map((sid) => stores.find((s) => s.id === sid)?.name || sid).join('、')}</>
+                            )}
+                          </p>
+                        ) : (
+                          <p className="text-[11px] text-status-danger/70">未設定 PIN</p>
+                        )}
                       </div>
                       <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => toggleCanSchedule(pin)}
-                          className={`p-1.5 rounded-lg ${pin.can_schedule ? 'text-brand-amber bg-amber-50' : 'text-gray-300 bg-gray-50'}`}
-                          title={pin.can_schedule ? '取消排班權限' : '授予排班權限'}
-                        >
-                          <CalendarDays size={16} />
-                        </button>
-                        <button
-                          onClick={() => toggleActive(pin)}
-                          className={`p-1.5 rounded-lg ${pin.is_active ? 'text-green-500 bg-green-50' : 'text-gray-400 bg-gray-100'}`}
-                          title={pin.is_active ? '停用' : '啟用'}
-                        >
-                          {pin.is_active ? <Shield size={16} /> : <ShieldOff size={16} />}
-                        </button>
-                        <button
-                          onClick={() => openEdit(pin)}
-                          className="p-1.5 rounded-lg text-brand-lotus bg-gray-50"
-                        >
-                          <Pencil size={16} />
-                        </button>
+                        {pin ? (
+                          <>
+                            <button
+                              onClick={() => toggleCanSchedule(pin)}
+                              className={`p-1.5 rounded-lg ${pin.can_schedule ? 'text-brand-amber bg-amber-50' : 'text-gray-300 bg-gray-50'}`}
+                              title={pin.can_schedule ? '取消排班權限' : '授予排班權限'}
+                            >
+                              <CalendarDays size={16} />
+                            </button>
+                            <button
+                              onClick={() => toggleActive(pin)}
+                              className={`p-1.5 rounded-lg ${pin.is_active ? 'text-green-500 bg-green-50' : 'text-gray-400 bg-gray-100'}`}
+                              title={pin.is_active ? '停用' : '啟用'}
+                            >
+                              {pin.is_active ? <Shield size={16} /> : <ShieldOff size={16} />}
+                            </button>
+                            <button
+                              onClick={() => openEdit(pin)}
+                              className="p-1.5 rounded-lg text-brand-lotus bg-gray-50"
+                            >
+                              <Pencil size={16} />
+                            </button>
+                          </>
+                        ) : (
+                          <button
+                            onClick={() => openAdd(staff.id, staff.group_id)}
+                            className="px-2.5 py-1 rounded-lg bg-brand-mocha text-white text-xs font-medium active:scale-95 transition-transform"
+                          >
+                            設定 PIN
+                          </button>
+                        )}
                       </div>
                     </div>
-                  ))
-                )}
+                  )
+                })}
               </div>
             </div>
           ))}
@@ -247,7 +283,7 @@ export default function PinManager() {
 
       {/* FAB */}
       <button
-        onClick={openAdd}
+        onClick={() => openAdd()}
         className="fixed bottom-6 right-6 w-14 h-14 rounded-full bg-brand-lotus text-white shadow-lg flex items-center justify-center active:scale-95 transition-transform z-40"
       >
         <Plus size={24} />
@@ -264,7 +300,7 @@ export default function PinManager() {
           <ModalSelect
             value={formStaffId}
             onChange={setFormStaffId}
-            options={allStaff.map((s) => ({ value: s.id, label: `${s.name} (${s.group})` }))}
+            options={allStaffOptions.map((s) => ({ value: s.id, label: `${s.name} (${s.group})` }))}
             placeholder="選擇人員"
           />
         </ModalField>

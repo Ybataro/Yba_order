@@ -1,5 +1,5 @@
-import { useMemo, useState, useRef, useEffect } from 'react'
-import { formatTime, getAttendanceType } from '@/lib/schedule'
+import { useMemo, useState, useRef, useEffect, useCallback } from 'react'
+import { formatTime, getAttendanceType, getTagColor } from '@/lib/schedule'
 import type { ShiftType, Schedule } from '@/lib/schedule'
 import type { StaffMember } from '@/data/staff'
 import { getTodayString } from '@/lib/utils'
@@ -151,9 +151,27 @@ export function CalendarGrid({ year, month, staff, schedules, shiftTypes, canSch
 
   const WEEKDAY_LABELS = ['一', '二', '三', '四', '五', '六', '日']
 
-  // Info popup state
-  const [popupInfo, setPopupInfo] = useState<{ sch: Schedule; name: string; label: string; color: { bg: string; text: string } } | null>(null)
+  /** Get effective tags for a schedule (schedule tags + shift type tags) */
+  const getEffectiveTags = useCallback((sch: Schedule): string[] => {
+    const tags: string[] = [...(sch.tags || [])]
+    if (sch.shift_type_id && shiftMap[sch.shift_type_id]) {
+      const st = shiftMap[sch.shift_type_id]
+      if (st.tags?.length) {
+        for (const t of st.tags) {
+          if (!tags.includes(t)) tags.push(t)
+        }
+      }
+    }
+    return tags
+  }, [shiftMap])
+
+  // Info popup state — includes anchor position for inline placement
+  const [popupInfo, setPopupInfo] = useState<{
+    sch: Schedule; name: string; label: string; color: { bg: string; text: string }
+    anchorTop: number; anchorLeft: number; anchorWidth: number
+  } | null>(null)
   const popupRef = useRef<HTMLDivElement>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
 
   // Close popup on outside click
   useEffect(() => {
@@ -176,24 +194,49 @@ export function CalendarGrid({ year, month, staff, schedules, shiftTypes, canSch
     }
   }, [popupInfo])
 
-  /** Render a badge */
+  /** Render a badge with tags below */
   const renderBadge = (sch: Schedule) => {
     const member = staffMap[sch.staff_id]
     if (!member) return null
     const color = getBadgeColor(sch)
     const shortName = getShortName(member.name)
     const fullLabel = getFullLabel(sch)
+    const tags = getEffectiveTags(sch)
+    const firstTag = tags.length > 0 ? tags[0] : null
+    const shortTag = firstTag ? (firstTag.length <= 2 ? firstTag : firstTag.slice(0, 2)) : null
+    const tagColor = firstTag ? getTagColor(firstTag) : null
     return (
       <button
         key={sch.id}
-        onClick={() => {
-          setPopupInfo({ sch, name: member.name, label: fullLabel, color })
+        onClick={(e) => {
+          const btn = e.currentTarget
+          const container = containerRef.current
+          if (container) {
+            const btnRect = btn.getBoundingClientRect()
+            const cRect = container.getBoundingClientRect()
+            setPopupInfo({
+              sch, name: member.name, label: fullLabel, color,
+              anchorTop: btnRect.bottom - cRect.top + container.scrollTop,
+              anchorLeft: btnRect.left - cRect.left + container.scrollLeft,
+              anchorWidth: btnRect.width,
+            })
+          } else {
+            setPopupInfo({ sch, name: member.name, label: fullLabel, color, anchorTop: 0, anchorLeft: 0, anchorWidth: 0 })
+          }
         }}
-        title={`${member.name} ${fullLabel}`}
-        className="rounded px-[3px] py-[1px] text-[8px] leading-tight font-semibold whitespace-nowrap active:opacity-70"
+        title={`${member.name} ${fullLabel}${firstTag ? ` [${firstTag}]` : ''}`}
+        className="rounded px-[3px] py-[1px] text-[8px] leading-tight font-semibold whitespace-nowrap active:opacity-70 flex flex-col items-center"
         style={{ backgroundColor: color.bg, color: color.text }}
       >
-        {shortName}
+        <span>{shortName}</span>
+        {shortTag && (
+          <span
+            className="text-[6px] leading-none rounded px-[2px] mt-[1px]"
+            style={{ backgroundColor: tagColor!.bg, color: tagColor!.text }}
+          >
+            {shortTag}
+          </span>
+        )}
       </button>
     )
   }
@@ -207,7 +250,7 @@ export function CalendarGrid({ year, month, staff, schedules, shiftTypes, canSch
   }
 
   return (
-    <div className="overflow-x-auto px-2 pb-4">
+    <div ref={containerRef} className="overflow-x-auto px-2 pb-4 relative">
       {/* min-w ensures badges stay side-by-side; overflows horizontally on mobile */}
       <div className="min-w-[700px]">
       {/* Weekday header */}
@@ -304,29 +347,30 @@ export function CalendarGrid({ year, month, staff, schedules, shiftTypes, canSch
       ))}
       </div>
 
-      {/* Info popup — sticky so it stays visible when zoomed */}
+      {/* Compact info popup — anchored below clicked badge */}
       {popupInfo && (
         <div
           ref={popupRef}
-          className="z-50 mx-auto w-full max-w-sm rounded-xl bg-white shadow-lg border border-gray-200 p-3 my-2"
+          className="absolute z-50 rounded-lg bg-white shadow-lg border border-gray-200 p-2 w-40"
+          style={{
+            top: popupInfo.anchorTop + 4,
+            left: Math.max(4, Math.min(popupInfo.anchorLeft - 60 + popupInfo.anchorWidth / 2, (containerRef.current?.scrollWidth ?? 700) - 168)),
+          }}
         >
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-2">
-              <span
-                className="inline-block rounded px-2 py-0.5 text-xs font-semibold"
-                style={{ backgroundColor: popupInfo.color.bg, color: popupInfo.color.text }}
-              >
-                {popupInfo.name}
-              </span>
-              <span className="text-xs text-gray-400">{popupInfo.sch.date}</span>
-            </div>
-            <button onClick={() => setPopupInfo(null)} className="p-1 rounded active:bg-gray-100">
-              <X size={14} className="text-gray-400" />
+          <div className="flex items-center justify-between mb-1">
+            <span
+              className="inline-block rounded px-1.5 py-px text-[10px] font-semibold"
+              style={{ backgroundColor: popupInfo.color.bg, color: popupInfo.color.text }}
+            >
+              {popupInfo.name}
+            </span>
+            <button onClick={() => setPopupInfo(null)} className="p-0.5 rounded active:bg-gray-100">
+              <X size={12} className="text-gray-400" />
             </button>
           </div>
-          <div className="text-sm text-brand-oak font-medium">{popupInfo.label}</div>
+          <div className="text-[11px] text-brand-oak font-medium">{popupInfo.label}</div>
           {popupInfo.sch.note && (
-            <div className="text-xs text-gray-500 mt-1">{popupInfo.sch.note}</div>
+            <div className="text-[10px] text-gray-500 mt-0.5">{popupInfo.sch.note}</div>
           )}
           {canSchedule && (
             <button
@@ -335,9 +379,9 @@ export function CalendarGrid({ year, month, staff, schedules, shiftTypes, canSch
                 setPopupInfo(null)
                 onCellClick?.(s.staff_id, s.date, s)
               }}
-              className="mt-2 flex items-center gap-1 px-3 py-1.5 rounded-lg bg-brand-oak text-white text-xs font-medium active:scale-95 transition-transform"
+              className="mt-1.5 flex items-center gap-1 px-2 py-1 rounded-md bg-brand-oak text-white text-[10px] font-medium active:scale-95 transition-transform"
             >
-              <Pencil size={12} />
+              <Pencil size={10} />
               編輯
             </button>
           )}

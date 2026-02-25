@@ -6,6 +6,7 @@ import { calcHours, getMonthDates, getAttendanceType } from '@/lib/schedule'
 import type { ShiftType, Schedule } from '@/lib/schedule'
 import { useStaffStore } from '@/stores/useStaffStore'
 import { useStoreStore } from '@/stores/useStoreStore'
+import { getSession, getRoleHomePath } from '@/lib/auth'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 
 interface StaffRow {
@@ -14,6 +15,7 @@ interface StaffRow {
   group: string
   employment_type: string
   hourly_rate: number
+  monthly_salary: number
   shifts: number
   hours: number
   estimated_pay: number
@@ -29,10 +31,11 @@ export default function ScheduleStats() {
   const today = new Date()
   const [year, setYear] = useState(today.getFullYear())
   const [month, setMonth] = useState(today.getMonth() + 1)
+  const backPath = useMemo(() => getRoleHomePath(getSession()), [])
   const [loading, setLoading] = useState(true)
   const [schedules, setSchedules] = useState<Schedule[]>([])
   const [shiftTypes, setShiftTypes] = useState<ShiftType[]>([])
-  const [staffExtra, setStaffExtra] = useState<Record<string, { employment_type: string; hourly_rate: number }>>({})
+  const [staffExtra, setStaffExtra] = useState<Record<string, { employment_type: string; hourly_rate: number; monthly_salary: number }>>({})
 
   const { kitchenStaff, storeStaff } = useStaffStore()
   const stores = useStoreStore((s) => s.items)
@@ -62,14 +65,14 @@ export default function ScheduleStats() {
       const [schRes, stRes, staffRes] = await Promise.all([
         supabase!.from('schedules').select('*').in('staff_id', allStaffIds).gte('date', startDate).lte('date', endDate),
         supabase!.from('shift_types').select('*').eq('is_active', true),
-        supabase!.from('staff').select('id, employment_type, hourly_rate').in('id', allStaffIds),
+        supabase!.from('staff').select('id, employment_type, hourly_rate, monthly_salary').in('id', allStaffIds),
       ])
       setSchedules((schRes.data as Schedule[] | null) || [])
       setShiftTypes((stRes.data as ShiftType[] | null) || [])
 
-      const extra: Record<string, { employment_type: string; hourly_rate: number }> = {}
-      ;(staffRes.data || []).forEach((d: { id: string; employment_type: string; hourly_rate: number }) => {
-        extra[d.id] = { employment_type: d.employment_type || 'full_time', hourly_rate: d.hourly_rate || 0 }
+      const extra: Record<string, { employment_type: string; hourly_rate: number; monthly_salary: number }> = {}
+      ;(staffRes.data || []).forEach((d: { id: string; employment_type: string; hourly_rate: number; monthly_salary: number }) => {
+        extra[d.id] = { employment_type: d.employment_type || 'full_time', hourly_rate: d.hourly_rate || 0, monthly_salary: d.monthly_salary || 0 }
       })
       setStaffExtra(extra)
       setLoading(false)
@@ -86,7 +89,7 @@ export default function ScheduleStats() {
   // Calculate stats
   const rows: StaffRow[] = useMemo(() => {
     return allStaff.map((staff) => {
-      const ext = staffExtra[staff.id] || { employment_type: 'full_time', hourly_rate: 0 }
+      const ext = staffExtra[staff.id] || { employment_type: 'full_time', hourly_rate: 0, monthly_salary: 0 }
       const staffSchedules = schedules.filter((s) => s.staff_id === staff.id)
       let totalHours = 0
       let workShifts = 0
@@ -104,28 +107,38 @@ export default function ScheduleStats() {
           totalHours += calcHours(s.custom_start, s.custom_end)
         }
       })
+      // 正職用月薪，兼職/工讀用時薪計算
+      const isFullTime = ext.employment_type === 'full_time'
+      const estimatedPay = isFullTime ? ext.monthly_salary : Math.round(totalHours * ext.hourly_rate)
       return {
         id: staff.id,
         name: staff.name,
         group: staff.group,
         employment_type: ext.employment_type,
         hourly_rate: ext.hourly_rate,
+        monthly_salary: ext.monthly_salary,
         shifts: workShifts,
         hours: Math.round(totalHours * 10) / 10,
-        estimated_pay: Math.round(totalHours * ext.hourly_rate),
+        estimated_pay: estimatedPay,
       }
     }).filter((r) => r.shifts > 0)
   }, [allStaff, schedules, shiftMap, staffExtra])
 
-  // Group by employment type
+  // Group by unit (央廚 / 各門店)
+  const groupOrder = useMemo(() => {
+    const order = ['央廚', ...stores.map((s) => s.name)]
+    return order
+  }, [stores])
+
   const grouped = useMemo(() => {
-    const g: Record<string, StaffRow[]> = { full_time: [], part_time: [], hourly: [] }
+    const g: Record<string, StaffRow[]> = {}
+    groupOrder.forEach((name) => { g[name] = [] })
     rows.forEach((r) => {
-      if (!g[r.employment_type]) g[r.employment_type] = []
-      g[r.employment_type].push(r)
+      if (!g[r.group]) g[r.group] = []
+      g[r.group].push(r)
     })
     return g
-  }, [rows])
+  }, [rows, groupOrder])
 
   const prevMonth = () => {
     if (month === 1) { setYear(year - 1); setMonth(12) }
@@ -144,7 +157,7 @@ export default function ScheduleStats() {
   if (!supabase) {
     return (
       <div className="page-container">
-        <TopNav title="工時統計" backTo="/admin" />
+        <TopNav title="工時統計" backTo={backPath} />
         <div className="flex items-center justify-center py-20 text-sm text-brand-lotus">需連接 Supabase</div>
       </div>
     )
@@ -152,7 +165,7 @@ export default function ScheduleStats() {
 
   return (
     <div className="page-container">
-      <TopNav title="工時統計" backTo="/admin" />
+      <TopNav title="工時統計" backTo={backPath} />
 
       {/* Month picker */}
       <div className="flex items-center gap-2 px-4 py-2 bg-white border-b border-gray-100">
@@ -173,38 +186,44 @@ export default function ScheduleStats() {
         <div className="flex items-center justify-center py-20 text-sm text-brand-lotus">本月尚無排班資料</div>
       ) : (
         <>
-          {Object.entries(grouped).map(([type, items]) => {
+          {groupOrder.map((groupName) => {
+            const items = grouped[groupName] || []
             if (items.length === 0) return null
             const subtotalShifts = items.reduce((a, r) => a + r.shifts, 0)
             const subtotalHours = items.reduce((a, r) => a + r.hours, 0)
             const subtotalPay = items.reduce((a, r) => a + r.estimated_pay, 0)
 
             return (
-              <div key={type}>
-                <SectionHeader title={`${EMPLOYMENT_LABELS[type] || type} (${items.length} 人)`} icon="■" />
+              <div key={groupName}>
+                <SectionHeader title={`${groupName} (${items.length} 人)`} icon="■" />
                 <div className="overflow-x-auto">
-                  <table className="w-full min-w-[420px]">
+                  <table className="w-full min-w-[480px]">
                     <thead>
                       <tr className="bg-surface-section text-xs text-brand-mocha">
                         <th className="px-3 py-2 text-left font-medium">姓名</th>
-                        <th className="px-2 py-2 text-center font-medium">單位</th>
+                        <th className="px-2 py-2 text-center font-medium">職別</th>
                         <th className="px-2 py-2 text-right font-medium">班數</th>
                         <th className="px-2 py-2 text-right font-medium">工時</th>
-                        <th className="px-2 py-2 text-right font-medium">時薪</th>
+                        <th className="px-2 py-2 text-right font-medium">月薪/時薪</th>
                         <th className="px-3 py-2 text-right font-medium">估算薪資</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {items.map((r) => (
-                        <tr key={r.id} className="border-t border-gray-50">
-                          <td className="px-3 py-2.5 text-sm font-medium text-brand-oak">{r.name}</td>
-                          <td className="px-2 py-2.5 text-xs text-center text-brand-lotus">{r.group}</td>
-                          <td className="px-2 py-2.5 text-sm text-right text-brand-oak">{r.shifts}</td>
-                          <td className="px-2 py-2.5 text-sm text-right text-brand-oak">{r.hours}h</td>
-                          <td className="px-2 py-2.5 text-sm text-right text-brand-mocha">${r.hourly_rate}</td>
-                          <td className="px-3 py-2.5 text-sm text-right font-medium text-brand-oak">${r.estimated_pay.toLocaleString()}</td>
-                        </tr>
-                      ))}
+                      {items.map((r) => {
+                        const isFullTime = r.employment_type === 'full_time'
+                        return (
+                          <tr key={r.id} className="border-t border-gray-50">
+                            <td className="px-3 py-2.5 text-sm font-medium text-brand-oak">{r.name}</td>
+                            <td className="px-2 py-2.5 text-xs text-center text-brand-lotus">{EMPLOYMENT_LABELS[r.employment_type] || r.employment_type}</td>
+                            <td className="px-2 py-2.5 text-sm text-right text-brand-oak">{r.shifts}</td>
+                            <td className="px-2 py-2.5 text-sm text-right text-brand-oak">{r.hours}h</td>
+                            <td className="px-2 py-2.5 text-xs text-right text-brand-mocha">
+                              {isFullTime ? `月 $${r.monthly_salary.toLocaleString()}` : `時 $${r.hourly_rate}`}
+                            </td>
+                            <td className="px-3 py-2.5 text-sm text-right font-medium text-brand-oak">${r.estimated_pay.toLocaleString()}</td>
+                          </tr>
+                        )
+                      })}
                       {/* Subtotal */}
                       <tr className="border-t-2 border-gray-200 bg-gray-50">
                         <td colSpan={2} className="px-3 py-2 text-xs font-semibold text-brand-mocha">小計</td>

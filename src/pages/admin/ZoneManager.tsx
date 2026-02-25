@@ -1,22 +1,30 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { TopNav } from '@/components/TopNav'
 import { AdminModal, ModalField, ModalInput } from '@/components/AdminModal'
 import { useToast } from '@/components/Toast'
 import { useStoreStore } from '@/stores/useStoreStore'
 import { useProductStore } from '@/stores/useProductStore'
 import { useFrozenProductStore } from '@/stores/useFrozenProductStore'
+import { useMaterialStore } from '@/stores/useMaterialStore'
 import { useZoneStore } from '@/stores/useZoneStore'
-import { Plus, Trash2, ChevronDown, ChevronRight, AlertTriangle, Snowflake } from 'lucide-react'
+import { Plus, Trash2, ChevronDown, ChevronRight, AlertTriangle, Snowflake, Package } from 'lucide-react'
 
 export default function ZoneManager() {
   const stores = useStoreStore((s) => s.items)
   const products = useProductStore((s) => s.items)
-  const categories = useProductStore((s) => s.categories)
+  const productCategories = useProductStore((s) => s.categories)
   const frozenProducts = useFrozenProductStore((s) => s.items)
+  const materials = useMaterialStore((s) => s.items)
+  const materialCategories = useMaterialStore((s) => s.categories)
   const { zones, getStoreZones, getZoneProductIds, addZone, removeZone, assignProduct, unassignProduct } = useZoneStore()
   const { showToast } = useToast()
 
-  const [selectedStoreId, setSelectedStoreId] = useState(stores[0]?.id || '')
+  // 央廚 + 各門店 tabs
+  const allTabs = [
+    { id: 'kitchen', name: '央廚' },
+    ...stores.map((s) => ({ id: s.id, name: s.name })),
+  ]
+  const [selectedStoreId, setSelectedStoreId] = useState('kitchen')
   const [expandedZone, setExpandedZone] = useState<string | null>(null)
   const [modalOpen, setModalOpen] = useState(false)
   const [formZoneCode, setFormZoneCode] = useState('')
@@ -24,13 +32,24 @@ export default function ZoneManager() {
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null)
 
   const storeZones = getStoreZones(selectedStoreId)
+  const isKitchen = selectedStoreId === 'kitchen'
 
-  // Find products not assigned to any zone of this store
+  // Find products not assigned to any zone
   const allAssignedIds = new Set(
     storeZones.flatMap((z) => getZoneProductIds(z.id))
   )
-  const unassignedProducts = products.filter((p) => !allAssignedIds.has(p.id))
-  const unassignedFrozen = frozenProducts.filter((p) => !allAssignedIds.has(p.key))
+
+  // 央廚：原物料 + 成品；門店：成品 + 冷凍品
+  const unassignedItems = useMemo(() => {
+    if (isKitchen) {
+      const unMat = materials.filter((m) => !allAssignedIds.has(m.id))
+      const unProd = products.filter((p) => !allAssignedIds.has(p.id))
+      return { count: unMat.length + unProd.length, names: [...unMat.slice(0, 3).map((m) => m.name), ...unProd.slice(0, 3).map((p) => p.name)].slice(0, 5) }
+    }
+    const unProd = products.filter((p) => !allAssignedIds.has(p.id))
+    const unFrozen = frozenProducts.filter((p) => !allAssignedIds.has(p.key))
+    return { count: unProd.length + unFrozen.length, names: [...unProd.slice(0, 5).map((p) => p.name), ...unFrozen.slice(0, 3).map((p) => p.name)].slice(0, 5) }
+  }, [isKitchen, materials, products, frozenProducts, allAssignedIds])
 
   const handleAddZone = () => {
     if (!formZoneCode.trim() || !formZoneName.trim()) {
@@ -74,37 +93,37 @@ export default function ZoneManager() {
     <div className="page-container">
       <TopNav title="樓層品項管理" backTo="/admin" />
 
-      {/* Store tabs */}
+      {/* Store tabs (央廚 + 各門店) */}
       <div className="flex border-b border-gray-200 bg-white">
-        {stores.map((store) => (
+        {allTabs.map((tab) => (
           <button
-            key={store.id}
+            key={tab.id}
             onClick={() => {
-              setSelectedStoreId(store.id)
+              setSelectedStoreId(tab.id)
               setExpandedZone(null)
             }}
             className={`flex-1 py-3 text-sm font-semibold transition-colors ${
-              selectedStoreId === store.id
+              selectedStoreId === tab.id
                 ? 'text-brand-oak border-b-2 border-brand-oak'
                 : 'text-brand-lotus'
             }`}
           >
-            {store.name}
+            {tab.name}
           </button>
         ))}
       </div>
 
       {/* Unassigned warning */}
-      {(unassignedProducts.length > 0 || unassignedFrozen.length > 0) && (
+      {unassignedItems.count > 0 && (
         <div className="mx-4 mt-3 p-3 bg-amber-50 border border-amber-200 rounded-xl flex items-start gap-2">
           <AlertTriangle size={16} className="text-amber-600 mt-0.5 shrink-0" />
           <div>
             <p className="text-sm font-medium text-amber-800">
-              {unassignedProducts.length + unassignedFrozen.length} 個品項未分配樓層
+              {unassignedItems.count} 個品項未分配區域
             </p>
             <p className="text-xs text-amber-700 mt-0.5">
-              {[...unassignedProducts.slice(0, 5).map((p) => p.name), ...unassignedFrozen.slice(0, 3).map((p) => p.name)].slice(0, 5).join('、')}
-              {unassignedProducts.length + unassignedFrozen.length > 5 && `...等`}
+              {unassignedItems.names.join('、')}
+              {unassignedItems.count > 5 && `...等`}
             </p>
           </div>
         </div>
@@ -113,12 +132,11 @@ export default function ZoneManager() {
       {/* Zone list */}
       <div className="px-4 py-3 space-y-3">
         {storeZones.length === 0 && (
-          <div className="text-center py-8 text-sm text-brand-lotus">此門店尚無樓層設定</div>
+          <div className="text-center py-8 text-sm text-brand-lotus">{isKitchen ? '央廚尚無區域設定' : '此門店尚無樓層設定'}</div>
         )}
         {storeZones.map((zone) => {
           const isExpanded = expandedZone === zone.id
           const assignedIds = new Set(getZoneProductIds(zone.id))
-          const frozenCount = frozenProducts.filter((fp) => assignedIds.has(fp.key)).length
 
           return (
             <div key={zone.id} className="bg-white rounded-card overflow-hidden shadow-sm">
@@ -135,7 +153,7 @@ export default function ZoneManager() {
                   )}
                   <span className="text-base font-semibold text-brand-oak">{zone.zoneName}</span>
                   <span className="text-xs text-brand-lotus">({zone.zoneCode})</span>
-                  <span className="ml-auto text-xs text-brand-lotus">{assignedIds.size} 品項{frozenCount > 0 ? ` + ${frozenCount} 冷凍` : ''}</span>
+                  <span className="ml-auto text-xs text-brand-lotus">{assignedIds.size} 品項</span>
                 </button>
                 <button
                   onClick={() => setDeleteConfirm(zone.id)}
@@ -148,53 +166,119 @@ export default function ZoneManager() {
               {/* Product checkboxes */}
               {isExpanded && (
                 <div className="border-t border-gray-100 px-4 py-2">
-                  {categories.map((cat) => {
-                    const catProducts = products.filter((p) => p.category === cat)
-                    if (catProducts.length === 0) return null
-                    return (
-                      <div key={cat} className="mb-2">
-                        <p className="text-xs font-semibold text-brand-lotus py-1">{cat}</p>
-                        {catProducts.map((product) => (
-                          <label
-                            key={product.id}
-                            className="flex items-center gap-2 py-1.5 px-1 cursor-pointer active:bg-gray-50 rounded"
-                          >
-                            <input
-                              type="checkbox"
-                              checked={assignedIds.has(product.id)}
-                              onChange={(e) => toggleProduct(zone.id, product.id, e.target.checked)}
-                              className="w-4 h-4 rounded border-gray-300 text-brand-oak focus:ring-brand-oak/30"
-                            />
-                            <span className="text-sm text-brand-oak">{product.name}</span>
-                            <span className="text-[10px] text-brand-lotus">({product.unit})</span>
-                          </label>
-                        ))}
-                      </div>
-                    )
-                  })}
-                  {/* Frozen products */}
-                  {frozenProducts.length > 0 && (
-                    <div className="mb-2">
-                      <p className="text-xs font-semibold text-brand-lotus py-1 flex items-center gap-1">
-                        <Snowflake size={11} />
-                        冷凍品
-                      </p>
-                      {frozenProducts.map((fp) => (
-                        <label
-                          key={fp.key}
-                          className="flex items-center gap-2 py-1.5 px-1 cursor-pointer active:bg-gray-50 rounded"
-                        >
-                          <input
-                            type="checkbox"
-                            checked={assignedIds.has(fp.key)}
-                            onChange={(e) => toggleProduct(zone.id, fp.key, e.target.checked)}
-                            className="w-4 h-4 rounded border-gray-300 text-brand-oak focus:ring-brand-oak/30"
-                          />
-                          <span className="text-sm text-brand-oak">{fp.name}</span>
-                          <span className="text-[10px] text-brand-lotus">({fp.spec})</span>
-                        </label>
-                      ))}
-                    </div>
+                  {isKitchen ? (
+                    <>
+                      {/* 央廚：原物料 */}
+                      {materialCategories.map((cat) => {
+                        const catMaterials = materials.filter((m) => m.category === cat)
+                        if (catMaterials.length === 0) return null
+                        return (
+                          <div key={cat} className="mb-2">
+                            <p className="text-xs font-semibold text-brand-lotus py-1">{cat}</p>
+                            {catMaterials.map((mat) => (
+                              <label
+                                key={mat.id}
+                                className="flex items-center gap-2 py-1.5 px-1 cursor-pointer active:bg-gray-50 rounded"
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={assignedIds.has(mat.id)}
+                                  onChange={(e) => toggleProduct(zone.id, mat.id, e.target.checked)}
+                                  className="w-4 h-4 rounded border-gray-300 text-brand-oak focus:ring-brand-oak/30"
+                                />
+                                <span className="text-sm text-brand-oak">{mat.name}</span>
+                                {mat.spec && <span className="text-[10px] text-brand-lotus">({mat.spec})</span>}
+                              </label>
+                            ))}
+                          </div>
+                        )
+                      })}
+                      {/* 央廚：成品 */}
+                      {products.length > 0 && (
+                        <div className="mb-2">
+                          <p className="text-xs font-semibold text-brand-lotus py-1 flex items-center gap-1">
+                            <Package size={11} />
+                            成品
+                          </p>
+                          {productCategories.map((cat) => {
+                            const catProducts = products.filter((p) => p.category === cat)
+                            if (catProducts.length === 0) return null
+                            return (
+                              <div key={cat} className="ml-2 mb-1">
+                                <p className="text-[10px] font-medium text-brand-mocha py-0.5">{cat}</p>
+                                {catProducts.map((product) => (
+                                  <label
+                                    key={product.id}
+                                    className="flex items-center gap-2 py-1.5 px-1 cursor-pointer active:bg-gray-50 rounded"
+                                  >
+                                    <input
+                                      type="checkbox"
+                                      checked={assignedIds.has(product.id)}
+                                      onChange={(e) => toggleProduct(zone.id, product.id, e.target.checked)}
+                                      className="w-4 h-4 rounded border-gray-300 text-brand-oak focus:ring-brand-oak/30"
+                                    />
+                                    <span className="text-sm text-brand-oak">{product.name}</span>
+                                    <span className="text-[10px] text-brand-lotus">({product.unit})</span>
+                                  </label>
+                                ))}
+                              </div>
+                            )
+                          })}
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      {/* 門店：成品 */}
+                      {productCategories.map((cat) => {
+                        const catProducts = products.filter((p) => p.category === cat)
+                        if (catProducts.length === 0) return null
+                        return (
+                          <div key={cat} className="mb-2">
+                            <p className="text-xs font-semibold text-brand-lotus py-1">{cat}</p>
+                            {catProducts.map((product) => (
+                              <label
+                                key={product.id}
+                                className="flex items-center gap-2 py-1.5 px-1 cursor-pointer active:bg-gray-50 rounded"
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={assignedIds.has(product.id)}
+                                  onChange={(e) => toggleProduct(zone.id, product.id, e.target.checked)}
+                                  className="w-4 h-4 rounded border-gray-300 text-brand-oak focus:ring-brand-oak/30"
+                                />
+                                <span className="text-sm text-brand-oak">{product.name}</span>
+                                <span className="text-[10px] text-brand-lotus">({product.unit})</span>
+                              </label>
+                            ))}
+                          </div>
+                        )
+                      })}
+                      {/* 門店：冷凍品 */}
+                      {frozenProducts.length > 0 && (
+                        <div className="mb-2">
+                          <p className="text-xs font-semibold text-brand-lotus py-1 flex items-center gap-1">
+                            <Snowflake size={11} />
+                            冷凍品
+                          </p>
+                          {frozenProducts.map((fp) => (
+                            <label
+                              key={fp.key}
+                              className="flex items-center gap-2 py-1.5 px-1 cursor-pointer active:bg-gray-50 rounded"
+                            >
+                              <input
+                                type="checkbox"
+                                checked={assignedIds.has(fp.key)}
+                                onChange={(e) => toggleProduct(zone.id, fp.key, e.target.checked)}
+                                className="w-4 h-4 rounded border-gray-300 text-brand-oak focus:ring-brand-oak/30"
+                              />
+                              <span className="text-sm text-brand-oak">{fp.name}</span>
+                              <span className="text-[10px] text-brand-lotus">({fp.spec})</span>
+                            </label>
+                          ))}
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
               )}
