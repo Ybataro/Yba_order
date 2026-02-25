@@ -378,3 +378,278 @@ export async function exportScheduleToPdf({
 
   doc.save(fileName.endsWith('.pdf') ? fileName : `${fileName}.pdf`)
 }
+
+// ── Calendar (monthly) PDF export ──────────────────────────────────
+
+export interface CalendarPdfOptions {
+  title: string
+  year: number
+  month: number // 1-based
+  staff: StaffMember[]
+  schedules: Schedule[]
+  shiftTypes: ShiftType[]
+  fileName: string
+}
+
+/** Build calendar weeks for PDF: array of 7-element arrays (Mon-Sun), null for outside-month */
+function buildPdfCalendarWeeks(year: number, month: number): (string | null)[][] {
+  const daysInMonth = new Date(year, month, 0).getDate()
+  const firstDow = new Date(year, month - 1, 1).getDay()
+  const startOffset = (firstDow + 6) % 7 // Mon=0
+
+  const weeks: (string | null)[][] = []
+  let week: (string | null)[] = []
+
+  for (let i = 0; i < startOffset; i++) week.push(null)
+
+  for (let day = 1; day <= daysInMonth; day++) {
+    const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+    week.push(dateStr)
+    if (week.length === 7) {
+      weeks.push(week)
+      week = []
+    }
+  }
+
+  if (week.length > 0) {
+    while (week.length < 7) week.push(null)
+    weeks.push(week)
+  }
+
+  return weeks
+}
+
+export async function exportCalendarScheduleToPdf({
+  title,
+  year,
+  month,
+  staff,
+  schedules,
+  shiftTypes,
+  fileName,
+}: CalendarPdfOptions) {
+  const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' })
+
+  const hasCJK = await registerFont(doc)
+  const fontName = hasCJK ? 'NotoSansTC' : 'helvetica'
+
+  // Build lookup maps
+  const shiftMap: Record<string, ShiftType> = {}
+  shiftTypes.forEach((st) => { shiftMap[st.id] = st })
+
+  const staffMap: Record<string, StaffMember> = {}
+  staff.forEach((s) => { staffMap[s.id] = s })
+
+  // date → Schedule[]
+  const dateSchedules: Record<string, Schedule[]> = {}
+  schedules.forEach((s) => {
+    if (!dateSchedules[s.date]) dateSchedules[s.date] = []
+    dateSchedules[s.date].push(s)
+  })
+
+  // ── Brand header ──
+  doc.setFontSize(14)
+  doc.setFont(fontName, 'normal')
+  doc.setTextColor(139, 115, 85)
+  doc.text('\u963F\u7238\u7684\u828B\u5713', 14, 13)
+
+  doc.setFontSize(11)
+  doc.setTextColor(60, 46, 38)
+  doc.text(title, 14, 20)
+
+  doc.setFontSize(8)
+  doc.setTextColor(120, 120, 120)
+  doc.text(`${year}年${month}月`, 14, 26)
+  doc.setTextColor(0, 0, 0)
+
+  // Build calendar weeks
+  const weeks = buildPdfCalendarWeeks(year, month)
+  const weekdayLabels = ['一', '二', '三', '四', '五', '六', '日']
+
+  // Helper: get cell text content for a date
+  function getCellContent(date: string | null): string {
+    if (!date) return ''
+    const dayNum = new Date(date + 'T00:00:00').getDate()
+    const daySchedules = dateSchedules[date] || []
+    const lines: string[] = [String(dayNum)]
+
+    daySchedules.forEach((sch) => {
+      const member = staffMap[sch.staff_id]
+      if (!member) return
+      const render = buildCellRender(sch, shiftMap)
+      if (!render) return
+      const parts = [member.name]
+      if (render.shiftName) parts.push(render.shiftName)
+      else if (render.timeRange) parts.push(render.timeRange)
+      if (render.tags.length > 0) parts.push(render.tags.map((t) => t.name).join(' '))
+      lines.push(parts.join(' '))
+    })
+
+    return lines.join('\n')
+  }
+
+  // Build table data
+  const head = [weekdayLabels]
+  const body = weeks.map((week) =>
+    week.map((date) => getCellContent(date))
+  )
+
+  // Render map for custom cell drawing: `row_col` → { date, schedules, renders }
+  interface CalendarCellData {
+    date: string
+    dayNum: number
+    entries: { staffName: string; render: CellRender }[]
+  }
+  const cellDataMap: Record<string, CalendarCellData> = {}
+
+  weeks.forEach((week, rowIdx) => {
+    week.forEach((date, colIdx) => {
+      if (!date) return
+      const daySchedules = dateSchedules[date] || []
+      const entries: { staffName: string; render: CellRender }[] = []
+      daySchedules.forEach((sch) => {
+        const member = staffMap[sch.staff_id]
+        if (!member) return
+        const render = buildCellRender(sch, shiftMap)
+        if (render) entries.push({ staffName: member.name, render })
+      })
+      cellDataMap[`${rowIdx}_${colIdx}`] = {
+        date,
+        dayNum: new Date(date + 'T00:00:00').getDate(),
+        entries,
+      }
+    })
+  })
+
+  // Adaptive cell height based on week count
+  const pageH = doc.internal.pageSize.getHeight()
+  const tableStartY = 30
+  const availableH = pageH - tableStartY - 10 // bottom margin
+  const headerRowH = 7
+  const rowH = Math.max(16, (availableH - headerRowH) / weeks.length)
+
+  autoTable(doc, {
+    startY: tableStartY,
+    head,
+    body,
+    styles: {
+      font: fontName,
+      fontSize: 5.5,
+      cellPadding: 1,
+      halign: 'left',
+      valign: 'top',
+      lineWidth: 0.15,
+      lineColor: [230, 225, 220],
+      minCellHeight: rowH,
+      overflow: 'hidden',
+    },
+    headStyles: {
+      fillColor: [139, 115, 85],
+      textColor: 255,
+      fontStyle: 'normal',
+      font: fontName,
+      halign: 'center',
+      cellPadding: 1.5,
+      fontSize: 7,
+      minCellHeight: headerRowH,
+    },
+    alternateRowStyles: {
+      fillColor: [252, 250, 248],
+    },
+    margin: { left: 10, right: 10 },
+
+    willDrawCell: (hookData) => {
+      if (hookData.section !== 'body') return
+      const key = `${hookData.row.index}_${hookData.column.index}`
+      if (cellDataMap[key] || !weeks[hookData.row.index][hookData.column.index]) {
+        hookData.cell.text = []
+      }
+    },
+
+    didDrawCell: (hookData) => {
+      if (hookData.section !== 'body') return
+
+      const rowIdx = hookData.row.index
+      const colIdx = hookData.column.index
+      const date = weeks[rowIdx]?.[colIdx]
+
+      if (!date) {
+        // Gray out empty cells
+        const cell = hookData.cell
+        doc.setFillColor(245, 243, 240)
+        doc.rect(cell.x, cell.y, cell.width, cell.height, 'F')
+        return
+      }
+
+      const key = `${rowIdx}_${colIdx}`
+      const data = cellDataMap[key]
+      if (!data) return
+
+      const cell = hookData.cell
+      const cx = cell.x + 1
+      let cy = cell.y + 1
+
+      // Day number
+      doc.setFont(fontName, 'normal')
+      doc.setFontSize(7)
+      doc.setTextColor(60, 46, 38)
+      doc.text(String(data.dayNum), cx, cy + 3)
+      cy += 5
+
+      // Schedule entries
+      const entryH = 3.2
+      const maxEntries = Math.floor((cell.height - 6) / entryH)
+
+      data.entries.slice(0, maxEntries).forEach((entry) => {
+        const r = entry.render
+
+        // Badge background
+        if (r.badgeFill) {
+          doc.setFillColor(...r.badgeFill)
+          doc.roundedRect(cx, cy - 0.5, cell.width - 2, entryH - 0.3, 0.8, 0.8, 'F')
+        }
+
+        // Text
+        doc.setFontSize(5)
+        const textColor = r.badgeFill ? r.badgeText : ([60, 46, 38] as [number, number, number])
+        doc.setTextColor(...textColor)
+
+        let label = entry.staffName
+        if (r.shiftName) label += ` ${r.shiftName}`
+        else if (r.timeRange) label += ` ${r.timeRange}`
+
+        // Truncate if too wide
+        const maxW = cell.width - 3
+        while (doc.getTextWidth(label) > maxW && label.length > 3) {
+          label = label.slice(0, -2) + '…'
+        }
+
+        doc.text(label, cx + 0.5, cy + 2)
+        cy += entryH
+      })
+
+      // Overflow indicator
+      if (data.entries.length > maxEntries) {
+        doc.setFontSize(4.5)
+        doc.setTextColor(140, 130, 120)
+        doc.text(`+${data.entries.length - maxEntries}`, cx + 0.5, cy + 1.5)
+      }
+    },
+  })
+
+  // Page numbers
+  const totalPages = doc.getNumberOfPages()
+  for (let i = 1; i <= totalPages; i++) {
+    doc.setPage(i)
+    doc.setFontSize(7)
+    doc.setTextColor(160, 160, 160)
+    doc.text(
+      `${i} / ${totalPages}`,
+      doc.internal.pageSize.getWidth() / 2,
+      doc.internal.pageSize.getHeight() - 6,
+      { align: 'center' },
+    )
+  }
+
+  doc.save(fileName.endsWith('.pdf') ? fileName : `${fileName}.pdf`)
+}
