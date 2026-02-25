@@ -167,6 +167,15 @@ export function CalendarGrid({ year, month, staff, schedules, shiftTypes, canSch
     return () => document.removeEventListener('mousedown', handler)
   }, [popupInfo])
 
+  // Scroll popup into view when it appears
+  useEffect(() => {
+    if (popupInfo && popupRef.current) {
+      setTimeout(() => {
+        popupRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+      }, 50)
+    }
+  }, [popupInfo])
+
   /** Render a badge */
   const renderBadge = (sch: Schedule) => {
     const member = staffMap[sch.staff_id]
@@ -295,46 +304,43 @@ export function CalendarGrid({ year, month, staff, schedules, shiftTypes, canSch
       ))}
       </div>
 
-      {/* Info popup */}
+      {/* Info popup — sticky so it stays visible when zoomed */}
       {popupInfo && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center" onClick={() => setPopupInfo(null)}>
-          <div
-            ref={popupRef}
-            onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-sm mx-4 mb-6 rounded-xl bg-white shadow-lg border border-gray-200 p-3 animate-in slide-in-from-bottom-4"
-          >
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2">
-                <span
-                  className="inline-block rounded px-2 py-0.5 text-xs font-semibold"
-                  style={{ backgroundColor: popupInfo.color.bg, color: popupInfo.color.text }}
-                >
-                  {popupInfo.name}
-                </span>
-                <span className="text-xs text-gray-400">{popupInfo.sch.date}</span>
-              </div>
-              <button onClick={() => setPopupInfo(null)} className="p-1 rounded active:bg-gray-100">
-                <X size={14} className="text-gray-400" />
-              </button>
-            </div>
-            <div className="text-sm text-brand-oak font-medium">{popupInfo.label}</div>
-            {popupInfo.sch.note && (
-              <div className="text-xs text-gray-500 mt-1">{popupInfo.sch.note}</div>
-            )}
-            {canSchedule && (
-              <button
-                onClick={() => {
-                  const s = popupInfo.sch
-                  setPopupInfo(null)
-                  onCellClick?.(s.staff_id, s.date, s)
-                }}
-                className="mt-2 flex items-center gap-1 px-3 py-1.5 rounded-lg bg-brand-oak text-white text-xs font-medium active:scale-95 transition-transform"
+        <div
+          ref={popupRef}
+          className="z-50 mx-auto w-full max-w-sm rounded-xl bg-white shadow-lg border border-gray-200 p-3 my-2"
+        >
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2">
+              <span
+                className="inline-block rounded px-2 py-0.5 text-xs font-semibold"
+                style={{ backgroundColor: popupInfo.color.bg, color: popupInfo.color.text }}
               >
-                <Pencil size={12} />
-                編輯
-              </button>
-            )}
+                {popupInfo.name}
+              </span>
+              <span className="text-xs text-gray-400">{popupInfo.sch.date}</span>
+            </div>
+            <button onClick={() => setPopupInfo(null)} className="p-1 rounded active:bg-gray-100">
+              <X size={14} className="text-gray-400" />
+            </button>
           </div>
+          <div className="text-sm text-brand-oak font-medium">{popupInfo.label}</div>
+          {popupInfo.sch.note && (
+            <div className="text-xs text-gray-500 mt-1">{popupInfo.sch.note}</div>
+          )}
+          {canSchedule && (
+            <button
+              onClick={() => {
+                const s = popupInfo.sch
+                setPopupInfo(null)
+                onCellClick?.(s.staff_id, s.date, s)
+              }}
+              className="mt-2 flex items-center gap-1 px-3 py-1.5 rounded-lg bg-brand-oak text-white text-xs font-medium active:scale-95 transition-transform"
+            >
+              <Pencil size={12} />
+              編輯
+            </button>
+          )}
         </div>
       )}
     </div>
