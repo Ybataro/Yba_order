@@ -96,25 +96,38 @@ export function CalendarGrid({ year, month, staff, schedules, shiftTypes, canSch
     return name.length <= 2 ? name : name.slice(0, 2)
   }
 
-  const getColor = (s: Schedule): { bg: string; text: string } => {
-    const at = s.attendance_type || 'work'
+  // Staff-based color palette: each person gets a unique fixed color
+  const STAFF_COLORS: { bg: string; text: string }[] = [
+    { bg: '#E8D5C4', text: '#5D4037' },  // 奶茶
+    { bg: '#C8E6C9', text: '#2E7D32' },  // 抹茶
+    { bg: '#BBDEFB', text: '#1565C0' },  // 天藍
+    { bg: '#F8BBD0', text: '#AD1457' },  // 櫻粉
+    { bg: '#D1C4E9', text: '#4527A0' },  // 薰衣草
+    { bg: '#FFE0B2', text: '#E65100' },  // 橘果
+    { bg: '#B2DFDB', text: '#00695C' },  // 薄荷
+    { bg: '#FFCDD2', text: '#C62828' },  // 莓紅
+    { bg: '#FFF9C4', text: '#F57F17' },  // 檸檬
+    { bg: '#CFD8DC', text: '#37474F' },  // 灰藍
+    { bg: '#DCEDC8', text: '#558B2F' },  // 青蘋果
+    { bg: '#F0F4C3', text: '#9E9D24' },  // 萊姆
+  ]
+
+  const staffColorMap = useMemo(() => {
+    const m: Record<string, { bg: string; text: string }> = {}
+    staff.forEach((s, i) => {
+      m[s.id] = STAFF_COLORS[i % STAFF_COLORS.length]
+    })
+    return m
+  }, [staff])
+
+  /** Get badge color: staff-based for work, leave-type color for leaves */
+  const getBadgeColor = (sch: Schedule): { bg: string; text: string } => {
+    const at = sch.attendance_type || 'work'
     if (at !== 'work') {
       const leave = getAttendanceType(at)
       if (leave) return { bg: leave.color, text: leave.textColor }
     }
-    if (s.shift_type_id && shiftMap[s.shift_type_id]) {
-      const st = shiftMap[s.shift_type_id]
-      if (st.color) {
-        // Determine text color based on brightness
-        const h = st.color.replace('#', '')
-        const r = parseInt(h.substring(0, 2), 16)
-        const g = parseInt(h.substring(2, 4), 16)
-        const b = parseInt(h.substring(4, 6), 16)
-        const isLight = (0.299 * r + 0.587 * g + 0.114 * b) / 255 > 0.6
-        return { bg: st.color, text: isLight ? '#3C2E26' : '#ffffff' }
-      }
-    }
-    return { bg: '#6B5D55', text: '#ffffff' }
+    return staffColorMap[sch.staff_id] || { bg: '#6B5D55', text: '#ffffff' }
   }
 
   const WEEKDAY_LABELS = ['一', '二', '三', '四', '五', '六', '日']
@@ -174,7 +187,7 @@ export function CalendarGrid({ year, month, staff, schedules, shiftTypes, canSch
                   {daySchedules.map((sch) => {
                     const member = staffMap[sch.staff_id]
                     if (!member) return null
-                    const color = getColor(sch)
+                    const color = getBadgeColor(sch)
                     const shortName = getShortName(member.name)
                     const fullLabel = getFullLabel(sch)
 
