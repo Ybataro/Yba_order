@@ -486,7 +486,7 @@ export async function exportCalendarScheduleToPdf({
   const weeks = buildPdfCalendarWeeks(year, month)
   const weekdayLabels = ['一', '二', '三', '四', '五', '六', '日']
 
-  // Helper: get cell text content for a date
+  // Helper: get cell text content for a date (work only, no leaves)
   function getCellContent(date: string | null): string {
     if (!date) return ''
     const dayNum = new Date(date + 'T00:00:00').getDate()
@@ -494,6 +494,8 @@ export async function exportCalendarScheduleToPdf({
     const lines: string[] = [String(dayNum)]
 
     daySchedules.forEach((sch) => {
+      const at = sch.attendance_type || 'work'
+      if (at !== 'work') return
       const member = staffMap[sch.staff_id]
       if (!member) return
       const render = buildCellRender(sch, shiftMap)
@@ -514,17 +516,37 @@ export async function exportCalendarScheduleToPdf({
     week.map((date) => getCellContent(date))
   )
 
-  // Render map for custom cell drawing: `row_col` → { date, schedules, renders }
+  // Staff order for consistent sorting
+  const staffOrderMap: Record<string, number> = {}
+  staff.forEach((s, i) => { staffOrderMap[s.id] = i })
+  const sortByStaffOrder = (arr: CalendarEntry[]) =>
+    arr.sort((a, b) => (staffOrderMap[a.staffId] ?? 999) - (staffOrderMap[b.staffId] ?? 999))
+
+  // Shift cutoff: < 17 = afternoon, >= 17 = evening
+  const SHIFT_CUTOFF = 17
+  function isAfternoon(sch: Schedule): boolean {
+    if (sch.shift_type_id && shiftMap[sch.shift_type_id]) {
+      const hour = parseInt(shiftMap[sch.shift_type_id].start_time.split(':')[0], 10)
+      return hour < SHIFT_CUTOFF
+    }
+    if (sch.custom_start) {
+      const hour = parseInt(sch.custom_start.split(':')[0], 10)
+      return hour < SHIFT_CUTOFF
+    }
+    return true
+  }
+
+  // Render map for custom cell drawing: `row_col` → { date, afternoon, evening }
   interface CalendarEntry {
     staffName: string
     staffId: string
-    isLeave: boolean
     render: CellRender
   }
   interface CalendarCellData {
     date: string
     dayNum: number
-    entries: CalendarEntry[]
+    afternoon: CalendarEntry[]
+    evening: CalendarEntry[]
   }
   const cellDataMap: Record<string, CalendarCellData> = {}
 
@@ -532,18 +554,26 @@ export async function exportCalendarScheduleToPdf({
     week.forEach((date, colIdx) => {
       if (!date) return
       const daySchedules = dateSchedules[date] || []
-      const entries: CalendarEntry[] = []
+      const afternoon: CalendarEntry[] = []
+      const evening: CalendarEntry[] = []
       daySchedules.forEach((sch) => {
+        const at = sch.attendance_type || 'work'
+        if (at !== 'work') return // hide leaves
         const member = staffMap[sch.staff_id]
         if (!member) return
         const render = buildCellRender(sch, shiftMap)
-        const at = sch.attendance_type || 'work'
-        if (render) entries.push({ staffName: member.name, staffId: sch.staff_id, isLeave: at !== 'work', render })
+        if (!render) return
+        const entry: CalendarEntry = { staffName: member.name, staffId: sch.staff_id, render }
+        if (isAfternoon(sch)) afternoon.push(entry)
+        else evening.push(entry)
       })
+      sortByStaffOrder(afternoon)
+      sortByStaffOrder(evening)
       cellDataMap[`${rowIdx}_${colIdx}`] = {
         date,
         dayNum: new Date(date + 'T00:00:00').getDate(),
-        entries,
+        afternoon,
+        evening,
       }
     })
   })
@@ -623,50 +653,61 @@ export async function exportCalendarScheduleToPdf({
       doc.text(String(data.dayNum), cx, cy + 3)
       cy += 5
 
-      // Schedule entries
       const entryH = 3.2
-      const maxEntries = Math.floor((cell.height - 6) / entryH)
+      const sectionLabelW = 4
+      const midY = cell.y + 1 + 5 + (cell.height - 6) / 2
 
-      data.entries.slice(0, maxEntries).forEach((entry) => {
-        const r = entry.render
+      // Helper: render entries in a section
+      const renderEntries = (entries: CalendarEntry[], startY: number, endY: number, label: string) => {
+        // Section label
+        doc.setFontSize(4)
+        doc.setTextColor(180, 170, 160)
+        doc.text(label, cx, startY + 2.5)
 
-        // Staff-based color for work, leave-type color for leaves
-        const staffColor = staffColorMap[entry.staffId]
-        const badgeBg: [number, number, number] = entry.isLeave
-          ? (r.badgeFill || [207, 216, 220])
-          : (staffColor?.bg || r.badgeFill || [107, 93, 85])
-        const badgeText: [number, number, number] = entry.isLeave
-          ? r.badgeText
-          : (staffColor?.text || r.badgeText)
+        const maxEntries = Math.floor((endY - startY) / entryH)
+        let ey = startY
+        entries.slice(0, maxEntries).forEach((entry) => {
+          const staffColor = staffColorMap[entry.staffId]
+          const badgeBg = staffColor?.bg || [107, 93, 85] as [number, number, number]
+          const badgeTextColor = staffColor?.text || [255, 255, 255] as [number, number, number]
 
-        // Badge background
-        doc.setFillColor(...badgeBg)
-        doc.roundedRect(cx, cy - 0.5, cell.width - 2, entryH - 0.3, 0.8, 0.8, 'F')
+          doc.setFillColor(...badgeBg)
+          doc.roundedRect(cx + sectionLabelW, ey - 0.5, cell.width - 2 - sectionLabelW, entryH - 0.3, 0.8, 0.8, 'F')
 
-        // Text
-        doc.setFontSize(5)
-        doc.setTextColor(...badgeText)
+          doc.setFontSize(5)
+          doc.setTextColor(...badgeTextColor)
 
-        let label = entry.staffName
-        if (r.shiftName) label += ` ${r.shiftName}`
-        else if (r.timeRange) label += ` ${r.timeRange}`
+          const r = entry.render
+          let text = entry.staffName
+          if (r.shiftName) text += ` ${r.shiftName}`
+          else if (r.timeRange) text += ` ${r.timeRange}`
 
-        // Truncate if too wide
-        const maxW = cell.width - 3
-        while (doc.getTextWidth(label) > maxW && label.length > 3) {
-          label = label.slice(0, -2) + '…'
+          const maxW = cell.width - 3 - sectionLabelW
+          while (doc.getTextWidth(text) > maxW && text.length > 3) {
+            text = text.slice(0, -2) + '…'
+          }
+
+          doc.text(text, cx + sectionLabelW + 0.5, ey + 2)
+          ey += entryH
+        })
+
+        if (entries.length > maxEntries) {
+          doc.setFontSize(4)
+          doc.setTextColor(140, 130, 120)
+          doc.text(`+${entries.length - maxEntries}`, cx + sectionLabelW + 0.5, ey + 1.5)
         }
-
-        doc.text(label, cx + 0.5, cy + 2)
-        cy += entryH
-      })
-
-      // Overflow indicator
-      if (data.entries.length > maxEntries) {
-        doc.setFontSize(4.5)
-        doc.setTextColor(140, 130, 120)
-        doc.text(`+${data.entries.length - maxEntries}`, cx + 0.5, cy + 1.5)
       }
+
+      // Afternoon section
+      renderEntries(data.afternoon, cy, midY - 0.5, '午')
+
+      // Divider line
+      doc.setDrawColor(180, 170, 160)
+      doc.setLineWidth(0.15)
+      doc.line(cell.x + 1, midY, cell.x + cell.width - 1, midY)
+
+      // Evening section
+      renderEntries(data.evening, midY + 1, cell.y + cell.height - 1, '晚')
     },
   })
 
