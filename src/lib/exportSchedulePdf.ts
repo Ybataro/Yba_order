@@ -618,7 +618,8 @@ export async function exportCalendarScheduleToPdf({
     willDrawCell: (hookData) => {
       if (hookData.section !== 'body') return
       const key = `${hookData.row.index}_${hookData.column.index}`
-      if (cellDataMap[key] || !weeks[hookData.row.index][hookData.column.index]) {
+      const weekRow = weeks[hookData.row.index]
+      if (cellDataMap[key] || !weekRow?.[hookData.column.index]) {
         hookData.cell.text = []
       }
     },
