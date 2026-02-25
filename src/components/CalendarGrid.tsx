@@ -15,20 +15,36 @@ interface CalendarGridProps {
   onCellClick?: (staffId: string, date: string, existing?: Schedule) => void
 }
 
+/** Cutoff hour: < 17 = 午班 (top), >= 17 = 晚班 (bottom) */
+const SHIFT_CUTOFF = 17
+
+/** Determine if a schedule is afternoon (true) or evening (false), or null for leave */
+function isAfternoonShift(sch: Schedule, shiftMap: Record<string, ShiftType>): boolean | null {
+  const at = sch.attendance_type || 'work'
+  if (at !== 'work') return null // leave → spans both
+
+  if (sch.shift_type_id && shiftMap[sch.shift_type_id]) {
+    const st = shiftMap[sch.shift_type_id]
+    const hour = parseInt(st.start_time.split(':')[0], 10)
+    return hour < SHIFT_CUTOFF
+  }
+  if (sch.custom_start) {
+    const hour = parseInt(sch.custom_start.split(':')[0], 10)
+    return hour < SHIFT_CUTOFF
+  }
+  return true // default to afternoon
+}
+
 /** Build calendar weeks: array of 7-element arrays, each element is a date string or null (outside month) */
 function buildCalendarWeeks(year: number, month: number): (string | null)[][] {
   const daysInMonth = new Date(year, month, 0).getDate()
-  // Day of week for 1st: 0=Sun..6=Sat → convert to Mon-based: Mon=0..Sun=6
   const firstDow = new Date(year, month - 1, 1).getDay()
-  const startOffset = (firstDow + 6) % 7 // Mon=0
+  const startOffset = (firstDow + 6) % 7
 
   const weeks: (string | null)[][] = []
   let week: (string | null)[] = []
 
-  // Leading nulls
-  for (let i = 0; i < startOffset; i++) {
-    week.push(null)
-  }
+  for (let i = 0; i < startOffset; i++) week.push(null)
 
   for (let day = 1; day <= daysInMonth; day++) {
     const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`
@@ -39,7 +55,6 @@ function buildCalendarWeeks(year: number, month: number): (string | null)[][] {
     }
   }
 
-  // Trailing nulls
   if (week.length > 0) {
     while (week.length < 7) week.push(null)
     weeks.push(week)
@@ -96,20 +111,20 @@ export function CalendarGrid({ year, month, staff, schedules, shiftTypes, canSch
     return name.length <= 2 ? name : name.slice(0, 2)
   }
 
-  // Staff-based color palette: each person gets a unique fixed color
+  // Staff-based color palette
   const STAFF_COLORS: { bg: string; text: string }[] = [
-    { bg: '#E8D5C4', text: '#5D4037' },  // 奶茶
-    { bg: '#C8E6C9', text: '#2E7D32' },  // 抹茶
-    { bg: '#BBDEFB', text: '#1565C0' },  // 天藍
-    { bg: '#F8BBD0', text: '#AD1457' },  // 櫻粉
-    { bg: '#D1C4E9', text: '#4527A0' },  // 薰衣草
-    { bg: '#FFE0B2', text: '#E65100' },  // 橘果
-    { bg: '#B2DFDB', text: '#00695C' },  // 薄荷
-    { bg: '#FFCDD2', text: '#C62828' },  // 莓紅
-    { bg: '#FFF9C4', text: '#F57F17' },  // 檸檬
-    { bg: '#CFD8DC', text: '#37474F' },  // 灰藍
-    { bg: '#DCEDC8', text: '#558B2F' },  // 青蘋果
-    { bg: '#F0F4C3', text: '#9E9D24' },  // 萊姆
+    { bg: '#E8D5C4', text: '#5D4037' },
+    { bg: '#C8E6C9', text: '#2E7D32' },
+    { bg: '#BBDEFB', text: '#1565C0' },
+    { bg: '#F8BBD0', text: '#AD1457' },
+    { bg: '#D1C4E9', text: '#4527A0' },
+    { bg: '#FFE0B2', text: '#E65100' },
+    { bg: '#B2DFDB', text: '#00695C' },
+    { bg: '#FFCDD2', text: '#C62828' },
+    { bg: '#FFF9C4', text: '#F57F17' },
+    { bg: '#CFD8DC', text: '#37474F' },
+    { bg: '#DCEDC8', text: '#558B2F' },
+    { bg: '#F0F4C3', text: '#9E9D24' },
   ]
 
   const staffColorMap = useMemo(() => {
@@ -120,7 +135,6 @@ export function CalendarGrid({ year, month, staff, schedules, shiftTypes, canSch
     return m
   }, [staff])
 
-  /** Get badge color: staff-based for work, leave-type color for leaves */
   const getBadgeColor = (sch: Schedule): { bg: string; text: string } => {
     const at = sch.attendance_type || 'work'
     if (at !== 'work') {
@@ -131,6 +145,30 @@ export function CalendarGrid({ year, month, staff, schedules, shiftTypes, canSch
   }
 
   const WEEKDAY_LABELS = ['一', '二', '三', '四', '五', '六', '日']
+
+  /** Render a badge */
+  const renderBadge = (sch: Schedule) => {
+    const member = staffMap[sch.staff_id]
+    if (!member) return null
+    const color = getBadgeColor(sch)
+    const shortName = getShortName(member.name)
+    const fullLabel = getFullLabel(sch)
+
+    return (
+      <button
+        key={sch.id}
+        onClick={() => canSchedule && onCellClick?.(sch.staff_id, sch.date, sch)}
+        disabled={!canSchedule}
+        title={`${member.name} ${fullLabel}`}
+        className={`rounded px-[3px] py-[1px] text-[8px] leading-tight font-semibold whitespace-nowrap ${
+          canSchedule ? 'active:opacity-70' : ''
+        }`}
+        style={{ backgroundColor: color.bg, color: color.text }}
+      >
+        {shortName}
+      </button>
+    )
+  }
 
   if (staff.length === 0) {
     return (
@@ -161,66 +199,69 @@ export function CalendarGrid({ year, month, staff, schedules, shiftTypes, canSch
         <div key={wi} className="grid grid-cols-7 border-b border-gray-100">
           {week.map((date, di) => {
             if (!date) {
-              return <div key={`empty-${di}`} className="min-h-[64px] bg-gray-50/50 border-r border-gray-100 last:border-r-0" />
+              return <div key={`empty-${di}`} className="min-h-[72px] bg-gray-50/50 border-r border-gray-100 last:border-r-0" />
             }
 
             const isToday = date === today
             const daySchedules = dateSchedules[date] || []
             const dayNum = new Date(date + 'T00:00:00').getDate()
 
+            // Split schedules into afternoon / evening / leave (spans both)
+            const afternoon: Schedule[] = []
+            const evening: Schedule[] = []
+            const leaves: Schedule[] = []
+
+            daySchedules.forEach((sch) => {
+              const period = isAfternoonShift(sch, shiftMap)
+              if (period === null) leaves.push(sch)
+              else if (period) afternoon.push(sch)
+              else evening.push(sch)
+            })
+
             return (
               <div
                 key={date}
-                className={`min-h-[64px] border-r border-gray-100 last:border-r-0 p-0.5 ${
+                className={`min-h-[72px] border-r border-gray-100 last:border-r-0 flex flex-col ${
                   isToday ? 'bg-brand-lotus/5' : ''
                 }`}
               >
                 {/* Date number */}
-                <div className={`text-[10px] font-medium px-0.5 mb-0.5 ${
+                <div className={`text-[10px] font-medium px-0.5 ${
                   isToday ? 'text-brand-lotus font-bold' : di >= 5 ? 'text-brand-lotus/70' : 'text-brand-oak'
                 }`}>
                   {dayNum}
                 </div>
 
-                {/* Schedule badges — flex-wrap, name-only pills, color = shift */}
-                <div className="flex flex-wrap gap-[2px]">
-                  {daySchedules.map((sch) => {
-                    const member = staffMap[sch.staff_id]
-                    if (!member) return null
-                    const color = getBadgeColor(sch)
-                    const shortName = getShortName(member.name)
-                    const fullLabel = getFullLabel(sch)
+                {/* Leave badges — span full width */}
+                {leaves.length > 0 && (
+                  <div className="flex flex-wrap gap-[2px] px-0.5">
+                    {leaves.map(renderBadge)}
+                  </div>
+                )}
 
-                    return (
-                      <button
-                        key={sch.id}
-                        onClick={() => canSchedule && onCellClick?.(sch.staff_id, date, sch)}
-                        disabled={!canSchedule}
-                        title={`${member.name} ${fullLabel}`}
-                        className={`rounded px-[3px] py-[1px] text-[8px] leading-tight font-semibold whitespace-nowrap ${
-                          canSchedule ? 'active:opacity-70' : ''
-                        }`}
-                        style={{ backgroundColor: color.bg, color: color.text }}
-                      >
-                        {shortName}
-                      </button>
-                    )
-                  })}
+                {/* Afternoon (午班) — top half */}
+                <div className="flex-1 flex flex-wrap gap-[2px] px-0.5 py-px content-start border-b border-dashed border-gray-200/60">
+                  {afternoon.map(renderBadge)}
+                </div>
 
-                  {/* Add button for empty cells */}
-                  {canSchedule && daySchedules.length === 0 && (
+                {/* Evening (晚班) — bottom half */}
+                <div className="flex-1 flex flex-wrap gap-[2px] px-0.5 py-px content-start">
+                  {evening.map(renderBadge)}
+                </div>
+
+                {/* Add button for empty cells */}
+                {canSchedule && daySchedules.length === 0 && (
+                  <div className="flex-1 flex items-center justify-center">
                     <button
                       onClick={() => {
-                        if (staff.length > 0) {
-                          onCellClick?.(staff[0].id, date)
-                        }
+                        if (staff.length > 0) onCellClick?.(staff[0].id, date)
                       }}
-                      className="w-full flex items-center justify-center py-1 rounded bg-gray-50 active:bg-gray-100"
+                      className="p-1 rounded bg-gray-50 active:bg-gray-100"
                     >
                       <Plus size={10} className="text-gray-300" />
                     </button>
-                  )}
-                </div>
+                  </div>
+                )}
               </div>
             )
           })}
