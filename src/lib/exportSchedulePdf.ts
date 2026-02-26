@@ -859,9 +859,14 @@ export async function exportCalendarScheduleToPdf({
       let eveningEndY: number
 
       if (hasLeaves) {
-        // Reserve space for leaves at bottom
-        const leaveH = Math.min(data.leaves.length * entryH, totalContentH * 0.25)
-        eveningEndY = contentBottom - leaveH - 0.5
+        if (!hasAfternoon && !hasEvening) {
+          // Pure leave day — leaves get all content space
+          eveningEndY = cy
+        } else {
+          // Mixed day — give leaves proportional space (up to 40%)
+          const leaveH = Math.min(data.leaves.length * entryH, totalContentH * 0.4)
+          eveningEndY = contentBottom - leaveH - 0.5
+        }
       } else {
         eveningEndY = contentBottom
       }
@@ -923,7 +928,7 @@ export async function exportCalendarScheduleToPdf({
           doc.text(text, bx + badgePadH, ey + entryH * 0.52)
           calEndBold(doc)
 
-          // Render tag pills right after the badge
+          // Render tag pills right after the badge (wrap to next row if overflow)
           if (r.tags.length > 0) {
             const calTagFontSize = Math.max(badgeFontSize - 2, 4.5)
             const tagPillPad = 0.8
@@ -931,16 +936,24 @@ export async function exportCalendarScheduleToPdf({
             doc.setFont(fontName, 'normal')
             doc.setFontSize(calTagFontSize)
             let tagX = bx + bw + 0.5
+            let tagY = ey
             const tagMaxX = cx + cw - 1
             r.tags.forEach((tag) => {
               const tw = doc.getTextWidth(tag.name) + tagPillPad * 2
-              if (tagX + tw > tagMaxX) return // don't overflow cell
+              if (tagX + tw > tagMaxX) {
+                // Wrap to next row
+                tagX = bx
+                tagY += tagPillH2 + 0.3
+                if (tagX + tw > tagMaxX) return // single tag too wide, skip
+              }
               doc.setFillColor(...tag.bg)
-              doc.roundedRect(tagX, ey - 0.1, tw, tagPillH2, 0.6, 0.6, 'F')
+              doc.roundedRect(tagX, tagY - 0.1, tw, tagPillH2, 0.6, 0.6, 'F')
               doc.setTextColor(...tag.text)
-              doc.text(tag.name, tagX + tw / 2, ey + entryH * 0.45, { align: 'center' })
+              doc.text(tag.name, tagX + tw / 2, tagY + entryH * 0.45, { align: 'center' })
               tagX += tw + 0.4
             })
+            // Account for wrapped tag rows
+            if (tagY > ey) ey = tagY
           }
 
           ey += entryH
