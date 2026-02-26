@@ -27,8 +27,25 @@ export default function StoreSchedules() {
   const { shiftTypes, positions, fetchShiftTypes, fetchPositions, upsertSchedule, removeSchedule } = useScheduleStore()
   const canSchedule = useCanSchedule()
   const { value: popupSetting } = useAppSetting('calendar_popup_enabled')
-  const popupEnabled = popupSetting !== 'false'
   const { showToast } = useToast()
+
+  // Fetch current user's employment_type for per-type popup setting
+  const [empType, setEmpType] = useState<string>('full_time')
+  const session = getSession()
+  useEffect(() => {
+    if (!supabase || !session?.staffId) return
+    supabase.from('staff').select('employment_type').eq('id', session.staffId).single()
+      .then(({ data }) => { if (data?.employment_type) setEmpType(data.employment_type) })
+  }, [session?.staffId])
+
+  const popupEnabled = useMemo(() => {
+    if (!popupSetting) return true
+    try {
+      const parsed = JSON.parse(popupSetting)
+      if (typeof parsed === 'object' && parsed !== null) return parsed[empType] !== false
+    } catch { /* old format */ }
+    return popupSetting !== 'false'
+  }, [popupSetting, empType])
 
   // Shared month state for both views
   const now = new Date()

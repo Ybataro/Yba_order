@@ -80,7 +80,24 @@ export default function PinManager() {
   const stores = useStoreStore((s) => s.items)
 
   const { value: popupSetting, loading: popupLoading, update: updatePopup } = useAppSetting('calendar_popup_enabled')
-  const popupEnabled = popupSetting !== 'false'
+
+  // Parse JSON popup settings per employment type (backward compat: old 'true'/'false' → all on/off)
+  const popupByType: Record<string, boolean> = useMemo(() => {
+    const defaults = { full_time: true, part_time: true, hourly: true }
+    if (!popupSetting) return defaults
+    try {
+      const parsed = JSON.parse(popupSetting)
+      if (typeof parsed === 'object' && parsed !== null) return { ...defaults, ...parsed }
+    } catch { /* old format */ }
+    // Old 'true'/'false' string → all on/off
+    const allOn = popupSetting !== 'false'
+    return { full_time: allOn, part_time: allOn, hourly: allOn }
+  }, [popupSetting])
+
+  const togglePopupType = (type: string) => {
+    const next = { ...popupByType, [type]: !popupByType[type] }
+    updatePopup(JSON.stringify(next))
+  }
 
   const [pins, setPins] = useState<UserPin[]>([])
   const [allStaffRows, setAllStaffRows] = useState<StaffRow[]>([])
@@ -289,29 +306,36 @@ export default function PinManager() {
           {/* System settings */}
           <div>
             <SectionHeader title="系統設定" icon="■" />
-            <div className="bg-white px-4 py-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 min-w-0">
-                  <Settings size={16} className="text-brand-mocha shrink-0" />
-                  <div>
-                    <p className="text-sm font-medium text-brand-oak">月行事曆 — 點擊人名顯示詳情</p>
-                    <p className="text-[11px] text-brand-mocha">關閉後，一般人員點擊人名不會彈出時間資訊</p>
-                  </div>
+            <div className="bg-white px-4 py-3 space-y-2">
+              <div className="flex items-center gap-2 mb-1">
+                <Settings size={16} className="text-brand-mocha shrink-0" />
+                <div>
+                  <p className="text-sm font-medium text-brand-oak">月行事曆 — 點擊人名顯示詳情</p>
+                  <p className="text-[11px] text-brand-mocha">依職別控制一般人員是否可點擊人名查看班次詳情</p>
                 </div>
-                <button
-                  onClick={() => updatePopup(popupEnabled ? 'false' : 'true')}
-                  disabled={popupLoading}
-                  className={`relative w-11 h-6 rounded-full transition-colors shrink-0 ${
-                    popupEnabled ? 'bg-green-500' : 'bg-gray-300'
-                  }`}
-                >
-                  <span
-                    className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${
-                      popupEnabled ? 'translate-x-5' : 'translate-x-0'
-                    }`}
-                  />
-                </button>
               </div>
+              {([
+                { key: 'full_time', label: '正職' },
+                { key: 'part_time', label: '兼職' },
+                { key: 'hourly', label: '工讀' },
+              ] as const).map(({ key, label }) => (
+                <div key={key} className="flex items-center justify-between pl-6">
+                  <span className="text-sm text-brand-oak">{label}</span>
+                  <button
+                    onClick={() => togglePopupType(key)}
+                    disabled={popupLoading}
+                    className={`relative w-11 h-6 rounded-full transition-colors shrink-0 ${
+                      popupByType[key] ? 'bg-green-500' : 'bg-gray-300'
+                    }`}
+                  >
+                    <span
+                      className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${
+                        popupByType[key] ? 'translate-x-5' : 'translate-x-0'
+                      }`}
+                    />
+                  </button>
+                </div>
+              ))}
             </div>
           </div>
 
