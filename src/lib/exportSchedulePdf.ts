@@ -1,6 +1,7 @@
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
 import { loadNotoSansTC } from '@/assets/notoSansTC'
+import { savePdfCompat } from '@/lib/savePdf'
 import {
   formatShortDate,
   getWeekdayLabel,
@@ -386,7 +387,7 @@ export async function exportScheduleToPdf({
     )
   }
 
-  doc.save(fileName.endsWith('.pdf') ? fileName : `${fileName}.pdf`)
+  await savePdfCompat(doc, fileName)
 }
 
 // ── Calendar (monthly) PDF export ──────────────────────────────────
@@ -1045,5 +1046,5 @@ export async function exportCalendarScheduleToPdf({
     )
   }
 
-  doc.save(fileName.endsWith('.pdf') ? fileName : `${fileName}.pdf`)
+  await savePdfCompat(doc, fileName)
 }

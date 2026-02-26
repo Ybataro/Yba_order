@@ -1,6 +1,7 @@
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
 import { loadNotoSansTC } from '@/assets/notoSansTC'
+import { savePdfCompat } from '@/lib/savePdf'
 import type { StoreProduct } from '@/data/storeProducts'
 
 // ── Category colors (品牌色系淺色調 — 對應 UI brand palette) ──
@@ -420,5 +421,5 @@ export async function exportOrderSummaryToPdf(opts: OrderSummaryPdfOptions) {
   }
 
   const dateStr = date.replace(/-/g, '')
-  doc.save(`叫貨總表_${dateStr}.pdf`)
+  await savePdfCompat(doc, `叫貨總表_${dateStr}.pdf`)
 }

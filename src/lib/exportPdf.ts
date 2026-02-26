@@ -1,6 +1,7 @@
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
 import { loadNotoSansTC } from '@/assets/notoSansTC'
+import { savePdfCompat } from '@/lib/savePdf'
 
 export interface PdfColumn {
   header: string
@@ -89,5 +90,5 @@ export async function exportToPdf({ title, dateRange, columns, data, fileName }:
     },
   })
 
-  doc.save(fileName.endsWith('.pdf') ? fileName : `${fileName}.pdf`)
+  await savePdfCompat(doc, fileName)
 }
