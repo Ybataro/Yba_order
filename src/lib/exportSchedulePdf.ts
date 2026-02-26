@@ -524,19 +524,7 @@ export async function exportCalendarScheduleToPdf({
   doc.text(title, titleX, headerY)
   calEndBold(doc)
 
-  // Separator dot + year/month
-  const titleW = doc.getTextWidth(title + ' ')
-  doc.setFontSize(9)
-  doc.setTextColor(180, 170, 160)
-  doc.text('\u2027', titleX + titleW, headerY)
-
-  doc.setFontSize(9)
-  calSetBold(doc, [100, 90, 80], 0.3)
-  const ymX = titleX + titleW + 3
-  doc.text(`${year}\u5E74${month}\u6708`, ymX, headerY)
-  calEndBold(doc)
-
-  // Legend — right-aligned, same line
+  // Legend — right-aligned, same line as brand + title
   const legendBlockSize = 3.5
   const legendGap = 1.5
   const legendFontSize = 8
@@ -576,8 +564,15 @@ export async function exportCalendarScheduleToPdf({
     void i
   })
 
+  // Year/month — separate prominent line (2x font size)
+  const ymY = headerY + 7
+  doc.setFontSize(18)
+  calSetBold(doc, [60, 46, 38], 0.5)
+  doc.text(`${year}\u5E74${month}\u6708`, marginLR, ymY)
+  calEndBold(doc)
+
   // Header separator line
-  const separatorY = headerY + 2
+  const separatorY = ymY + 3
   doc.setDrawColor(139, 115, 85)
   doc.setLineWidth(0.4)
   doc.line(marginLR, separatorY, pageW - marginLR, separatorY)
@@ -621,6 +616,7 @@ export async function exportCalendarScheduleToPdf({
     bereavement_leave: { bg: [228, 235, 245], text: [55, 75, 110] },     // 灰藍
     maternity_leave:   { bg: [255, 250, 222], text: [200, 155, 10] },    // 亮黃
     prenatal_leave:    { bg: [255, 248, 220], text: [190, 145, 10] },    // 暖黃
+    comp_leave:        { bg: [210, 245, 250], text: [0, 131, 143] },     // 青綠（補休）
     company_off:       { bg: [220, 228, 235], text: [80, 100, 120] },    // 灰藍（公休）
     late_early:        { bg: [255, 232, 222], text: [210, 80, 25] },     // 亮橘紅
   }
@@ -703,11 +699,12 @@ export async function exportCalendarScheduleToPdf({
     })
   })
 
-  // ── Adaptive sizing — MUST fit 1 page ──
+  // ── Adaptive sizing — MUST fit 1 page (95% table scale) ──
+  const tableMarginLR = marginLR + (pageW - 2 * marginLR) * 0.025
   const tableStartY = separatorY + 1.5
   const headerRowH = 5.5
   const safetyBuffer = 1.5 // prevent autoTable rounding overflow
-  const availableH = pageH - tableStartY - margin - safetyBuffer
+  const availableH = (pageH - tableStartY - margin - safetyBuffer) * 0.95
   const rowH = (availableH - headerRowH) / weeks.length
 
   // Adaptive font sizes — larger for readability
@@ -747,7 +744,7 @@ export async function exportCalendarScheduleToPdf({
       fontSize: 7,
       minCellHeight: headerRowH,
     },
-    margin: { left: marginLR, right: marginLR, top: 0, bottom: margin },
+    margin: { left: tableMarginLR, right: tableMarginLR, top: 0, bottom: margin },
 
     willDrawCell: (hookData) => {
       // Clear head text (we draw bold manually)
