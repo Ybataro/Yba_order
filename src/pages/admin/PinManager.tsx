@@ -7,8 +7,7 @@ import { useStaffStore } from '@/stores/useStaffStore'
 import { useStoreStore } from '@/stores/useStoreStore'
 import { supabase } from '@/lib/supabase'
 import { hashPin } from '@/lib/auth'
-import { useAppSetting } from '@/hooks/useAppSetting'
-import { Plus, Pencil, Shield, ShieldOff, CalendarDays, Settings, Lock } from 'lucide-react'
+import { Plus, Pencil, Shield, ShieldOff, CalendarDays, Lock, Eye, EyeOff } from 'lucide-react'
 
 interface UserPin {
   id: string
@@ -18,6 +17,7 @@ interface UserPin {
   allowed_stores: string[]
   is_active: boolean
   can_schedule: boolean
+  can_popup: boolean
   allowed_pages: string[] | null
 }
 
@@ -78,26 +78,6 @@ export default function PinManager() {
   const { showToast } = useToast()
   const { adminStaff, kitchenStaff, storeStaff } = useStaffStore()
   const stores = useStoreStore((s) => s.items)
-
-  const { value: popupSetting, loading: popupLoading, update: updatePopup } = useAppSetting('calendar_popup_enabled')
-
-  // Parse JSON popup settings per employment type (backward compat: old 'true'/'false' → all on/off)
-  const popupByType: Record<string, boolean> = useMemo(() => {
-    const defaults = { full_time: true, part_time: true, hourly: true }
-    if (!popupSetting) return defaults
-    try {
-      const parsed = JSON.parse(popupSetting)
-      if (typeof parsed === 'object' && parsed !== null) return { ...defaults, ...parsed }
-    } catch { /* old format */ }
-    // Old 'true'/'false' string → all on/off
-    const allOn = popupSetting !== 'false'
-    return { full_time: allOn, part_time: allOn, hourly: allOn }
-  }, [popupSetting])
-
-  const togglePopupType = (type: string) => {
-    const next = { ...popupByType, [type]: !popupByType[type] }
-    updatePopup(JSON.stringify(next))
-  }
 
   const [pins, setPins] = useState<UserPin[]>([])
   const [allStaffRows, setAllStaffRows] = useState<StaffRow[]>([])
@@ -280,6 +260,18 @@ export default function PinManager() {
     showToast(pin.can_schedule ? '已取消排班權限' : '已授予排班權限')
   }
 
+  const toggleCanPopup = async (pin: UserPin) => {
+    if (!supabase) return
+    const { error } = await supabase
+      .from('user_pins')
+      .update({ can_popup: !pin.can_popup, updated_at: new Date().toISOString() })
+      .eq('id', pin.id)
+
+    if (error) { showToast('更新失敗', 'error'); return }
+    setPins((prev) => prev.map((p) => p.id === pin.id ? { ...p, can_popup: !p.can_popup } : p))
+    showToast(pin.can_popup ? '已隱藏班次詳情' : '已開放班次詳情')
+  }
+
   const roleOptions = [
     { value: 'store', label: '門店' },
     { value: 'kitchen', label: '央廚' },
@@ -303,42 +295,6 @@ export default function PinManager() {
         <div className="flex items-center justify-center py-20 text-sm text-brand-lotus">載入中...</div>
       ) : (
         <>
-          {/* System settings */}
-          <div>
-            <SectionHeader title="系統設定" icon="■" />
-            <div className="bg-white px-4 py-3 space-y-2">
-              <div className="flex items-center gap-2 mb-1">
-                <Settings size={16} className="text-brand-mocha shrink-0" />
-                <div>
-                  <p className="text-sm font-medium text-brand-oak">月行事曆 — 點擊人名顯示詳情</p>
-                  <p className="text-[11px] text-brand-mocha">依職別控制一般人員是否可點擊人名查看班次詳情</p>
-                </div>
-              </div>
-              {([
-                { key: 'full_time', label: '正職' },
-                { key: 'part_time', label: '兼職' },
-                { key: 'hourly', label: '工讀' },
-              ] as const).map(({ key, label }) => (
-                <div key={key} className="flex items-center justify-between pl-6">
-                  <span className="text-sm text-brand-oak">{label}</span>
-                  <button
-                    onClick={() => togglePopupType(key)}
-                    disabled={popupLoading}
-                    className={`relative w-11 h-6 rounded-full transition-colors shrink-0 ${
-                      popupByType[key] ? 'bg-green-500' : 'bg-gray-300'
-                    }`}
-                  >
-                    <span
-                      className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${
-                        popupByType[key] ? 'translate-x-5' : 'translate-x-0'
-                      }`}
-                    />
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
-
           {grouped.map(([groupId, staffRows]) => (
             <div key={groupId}>
               <SectionHeader title={`${groupLabels[groupId] || groupId} (${staffRows.length})`} icon="■" />
@@ -382,6 +338,13 @@ export default function PinManager() {
                                   <Lock size={16} />
                                 </button>
                               )}
+                              <button
+                                onClick={() => toggleCanPopup(pin)}
+                                className={`p-1.5 rounded-lg ${pin.can_popup ? 'text-blue-500 bg-blue-50' : 'text-gray-300 bg-gray-50'}`}
+                                title={pin.can_popup ? '隱藏班次詳情' : '開放班次詳情'}
+                              >
+                                {pin.can_popup ? <Eye size={16} /> : <EyeOff size={16} />}
+                              </button>
                               <button
                                 onClick={() => toggleCanSchedule(pin)}
                                 className={`p-1.5 rounded-lg ${pin.can_schedule ? 'text-brand-amber bg-amber-50' : 'text-gray-300 bg-gray-50'}`}

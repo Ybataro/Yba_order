@@ -7,7 +7,6 @@ import { ShiftPickerModal } from '@/components/ShiftPickerModal'
 import { useScheduleStore } from '@/stores/useScheduleStore'
 import { useStaffStore } from '@/stores/useStaffStore'
 import { useCanSchedule } from '@/hooks/useCanSchedule'
-import { useAppSetting } from '@/hooks/useAppSetting'
 import { getMonthDates } from '@/lib/schedule'
 import { getSession } from '@/lib/auth'
 import { exportCalendarScheduleToPdf } from '@/lib/exportSchedulePdf'
@@ -22,26 +21,17 @@ export default function KitchenSchedules() {
   const staffInitialized = useStaffStore((s) => s.initialized)
   const { shiftTypes, positions, fetchShiftTypes, fetchPositions, upsertSchedule, removeSchedule } = useScheduleStore()
   const canSchedule = useCanSchedule()
-  const { value: popupSetting } = useAppSetting('calendar_popup_enabled')
   const { showToast } = useToast()
 
-  // Fetch current user's employment_type for per-type popup setting
-  const [empType, setEmpType] = useState<string>('full_time')
-  const session = getSession()
+  // Fetch can_popup staff IDs for calendar popup control
+  const [popupStaffIds, setPopupStaffIds] = useState<Set<string> | undefined>(undefined)
   useEffect(() => {
-    if (!supabase || !session?.staffId) return
-    supabase.from('staff').select('employment_type').eq('id', session.staffId).single()
-      .then(({ data }) => { if (data?.employment_type) setEmpType(data.employment_type) })
-  }, [session?.staffId])
-
-  const popupEnabled = useMemo(() => {
-    if (!popupSetting) return true
-    try {
-      const parsed = JSON.parse(popupSetting)
-      if (typeof parsed === 'object' && parsed !== null) return parsed[empType] !== false
-    } catch { /* old format */ }
-    return popupSetting !== 'false'
-  }, [popupSetting, empType])
+    if (!supabase || canSchedule) return
+    supabase.from('user_pins').select('staff_id').eq('can_popup', true).eq('is_active', true)
+      .then(({ data }) => {
+        setPopupStaffIds(new Set((data || []).map((r: { staff_id: string }) => r.staff_id)))
+      })
+  }, [canSchedule])
 
   // Shared month state for both views
   const now = new Date()
@@ -262,7 +252,7 @@ export default function KitchenSchedules() {
           shiftTypes={shiftTypes}
           canSchedule={canSchedule}
           onCellClick={handleCellClick}
-          popupEnabled={canSchedule || popupEnabled}
+          popupStaffIds={canSchedule ? undefined : popupStaffIds}
         />
       )}
 

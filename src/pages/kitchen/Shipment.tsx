@@ -12,7 +12,7 @@ import { supabase } from '@/lib/supabase'
 import { shipmentSessionId, getTodayTW } from '@/lib/session'
 import { formatDate } from '@/lib/utils'
 import { logAudit } from '@/lib/auditLog'
-import { Truck, AlertTriangle, UserCheck, RefreshCw, MessageSquare, Clock, Send } from 'lucide-react'
+import { Truck, AlertTriangle, UserCheck, RefreshCw, MessageSquare, Clock, Send, Plus, X } from 'lucide-react'
 
 export default function Shipment() {
   const { showToast } = useToast()
@@ -40,6 +40,10 @@ export default function Shipment() {
   const [isEdit, setIsEdit] = useState<Record<string, boolean>>({})
   const [loading, setLoading] = useState(true)
 
+  // 未叫貨品項（央廚主動出貨）
+  const [extraItems, setExtraItems] = useState<Record<string, Record<string, string>>>({})
+  const [showExtraPicker, setShowExtraPicker] = useState<Record<string, boolean>>({})
+
   // 收貨回饋
   const [receiveStatus, setReceiveStatus] = useState<Record<string, {
     received_at: string | null
@@ -65,12 +69,14 @@ export default function Shipment() {
       const editData: Record<string, boolean> = {}
       const rcvData: typeof receiveStatus = {}
       const rplyData: Record<string, string> = {}
+      const exData: Record<string, Record<string, string>> = {}
       const productMap = new Map(storeProducts.map(p => [p.id, p]))
 
       for (const store of stores) {
         oqData[store.id] = {}
         aqData[store.id] = {}
         cfData[store.id] = {}
+        exData[store.id] = {}
         storeProducts.forEach(p => {
           oqData[store.id][p.id] = 0
           aqData[store.id][p.id] = ''
@@ -111,7 +117,12 @@ export default function Shipment() {
 
           if (shipItems) {
             shipItems.forEach(item => {
-              aqData[store.id][item.product_id] = item.actual_qty > 0 ? String(item.actual_qty) : ''
+              // 未叫貨品項（order_qty === 0）歸入 extraItems
+              if (item.order_qty === 0 && item.actual_qty > 0) {
+                exData[store.id][item.product_id] = String(item.actual_qty)
+              } else {
+                aqData[store.id][item.product_id] = item.actual_qty > 0 ? String(item.actual_qty) : ''
+              }
               cfData[store.id][item.product_id] = item.received || false
 
               // 收集未收到的品項
@@ -151,6 +162,7 @@ export default function Shipment() {
       setIsEdit(editData)
       setReceiveStatus(rcvData)
       setReplyText(rplyData)
+      setExtraItems(exData)
       setLoading(false)
     }
 
@@ -179,12 +191,71 @@ export default function Shipment() {
     return map
   }, [items, productCategories])
 
+  // 未叫貨品項列表（當前 activeStore）
+  const currentExtraIds = Object.keys(extraItems[activeStore] || {})
+  const orderedIds = new Set(items.map(p => p.id))
+  const extraAddedIds = new Set(currentExtraIds)
+
+  // 可選的未叫貨品項（排除已叫貨 + 已加入的）
+  const availableExtraProducts = useMemo(() => {
+    return storeProducts.filter(p => !orderedIds.has(p.id) && !extraAddedIds.has(p.id))
+  }, [storeProducts, orderedIds, extraAddedIds])
+
+  const availableByCategory = useMemo(() => {
+    const map = new Map<string, typeof storeProducts>()
+    for (const cat of productCategories) {
+      const catItems = availableExtraProducts.filter(p => p.category === cat)
+      if (catItems.length > 0) map.set(cat, catItems)
+    }
+    return map
+  }, [availableExtraProducts, productCategories])
+
+  // 已加入的 extra items（帶產品資訊）
+  const extraItemsList = useMemo(() => {
+    const ids = Object.keys(extraItems[activeStore] || {})
+    return ids
+      .map(id => storeProducts.find(p => p.id === id))
+      .filter((p): p is (typeof storeProducts)[number] => !!p)
+  }, [extraItems, activeStore, storeProducts])
+
+  const extraByCategory = useMemo(() => {
+    const map = new Map<string, typeof storeProducts>()
+    for (const cat of productCategories) {
+      const catItems = extraItemsList.filter(p => p.category === cat)
+      if (catItems.length > 0) map.set(cat, catItems)
+    }
+    return map
+  }, [extraItemsList, productCategories])
+
   const confirmedCount = items.filter(p => confirmed[activeStore]?.[p.id]).length
   const diffCount = items.filter(p => {
     const ordered = orderQty[activeStore]?.[p.id] || 0
     const actual = parseFloat(actualQty[activeStore]?.[p.id] || '0') || 0
     return ordered !== actual
   }).length
+
+  const addExtraItem = (productId: string) => {
+    setExtraItems(prev => ({
+      ...prev,
+      [activeStore]: { ...prev[activeStore], [productId]: '' }
+    }))
+    setShowExtraPicker(prev => ({ ...prev, [activeStore]: false }))
+  }
+
+  const removeExtraItem = (productId: string) => {
+    setExtraItems(prev => {
+      const copy = { ...prev[activeStore] }
+      delete copy[productId]
+      return { ...prev, [activeStore]: copy }
+    })
+  }
+
+  const updateExtraQty = (productId: string, value: string) => {
+    setExtraItems(prev => ({
+      ...prev,
+      [activeStore]: { ...prev[activeStore], [productId]: value }
+    }))
+  }
 
   const focusNext = () => {
     const allInputs = document.querySelectorAll<HTMLInputElement>('[data-ship]')
@@ -230,6 +301,21 @@ export default function Shipment() {
       actual_qty: parseFloat(actualQty[activeStore]?.[p.id] || '0') || 0,
       received: false,
     }))
+
+    // 加入未叫貨品項（order_qty: 0）
+    const storeExtra = extraItems[activeStore] || {}
+    Object.entries(storeExtra).forEach(([productId, qtyStr]) => {
+      const qty = parseFloat(qtyStr || '0') || 0
+      if (qty > 0) {
+        shipItems.push({
+          session_id: sid,
+          product_id: productId,
+          order_qty: 0,
+          actual_qty: qty,
+          received: false,
+        })
+      }
+    })
 
     // Delete old shipment items first (handles removed order items)
     await supabase.from('shipment_items').delete().eq('session_id', sid)
@@ -438,6 +524,96 @@ export default function Shipment() {
               ))}
             </>
           )}
+
+          {/* 未叫貨品項（央廚主動出貨）*/}
+          <div className="mt-3">
+            <div className="flex items-center justify-between px-4 py-2 bg-surface-section border-y border-gray-200">
+              <div className="flex items-center gap-1.5">
+                <Plus size={14} className="text-brand-mocha" />
+                <span className="text-sm font-semibold text-brand-oak">未叫貨品項</span>
+                <span className="text-[10px] text-brand-lotus">（央廚主動出貨）</span>
+              </div>
+              <button
+                onClick={() => setShowExtraPicker(prev => ({ ...prev, [activeStore]: !prev[activeStore] }))}
+                className="flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-brand-mocha text-white"
+              >
+                <Plus size={12} />
+                新增品項
+              </button>
+            </div>
+
+            {/* 品項選擇下拉 */}
+            {showExtraPicker[activeStore] && (
+              <div className="bg-white border-b border-gray-200 max-h-60 overflow-y-auto">
+                {availableByCategory.size === 0 ? (
+                  <div className="px-4 py-3 text-sm text-brand-lotus text-center">所有品項皆已加入</div>
+                ) : (
+                  Array.from(availableByCategory.entries()).map(([category, products]) => (
+                    <div key={category}>
+                      <div className="px-4 py-1 bg-gray-50 text-[11px] text-brand-lotus font-medium">{category}</div>
+                      {products.map(product => (
+                        <button
+                          key={product.id}
+                          onClick={() => addExtraItem(product.id)}
+                          className="w-full flex items-center px-4 py-2 text-left hover:bg-gray-50 active:bg-gray-100 border-b border-gray-50"
+                        >
+                          <span className="text-sm text-brand-oak">{product.name}</span>
+                          <span className="text-[10px] text-brand-lotus ml-1.5">({product.unit})</span>
+                        </button>
+                      ))}
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
+
+            {/* 已加入的 extra items 列表 */}
+            {extraItemsList.length > 0 && (
+              <>
+                <div className="flex items-center px-4 py-1.5 bg-surface-section text-[11px] text-brand-lotus border-b border-gray-100">
+                  <span className="flex-1">品名</span>
+                  <span className="w-[60px] text-center">實出</span>
+                  <span className="w-7"></span>
+                </div>
+                {Array.from(extraByCategory.entries()).map(([category, products]) => (
+                  <div key={`extra-${category}`}>
+                    <SectionHeader title={category} icon="■" />
+                    <div className="bg-white">
+                      {products.map((product, idx) => (
+                        <div
+                          key={product.id}
+                          className={`flex items-center px-4 py-2 ${idx < products.length - 1 ? 'border-b border-gray-50' : ''}`}
+                        >
+                          <div className="flex-1 min-w-0 pr-2">
+                            <p className="text-sm font-medium text-brand-oak leading-tight">{product.name}</p>
+                            <p className="text-[10px] text-brand-lotus leading-tight">{product.unit}</p>
+                          </div>
+                          <div className="w-[60px] flex justify-center">
+                            <NumericInput
+                              value={extraItems[activeStore]?.[product.id] || ''}
+                              onChange={(v) => updateExtraQty(product.id, v)}
+                              isFilled
+                              onNext={focusNext}
+                              data-ship=""
+                            />
+                          </div>
+                          <button onClick={() => removeExtraItem(product.id)} className="w-7 flex justify-center">
+                            <X size={16} className="text-status-error" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </>
+            )}
+
+            {extraItemsList.length === 0 && !showExtraPicker[activeStore] && (
+              <div className="px-4 py-3 text-sm text-brand-lotus text-center bg-white">
+                尚未新增未叫貨品項
+              </div>
+            )}
+          </div>
 
           {/* 收貨回饋區 */}
           {isEdit[activeStore] && (

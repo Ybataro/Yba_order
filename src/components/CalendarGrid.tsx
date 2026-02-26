@@ -13,7 +13,7 @@ interface CalendarGridProps {
   shiftTypes: ShiftType[]
   canSchedule: boolean
   onCellClick?: (staffId: string, date: string, existing?: Schedule) => void
-  popupEnabled?: boolean
+  popupStaffIds?: Set<string>
 }
 
 /** Cutoff hour: < 17 = 午班 (top), >= 17 = 晚班 (bottom) */
@@ -64,7 +64,7 @@ function buildCalendarWeeks(year: number, month: number): (string | null)[][] {
   return weeks
 }
 
-export function CalendarGrid({ year, month, staff, schedules, shiftTypes, canSchedule, onCellClick, popupEnabled = true }: CalendarGridProps) {
+export function CalendarGrid({ year, month, staff, schedules, shiftTypes, canSchedule, onCellClick, popupStaffIds }: CalendarGridProps) {
   const today = getTodayString()
   const weeks = useMemo(() => buildCalendarWeeks(year, month), [year, month])
 
@@ -228,7 +228,10 @@ export function CalendarGrid({ year, month, staff, schedules, shiftTypes, canSch
       </>
     )
 
-    if (!popupEnabled) {
+    // undefined = all clickable (scheduler), Set = only those staff IDs
+    const canPopup = popupStaffIds === undefined || popupStaffIds.has(sch.staff_id)
+
+    if (!canPopup) {
       return (
         <div
           key={sch.id}

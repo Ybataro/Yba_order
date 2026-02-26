@@ -9,7 +9,7 @@ import { useStoreStore } from '@/stores/useStoreStore'
 import { supabase } from '@/lib/supabase'
 import { shipmentSessionId, getTodayTW } from '@/lib/session'
 import { logAudit } from '@/lib/auditLog'
-import { CheckCircle, AlertTriangle, ArrowRight, RefreshCw, MessageSquare } from 'lucide-react'
+import { CheckCircle, AlertTriangle, ArrowRight, RefreshCw, MessageSquare, Package } from 'lucide-react'
 
 interface ShipmentItem {
   productId: string
@@ -20,6 +20,7 @@ interface ShipmentItem {
   actualQty: number
   hasDiff: boolean
   diff: number
+  isExtra: boolean
 }
 
 export default function Receive() {
@@ -88,6 +89,7 @@ export default function Receive() {
           if (!product) return
           const orderQty = item.order_qty || 0
           const actualQty = item.actual_qty || 0
+          const isExtra = orderQty === 0
           loaded.push({
             productId: item.product_id,
             name: product.name,
@@ -95,8 +97,9 @@ export default function Receive() {
             category: product.category,
             orderQty,
             actualQty,
-            hasDiff: orderQty !== actualQty,
+            hasDiff: !isExtra && orderQty !== actualQty,
             diff: Math.round((actualQty - orderQty) * 10) / 10,
+            isExtra,
           })
           loadedConfirmed[item.product_id] = item.received ?? false
         })
@@ -111,21 +114,33 @@ export default function Receive() {
     load()
   }, [storeId, today])
 
+  const regularItems = useMemo(() => shipmentItems.filter(i => !i.isExtra), [shipmentItems])
+  const extraItems = useMemo(() => shipmentItems.filter(i => i.isExtra), [shipmentItems])
+
   const itemsByCategory = useMemo(() => {
     const map = new Map<string, ShipmentItem[]>()
     for (const cat of productCategories) {
-      const catItems = shipmentItems.filter(i => i.category === cat)
+      const catItems = regularItems.filter(i => i.category === cat)
       if (catItems.length > 0) map.set(cat, catItems)
     }
     return map
-  }, [shipmentItems, productCategories])
+  }, [regularItems, productCategories])
+
+  const extraByCategory = useMemo(() => {
+    const map = new Map<string, ShipmentItem[]>()
+    for (const cat of productCategories) {
+      const catItems = extraItems.filter(i => i.category === cat)
+      if (catItems.length > 0) map.set(cat, catItems)
+    }
+    return map
+  }, [extraItems, productCategories])
 
   const toggleConfirm = (productId: string) => {
     setConfirmed(prev => ({ ...prev, [productId]: !prev[productId] }))
   }
 
   const confirmedCount = shipmentItems.filter(item => confirmed[item.productId]).length
-  const diffCount = shipmentItems.filter(item => item.hasDiff).length
+  const diffCount = regularItems.filter(item => item.hasDiff).length
 
   const handleSubmit = async () => {
     if (!supabase || !storeId) {
@@ -294,6 +309,60 @@ export default function Receive() {
               </div>
             </div>
           ))}
+
+          {/* 央廚主動出貨品項 */}
+          {extraItems.length > 0 && (
+            <div className="mt-3">
+              <div className="flex items-center gap-1.5 px-4 py-2 bg-surface-section border-y border-gray-200">
+                <Package size={14} className="text-brand-mocha" />
+                <span className="text-sm font-semibold text-brand-oak">央廚主動出貨</span>
+                <span className="text-[10px] text-brand-lotus">（未經叫貨）</span>
+                <span className="ml-auto text-xs text-brand-lotus">{extraItems.length} 項</span>
+              </div>
+
+              <div className="flex items-center px-4 py-1.5 bg-surface-section text-[11px] text-brand-lotus border-b border-gray-100">
+                <span className="w-6"></span>
+                <span className="flex-1 pl-2">品名</span>
+                <span className="w-[50px] text-center">實出</span>
+              </div>
+
+              {Array.from(extraByCategory.entries()).map(([category, items]) => (
+                <div key={`extra-${category}`}>
+                  <SectionHeader title={category} icon="■" />
+                  <div className="bg-white">
+                    {items.map((item, idx) => {
+                      const isConfirmed = confirmed[item.productId]
+
+                      return (
+                        <button
+                          key={item.productId}
+                          onClick={() => toggleConfirm(item.productId)}
+                          className={`w-full flex items-center px-4 py-2.5 text-left active:bg-gray-50 ${
+                            idx < items.length - 1 ? 'border-b border-gray-50' : ''
+                          } ${isConfirmed ? 'bg-status-success/5' : ''}`}
+                        >
+                          <div className={`w-5 h-5 rounded border-2 flex items-center justify-center shrink-0 transition-colors ${
+                            isConfirmed ? 'bg-status-success border-status-success' : 'border-gray-300'
+                          }`}>
+                            {isConfirmed && <CheckCircle size={13} className="text-white" />}
+                          </div>
+
+                          <div className="flex-1 min-w-0 pl-2">
+                            <p className="text-sm font-medium text-brand-oak leading-tight">{item.name}</p>
+                            <p className="text-[10px] text-brand-lotus leading-tight">{item.unit}</p>
+                          </div>
+
+                          <span className="w-[50px] text-center text-sm font-num text-brand-oak font-bold">
+                            {item.actualQty}
+                          </span>
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
 
           {/* 差異備註 */}
           <div className="px-4 py-3">
