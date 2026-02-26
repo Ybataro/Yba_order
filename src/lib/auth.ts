@@ -43,6 +43,7 @@ export function clearSession(): void {
   sessionStorage.removeItem('kitchen_staff')
   sessionStorage.removeItem('yba_has_pins')
   sessionStorage.removeItem('yba_can_schedule')
+  sessionStorage.removeItem('yba_allowed_pages')
   const keys = Object.keys(sessionStorage).filter((k) => k.startsWith('store_') && k.endsWith('_staff'))
   for (const k of keys) sessionStorage.removeItem(k)
 }

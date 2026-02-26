@@ -419,6 +419,20 @@ function buildPdfCalendarWeeks(year: number, month: number): (string | null)[][]
   return weeks
 }
 
+// ── Bold text helpers (fill+stroke rendering mode) ──
+function calSetBold(doc: jsPDF, color: [number, number, number], strokeW = 0.35) {
+  doc.setTextColor(...color)
+  doc.setDrawColor(...color)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  ;(doc as any).internal.write(`2 Tr ${strokeW} w`)
+}
+
+function calEndBold(doc: jsPDF) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  ;(doc as any).internal.write('0 Tr 0 w')
+  doc.setDrawColor(200, 195, 185)
+}
+
 export async function exportCalendarScheduleToPdf({
   title,
   year,
@@ -429,9 +443,14 @@ export async function exportCalendarScheduleToPdf({
   fileName,
 }: CalendarPdfOptions) {
   const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' })
+  const pageW = doc.internal.pageSize.getWidth()   // 297
+  const pageH = doc.internal.pageSize.getHeight()   // 210
 
   const hasCJK = await registerFont(doc)
   const fontName = hasCJK ? 'NotoSansTC' : 'helvetica'
+
+  const margin = 5  // top/bottom
+  const marginLR = 15 // left/right (1.5cm)
 
   // Build lookup maps
   const shiftMap: Record<string, ShiftType> = {}
@@ -467,54 +486,95 @@ export async function exportCalendarScheduleToPdf({
     dateSchedules[s.date].push(s)
   })
 
-  // ── Brand header ──
-  doc.setFontSize(14)
+  // ── Collect active staff for legend (only those with schedules this month) ──
+  const activeStaffIds = new Set<string>()
+  schedules.forEach((s) => { activeStaffIds.add(s.staff_id) })
+  const legendStaff = staff.filter((s) => activeStaffIds.has(s.id))
+
+  // ── Single-line header: brand + title + year/month + legend ──
+  const headerY = margin + 5.5
   doc.setFont(fontName, 'normal')
-  doc.setTextColor(139, 115, 85)
-  doc.text('\u963F\u7238\u7684\u828B\u5713', 14, 13)
 
+  // Brand name (bold)
   doc.setFontSize(11)
-  doc.setTextColor(60, 46, 38)
-  doc.text(title, 14, 20)
+  calSetBold(doc, [139, 115, 85], 0.45)
+  doc.text('\u963F\u7238\u7684\u828B\u5713', marginLR, headerY)
+  calEndBold(doc)
 
-  doc.setFontSize(8)
-  doc.setTextColor(120, 120, 120)
-  doc.text(`${year}年${month}月`, 14, 26)
-  doc.setTextColor(0, 0, 0)
+  // Separator dot
+  doc.setFontSize(9)
+  doc.setTextColor(180, 170, 160)
+  const brandW = doc.getTextWidth('\u963F\u7238\u7684\u828B\u5713 ')
+  doc.text('\u2027', marginLR + brandW, headerY)
+
+  // Title
+  doc.setFontSize(10)
+  calSetBold(doc, [60, 46, 38], 0.35)
+  const titleX = marginLR + brandW + 3
+  doc.text(title, titleX, headerY)
+  calEndBold(doc)
+
+  // Separator dot + year/month
+  const titleW = doc.getTextWidth(title + ' ')
+  doc.setFontSize(9)
+  doc.setTextColor(180, 170, 160)
+  doc.text('\u2027', titleX + titleW, headerY)
+
+  doc.setFontSize(9)
+  calSetBold(doc, [100, 90, 80], 0.3)
+  const ymX = titleX + titleW + 3
+  doc.text(`${year}\u5E74${month}\u6708`, ymX, headerY)
+  calEndBold(doc)
+
+  // Legend — right-aligned, same line
+  const legendBlockSize = 3.5
+  const legendGap = 1.5
+  const legendFontSize = 8
+  doc.setFontSize(legendFontSize)
+
+  // Calculate total legend width first
+  let totalLegendW = 0
+  legendStaff.forEach((s, i) => {
+    const nameW = doc.getTextWidth(s.name)
+    totalLegendW += legendBlockSize + 1.2 + nameW
+    if (i < legendStaff.length - 1) totalLegendW += legendGap + 1
+  })
+
+  let legendX = pageW - marginLR - totalLegendW
+  const legendCenterY = headerY - 1.5
+
+  legendStaff.forEach((s, i) => {
+    const color = staffColorMap[s.id]
+    if (!color) return
+
+    // Color block
+    doc.setFillColor(...color.bg)
+    doc.roundedRect(legendX, legendCenterY - 1.5, legendBlockSize, legendBlockSize, 0.5, 0.5, 'F')
+    doc.setDrawColor(...color.text)
+    doc.setLineWidth(0.15)
+    doc.roundedRect(legendX, legendCenterY - 1.5, legendBlockSize, legendBlockSize, 0.5, 0.5, 'S')
+
+    // Name
+    legendX += legendBlockSize + 1.2
+    doc.setFont(fontName, 'normal')
+    doc.setFontSize(legendFontSize)
+    calSetBold(doc, color.text, 0.25)
+    doc.text(s.name, legendX, legendCenterY + 1.5)
+    calEndBold(doc)
+
+    legendX += doc.getTextWidth(s.name) + legendGap + 1
+    void i
+  })
+
+  // Header separator line
+  const separatorY = headerY + 2
+  doc.setDrawColor(139, 115, 85)
+  doc.setLineWidth(0.4)
+  doc.line(marginLR, separatorY, pageW - marginLR, separatorY)
 
   // Build calendar weeks
   const weeks = buildPdfCalendarWeeks(year, month)
-  const weekdayLabels = ['一', '二', '三', '四', '五', '六', '日']
-
-  // Helper: get cell text content for a date (work only, no leaves)
-  function getCellContent(date: string | null): string {
-    if (!date) return ''
-    const dayNum = new Date(date + 'T00:00:00').getDate()
-    const daySchedules = dateSchedules[date] || []
-    const lines: string[] = [String(dayNum)]
-
-    daySchedules.forEach((sch) => {
-      const at = sch.attendance_type || 'work'
-      if (at !== 'work') return
-      const member = staffMap[sch.staff_id]
-      if (!member) return
-      const render = buildCellRender(sch, shiftMap)
-      if (!render) return
-      const parts = [member.name]
-      if (render.shiftName) parts.push(render.shiftName)
-      else if (render.timeRange) parts.push(render.timeRange)
-      if (render.tags.length > 0) parts.push(render.tags.map((t) => t.name).join(' '))
-      lines.push(parts.join(' '))
-    })
-
-    return lines.join('\n')
-  }
-
-  // Build table data
-  const head = [weekdayLabels]
-  const body = weeks.map((week) =>
-    week.map((date) => getCellContent(date))
-  )
+  const weekdayLabels = ['\u4E00', '\u4E8C', '\u4E09', '\u56DB', '\u4E94', '\u516D', '\u65E5']
 
   // Staff order for consistent sorting
   const staffOrderMap: Record<string, number> = {}
@@ -536,17 +596,44 @@ export async function exportCalendarScheduleToPdf({
     return true
   }
 
-  // Render map for custom cell drawing: `row_col` → { date, afternoon, evening }
+  // ── Bright leave colors for PDF (亮色系) ──
+  const LEAVE_PDF_COLORS: Record<string, { bg: [number, number, number]; text: [number, number, number] }> = {
+    rest_day:          { bg: [230, 238, 255], text: [60, 90, 180] },     // 亮藍灰
+    regular_leave:     { bg: [225, 232, 250], text: [50, 75, 160] },     // 靛藍
+    national_holiday:  { bg: [255, 225, 225], text: [210, 50, 50] },     // 亮紅
+    annual_leave:      { bg: [215, 240, 255], text: [15, 110, 210] },    // 天藍
+    sick_leave:        { bg: [255, 238, 215], text: [220, 120, 0] },     // 亮橘
+    personal_leave:    { bg: [242, 228, 255], text: [130, 40, 200] },    // 亮紫
+    menstrual_leave:   { bg: [255, 228, 242], text: [210, 40, 120] },    // 亮粉
+    family_care_leave: { bg: [222, 250, 228], text: [25, 155, 55] },     // 亮綠
+    official_leave:    { bg: [220, 240, 255], text: [25, 100, 200] },    // 湛藍
+    marriage_leave:    { bg: [255, 228, 228], text: [200, 45, 45] },     // 玫紅
+    bereavement_leave: { bg: [228, 235, 245], text: [55, 75, 110] },     // 灰藍
+    maternity_leave:   { bg: [255, 250, 222], text: [200, 155, 10] },    // 亮黃
+    prenatal_leave:    { bg: [255, 248, 220], text: [190, 145, 10] },    // 暖黃
+    late_early:        { bg: [255, 232, 222], text: [210, 80, 25] },     // 亮橘紅
+  }
+  const defaultLeaveColor = { bg: [235, 240, 250] as [number, number, number], text: [70, 90, 150] as [number, number, number] }
+
+  // ── Build cell data including leaves ──
   interface CalendarEntry {
     staffName: string
     staffId: string
     render: CellRender
+  }
+  interface LeaveEntry {
+    staffName: string
+    staffId: string
+    leaveName: string
+    leaveColor: [number, number, number]
+    leaveTextColor: [number, number, number]
   }
   interface CalendarCellData {
     date: string
     dayNum: number
     afternoon: CalendarEntry[]
     evening: CalendarEntry[]
+    leaves: LeaveEntry[]
   }
   const cellDataMap: Record<string, CalendarCellData> = {}
 
@@ -556,11 +643,27 @@ export async function exportCalendarScheduleToPdf({
       const daySchedules = dateSchedules[date] || []
       const afternoon: CalendarEntry[] = []
       const evening: CalendarEntry[] = []
+      const leaves: LeaveEntry[] = []
       daySchedules.forEach((sch) => {
         const at = sch.attendance_type || 'work'
-        if (at !== 'work') return // hide leaves
         const member = staffMap[sch.staff_id]
         if (!member) return
+
+        if (at !== 'work') {
+          // Leave/rest entry — use bright PDF colors
+          const leaveType = getAttendanceType(at)
+          if (!leaveType) return
+          const pdfColor = LEAVE_PDF_COLORS[at] || defaultLeaveColor
+          leaves.push({
+            staffName: member.name,
+            staffId: sch.staff_id,
+            leaveName: leaveType.name,
+            leaveColor: pdfColor.bg,
+            leaveTextColor: pdfColor.text,
+          })
+          return
+        }
+
         const render = buildCellRender(sch, shiftMap)
         if (!render) return
         const entry: CalendarEntry = { staffName: member.name, staffId: sch.staff_id, render }
@@ -569,21 +672,35 @@ export async function exportCalendarScheduleToPdf({
       })
       sortByStaffOrder(afternoon)
       sortByStaffOrder(evening)
+      leaves.sort((a, b) => (staffOrderMap[a.staffId] ?? 999) - (staffOrderMap[b.staffId] ?? 999))
       cellDataMap[`${rowIdx}_${colIdx}`] = {
         date,
         dayNum: new Date(date + 'T00:00:00').getDate(),
         afternoon,
         evening,
+        leaves,
       }
     })
   })
 
-  // Adaptive cell height based on week count
-  const pageH = doc.internal.pageSize.getHeight()
-  const tableStartY = 30
-  const availableH = pageH - tableStartY - 10 // bottom margin
-  const headerRowH = 7
-  const rowH = Math.max(16, (availableH - headerRowH) / weeks.length)
+  // ── Adaptive sizing — MUST fit 1 page ──
+  const tableStartY = separatorY + 1.5
+  const headerRowH = 5.5
+  const safetyBuffer = 1.5 // prevent autoTable rounding overflow
+  const availableH = pageH - tableStartY - margin - safetyBuffer
+  const rowH = (availableH - headerRowH) / weeks.length
+
+  // Adaptive font sizes — larger for readability
+  const badgeFontSize = Math.min(12, Math.max(7, rowH * 0.3))
+  const dayNumFontSize = badgeFontSize + 1.5
+  const sectionLabelFontSize = Math.max(4.5, badgeFontSize - 2.5)
+  const entryH = Math.min(5.5, Math.max(3.8, badgeFontSize * 0.5))
+
+  // Build dummy body for autoTable (content drawn in didDrawCell)
+  const head = [weekdayLabels]
+  const body = weeks.map((week) =>
+    week.map((date) => date ? String(new Date(date + 'T00:00:00').getDate()) : '')
+  )
 
   autoTable(doc, {
     startY: tableStartY,
@@ -591,137 +708,265 @@ export async function exportCalendarScheduleToPdf({
     body,
     styles: {
       font: fontName,
-      fontSize: 5.5,
-      cellPadding: 1,
+      fontSize: 5,
+      cellPadding: 0.5,
       halign: 'left',
       valign: 'top',
       lineWidth: 0.15,
-      lineColor: [230, 225, 220],
+      lineColor: [200, 195, 185],
       minCellHeight: rowH,
       overflow: 'hidden',
     },
     headStyles: {
-      fillColor: [139, 115, 85],
+      fillColor: [90, 70, 50],
       textColor: 255,
       fontStyle: 'normal',
       font: fontName,
       halign: 'center',
-      cellPadding: 1.5,
+      cellPadding: 1,
       fontSize: 7,
       minCellHeight: headerRowH,
     },
-    alternateRowStyles: {
-      fillColor: [252, 250, 248],
-    },
-    margin: { left: 10, right: 10 },
+    margin: { left: marginLR, right: marginLR, top: 0, bottom: margin },
 
     willDrawCell: (hookData) => {
-      if (hookData.section !== 'body') return
-      const key = `${hookData.row.index}_${hookData.column.index}`
-      const weekRow = weeks[hookData.row.index]
-      if (cellDataMap[key] || !weekRow?.[hookData.column.index]) {
+      // Clear head text (we draw bold manually)
+      if (hookData.section === 'head') {
         hookData.cell.text = []
       }
+      if (hookData.section !== 'body') return
+      // Clear all body text
+      hookData.cell.text = []
     },
 
     didDrawCell: (hookData) => {
+      // ── Bold table header ──
+      if (hookData.section === 'head') {
+        const cell = hookData.cell
+        const colIdx = hookData.column.index
+        const label = weekdayLabels[colIdx] || ''
+        const isWeekend = colIdx >= 5
+
+        // Weekend header: slightly lighter brown
+        if (isWeekend) {
+          doc.setFillColor(120, 95, 70)
+          doc.rect(cell.x, cell.y, cell.width, cell.height, 'F')
+          doc.setDrawColor(200, 195, 185)
+          doc.setLineWidth(0.15)
+          doc.rect(cell.x, cell.y, cell.width, cell.height, 'S')
+        }
+
+        doc.setFont(fontName, 'normal')
+        doc.setFontSize(7)
+        calSetBold(doc, [255, 255, 255], 0.4)
+        doc.text(label, cell.x + cell.width / 2, cell.y + cell.height / 2, {
+          align: 'center',
+          baseline: 'middle',
+        })
+        calEndBold(doc)
+        return
+      }
+
       if (hookData.section !== 'body') return
 
       const rowIdx = hookData.row.index
       const colIdx = hookData.column.index
       const date = weeks[rowIdx]?.[colIdx]
+      const cell = hookData.cell
+      const isWeekend = colIdx >= 5
 
       if (!date) {
         // Gray out empty cells
-        const cell = hookData.cell
-        doc.setFillColor(245, 243, 240)
+        doc.setFillColor(240, 238, 235)
         doc.rect(cell.x, cell.y, cell.width, cell.height, 'F')
+        doc.setDrawColor(200, 195, 185)
+        doc.setLineWidth(0.15)
+        doc.rect(cell.x, cell.y, cell.width, cell.height, 'S')
         return
+      }
+
+      // Weekend background
+      if (isWeekend) {
+        doc.setFillColor(252, 250, 248)
+        doc.rect(cell.x, cell.y, cell.width, cell.height, 'F')
+        doc.setDrawColor(200, 195, 185)
+        doc.setLineWidth(0.15)
+        doc.rect(cell.x, cell.y, cell.width, cell.height, 'S')
       }
 
       const key = `${rowIdx}_${colIdx}`
       const data = cellDataMap[key]
       if (!data) return
 
-      const cell = hookData.cell
-      const cx = cell.x + 1
-      let cy = cell.y + 1
+      const cx = cell.x + 0.8
+      const cw = cell.width
+      let cy = cell.y + 0.5
 
-      // Day number
+      // Day number (bold)
       doc.setFont(fontName, 'normal')
-      doc.setFontSize(7)
-      doc.setTextColor(60, 46, 38)
-      doc.text(String(data.dayNum), cx, cy + 3)
-      cy += 5
+      doc.setFontSize(dayNumFontSize)
+      calSetBold(doc, [60, 46, 38], 0.35)
+      doc.text(String(data.dayNum), cx, cy + dayNumFontSize * 0.35)
+      calEndBold(doc)
+      cy += dayNumFontSize * 0.42 + 0.5
 
-      const entryH = 3.2
-      const sectionLabelW = 4
-      const midY = cell.y + 1 + 5 + (cell.height - 6) / 2
+      const sectionLabelW = 3.5
+      const badgeR = 0.8
 
-      // Helper: render entries in a section
-      const renderEntries = (entries: CalendarEntry[], startY: number, endY: number, label: string) => {
+      // Calculate section areas
+      // Total area for content: from cy to cell bottom - 0.5
+      const contentBottom = cell.y + cell.height - 0.5
+      const hasAfternoon = data.afternoon.length > 0
+      const hasEvening = data.evening.length > 0
+      const hasLeaves = data.leaves.length > 0
+
+      // Divide available space: afternoon | evening | leaves
+      const totalContentH = contentBottom - cy
+      let afternoonEndY: number
+      let eveningEndY: number
+
+      if (hasLeaves) {
+        // Reserve space for leaves at bottom
+        const leaveH = Math.min(data.leaves.length * entryH, totalContentH * 0.25)
+        eveningEndY = contentBottom - leaveH - 0.5
+        afternoonEndY = cy + (eveningEndY - cy) / 2
+      } else {
+        eveningEndY = contentBottom
+        afternoonEndY = cy + totalContentH / 2
+      }
+
+      // Helper: render work entries in a section
+      const badgePadH = 1.4 // horizontal padding inside badge
+      const maxBadgeW = cw - 1.6 - sectionLabelW // max badge width (cell limit)
+
+      const renderWorkEntries = (entries: CalendarEntry[], startY: number, endY: number, label: string) => {
         // Section label
-        doc.setFontSize(4)
-        doc.setTextColor(180, 170, 160)
-        doc.text(label, cx, startY + 2.5)
+        doc.setFont(fontName, 'normal')
+        doc.setFontSize(sectionLabelFontSize)
+        doc.setTextColor(170, 160, 150)
+        doc.text(label, cx, startY + sectionLabelFontSize * 0.35)
 
-        const maxEntries = Math.floor((endY - startY) / entryH)
+        const maxEntries = Math.max(1, Math.floor((endY - startY) / entryH))
         let ey = startY
         entries.slice(0, maxEntries).forEach((entry) => {
           const staffColor = staffColorMap[entry.staffId]
           const badgeBg = staffColor?.bg || [107, 93, 85] as [number, number, number]
           const badgeTextColor = staffColor?.text || [255, 255, 255] as [number, number, number]
 
-          doc.setFillColor(...badgeBg)
-          doc.roundedRect(cx + sectionLabelW, ey - 0.5, cell.width - 2 - sectionLabelW, entryH - 0.3, 0.8, 0.8, 'F')
+          const bx = cx + sectionLabelW
 
-          doc.setFontSize(5)
-          doc.setTextColor(...badgeTextColor)
+          // Build text first to measure
+          doc.setFont(fontName, 'normal')
+          doc.setFontSize(badgeFontSize)
 
           const r = entry.render
           let text = entry.staffName
           if (r.shiftName) text += ` ${r.shiftName}`
           else if (r.timeRange) text += ` ${r.timeRange}`
 
-          const maxW = cell.width - 3 - sectionLabelW
-          while (doc.getTextWidth(text) > maxW && text.length > 3) {
-            text = text.slice(0, -2) + '…'
+          // Truncate if exceeds max cell width
+          while (doc.getTextWidth(text) > maxBadgeW - badgePadH * 2 && text.length > 3) {
+            text = text.slice(0, -2) + '\u2026'
           }
 
-          doc.text(text, cx + sectionLabelW + 0.5, ey + 2)
+          // Badge width = text width + padding, capped at cell width
+          const textW = doc.getTextWidth(text)
+          const bw = Math.min(textW + badgePadH * 2, maxBadgeW)
+
+          doc.setFillColor(...badgeBg)
+          doc.roundedRect(bx, ey - 0.3, bw, entryH - 0.2, badgeR, badgeR, 'F')
+
+          calSetBold(doc, badgeTextColor, 0.25)
+          doc.text(text, bx + badgePadH, ey + entryH * 0.52)
+          calEndBold(doc)
           ey += entryH
         })
 
         if (entries.length > maxEntries) {
-          doc.setFontSize(4)
+          doc.setFont(fontName, 'normal')
+          doc.setFontSize(sectionLabelFontSize)
           doc.setTextColor(140, 130, 120)
-          doc.text(`+${entries.length - maxEntries}`, cx + sectionLabelW + 0.5, ey + 1.5)
+          doc.text(`+${entries.length - maxEntries}`, cx + sectionLabelW + 0.5, ey + entryH * 0.4)
         }
       }
 
       // Afternoon section
-      renderEntries(data.afternoon, cy, midY - 0.5, '午')
+      if (hasAfternoon || hasEvening) {
+        renderWorkEntries(data.afternoon, cy, afternoonEndY - 0.3, '\u5348')
 
-      // Divider line
-      doc.setDrawColor(180, 170, 160)
-      doc.setLineWidth(0.15)
-      doc.line(cell.x + 1, midY, cell.x + cell.width - 1, midY)
+        // Divider line
+        doc.setDrawColor(200, 195, 185)
+        doc.setLineWidth(0.1)
+        doc.line(cell.x + 0.8, afternoonEndY, cell.x + cw - 0.8, afternoonEndY)
 
-      // Evening section
-      renderEntries(data.evening, midY + 1, cell.y + cell.height - 1, '晚')
+        // Evening section
+        renderWorkEntries(data.evening, afternoonEndY + 0.5, eveningEndY, '\u665A')
+      }
+
+      // Leave entries — distinct style: colored dot + text + dashed underline
+      if (hasLeaves) {
+        const maxLeaveW = cw - 2
+        const leaveFontSize = Math.max(badgeFontSize - 1.5, 5.5)
+        const leaveEntryH = entryH * 0.9
+        let leaveY = eveningEndY + (hasAfternoon || hasEvening ? 0.8 : 0)
+        data.leaves.forEach((leave) => {
+          if (leaveY + leaveEntryH > contentBottom + 0.5) return
+
+          const bx = cx + 0.5
+          const dotR = 1.2
+
+          // Colored dot
+          doc.setFillColor(...leave.leaveColor)
+          doc.circle(bx + dotR, leaveY + leaveEntryH * 0.35, dotR, 'F')
+          doc.setDrawColor(...leave.leaveTextColor)
+          doc.setLineWidth(0.2)
+          doc.circle(bx + dotR, leaveY + leaveEntryH * 0.35, dotR, 'S')
+
+          // Text: "人名 假別"
+          doc.setFont(fontName, 'normal')
+          doc.setFontSize(leaveFontSize)
+
+          let text = `${leave.staffName} ${leave.leaveName}`
+          const textStartX = bx + dotR * 2 + 1.2
+          while (doc.getTextWidth(text) > maxLeaveW - dotR * 2 - 2 && text.length > 3) {
+            text = text.slice(0, -2) + '\u2026'
+          }
+
+          calSetBold(doc, leave.leaveTextColor, 0.2)
+          doc.text(text, textStartX, leaveY + leaveEntryH * 0.55)
+          calEndBold(doc)
+
+          // Dashed underline
+          const textW = doc.getTextWidth(text)
+          doc.setDrawColor(...leave.leaveTextColor)
+          doc.setLineWidth(0.15)
+          const dashLen = 0.8
+          const gapLen = 0.6
+          const lineY = leaveY + leaveEntryH * 0.72
+          let dx = textStartX
+          const lineEnd = textStartX + textW
+          while (dx < lineEnd) {
+            const segEnd = Math.min(dx + dashLen, lineEnd)
+            doc.line(dx, lineY, segEnd, lineY)
+            dx = segEnd + gapLen
+          }
+
+          leaveY += leaveEntryH
+        })
+      }
     },
   })
 
-  // Page numbers
+  // Page numbers (minimal)
   const totalPages = doc.getNumberOfPages()
   for (let i = 1; i <= totalPages; i++) {
     doc.setPage(i)
-    doc.setFontSize(7)
-    doc.setTextColor(160, 160, 160)
+    doc.setFontSize(6)
+    doc.setTextColor(180, 180, 180)
     doc.text(
       `${i} / ${totalPages}`,
-      doc.internal.pageSize.getWidth() / 2,
-      doc.internal.pageSize.getHeight() - 6,
+      pageW / 2,
+      pageH - 2,
       { align: 'center' },
     )
   }

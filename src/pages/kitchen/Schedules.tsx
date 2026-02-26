@@ -7,6 +7,7 @@ import { ShiftPickerModal } from '@/components/ShiftPickerModal'
 import { useScheduleStore } from '@/stores/useScheduleStore'
 import { useStaffStore } from '@/stores/useStaffStore'
 import { useCanSchedule } from '@/hooks/useCanSchedule'
+import { useAppSetting } from '@/hooks/useAppSetting'
 import { getMonthDates } from '@/lib/schedule'
 import { getSession } from '@/lib/auth'
 import { exportCalendarScheduleToPdf } from '@/lib/exportSchedulePdf'
@@ -21,6 +22,8 @@ export default function KitchenSchedules() {
   const staffInitialized = useStaffStore((s) => s.initialized)
   const { shiftTypes, positions, fetchShiftTypes, fetchPositions, upsertSchedule, removeSchedule } = useScheduleStore()
   const canSchedule = useCanSchedule()
+  const { value: popupSetting } = useAppSetting('calendar_popup_enabled')
+  const popupEnabled = popupSetting !== 'false'
   const { showToast } = useToast()
 
   // Shared month state for both views
@@ -170,57 +173,61 @@ export default function KitchenSchedules() {
     <div className="page-container">
       <TopNav title="央廚排班表" backTo="/kitchen" />
 
-      {/* View mode tabs */}
-      <div className="flex items-center gap-1 px-4 pt-2 no-print">
-        <button
-          onClick={() => setViewMode('grid')}
-          className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-            viewMode === 'grid'
-              ? 'bg-brand-oak text-white'
-              : 'bg-gray-100 text-brand-mocha active:bg-gray-200'
-          }`}
-        >
-          <LayoutGrid size={13} />
-          月檢視
-        </button>
-        <button
-          onClick={() => setViewMode('calendar')}
-          className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-            viewMode === 'calendar'
-              ? 'bg-brand-oak text-white'
-              : 'bg-gray-100 text-brand-mocha active:bg-gray-200'
-          }`}
-        >
-          <CalendarDays size={13} />
-          月行事曆
-        </button>
-      </div>
+      {/* View mode tabs — only show for schedule managers */}
+      {canSchedule && (
+        <div className="flex items-center gap-1 px-4 pt-2 no-print">
+          <button
+            onClick={() => setViewMode('grid')}
+            className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+              viewMode === 'grid'
+                ? 'bg-brand-oak text-white'
+                : 'bg-gray-100 text-brand-mocha active:bg-gray-200'
+            }`}
+          >
+            <LayoutGrid size={13} />
+            月檢視
+          </button>
+          <button
+            onClick={() => setViewMode('calendar')}
+            className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+              viewMode === 'calendar'
+                ? 'bg-brand-oak text-white'
+                : 'bg-gray-100 text-brand-mocha active:bg-gray-200'
+            }`}
+          >
+            <CalendarDays size={13} />
+            月行事曆
+          </button>
+        </div>
+      )}
 
       {/* Navigation (shared MonthNav) */}
       <div className="no-print">
         <MonthNav year={calYear} month={calMonth} onChange={(y, m) => { setCalYear(y); setCalMonth(m) }} />
       </div>
 
-      {/* Action buttons */}
-      <div className="flex items-center justify-end gap-1.5 px-4 py-2 no-print">
-        <button
-          onClick={handlePdf}
-          className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-brand-lotus text-white text-xs font-medium active:scale-95 transition-transform"
-        >
-          <FileText size={14} />
-          PDF
-        </button>
-        <button
-          onClick={() => window.print()}
-          className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-brand-mocha text-white text-xs font-medium active:scale-95 transition-transform"
-        >
-          <Printer size={14} />
-          列印
-        </button>
-      </div>
+      {/* Action buttons — only show for schedule managers */}
+      {canSchedule && (
+        <div className="flex items-center justify-end gap-1.5 px-4 py-2 no-print">
+          <button
+            onClick={handlePdf}
+            className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-brand-lotus text-white text-xs font-medium active:scale-95 transition-transform"
+          >
+            <FileText size={14} />
+            PDF
+          </button>
+          <button
+            onClick={() => window.print()}
+            className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-brand-mocha text-white text-xs font-medium active:scale-95 transition-transform"
+          >
+            <Printer size={14} />
+            列印
+          </button>
+        </div>
+      )}
 
-      {/* Grid */}
-      {viewMode === 'grid' ? (
+      {/* Grid — non-schedulers always see calendar */}
+      {canSchedule && viewMode === 'grid' ? (
         <ScheduleGrid
           dates={monthDates}
           staff={kitchenStaff}
@@ -238,6 +245,7 @@ export default function KitchenSchedules() {
           shiftTypes={shiftTypes}
           canSchedule={canSchedule}
           onCellClick={handleCellClick}
+          popupEnabled={canSchedule || popupEnabled}
         />
       )}
 

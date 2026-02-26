@@ -13,6 +13,7 @@ interface CalendarGridProps {
   shiftTypes: ShiftType[]
   canSchedule: boolean
   onCellClick?: (staffId: string, date: string, existing?: Schedule) => void
+  popupEnabled?: boolean
 }
 
 /** Cutoff hour: < 17 = 午班 (top), >= 17 = 晚班 (bottom) */
@@ -63,7 +64,7 @@ function buildCalendarWeeks(year: number, month: number): (string | null)[][] {
   return weeks
 }
 
-export function CalendarGrid({ year, month, staff, schedules, shiftTypes, canSchedule, onCellClick }: CalendarGridProps) {
+export function CalendarGrid({ year, month, staff, schedules, shiftTypes, canSchedule, onCellClick, popupEnabled = true }: CalendarGridProps) {
   const today = getTodayString()
   const weeks = useMemo(() => buildCalendarWeeks(year, month), [year, month])
 
@@ -205,6 +206,34 @@ export function CalendarGrid({ year, month, staff, schedules, shiftTypes, canSch
     const firstTag = tags.length > 0 ? tags[0] : null
     const shortTag = firstTag ? (firstTag.length <= 2 ? firstTag : firstTag.slice(0, 2)) : null
     const tagColor = firstTag ? getTagColor(firstTag) : null
+
+    const badgeContent = (
+      <>
+        <span>{shortName}</span>
+        {shortTag && (
+          <span
+            className="text-[6px] leading-none rounded px-[2px] mt-[1px]"
+            style={{ backgroundColor: tagColor!.bg, color: tagColor!.text }}
+          >
+            {shortTag}
+          </span>
+        )}
+      </>
+    )
+
+    if (!popupEnabled) {
+      return (
+        <div
+          key={sch.id}
+          title={`${member.name} ${fullLabel}${firstTag ? ` [${firstTag}]` : ''}`}
+          className="rounded px-[3px] py-[1px] text-[8px] leading-tight font-semibold whitespace-nowrap flex flex-col items-center"
+          style={{ backgroundColor: color.bg, color: color.text }}
+        >
+          {badgeContent}
+        </div>
+      )
+    }
+
     return (
       <button
         key={sch.id}
@@ -228,15 +257,7 @@ export function CalendarGrid({ year, month, staff, schedules, shiftTypes, canSch
         className="rounded px-[3px] py-[1px] text-[8px] leading-tight font-semibold whitespace-nowrap active:opacity-70 flex flex-col items-center"
         style={{ backgroundColor: color.bg, color: color.text }}
       >
-        <span>{shortName}</span>
-        {shortTag && (
-          <span
-            className="text-[6px] leading-none rounded px-[2px] mt-[1px]"
-            style={{ backgroundColor: tagColor!.bg, color: tagColor!.text }}
-          >
-            {shortTag}
-          </span>
-        )}
+        {badgeContent}
       </button>
     )
   }

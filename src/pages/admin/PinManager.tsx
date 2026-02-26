@@ -7,7 +7,8 @@ import { useStaffStore } from '@/stores/useStaffStore'
 import { useStoreStore } from '@/stores/useStoreStore'
 import { supabase } from '@/lib/supabase'
 import { hashPin } from '@/lib/auth'
-import { Plus, Pencil, Shield, ShieldOff, CalendarDays } from 'lucide-react'
+import { useAppSetting } from '@/hooks/useAppSetting'
+import { Plus, Pencil, Shield, ShieldOff, CalendarDays, Settings, Lock } from 'lucide-react'
 
 interface UserPin {
   id: string
@@ -17,6 +18,38 @@ interface UserPin {
   allowed_stores: string[]
   is_active: boolean
   can_schedule: boolean
+  allowed_pages: string[] | null
+}
+
+/** Page definitions for store and kitchen contexts */
+const STORE_PAGES = [
+  { key: 'inventory', label: '物料盤點' },
+  { key: 'settlement', label: '每日結帳' },
+  { key: 'order', label: '叫貨' },
+  { key: 'receive', label: '收貨確認' },
+  { key: 'expense', label: '雜支申報' },
+  { key: 'schedule', label: '排班表' },
+]
+
+const KITCHEN_PAGES = [
+  { key: 'orders', label: '各店叫貨總表' },
+  { key: 'shipments', label: '出貨表' },
+  { key: 'materials', label: '原物料庫存' },
+  { key: 'products', label: '成品庫存' },
+  { key: 'material-orders', label: '原物料叫貨' },
+  { key: 'production-schedule', label: '生產排程建議' },
+  { key: 'expense', label: '雜支申報' },
+  { key: 'staff-schedule', label: '排班表' },
+]
+
+const STORE_PRESETS: Record<string, string[]> = {
+  part_time: ['expense', 'schedule'],
+  full_time: ['expense', 'schedule', 'inventory'],
+}
+
+const KITCHEN_PRESETS: Record<string, string[]> = {
+  part_time: ['expense', 'staff-schedule'],
+  full_time: ['expense', 'staff-schedule', 'materials', 'products'],
 }
 
 interface StaffRow {
@@ -46,6 +79,9 @@ export default function PinManager() {
   const { adminStaff, kitchenStaff, storeStaff } = useStaffStore()
   const stores = useStoreStore((s) => s.items)
 
+  const { value: popupSetting, loading: popupLoading, update: updatePopup } = useAppSetting('calendar_popup_enabled')
+  const popupEnabled = popupSetting !== 'false'
+
   const [pins, setPins] = useState<UserPin[]>([])
   const [allStaffRows, setAllStaffRows] = useState<StaffRow[]>([])
   const [loading, setLoading] = useState(true)
@@ -57,6 +93,40 @@ export default function PinManager() {
   const [formRole, setFormRole] = useState('store')
   const [formPin, setFormPin] = useState('')
   const [formAllowedStores, setFormAllowedStores] = useState<string[]>([])
+
+  // Page permission panel state
+  const [pagePanelPinId, setPagePanelPinId] = useState<string | null>(null)
+  const [pagePanelPages, setPagePanelPages] = useState<string[] | null>(null)
+  const [pagePanelSaving, setPagePanelSaving] = useState(false)
+
+  const getPageContext = (pin: UserPin): 'store' | 'kitchen' => {
+    return pin.role === 'kitchen' ? 'kitchen' : 'store'
+  }
+
+  const getPageList = (ctx: 'store' | 'kitchen') => ctx === 'store' ? STORE_PAGES : KITCHEN_PAGES
+
+  const togglePagePanel = (pin: UserPin) => {
+    if (pagePanelPinId === pin.id) {
+      setPagePanelPinId(null)
+      return
+    }
+    setPagePanelPinId(pin.id)
+    setPagePanelPages(pin.allowed_pages ? [...pin.allowed_pages] : null)
+  }
+
+  const saveAllowedPages = async (pin: UserPin) => {
+    if (!supabase) return
+    setPagePanelSaving(true)
+    const { error } = await supabase
+      .from('user_pins')
+      .update({ allowed_pages: pagePanelPages, updated_at: new Date().toISOString() })
+      .eq('id', pin.id)
+    setPagePanelSaving(false)
+    if (error) { showToast('儲存失敗', 'error'); return }
+    setPins((prev) => prev.map((p) => p.id === pin.id ? { ...p, allowed_pages: pagePanelPages } : p))
+    setPagePanelPinId(null)
+    showToast('頁面權限已更新')
+  }
 
   // Fetch pins + all staff
   useEffect(() => {
@@ -216,62 +286,198 @@ export default function PinManager() {
         <div className="flex items-center justify-center py-20 text-sm text-brand-lotus">載入中...</div>
       ) : (
         <>
+          {/* System settings */}
+          <div>
+            <SectionHeader title="系統設定" icon="■" />
+            <div className="bg-white px-4 py-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 min-w-0">
+                  <Settings size={16} className="text-brand-mocha shrink-0" />
+                  <div>
+                    <p className="text-sm font-medium text-brand-oak">月行事曆 — 點擊人名顯示詳情</p>
+                    <p className="text-[11px] text-brand-mocha">關閉後，一般人員點擊人名不會彈出時間資訊</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => updatePopup(popupEnabled ? 'false' : 'true')}
+                  disabled={popupLoading}
+                  className={`relative w-11 h-6 rounded-full transition-colors shrink-0 ${
+                    popupEnabled ? 'bg-green-500' : 'bg-gray-300'
+                  }`}
+                >
+                  <span
+                    className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${
+                      popupEnabled ? 'translate-x-5' : 'translate-x-0'
+                    }`}
+                  />
+                </button>
+              </div>
+            </div>
+          </div>
+
           {grouped.map(([groupId, staffRows]) => (
             <div key={groupId}>
               <SectionHeader title={`${groupLabels[groupId] || groupId} (${staffRows.length})`} icon="■" />
               <div className="bg-white divide-y divide-gray-50">
                 {staffRows.map((staff) => {
                   const pin = pinMap.get(staff.id)
+                  const isPanelOpen = pin && pagePanelPinId === pin.id
+                  const pageCtx = pin ? getPageContext(pin) : 'store'
+                  const pageList = getPageList(pageCtx)
+                  const presets = pageCtx === 'store' ? STORE_PRESETS : KITCHEN_PRESETS
                   return (
-                    <div key={staff.id} className="flex items-center px-4 py-3">
-                      <div className="flex-1 min-w-0">
-                        <p className={`text-sm font-medium ${pin ? 'text-brand-oak' : 'text-brand-oak/50'}`}>
-                          {staff.name}
-                        </p>
-                        {pin ? (
-                          <p className="text-[11px] text-brand-lotus">
-                            {pin.is_active ? '啟用中' : '已停用'}
-                            {pin.allowed_stores?.length > 0 && (
-                              <> · {pin.allowed_stores.map((sid) => stores.find((s) => s.id === sid)?.name || sid).join('、')}</>
-                            )}
+                    <div key={staff.id}>
+                      <div className="flex items-center px-4 py-3">
+                        <div className="flex-1 min-w-0">
+                          <p className={`text-sm font-medium ${pin ? 'text-brand-oak' : 'text-brand-oak/50'}`}>
+                            {staff.name}
                           </p>
-                        ) : (
-                          <p className="text-[11px] text-status-danger/70">未設定 PIN</p>
-                        )}
+                          {pin ? (
+                            <p className="text-[11px] text-brand-lotus">
+                              {pin.is_active ? '啟用中' : '已停用'}
+                              {pin.allowed_stores?.length > 0 && (
+                                <> · {pin.allowed_stores.map((sid) => stores.find((s) => s.id === sid)?.name || sid).join('、')}</>
+                              )}
+                              {pin.role !== 'admin' && !pin.can_schedule && (
+                                <> · {pin.allowed_pages ? `自訂 ${pin.allowed_pages.length} 頁` : '預設權限'}</>
+                              )}
+                            </p>
+                          ) : (
+                            <p className="text-[11px] text-status-danger/70">未設定 PIN</p>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {pin ? (
+                            <>
+                              {pin.role !== 'admin' && (
+                                <button
+                                  onClick={() => togglePagePanel(pin)}
+                                  className={`p-1.5 rounded-lg ${isPanelOpen ? 'text-brand-lotus bg-brand-lotus/10' : pin.allowed_pages ? 'text-brand-mocha bg-amber-50' : 'text-gray-300 bg-gray-50'}`}
+                                  title="頁面權限"
+                                >
+                                  <Lock size={16} />
+                                </button>
+                              )}
+                              <button
+                                onClick={() => toggleCanSchedule(pin)}
+                                className={`p-1.5 rounded-lg ${pin.can_schedule ? 'text-brand-amber bg-amber-50' : 'text-gray-300 bg-gray-50'}`}
+                                title={pin.can_schedule ? '取消排班權限' : '授予排班權限'}
+                              >
+                                <CalendarDays size={16} />
+                              </button>
+                              <button
+                                onClick={() => toggleActive(pin)}
+                                className={`p-1.5 rounded-lg ${pin.is_active ? 'text-green-500 bg-green-50' : 'text-gray-400 bg-gray-100'}`}
+                                title={pin.is_active ? '停用' : '啟用'}
+                              >
+                                {pin.is_active ? <Shield size={16} /> : <ShieldOff size={16} />}
+                              </button>
+                              <button
+                                onClick={() => openEdit(pin)}
+                                className="p-1.5 rounded-lg text-brand-lotus bg-gray-50"
+                              >
+                                <Pencil size={16} />
+                              </button>
+                            </>
+                          ) : (
+                            <button
+                              onClick={() => openAdd(staff.id, staff.group_id)}
+                              className="px-2.5 py-1 rounded-lg bg-brand-mocha text-white text-xs font-medium active:scale-95 transition-transform"
+                            >
+                              設定 PIN
+                            </button>
+                          )}
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        {pin ? (
-                          <>
-                            <button
-                              onClick={() => toggleCanSchedule(pin)}
-                              className={`p-1.5 rounded-lg ${pin.can_schedule ? 'text-brand-amber bg-amber-50' : 'text-gray-300 bg-gray-50'}`}
-                              title={pin.can_schedule ? '取消排班權限' : '授予排班權限'}
-                            >
-                              <CalendarDays size={16} />
-                            </button>
-                            <button
-                              onClick={() => toggleActive(pin)}
-                              className={`p-1.5 rounded-lg ${pin.is_active ? 'text-green-500 bg-green-50' : 'text-gray-400 bg-gray-100'}`}
-                              title={pin.is_active ? '停用' : '啟用'}
-                            >
-                              {pin.is_active ? <Shield size={16} /> : <ShieldOff size={16} />}
-                            </button>
-                            <button
-                              onClick={() => openEdit(pin)}
-                              className="p-1.5 rounded-lg text-brand-lotus bg-gray-50"
-                            >
-                              <Pencil size={16} />
-                            </button>
-                          </>
-                        ) : (
-                          <button
-                            onClick={() => openAdd(staff.id, staff.group_id)}
-                            className="px-2.5 py-1 rounded-lg bg-brand-mocha text-white text-xs font-medium active:scale-95 transition-transform"
-                          >
-                            設定 PIN
-                          </button>
-                        )}
-                      </div>
+
+                      {/* Inline page permission panel */}
+                      {isPanelOpen && pin && (
+                        <div className="px-4 pb-3">
+                          <div className="rounded-xl bg-gray-50 p-3 space-y-3">
+                            <p className="text-xs font-semibold text-brand-oak">
+                              頁面權限 — {staff.name}
+                              {pin.can_schedule && <span className="ml-1 text-brand-amber font-normal">（排班人員，已有全部權限）</span>}
+                            </p>
+
+                            {/* Preset buttons */}
+                            <div className="flex flex-wrap gap-1.5">
+                              <button
+                                onClick={() => setPagePanelPages(null)}
+                                className={`px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${
+                                  pagePanelPages === null ? 'bg-brand-lotus text-white' : 'bg-white text-brand-oak border border-gray-200'
+                                }`}
+                              >
+                                全部（預設）
+                              </button>
+                              <button
+                                onClick={() => setPagePanelPages([...presets['part_time']])}
+                                className={`px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${
+                                  pagePanelPages !== null && JSON.stringify([...pagePanelPages].sort()) === JSON.stringify([...presets['part_time']].sort())
+                                    ? 'bg-brand-lotus text-white' : 'bg-white text-brand-oak border border-gray-200'
+                                }`}
+                              >
+                                工讀生/兼職
+                              </button>
+                              <button
+                                onClick={() => setPagePanelPages([...presets['full_time']])}
+                                className={`px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${
+                                  pagePanelPages !== null && JSON.stringify([...pagePanelPages].sort()) === JSON.stringify([...presets['full_time']].sort())
+                                    ? 'bg-brand-lotus text-white' : 'bg-white text-brand-oak border border-gray-200'
+                                }`}
+                              >
+                                正職
+                              </button>
+                            </div>
+
+                            {/* Individual toggles */}
+                            <div className="grid grid-cols-2 gap-1.5">
+                              {pageList.map((page) => {
+                                const checked = pagePanelPages === null || pagePanelPages.includes(page.key)
+                                return (
+                                  <label key={page.key} className="flex items-center gap-2 px-2 py-1.5 rounded-lg bg-white text-sm">
+                                    <input
+                                      type="checkbox"
+                                      checked={checked}
+                                      onChange={(e) => {
+                                        if (pagePanelPages === null) {
+                                          // Switch from "all" to custom: include all except this one
+                                          const all = pageList.map((p) => p.key)
+                                          setPagePanelPages(e.target.checked ? all : all.filter((k) => k !== page.key))
+                                        } else {
+                                          setPagePanelPages(
+                                            e.target.checked
+                                              ? [...pagePanelPages, page.key]
+                                              : pagePanelPages.filter((k) => k !== page.key)
+                                          )
+                                        }
+                                      }}
+                                      className="w-4 h-4 rounded border-gray-300 text-brand-lotus"
+                                    />
+                                    <span className="text-brand-oak text-xs">{page.label}</span>
+                                  </label>
+                                )
+                              })}
+                            </div>
+
+                            {/* Save / Cancel */}
+                            <div className="flex gap-2 pt-1">
+                              <button
+                                onClick={() => setPagePanelPinId(null)}
+                                className="flex-1 py-1.5 rounded-lg text-xs font-medium text-brand-oak bg-white border border-gray-200"
+                              >
+                                取消
+                              </button>
+                              <button
+                                onClick={() => saveAllowedPages(pin)}
+                                disabled={pagePanelSaving}
+                                className="flex-1 py-1.5 rounded-lg text-xs font-medium text-white bg-brand-lotus disabled:opacity-50"
+                              >
+                                {pagePanelSaving ? '儲存中...' : '儲存'}
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )
                 })}

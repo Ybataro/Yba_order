@@ -7,17 +7,18 @@ import CriticalAlertModal from '@/components/CriticalAlertModal'
 import type { Notification } from '@/hooks/useNotifications'
 import { clearSession, getSession } from '@/lib/auth'
 import { useCanSchedule } from '@/hooks/useCanSchedule'
+import { useAllowedPages } from '@/hooks/useAllowedPages'
 import ChangePinModal from '@/components/ChangePinModal'
 
 const menuItems = [
-  { icon: ClipboardList, label: '各店叫貨總表', desc: '查看各店叫貨需求與加總', path: '/kitchen/orders', color: 'bg-brand-mocha' },
-  { icon: Truck, label: '出貨表', desc: '記錄各店出貨品項', path: '/kitchen/shipments', color: 'bg-brand-camel' },
-  { icon: Package, label: '原物料庫存', desc: '盤點原物料並叫貨', path: '/kitchen/materials', color: 'bg-brand-lotus' },
-  { icon: Box, label: '成品庫存', desc: '盤點成品與半成品', path: '/kitchen/products', color: 'bg-brand-blush' },
-  { icon: ShoppingCart, label: '原物料叫貨', desc: '向供應商訂購原物料', path: '/kitchen/material-orders', color: 'bg-brand-silver' },
-  { icon: CalendarClock, label: '生產排程建議', desc: '今日/明日生產量與本週概覽', path: '/kitchen/schedule', color: 'bg-brand-oak' },
-  { icon: Receipt, label: '雜支申報', desc: '記錄日常雜支費用', path: '/kitchen/expense', color: 'bg-brand-camel' },
-  { icon: CalendarDays, label: '排班表', desc: '查看/編輯央廚員工排班', path: '/kitchen/staff-schedule', color: 'bg-brand-amber' },
+  { key: 'orders', icon: ClipboardList, label: '各店叫貨總表', desc: '查看各店叫貨需求與加總', path: '/kitchen/orders', color: 'bg-brand-mocha' },
+  { key: 'shipments', icon: Truck, label: '出貨表', desc: '記錄各店出貨品項', path: '/kitchen/shipments', color: 'bg-brand-camel' },
+  { key: 'materials', icon: Package, label: '原物料庫存', desc: '盤點原物料並叫貨', path: '/kitchen/materials', color: 'bg-brand-lotus' },
+  { key: 'products', icon: Box, label: '成品庫存', desc: '盤點成品與半成品', path: '/kitchen/products', color: 'bg-brand-blush' },
+  { key: 'material-orders', icon: ShoppingCart, label: '原物料叫貨', desc: '向供應商訂購原物料', path: '/kitchen/material-orders', color: 'bg-brand-silver' },
+  { key: 'production-schedule', icon: CalendarClock, label: '生產排程建議', desc: '今日/明日生產量與本週概覽', path: '/kitchen/schedule', color: 'bg-brand-oak' },
+  { key: 'expense', icon: Receipt, label: '雜支申報', desc: '記錄日常雜支費用', path: '/kitchen/expense', color: 'bg-brand-camel' },
+  { key: 'staff-schedule', icon: CalendarDays, label: '排班表', desc: '查看/編輯央廚員工排班', path: '/kitchen/staff-schedule', color: 'bg-brand-amber' },
 ]
 
 const scheduleAdminItems = [
@@ -29,6 +30,10 @@ export default function KitchenHome() {
   const kitchenStaff = useStaffStore((s) => s.kitchenStaff)
   const authSession = getSession()
   const canSchedule = useCanSchedule()
+  const allowedPages = useAllowedPages('kitchen')
+  const visibleMenuItems = allowedPages === null
+    ? menuItems
+    : menuItems.filter((item) => allowedPages.includes(item.key))
   const [currentStaff, setCurrentStaff] = useState(() => {
     // 先信任 sessionStorage（kitchenStaff 可能尚未載入）
     return sessionStorage.getItem('kitchen_staff') || ''
@@ -123,7 +128,7 @@ export default function KitchenHome() {
       )}
 
       <div className="px-4 space-y-3">
-        {menuItems.map((item) => (
+        {visibleMenuItems.map((item) => (
           <button
             key={item.path}
             disabled={!currentStaff}

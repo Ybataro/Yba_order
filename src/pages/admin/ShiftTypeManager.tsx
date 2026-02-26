@@ -11,10 +11,6 @@ import { formatTime } from '@/lib/schedule'
 import { getSession, getRoleHomePath } from '@/lib/auth'
 import { Plus, Pencil, Trash2, X, Tag } from 'lucide-react'
 
-const GROUPS = [
-  { id: 'kitchen', label: '央廚' },
-]
-
 const COLORS = [
   { value: '#6B5D55', label: '棕色' },
   { value: '#8B6F4E', label: '焦糖' },
@@ -26,12 +22,30 @@ const COLORS = [
   { value: '#C4A35A', label: '金色' },
 ]
 
+const KITCHEN_GROUP = { id: 'kitchen', label: '央廚' }
+
 export default function ShiftTypeManager() {
   const { showToast } = useToast()
   const stores = useStoreStore((s) => s.items)
-  const backPath = useMemo(() => getRoleHomePath(getSession()), [])
+  const session = getSession()
+  const backPath = useMemo(() => getRoleHomePath(session), [])
   const { tagPresets, fetchTagPresets, addTagPreset, removeTagPreset } = useScheduleStore()
-  const groups = [...GROUPS, ...stores.map((s) => ({ id: s.id, label: s.name }))]
+
+  // 根據角色過濾可見群組：admin 全部、kitchen 僅央廚、store 僅允許門店
+  const groups = useMemo(() => {
+    const allGroups = [KITCHEN_GROUP, ...stores.map((s) => ({ id: s.id, label: s.name }))]
+    if (!session || session.role === 'admin') return allGroups
+    if (session.role === 'kitchen') return [KITCHEN_GROUP]
+    if (session.role === 'store') {
+      if (session.allowedStores.length === 0) {
+        return stores.map((s) => ({ id: s.id, label: s.name }))
+      }
+      return stores
+        .filter((s) => session.allowedStores.includes(s.id))
+        .map((s) => ({ id: s.id, label: s.name }))
+    }
+    return allGroups
+  }, [stores, session?.role, session?.allowedStores])
 
   // ── Shift Types state ──
   const [allShifts, setAllShifts] = useState<ShiftType[]>([])
@@ -45,7 +59,7 @@ export default function ShiftTypeManager() {
   const [formStart, setFormStart] = useState('08:00')
   const [formEnd, setFormEnd] = useState('16:00')
   const [formColor, setFormColor] = useState('#6B5D55')
-  const [formGroup, setFormGroup] = useState('kitchen')
+  const [formGroup, setFormGroup] = useState(groups[0]?.id || 'kitchen')
   const [formTags, setFormTags] = useState<string[]>([])
   const [tagInput, setTagInput] = useState('')
 
@@ -58,7 +72,7 @@ export default function ShiftTypeManager() {
   // Position form
   const [posFormName, setPosFormName] = useState('')
   const [posFormColor, setPosFormColor] = useState('#6B5D55')
-  const [posFormGroup, setPosFormGroup] = useState('kitchen')
+  const [posFormGroup, setPosFormGroup] = useState(groups[0]?.id || 'kitchen')
 
   // ── Fetch ──
   const fetchAll = useCallback(async () => {
@@ -83,7 +97,7 @@ export default function ShiftTypeManager() {
     setFormStart('08:00')
     setFormEnd('16:00')
     setFormColor('#6B5D55')
-    setFormGroup(groupId || 'kitchen')
+    setFormGroup(groupId || groups[0]?.id || 'kitchen')
     setFormTags([])
     setTagInput('')
     setModalOpen(true)
@@ -169,7 +183,7 @@ export default function ShiftTypeManager() {
     setPosEditing(null)
     setPosFormName('')
     setPosFormColor('#6B5D55')
-    setPosFormGroup(groupId || 'kitchen')
+    setPosFormGroup(groupId || groups[0]?.id || 'kitchen')
     setPosModalOpen(true)
   }
 

@@ -9,15 +9,16 @@ import CriticalAlertModal from '@/components/CriticalAlertModal'
 import type { Notification } from '@/hooks/useNotifications'
 import { clearSession, getSession } from '@/lib/auth'
 import { useCanSchedule } from '@/hooks/useCanSchedule'
+import { useAllowedPages } from '@/hooks/useAllowedPages'
 import ChangePinModal from '@/components/ChangePinModal'
 
 const menuItems = [
-  { icon: ClipboardList, label: '物料盤點', desc: '門店打烊物料清點', path: 'inventory', color: 'bg-brand-mocha' },
-  { icon: DollarSign, label: '每日結帳', desc: '營收與現金盤點', path: 'settlement', color: 'bg-brand-camel' },
-  { icon: Package, label: '叫貨', desc: '明日物料需求', path: 'order', color: 'bg-brand-lotus' },
-  { icon: PackageCheck, label: '收貨確認', desc: '確認央廚今日出貨', path: 'receive', color: 'bg-brand-blush' },
-  { icon: Receipt, label: '雜支申報', desc: '記錄日常雜支費用', path: 'expense', color: 'bg-brand-silver' },
-  { icon: CalendarDays, label: '排班表', desc: '查看/編輯門店員工排班', path: 'schedule', color: 'bg-brand-amber' },
+  { key: 'inventory', icon: ClipboardList, label: '物料盤點', desc: '門店打烊物料清點', path: 'inventory', color: 'bg-brand-mocha' },
+  { key: 'settlement', icon: DollarSign, label: '每日結帳', desc: '營收與現金盤點', path: 'settlement', color: 'bg-brand-camel' },
+  { key: 'order', icon: Package, label: '叫貨', desc: '明日物料需求', path: 'order', color: 'bg-brand-lotus' },
+  { key: 'receive', icon: PackageCheck, label: '收貨確認', desc: '確認央廚今日出貨', path: 'receive', color: 'bg-brand-blush' },
+  { key: 'expense', icon: Receipt, label: '雜支申報', desc: '記錄日常雜支費用', path: 'expense', color: 'bg-brand-silver' },
+  { key: 'schedule', icon: CalendarDays, label: '排班表', desc: '查看/編輯門店員工排班', path: 'schedule', color: 'bg-brand-amber' },
 ]
 
 const scheduleAdminItems = [
@@ -31,6 +32,10 @@ export default function StoreHome() {
   const staffList = useStaffStore((s) => s.getStoreStaff(storeId || ''))
   const authSession = getSession()
   const canSchedule = useCanSchedule()
+  const allowedPages = useAllowedPages('store')
+  const visibleMenuItems = allowedPages === null
+    ? menuItems
+    : menuItems.filter((item) => allowedPages.includes(item.key))
   const [currentStaff, setCurrentStaff] = useState(() => {
     // 先信任 sessionStorage（staffList 可能尚未載入）
     return sessionStorage.getItem(`store_${storeId}_staff`) || ''
@@ -126,7 +131,7 @@ export default function StoreHome() {
       )}
 
       <div className="px-4 space-y-3">
-        {menuItems.map((item) => (
+        {visibleMenuItems.map((item) => (
           <button
             key={item.path}
             disabled={!currentStaff}

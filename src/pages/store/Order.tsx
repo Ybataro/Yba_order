@@ -9,7 +9,7 @@ import { useProductStore } from '@/stores/useProductStore'
 import { useStoreStore } from '@/stores/useStoreStore'
 import { DateNav } from '@/components/DateNav'
 import { supabase } from '@/lib/supabase'
-import { orderSessionId, productStockSessionId, getTodayTW, getYesterdayTW, getOrderDeadline, isPastDeadline } from '@/lib/session'
+import { orderSessionId, getTodayTW, getYesterdayTW, getOrderDeadline, isPastDeadline } from '@/lib/session'
 import { submitWithOffline } from '@/lib/submitWithOffline'
 import { logAudit } from '@/lib/auditLog'
 import { formatDate } from '@/lib/utils'
@@ -322,27 +322,37 @@ export default function Order() {
     load()
   }, [storeId, selectedDate])
 
-  // 央廚成品庫存（D-1）
+  // 央廚成品庫存（抓資料庫最近一筆有資料的盤點，因週三/日休息無盤點）
   const [kitchenStock, setKitchenStock] = useState<Record<string, number>>({})
 
   useEffect(() => {
     if (!supabase) return
-    const d1 = new Date(selectedDate + 'T00:00:00+08:00')
-    d1.setDate(d1.getDate() - 1)
-    const prevDate = d1.toLocaleDateString('en-CA', { timeZone: 'Asia/Taipei' })
-    const sessionId = productStockSessionId(prevDate)
+    setKitchenStock({})
 
-    supabase
-      .from('product_stock_items')
-      .select('product_id, stock_qty')
-      .eq('session_id', sessionId)
-      .then(({ data }) => {
-        const m: Record<string, number> = {}
-        data?.forEach(item => {
-          m[item.product_id] = (m[item.product_id] || 0) + (item.stock_qty || 0)
-        })
-        setKitchenStock(m)
+    const load = async () => {
+      const { data: latestSession } = await supabase!
+        .from('product_stock_sessions')
+        .select('id, date')
+        .lt('date', selectedDate)
+        .order('date', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+
+      if (!latestSession) return
+
+      const { data } = await supabase!
+        .from('product_stock_items')
+        .select('product_id, stock_qty')
+        .eq('session_id', latestSession.id)
+
+      const m: Record<string, number> = {}
+      data?.forEach(item => {
+        m[item.product_id] = (m[item.product_id] || 0) + (item.stock_qty || 0)
       })
+      setKitchenStock(m)
+    }
+
+    load()
   }, [selectedDate])
 
   // 建議量計算
