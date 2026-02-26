@@ -100,7 +100,17 @@ function buildCellRender(
     timeRange = `${formatTime(sch.custom_start)}-${formatTime(sch.custom_end)}`
   }
 
-  const tags: TagRender[] = (sch.tags || []).map((t) => {
+  // Merge schedule tags + shift type tags (like getEffectiveTags in CalendarGrid)
+  const allTagNames: string[] = [...(sch.tags || [])]
+  if (sch.shift_type_id && shiftMap[sch.shift_type_id]) {
+    const st = shiftMap[sch.shift_type_id]
+    if (st.tags?.length) {
+      for (const t of st.tags) {
+        if (!allTagNames.includes(t)) allTagNames.push(t)
+      }
+    }
+  }
+  const tags: TagRender[] = allTagNames.map((t) => {
     const tc = getTagColor(t)
     return { name: t, bg: hexToRgb(tc.bg), text: hexToRgb(tc.text) }
   })
@@ -611,6 +621,7 @@ export async function exportCalendarScheduleToPdf({
     bereavement_leave: { bg: [228, 235, 245], text: [55, 75, 110] },     // 灰藍
     maternity_leave:   { bg: [255, 250, 222], text: [200, 155, 10] },    // 亮黃
     prenatal_leave:    { bg: [255, 248, 220], text: [190, 145, 10] },    // 暖黃
+    company_off:       { bg: [220, 228, 235], text: [80, 100, 120] },    // 灰藍（公休）
     late_early:        { bg: [255, 232, 222], text: [210, 80, 25] },     // 亮橘紅
   }
   const defaultLeaveColor = { bg: [235, 240, 250] as [number, number, number], text: [70, 90, 150] as [number, number, number] }
@@ -634,6 +645,7 @@ export async function exportCalendarScheduleToPdf({
     afternoon: CalendarEntry[]
     evening: CalendarEntry[]
     leaves: LeaveEntry[]
+    isCompanyOff: boolean
   }
   const cellDataMap: Record<string, CalendarCellData> = {}
 
@@ -673,12 +685,20 @@ export async function exportCalendarScheduleToPdf({
       sortByStaffOrder(afternoon)
       sortByStaffOrder(evening)
       leaves.sort((a, b) => (staffOrderMap[a.staffId] ?? 999) - (staffOrderMap[b.staffId] ?? 999))
+
+      // 全員公休：所有 schedule 都是 company_off，無任何工作班次
+      const allCompanyOff = daySchedules.length > 0
+        && afternoon.length === 0
+        && evening.length === 0
+        && daySchedules.every((s) => (s.attendance_type || 'work') === 'company_off')
+
       cellDataMap[`${rowIdx}_${colIdx}`] = {
         date,
         dayNum: new Date(date + 'T00:00:00').getDate(),
         afternoon,
         evening,
-        leaves,
+        leaves: allCompanyOff ? [] : leaves, // 公休日不逐人列出
+        isCompanyOff: allCompanyOff,
       }
     })
   })
@@ -810,6 +830,19 @@ export async function exportCalendarScheduleToPdf({
       calEndBold(doc)
       cy += dayNumFontSize * 0.42 + 0.5
 
+      // 公休日：格子中央顯示「公休」文字，不渲染逐人假別
+      if (data.isCompanyOff) {
+        const companyOffColor = LEAVE_PDF_COLORS['company_off'] || defaultLeaveColor
+        const contentBottom = cell.y + cell.height
+        const centerY = (cy + contentBottom) / 2
+        doc.setFont(fontName, 'normal')
+        doc.setFontSize(badgeFontSize + 1)
+        calSetBold(doc, companyOffColor.text, 0.3)
+        doc.text('\u516C\u4F11', cell.x + cw / 2, centerY, { align: 'center' })
+        calEndBold(doc)
+        return
+      }
+
       const sectionLabelW = 3.5
       const badgeR = 0.8
 
@@ -829,10 +862,20 @@ export async function exportCalendarScheduleToPdf({
         // Reserve space for leaves at bottom
         const leaveH = Math.min(data.leaves.length * entryH, totalContentH * 0.25)
         eveningEndY = contentBottom - leaveH - 0.5
-        afternoonEndY = cy + (eveningEndY - cy) / 2
       } else {
         eveningEndY = contentBottom
-        afternoonEndY = cy + totalContentH / 2
+      }
+
+      // Dynamic split: proportional to entry count, or full space if one section is empty
+      const workAreaH = eveningEndY - cy
+      if (!hasEvening) {
+        afternoonEndY = eveningEndY
+      } else if (!hasAfternoon) {
+        afternoonEndY = cy
+      } else {
+        const total = data.afternoon.length + data.evening.length
+        const ratio = data.afternoon.length / total
+        afternoonEndY = cy + workAreaH * Math.max(0.3, Math.min(0.7, ratio))
       }
 
       // Helper: render work entries in a section
@@ -879,6 +922,27 @@ export async function exportCalendarScheduleToPdf({
           calSetBold(doc, badgeTextColor, 0.25)
           doc.text(text, bx + badgePadH, ey + entryH * 0.52)
           calEndBold(doc)
+
+          // Render tag pills right after the badge
+          if (r.tags.length > 0) {
+            const calTagFontSize = Math.max(badgeFontSize - 2, 4.5)
+            const tagPillPad = 0.8
+            const tagPillH2 = entryH - 0.8
+            doc.setFont(fontName, 'normal')
+            doc.setFontSize(calTagFontSize)
+            let tagX = bx + bw + 0.5
+            const tagMaxX = cx + cw - 1
+            r.tags.forEach((tag) => {
+              const tw = doc.getTextWidth(tag.name) + tagPillPad * 2
+              if (tagX + tw > tagMaxX) return // don't overflow cell
+              doc.setFillColor(...tag.bg)
+              doc.roundedRect(tagX, ey - 0.1, tw, tagPillH2, 0.6, 0.6, 'F')
+              doc.setTextColor(...tag.text)
+              doc.text(tag.name, tagX + tw / 2, ey + entryH * 0.45, { align: 'center' })
+              tagX += tw + 0.4
+            })
+          }
+
           ey += entryH
         })
 

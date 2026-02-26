@@ -203,20 +203,27 @@ export function CalendarGrid({ year, month, staff, schedules, shiftTypes, canSch
     const shortName = getShortName(member.name)
     const fullLabel = getFullLabel(sch)
     const tags = getEffectiveTags(sch)
-    const firstTag = tags.length > 0 ? tags[0] : null
-    const shortTag = firstTag ? (firstTag.length <= 2 ? firstTag : firstTag.slice(0, 2)) : null
-    const tagColor = firstTag ? getTagColor(firstTag) : null
+    const tagsTitle = tags.length > 0 ? ` [${tags.join(', ')}]` : ''
 
     const badgeContent = (
       <>
         <span>{shortName}</span>
-        {shortTag && (
-          <span
-            className="text-[6px] leading-none rounded px-[2px] mt-[1px]"
-            style={{ backgroundColor: tagColor!.bg, color: tagColor!.text }}
-          >
-            {shortTag}
-          </span>
+        {tags.length > 0 && (
+          <div className="flex gap-[1px] mt-[1px]">
+            {tags.map((t) => {
+              const tc = getTagColor(t)
+              const short = t.length <= 2 ? t : t.slice(0, 2)
+              return (
+                <span
+                  key={t}
+                  className="text-[6px] leading-none rounded px-[2px]"
+                  style={{ backgroundColor: tc.bg, color: tc.text }}
+                >
+                  {short}
+                </span>
+              )
+            })}
+          </div>
         )}
       </>
     )
@@ -225,7 +232,7 @@ export function CalendarGrid({ year, month, staff, schedules, shiftTypes, canSch
       return (
         <div
           key={sch.id}
-          title={`${member.name} ${fullLabel}${firstTag ? ` [${firstTag}]` : ''}`}
+          title={`${member.name} ${fullLabel}${tagsTitle}`}
           className="rounded px-[3px] py-[1px] text-[8px] leading-tight font-semibold whitespace-nowrap flex flex-col items-center"
           style={{ backgroundColor: color.bg, color: color.text }}
         >
@@ -253,7 +260,7 @@ export function CalendarGrid({ year, month, staff, schedules, shiftTypes, canSch
             setPopupInfo({ sch, name: member.name, label: fullLabel, color, anchorTop: 0, anchorLeft: 0, anchorWidth: 0 })
           }
         }}
-        title={`${member.name} ${fullLabel}${firstTag ? ` [${firstTag}]` : ''}`}
+        title={`${member.name} ${fullLabel}${tagsTitle}`}
         className="rounded px-[3px] py-[1px] text-[8px] leading-tight font-semibold whitespace-nowrap active:opacity-70 flex flex-col items-center"
         style={{ backgroundColor: color.bg, color: color.text }}
       >
@@ -303,10 +310,14 @@ export function CalendarGrid({ year, month, staff, schedules, shiftTypes, canSch
             // Split work schedules into afternoon / evening (skip leaves)
             const afternoon: Schedule[] = []
             const evening: Schedule[] = []
+            let hasCompanyOff = false
+            let hasWorkShift = false
 
             daySchedules.forEach((sch) => {
               const at = sch.attendance_type || 'work'
-              if (at !== 'work') return // hide leaves from calendar
+              if (at === 'company_off') { hasCompanyOff = true; return }
+              if (at !== 'work') return // hide other leaves from calendar
+              hasWorkShift = true
               const period = isAfternoonShift(sch, shiftMap)
               if (period === false) evening.push(sch)
               else afternoon.push(sch)
@@ -314,6 +325,9 @@ export function CalendarGrid({ year, month, staff, schedules, shiftTypes, canSch
 
             sortByStaff(afternoon)
             sortByStaff(evening)
+
+            // 全員公休且無任何工作班次 → 顯示公休橫幅
+            const isAllCompanyOff = hasCompanyOff && !hasWorkShift
 
             return (
               <div
@@ -329,37 +343,46 @@ export function CalendarGrid({ year, month, staff, schedules, shiftTypes, canSch
                   {dayNum}
                 </div>
 
-                {/* Afternoon (午班) — top half */}
-                <div className="flex items-start min-h-[14px]">
-                  <span className="text-[7px] text-brand-mocha/40 leading-none pt-0.5 pl-px shrink-0">午</span>
-                  <div className="flex-1 flex flex-wrap gap-[2px] px-0.5 py-px content-start">
-                    {afternoon.map(renderBadge)}
-                  </div>
-                </div>
-
-                {/* Divider */}
-                <div className="mx-0.5 border-t border-brand-mocha/30" />
-
-                {/* Evening (晚班) — bottom half */}
-                <div className="flex items-start min-h-[14px]">
-                  <span className="text-[7px] text-brand-mocha/40 leading-none pt-0.5 pl-px shrink-0">晚</span>
-                  <div className="flex-1 flex flex-wrap gap-[2px] px-0.5 py-px content-start">
-                    {evening.map(renderBadge)}
-                  </div>
-                </div>
-
-                {/* Add button for empty cells */}
-                {canSchedule && daySchedules.length === 0 && (
+                {isAllCompanyOff ? (
+                  /* 公休橫幅 */
                   <div className="flex-1 flex items-center justify-center">
-                    <button
-                      onClick={() => {
-                        if (staff.length > 0) onCellClick?.(staff[0].id, date)
-                      }}
-                      className="p-1 rounded bg-gray-50 active:bg-gray-100"
-                    >
-                      <Plus size={10} className="text-gray-300" />
-                    </button>
+                    <span className="text-[10px] font-semibold text-gray-400">公休</span>
                   </div>
+                ) : (
+                  <>
+                    {/* Afternoon (午班) — top half */}
+                    <div className="flex items-start min-h-[14px]">
+                      <span className="text-[7px] text-brand-mocha/40 leading-none pt-0.5 pl-px shrink-0">午</span>
+                      <div className="flex-1 flex flex-wrap gap-[2px] px-0.5 py-px content-start">
+                        {afternoon.map(renderBadge)}
+                      </div>
+                    </div>
+
+                    {/* Divider */}
+                    <div className="mx-0.5 border-t border-brand-mocha/30" />
+
+                    {/* Evening (晚班) — bottom half */}
+                    <div className="flex items-start min-h-[14px]">
+                      <span className="text-[7px] text-brand-mocha/40 leading-none pt-0.5 pl-px shrink-0">晚</span>
+                      <div className="flex-1 flex flex-wrap gap-[2px] px-0.5 py-px content-start">
+                        {evening.map(renderBadge)}
+                      </div>
+                    </div>
+
+                    {/* Add button for empty cells */}
+                    {canSchedule && daySchedules.length === 0 && (
+                      <div className="flex-1 flex items-center justify-center">
+                        <button
+                          onClick={() => {
+                            if (staff.length > 0) onCellClick?.(staff[0].id, date)
+                          }}
+                          className="p-1 rounded bg-gray-50 active:bg-gray-100"
+                        >
+                          <Plus size={10} className="text-gray-300" />
+                        </button>
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
             )

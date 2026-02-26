@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useCallback, useRef } from 'react'
 import { TopNav } from '@/components/TopNav'
 import { DateNav } from '@/components/DateNav'
 import { NumericInput } from '@/components/NumericInput'
@@ -10,8 +10,9 @@ import { useZoneStore } from '@/stores/useZoneStore'
 import { supabase } from '@/lib/supabase'
 import { productStockSessionId, getTodayTW } from '@/lib/session'
 import { formatDate } from '@/lib/utils'
-import { Save, UserCheck, RefreshCw } from 'lucide-react'
+import { Save, UserCheck, RefreshCw, ChevronDown, ChevronUp } from 'lucide-react'
 import { useStaffStore } from '@/stores/useStaffStore'
+import { StockEntryPanel, type StockEntry } from '@/components/StockEntryPanel'
 
 export default function ProductStock() {
   const { showToast } = useToast()
@@ -55,6 +56,11 @@ export default function ProductStock() {
   const [isEdit, setIsEdit] = useState(false)
   const [loading, setLoading] = useState(true)
 
+  // Stock entries (到期日批次) state
+  const [stockEntries, setStockEntries] = useState<Record<string, StockEntry[]>>({})
+  const originalStockEntries = useRef<Record<string, StockEntry[]>>({})
+  const [expandedStockId, setExpandedStockId] = useState<string | null>(null)
+
   // Load existing session
   useEffect(() => {
     if (!supabase) { setLoading(false); return }
@@ -65,33 +71,62 @@ export default function ProductStock() {
     setStock(initStock)
     setIsEdit(false)
     setConfirmBy('')
+    setStockEntries({})
+    originalStockEntries.current = {}
+    setExpandedStockId(null)
 
-    supabase
-      .from('product_stock_sessions')
-      .select('*')
-      .eq('id', sessionId)
-      .maybeSingle()
-      .then(({ data: session }) => {
+    const load = async () => {
+      try {
+        const { data: session } = await supabase!
+          .from('product_stock_sessions')
+          .select('*')
+          .eq('id', sessionId)
+          .maybeSingle()
+
         if (!session) { setLoading(false); return }
         setIsEdit(true)
         if (session.submitted_by) setConfirmBy(session.submitted_by)
 
-        supabase!
+        const { data: items } = await supabase!
           .from('product_stock_items')
           .select('*')
           .eq('session_id', sessionId)
-          .then(({ data: items }) => {
-            if (items && items.length > 0) {
-              const loadedStock: Record<string, string> = {}
-              storeProducts.forEach(p => { loadedStock[p.id] = '' })
-              items.forEach(item => {
-                loadedStock[item.product_id] = item.stock_qty != null ? String(item.stock_qty) : ''
-              })
-              setStock(loadedStock)
-            }
-            setLoading(false)
+
+        if (items && items.length > 0) {
+          const loadedStock: Record<string, string> = {}
+          storeProducts.forEach(p => { loadedStock[p.id] = '' })
+          items.forEach(item => {
+            loadedStock[item.product_id] = item.stock_qty != null ? String(item.stock_qty) : ''
           })
-      })
+          setStock(loadedStock)
+        }
+
+        // Load stock entries (到期日批次)
+        const { data: seRows } = await supabase!
+          .from('product_stock_entries')
+          .select('product_id, expiry_date, quantity')
+          .eq('session_id', sessionId)
+          .order('expiry_date', { ascending: true })
+
+        if (seRows && seRows.length > 0) {
+          const grouped: Record<string, StockEntry[]> = {}
+          seRows.forEach((r) => {
+            if (!grouped[r.product_id]) grouped[r.product_id] = []
+            grouped[r.product_id].push({
+              expiryDate: r.expiry_date,
+              quantity: r.quantity != null ? String(r.quantity) : '',
+            })
+          })
+          originalStockEntries.current = JSON.parse(JSON.stringify(grouped))
+          setStockEntries(grouped)
+        }
+      } catch {
+        // ignore fetch errors
+      }
+      setLoading(false)
+    }
+
+    load()
   }, [selectedDate])
 
   const productsByCategory = useMemo(() => {
@@ -108,6 +143,16 @@ export default function ProductStock() {
     const idx = arr.indexOf(document.activeElement as HTMLInputElement)
     if (idx >= 0 && idx < arr.length - 1) arr[idx + 1].focus()
   }
+
+  // Auto-sum stock entries → stock[productId]
+  const updateStockFromEntries = useCallback((productId: string, entries: StockEntry[]) => {
+    const sum = entries.reduce((acc, e) => {
+      const n = parseFloat(e.quantity)
+      return acc + (isNaN(n) ? 0 : n)
+    }, 0)
+    const sumStr = entries.length > 0 ? String(Math.round(sum * 10) / 10) : ''
+    setStock(prev => ({ ...prev, [productId]: sumStr }))
+  }, [])
 
   const doSubmit = async () => {
     if (!confirmBy) {
@@ -156,6 +201,30 @@ export default function ProductStock() {
         return
       }
     }
+
+    // Save stock entries (到期日批次): delete + insert
+    await supabase
+      .from('product_stock_entries')
+      .delete()
+      .eq('session_id', sessionId)
+
+    const seInserts: { session_id: string; product_id: string; expiry_date: string; quantity: number }[] = []
+    Object.entries(stockEntries).forEach(([pid, entries]) => {
+      entries.forEach((e) => {
+        if (e.expiryDate && e.quantity !== '') {
+          seInserts.push({
+            session_id: sessionId,
+            product_id: pid,
+            expiry_date: e.expiryDate,
+            quantity: parseFloat(e.quantity) || 0,
+          })
+        }
+      })
+    })
+    if (seInserts.length > 0) {
+      await supabase.from('product_stock_entries').insert(seInserts)
+    }
+    originalStockEntries.current = JSON.parse(JSON.stringify(stockEntries))
 
     const staffName = kitchenStaff.find(s => s.id === confirmBy)?.name
     setIsEdit(true)
@@ -209,15 +278,80 @@ export default function ProductStock() {
             <div key={category}>
               <SectionHeader title={category} icon="■" />
               <div className="bg-white">
-                {products.map((product, idx) => (
-                  <div key={product.id} className={`flex items-center justify-between px-4 py-2.5 ${idx < products.length - 1 ? 'border-b border-gray-50' : ''}`}>
-                    <div className="flex-1 min-w-0">
-                      <span className="text-sm font-medium text-brand-oak">{product.name}</span>
-                      {product.shelfLifeDays && <span className="text-[10px] text-brand-lotus ml-1">期效{product.shelfLifeDays}</span>}
+                {products.map((product, idx) => {
+                  const hasStockEntries = (stockEntries[product.id]?.length ?? 0) > 0
+                  const isExpanded = expandedStockId === product.id
+
+                  return (
+                    <div key={product.id}>
+                      <div className={`flex items-center justify-between px-4 py-2.5 ${idx < products.length - 1 && !isExpanded ? 'border-b border-gray-50' : ''}`}>
+                        <div className="flex-1 min-w-0">
+                          <span className="text-sm font-medium text-brand-oak">{product.name}</span>
+                          {product.shelfLifeDays && <span className="text-[10px] text-brand-lotus ml-1">期效{product.shelfLifeDays}</span>}
+                        </div>
+                        {/* 庫存欄：有到期日資料 → 顯示合計+展開按鈕；否則原始輸入+「+」按鈕 */}
+                        {hasStockEntries || isExpanded ? (
+                          <button
+                            type="button"
+                            onClick={() => setExpandedStockId(isExpanded ? null : product.id)}
+                            className={`w-[56px] h-9 rounded-lg flex items-center justify-center gap-0.5 text-base font-semibold transition-colors ${
+                              stock[product.id] !== '' ? 'bg-green-50 text-brand-oak' : 'bg-gray-50 text-brand-lotus'
+                            } border border-gray-200`}
+                          >
+                            <span className="text-sm">{stock[product.id] || '0'}</span>
+                            {isExpanded
+                              ? <ChevronUp size={12} className="text-brand-lotus" />
+                              : <ChevronDown size={12} className="text-brand-lotus" />
+                            }
+                          </button>
+                        ) : (
+                          <div className="relative">
+                            <NumericInput value={stock[product.id]} onChange={(v) => setStock(prev => ({ ...prev, [product.id]: v }))} unit={product.unit} isFilled onNext={focusNext} data-pst="" />
+                            <button
+                              type="button"
+                              title="依到期日分批輸入"
+                              onClick={() => {
+                                setStockEntries(prev => ({
+                                  ...prev,
+                                  [product.id]: [{ expiryDate: '', quantity: stock[product.id] || '' }],
+                                }))
+                                setExpandedStockId(product.id)
+                              }}
+                              className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-brand-oak/70 text-white flex items-center justify-center text-[10px] leading-none"
+                            >
+                              +
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                      {/* 展開到期日面板 */}
+                      {isExpanded && (
+                        <StockEntryPanel
+                          entries={stockEntries[product.id] || []}
+                          onChange={(entries) => {
+                            if (entries.length === 0) {
+                              // All entries removed → revert to plain input mode
+                              setStockEntries(prev => {
+                                const next = { ...prev }
+                                delete next[product.id]
+                                return next
+                              })
+                              setExpandedStockId(null)
+                              setStock(prev => ({ ...prev, [product.id]: '' }))
+                              return
+                            }
+                            setStockEntries(prev => ({ ...prev, [product.id]: entries }))
+                            updateStockFromEntries(product.id, entries)
+                          }}
+                          onCollapse={() => setExpandedStockId(null)}
+                        />
+                      )}
+                      {isExpanded && idx < products.length - 1 && (
+                        <div className="border-b border-gray-50" />
+                      )}
                     </div>
-                    <NumericInput value={stock[product.id]} onChange={(v) => setStock(prev => ({ ...prev, [product.id]: v }))} unit={product.unit} isFilled onNext={focusNext} data-pst="" />
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             </div>
           ))}

@@ -6,7 +6,7 @@ export interface AttendanceTypeDef {
   name: string
   color: string        // 背景色
   textColor: string    // 文字色
-  category: 'work' | 'leave' | 'special'
+  category: 'work' | 'leave' | 'special' | 'company'
   countsAsWork: boolean
 }
 
@@ -25,6 +25,7 @@ export const ATTENDANCE_TYPES: AttendanceTypeDef[] = [
   { id: 'bereavement_leave', name: '喪假',       color: '#CFD8DC', textColor: '#37474F', category: 'leave',   countsAsWork: false },
   { id: 'maternity_leave',   name: '產假',       color: '#FFF9C4', textColor: '#F57F17', category: 'leave',   countsAsWork: false },
   { id: 'prenatal_leave',    name: '產檢假',     color: '#FFF9C4', textColor: '#F57F17', category: 'leave',   countsAsWork: false },
+  { id: 'company_off',       name: '公休',       color: '#B0BEC5', textColor: '#37474F', category: 'company', countsAsWork: false },
   { id: 'late_early',        name: '遲到早退',   color: '#FFCCBC', textColor: '#BF360C', category: 'special', countsAsWork: true  },
 ]
 
