@@ -1,5 +1,6 @@
 import { useRef, useEffect } from 'react'
-import { NumericInput } from '@/components/NumericInput'
+import { DualUnitInput } from '@/components/DualUnitInput'
+import { formatDualUnit } from '@/lib/utils'
 import { Plus, X } from 'lucide-react'
 
 export interface StockEntry {
@@ -11,9 +12,13 @@ interface StockEntryPanelProps {
   entries: StockEntry[]
   onChange: (entries: StockEntry[]) => void
   onCollapse: () => void
+  unit?: string
+  box_unit?: string
+  box_ratio?: number
 }
 
-export function StockEntryPanel({ entries, onChange, onCollapse }: StockEntryPanelProps) {
+export function StockEntryPanel({ entries, onChange, onCollapse, unit, box_unit, box_ratio }: StockEntryPanelProps) {
+  const hasDual = !!(box_unit && box_ratio && box_ratio > 0)
   const lastAddedRef = useRef<boolean>(false)
   const panelRef = useRef<HTMLDivElement>(null)
 
@@ -65,7 +70,7 @@ export function StockEntryPanel({ entries, onChange, onCollapse }: StockEntryPan
       {/* Header */}
       <div className="flex items-center text-[11px] text-brand-lotus mb-1.5">
         <span className="flex-1">到期日</span>
-        <span className="w-[70px] text-center">數量</span>
+        <span className={`${hasDual ? 'w-[110px]' : 'w-[70px]'} text-center`}>數量</span>
         <span className="w-[28px]"></span>
       </div>
 
@@ -78,10 +83,13 @@ export function StockEntryPanel({ entries, onChange, onCollapse }: StockEntryPan
             onChange={(e) => updateEntry(idx, 'expiryDate', e.target.value)}
             className="flex-1 h-9 rounded-lg border border-gray-200 bg-white px-2 text-sm text-brand-oak outline-none focus:border-brand-oak/50 focus:ring-1 focus:ring-brand-oak/20"
           />
-          <div className="w-[70px]">
-            <NumericInput
+          <div className={`${hasDual ? 'w-[110px]' : 'w-[70px]'} flex justify-center`}>
+            <DualUnitInput
               value={entry.quantity}
               onChange={(v) => updateEntry(idx, 'quantity', v)}
+              unit={unit}
+              box_unit={box_unit}
+              box_ratio={box_ratio}
               isFilled
               onNext={() => handleQuantityNext(idx)}
               data-stock-qty=""
@@ -111,7 +119,9 @@ export function StockEntryPanel({ entries, onChange, onCollapse }: StockEntryPan
       <div className="flex items-center justify-end mt-2 pt-2 border-t border-brand-oak/10">
         <span className="text-xs text-brand-lotus mr-2">庫存合計:</span>
         <span className="text-sm font-bold text-brand-oak">
-          {Math.round(total * 10) / 10}
+          {hasDual
+            ? formatDualUnit(Math.round(total * 10) / 10, unit || '', box_unit, box_ratio)
+            : Math.round(total * 10) / 10}
         </span>
       </div>
     </div>

@@ -41,6 +41,8 @@ export const useMaterialStore = create<MaterialState>()((set, get) => ({
           spec: d.spec ?? '',
           unit: d.unit,
           notes: d.notes ?? undefined,
+          box_unit: d.box_unit ?? undefined,
+          box_ratio: d.box_ratio ?? undefined,
         })),
       })
     }
@@ -60,6 +62,8 @@ export const useMaterialStore = create<MaterialState>()((set, get) => ({
         spec: item.spec,
         unit: item.unit,
         notes: item.notes ?? null,
+        box_unit: item.box_unit ?? null,
+        box_ratio: item.box_ratio ?? null,
         sort_order: get().items.length - 1,
       }).then()
     }
@@ -76,6 +80,8 @@ export const useMaterialStore = create<MaterialState>()((set, get) => ({
       if (partial.spec !== undefined) db.spec = partial.spec
       if (partial.unit !== undefined) db.unit = partial.unit
       if (partial.notes !== undefined) db.notes = partial.notes ?? null
+      if (partial.box_unit !== undefined) db.box_unit = partial.box_unit ?? null
+      if (partial.box_ratio !== undefined) db.box_ratio = partial.box_ratio ?? null
       if (Object.keys(db).length > 0) {
         supabase.from('raw_materials').update(db).eq('id', id).then()
       }

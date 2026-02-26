@@ -9,6 +9,7 @@ import { useStoreStore } from '@/stores/useStoreStore'
 import { supabase } from '@/lib/supabase'
 import { shipmentSessionId, getTodayTW } from '@/lib/session'
 import { logAudit } from '@/lib/auditLog'
+import { formatDualUnit } from '@/lib/utils'
 import { CheckCircle, AlertTriangle, ArrowRight, RefreshCw, MessageSquare, Package } from 'lucide-react'
 
 interface ShipmentItem {
@@ -21,6 +22,8 @@ interface ShipmentItem {
   hasDiff: boolean
   diff: number
   isExtra: boolean
+  box_unit?: string
+  box_ratio?: number
 }
 
 export default function Receive() {
@@ -100,6 +103,8 @@ export default function Receive() {
             hasDiff: !isExtra && orderQty !== actualQty,
             diff: Math.round((actualQty - orderQty) * 10) / 10,
             isExtra,
+            box_unit: product.box_unit,
+            box_ratio: product.box_ratio,
           })
           loadedConfirmed[item.product_id] = item.received ?? false
         })
@@ -285,20 +290,20 @@ export default function Receive() {
                         <span className={`w-[50px] text-center text-sm font-num ${
                           item.hasDiff ? 'text-brand-lotus line-through' : 'text-brand-oak'
                         }`}>
-                          {item.orderQty}
+                          {formatDualUnit(item.orderQty, item.unit, item.box_unit, item.box_ratio)}
                         </span>
                         {item.hasDiff ? (
                           <>
                             <ArrowRight size={10} className="text-status-warning shrink-0" />
                             <span className="w-[50px] text-center text-sm font-num font-bold text-status-warning">
-                              {item.actualQty}
+                              {formatDualUnit(item.actualQty, item.unit, item.box_unit, item.box_ratio)}
                             </span>
                           </>
                         ) : (
                           <>
                             <span className="w-[12px]"></span>
                             <span className="w-[50px] text-center text-sm font-num text-brand-oak">
-                              {item.actualQty}
+                              {formatDualUnit(item.actualQty, item.unit, item.box_unit, item.box_ratio)}
                             </span>
                           </>
                         )}
@@ -353,7 +358,7 @@ export default function Receive() {
                           </div>
 
                           <span className="w-[50px] text-center text-sm font-num text-brand-oak font-bold">
-                            {item.actualQty}
+                            {formatDualUnit(item.actualQty, item.unit, item.box_unit, item.box_ratio)}
                           </span>
                         </button>
                       )

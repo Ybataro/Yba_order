@@ -125,186 +125,6 @@ function buildCellRender(
   return { shiftName, timeRange, tags, badgeFill, badgeText }
 }
 
-// ── Render one schedule table and return the Y position after it ──
-function renderScheduleTable(
-  doc: jsPDF,
-  fontName: string,
-  dates: string[],
-  staff: StaffMember[],
-  scheduleMap: Record<string, Schedule>,
-  shiftMap: Record<string, ShiftType>,
-  startY: number,
-  compact: boolean,
-): number {
-  // Build cell render data for this table
-  const renderMap: Record<string, CellRender> = {}
-  staff.forEach((member, rowIdx) => {
-    dates.forEach((date, colIdx) => {
-      const sch = scheduleMap[`${member.id}_${date}`]
-      const render = buildCellRender(sch, shiftMap)
-      if (render) {
-        renderMap[`${rowIdx}_${colIdx + 1}`] = render
-      }
-    })
-  })
-
-  const head = [
-    '員工',
-    ...dates.map((d) => `${getWeekdayLabel(d)} ${formatShortDate(d)}`),
-  ]
-
-  const body = staff.map((member, rowIdx) => [
-    member.name,
-    ...dates.map((_date, colIdx) => {
-      const key = `${rowIdx}_${colIdx + 1}`
-      const r = renderMap[key]
-      if (!r) return '-'
-      const lines: string[] = []
-      if (r.shiftName) lines.push(r.shiftName)
-      if (r.timeRange) lines.push(r.timeRange)
-      if (r.tags.length > 0) lines.push(r.tags.map((t) => t.name).join(' '))
-      return lines.join('\n') || '-'
-    }),
-  ])
-
-  // Sizing based on compact mode
-  const fontSize = compact ? 6 : 7.5
-  const headFontSize = compact ? 6 : 7.5
-  const cellPad = compact ? 1.5 : 2.5
-  const minH = compact ? 10 : 14
-  const nameW = compact ? 18 : 22
-  const badgePad = compact ? 1 : 1.5
-  const badgeR = compact ? 1.5 : 2
-  const nameFontSize = compact ? 6.5 : 8
-  const timeFontSize = compact ? 5.5 : 6.5
-  const tagFontSize = compact ? 4.5 : 5.5
-  const lineGap = compact ? 3.2 : 3.8
-  const tagPillH = compact ? 2.6 : 3.2
-
-  let finalY = startY
-
-  autoTable(doc, {
-    startY,
-    head: [head],
-    body,
-    styles: {
-      font: fontName,
-      fontSize,
-      cellPadding: cellPad,
-      halign: 'center',
-      valign: 'middle',
-      lineWidth: 0.15,
-      lineColor: [230, 225, 220],
-      minCellHeight: minH,
-    },
-    headStyles: {
-      fillColor: [139, 115, 85],
-      textColor: 255,
-      fontStyle: 'normal',
-      font: fontName,
-      halign: 'center',
-      cellPadding: cellPad,
-      fontSize: headFontSize,
-    },
-    columnStyles: {
-      0: { halign: 'left', cellWidth: nameW },
-    },
-    alternateRowStyles: {
-      fillColor: [252, 250, 248],
-    },
-    margin: { left: 14, right: 14 },
-
-    willDrawCell: (hookData) => {
-      if (hookData.section !== 'body') return
-      const key = `${hookData.row.index}_${hookData.column.index}`
-      if (renderMap[key]) {
-        hookData.cell.text = []
-      }
-    },
-
-    didDrawCell: (hookData) => {
-      if (hookData.section !== 'body') return
-      if (hookData.column.index === 0) return
-
-      const key = `${hookData.row.index}_${hookData.column.index}`
-      const r = renderMap[key]
-      if (!r) return
-
-      const cell = hookData.cell
-      const cx = cell.x
-      const cy = cell.y
-      const cw = cell.width
-      const ch = cell.height
-
-      const badgeX = cx + badgePad
-      const badgeY = cy + badgePad
-      const badgeW = cw - badgePad * 2
-      const badgeH = ch - badgePad * 2
-
-      if (r.badgeFill) {
-        doc.setFillColor(...r.badgeFill)
-        doc.roundedRect(badgeX, badgeY, badgeW, badgeH, badgeR, badgeR, 'F')
-      }
-
-      doc.setFont(fontName, 'normal')
-      const centerX = cx + cw / 2
-      const hasTags = r.tags.length > 0
-      const lineCount = (r.shiftName ? 1 : 0) + (r.timeRange ? 1 : 0)
-      const tagHeight = hasTags ? tagPillH + 1.5 : 0
-      const textBlockHeight = lineCount * lineGap + tagHeight
-      let textY = cy + (ch - textBlockHeight) / 2 + (compact ? 2.5 : 3)
-
-      if (r.shiftName) {
-        doc.setFontSize(nameFontSize)
-        doc.setTextColor(...r.badgeText)
-        doc.text(r.shiftName, centerX, textY, { align: 'center' })
-        textY += lineGap
-      }
-
-      if (r.timeRange) {
-        doc.setFontSize(timeFontSize)
-        const timeColor: [number, number, number] = r.badgeFill
-          ? r.badgeText : [120, 110, 100]
-        doc.setTextColor(...timeColor)
-        doc.text(r.timeRange, centerX, textY, { align: 'center' })
-        textY += lineGap
-      }
-
-      if (hasTags) {
-        doc.setFontSize(tagFontSize)
-        let totalTagW = 0
-        const tagWidths: number[] = []
-        r.tags.forEach((tag) => {
-          const tw = doc.getTextWidth(tag.name) + 2
-          tagWidths.push(tw)
-          totalTagW += tw
-        })
-        totalTagW += (r.tags.length - 1) * 0.8
-
-        let tagX = centerX - totalTagW / 2
-        const tagY = textY
-
-        r.tags.forEach((tag, i) => {
-          const tw = tagWidths[i]
-          doc.setFillColor(...tag.bg)
-          doc.roundedRect(tagX, tagY - 2, tw, tagPillH, 0.8, 0.8, 'F')
-          doc.setTextColor(...tag.text)
-          doc.text(tag.name, tagX + tw / 2, tagY, { align: 'center' })
-          tagX += tw + 0.8
-        })
-      }
-    },
-
-    didDrawPage: (hookData) => {
-      // Track final Y for stacking tables
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      finalY = (hookData as any).cursor?.y ?? startY + 100
-    },
-  })
-
-  return finalY
-}
-
 export async function exportScheduleToPdf({
   title,
   dateRange,
@@ -315,77 +135,279 @@ export async function exportScheduleToPdf({
   fileName,
 }: SchedulePdfOptions) {
   const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' })
+  const pageW = doc.internal.pageSize.getWidth()   // 297
+  const pageH = doc.internal.pageSize.getHeight()  // 210
 
   const hasCJK = await registerFont(doc)
   const fontName = hasCJK ? 'NotoSansTC' : 'helvetica'
 
-  // ── Build lookup maps ──
+  // Build lookup maps
   const shiftMap: Record<string, ShiftType> = {}
   shiftTypes.forEach((st) => { shiftMap[st.id] = st })
-
   const scheduleMap: Record<string, Schedule> = {}
   schedules.forEach((s) => { scheduleMap[`${s.staff_id}_${s.date}`] = s })
 
-  // ── Brand header ──
-  doc.setFontSize(14)
+  // Layout constants
+  const marginLR = 8
+  const marginTop = 5
+  const marginBottom = 3
+
+  // ── Compact header (single line) ──
+  const headerY = marginTop + 3.5
   doc.setFont(fontName, 'normal')
-  doc.setTextColor(139, 115, 85)
-  doc.text('\u963F\u7238\u7684\u828B\u5713', 14, 13)
+  doc.setFontSize(9)
+  calSetBold(doc, [139, 115, 85], 0.35)
+  doc.text('\u963F\u7238\u7684\u828B\u5713', marginLR, headerY)
+  calEndBold(doc)
 
-  doc.setFontSize(11)
-  doc.setTextColor(60, 46, 38)
-  doc.text(title, 14, 20)
-
+  const brandW = doc.getTextWidth('\u963F\u7238\u7684\u828B\u5713 ')
   doc.setFontSize(8)
-  doc.setTextColor(120, 120, 120)
-  doc.text(dateRange, 14, 26)
-  doc.setTextColor(0, 0, 0)
+  calSetBold(doc, [60, 46, 38], 0.25)
+  doc.text(title, marginLR + brandW + 2, headerY)
+  calEndBold(doc)
 
-  const isMultiWeek = weekDates.length > 7
+  doc.setFontSize(6.5)
+  doc.setTextColor(140, 140, 140)
+  doc.text(dateRange, pageW - marginLR, headerY, { align: 'right' })
 
-  if (!isMultiWeek) {
-    // ── Single week: one table ──
-    renderScheduleTable(doc, fontName, weekDates, staff, scheduleMap, shiftMap, 30, false)
-  } else {
-    // ── Multi-week: split into 7-day chunks, stacked ──
-    const chunks: string[][] = []
-    for (let i = 0; i < weekDates.length; i += 7) {
-      chunks.push(weekDates.slice(i, i + 7))
+  const separatorY = headerY + 2
+  doc.setDrawColor(139, 115, 85)
+  doc.setLineWidth(0.25)
+  doc.line(marginLR, separatorY, pageW - marginLR, separatorY)
+
+  // Split into weekly chunks
+  const chunks: string[][] = []
+  for (let i = 0; i < weekDates.length; i += 7) {
+    chunks.push(weekDates.slice(i, i + 7))
+  }
+  const numChunks = chunks.length
+  const isMultiWeek = numChunks > 1
+
+  // ── Adaptive sizing to fit one landscape A4 page ──
+  const contentStartY = separatorY + 1
+  const availableH = pageH - contentStartY - marginBottom
+  const tableGap = isMultiWeek ? 0.8 : 0
+  const weekLabelH = isMultiWeek ? 2.5 : 0
+  const totalOverhead = Math.max(0, numChunks - 1) * tableGap + numChunks * weekLabelH
+  const totalTableH = availableH - totalOverhead
+  const perTableH = totalTableH / numChunks
+
+  const headRowH = Math.max(3, Math.min(5, perTableH * 0.08))
+  const dataRowH = (perTableH - headRowH) / Math.max(staff.length, 1)
+
+  // Font sizes scaled to row height
+  const shiftNameFS = Math.min(7, Math.max(4, dataRowH * 0.9))
+  const timeFS = Math.min(5.5, Math.max(3.2, shiftNameFS * 0.7))
+  const headFS = Math.min(6, Math.max(4, headRowH * 1.0))
+  const tagFS = Math.min(4, Math.max(2.5, shiftNameFS * 0.55))
+  const staffNameFS = Math.min(6.5, Math.max(4, dataRowH * 0.85))
+
+  // Column widths
+  const nameColW = Math.min(16, Math.max(12, (pageW - marginLR * 2) * 0.05))
+
+  // Badge sizing
+  const badgePadV = Math.max(0.3, dataRowH * 0.05)
+  const badgeR = Math.min(1.2, dataRowH * 0.12)
+  const lineGap = Math.max(1.8, dataRowH * 0.3)
+  const tagPillH = Math.max(1.5, dataRowH * 0.2)
+
+  let currentY = contentStartY
+
+  chunks.forEach((chunk) => {
+    // Week sub-label
+    if (isMultiWeek) {
+      const wkStart = formatShortDate(chunk[0])
+      const wkEnd = formatShortDate(chunk[chunk.length - 1])
+      doc.setFont(fontName, 'normal')
+      doc.setFontSize(5)
+      doc.setTextColor(150, 140, 130)
+      doc.text(
+        `${wkStart}\uFF08${getWeekdayLabel(chunk[0])}\uFF09\uFF5E ${wkEnd}\uFF08${getWeekdayLabel(chunk[chunk.length - 1])}\uFF09`,
+        marginLR, currentY + 2,
+      )
+      currentY += weekLabelH
     }
 
-    let currentY = 30
-    chunks.forEach((chunk, idx) => {
-      // Sub-header for each week
-      const label = `${formatShortDate(chunk[0])}（${getWeekdayLabel(chunk[0])}）～ ${formatShortDate(chunk[chunk.length - 1])}（${getWeekdayLabel(chunk[chunk.length - 1])}）`
-      doc.setFontSize(7)
-      doc.setFont(fontName, 'normal')
-      doc.setTextColor(140, 130, 120)
-      doc.text(label, 14, currentY)
-      currentY += 2.5
-
-      currentY = renderScheduleTable(
-        doc, fontName, chunk, staff, scheduleMap, shiftMap, currentY, true,
-      )
-
-      if (idx < chunks.length - 1) {
-        currentY += 3 // gap between tables
-      }
+    // Build cell render data
+    const renderMap: Record<string, CellRender> = {}
+    staff.forEach((member, rowIdx) => {
+      chunk.forEach((date, colIdx) => {
+        const sch = scheduleMap[`${member.id}_${date}`]
+        const render = buildCellRender(sch, shiftMap)
+        if (render) {
+          renderMap[`${rowIdx}_${colIdx + 1}`] = render
+        }
+      })
     })
-  }
 
-  // ── Page numbers ──
-  const totalPages = doc.getNumberOfPages()
-  for (let i = 1; i <= totalPages; i++) {
-    doc.setPage(i)
-    doc.setFontSize(7)
-    doc.setTextColor(160, 160, 160)
-    doc.text(
-      `${i} / ${totalPages}`,
-      doc.internal.pageSize.getWidth() / 2,
-      doc.internal.pageSize.getHeight() - 6,
-      { align: 'center' },
-    )
-  }
+    const head = ['\u54E1\u5DE5', ...chunk.map((d) => `${getWeekdayLabel(d)} ${formatShortDate(d)}`)]
+    const body = staff.map((member) => [
+      member.name,
+      ...chunk.map(() => ' '),
+    ])
+
+    let tableEndY = currentY
+
+    autoTable(doc, {
+      startY: currentY,
+      head: [head],
+      body,
+      styles: {
+        font: fontName,
+        fontSize: 1,
+        cellPadding: 0,
+        halign: 'center',
+        valign: 'middle',
+        lineWidth: 0.1,
+        lineColor: [225, 220, 215],
+        minCellHeight: dataRowH,
+        overflow: 'hidden',
+      },
+      headStyles: {
+        fillColor: [139, 115, 85],
+        textColor: 255,
+        fontStyle: 'normal',
+        font: fontName,
+        halign: 'center',
+        cellPadding: 0,
+        fontSize: 1,
+        minCellHeight: headRowH,
+      },
+      columnStyles: {
+        0: { halign: 'left', cellWidth: nameColW },
+      },
+      alternateRowStyles: {
+        fillColor: [253, 251, 249],
+      },
+      margin: { left: marginLR, right: marginLR },
+
+      willDrawCell: (hookData) => {
+        if (hookData.section === 'head') {
+          hookData.cell.text = []
+          return
+        }
+        if (hookData.section !== 'body') return
+        hookData.cell.text = []
+      },
+
+      didDrawCell: (hookData) => {
+        // Bold table header
+        if (hookData.section === 'head') {
+          const cell = hookData.cell
+          const colIdx = hookData.column.index
+          const label = head[colIdx]
+          doc.setFont(fontName, 'normal')
+          doc.setFontSize(headFS)
+          calSetBold(doc, [255, 255, 255], 0.3)
+          doc.text(label, cell.x + cell.width / 2, cell.y + cell.height / 2, {
+            align: 'center', baseline: 'middle',
+          })
+          calEndBold(doc)
+          return
+        }
+        if (hookData.section !== 'body') return
+
+        const cell = hookData.cell
+
+        // Staff name column — bold
+        if (hookData.column.index === 0) {
+          const name = staff[hookData.row.index]?.name || ''
+          doc.setFont(fontName, 'normal')
+          doc.setFontSize(staffNameFS)
+          calSetBold(doc, [60, 46, 38], 0.2)
+          doc.text(name, cell.x + 1, cell.y + cell.height / 2, { baseline: 'middle' })
+          calEndBold(doc)
+          return
+        }
+
+        const key = `${hookData.row.index}_${hookData.column.index}`
+        const r = renderMap[key]
+        if (!r) return
+
+        // Calculate badge width based on text content
+        doc.setFont(fontName, 'normal')
+        let maxTextW = 0
+        if (r.shiftName) {
+          doc.setFontSize(shiftNameFS)
+          maxTextW = Math.max(maxTextW, doc.getTextWidth(r.shiftName))
+        }
+        if (r.timeRange) {
+          doc.setFontSize(timeFS)
+          maxTextW = Math.max(maxTextW, doc.getTextWidth(r.timeRange))
+        }
+        const badgePadH = 1.5
+        const bw = Math.min(cell.width - 0.6, maxTextW + badgePadH * 2)
+        const bh = cell.height - badgePadV * 2
+        const bx = cell.x + (cell.width - bw) / 2
+        const by = cell.y + badgePadV
+
+        if (r.badgeFill) {
+          doc.setFillColor(...r.badgeFill)
+          doc.roundedRect(bx, by, bw, bh, badgeR, badgeR, 'F')
+        }
+
+        // Centered text
+        const centerX = cell.x + cell.width / 2
+        const hasTags = r.tags.length > 0
+        const lc = (r.shiftName ? 1 : 0) + (r.timeRange ? 1 : 0)
+        const tagH = hasTags ? tagPillH + 0.6 : 0
+        const textBlockH = lc * lineGap + tagH
+        let textY = cell.y + (cell.height - textBlockH) / 2 + lineGap * 0.6
+
+        if (r.shiftName) {
+          doc.setFont(fontName, 'normal')
+          doc.setFontSize(shiftNameFS)
+          calSetBold(doc, r.badgeText, 0.2)
+          doc.text(r.shiftName, centerX, textY, { align: 'center' })
+          calEndBold(doc)
+          textY += lineGap
+        }
+
+        if (r.timeRange) {
+          doc.setFont(fontName, 'normal')
+          doc.setFontSize(timeFS)
+          const tc: [number, number, number] = r.badgeFill ? r.badgeText : [120, 110, 100]
+          doc.setTextColor(...tc)
+          doc.text(r.timeRange, centerX, textY, { align: 'center' })
+          textY += lineGap
+        }
+
+        if (hasTags) {
+          doc.setFont(fontName, 'normal')
+          doc.setFontSize(tagFS)
+          let totalTagW = 0
+          const tagWidths: number[] = []
+          r.tags.forEach((tag) => {
+            const tw = doc.getTextWidth(tag.name) + 1.5
+            tagWidths.push(tw)
+            totalTagW += tw
+          })
+          totalTagW += Math.max(0, r.tags.length - 1) * 0.5
+          let tagX = centerX - totalTagW / 2
+          r.tags.forEach((tag, i) => {
+            const tw = tagWidths[i]
+            doc.setFillColor(...tag.bg)
+            doc.roundedRect(tagX, textY - tagPillH * 0.6, tw, tagPillH, 0.5, 0.5, 'F')
+            doc.setTextColor(...tag.text)
+            doc.text(tag.name, tagX + tw / 2, textY, { align: 'center' })
+            tagX += tw + 0.5
+          })
+        }
+      },
+
+      didDrawPage: (hookData) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        tableEndY = (hookData as any).cursor?.y ?? currentY + 20
+      },
+    })
+
+    currentY = tableEndY + tableGap
+  })
+
+  // Page number
+  doc.setFontSize(5.5)
+  doc.setTextColor(180, 180, 180)
+  doc.text('1 / 1', pageW / 2, pageH - 2, { align: 'center' })
 
   await savePdfCompat(doc, fileName)
 }
@@ -881,9 +903,13 @@ export async function exportCalendarScheduleToPdf({
         afternoonEndY = cy + workAreaH * Math.max(0.3, Math.min(0.7, ratio))
       }
 
-      // Helper: render work entries in a section
-      const badgePadH = 1.4 // horizontal padding inside badge
-      const maxBadgeW = cw - 1.6 - sectionLabelW // max badge width (cell limit)
+      // Helper: render work entries — name on top, 2-char tags below (matching web UI)
+      const badgePadH = 1.4
+      const personGap = 1.0
+      const calTagFontSize = Math.max(badgeFontSize - 1, 5.5)
+      const tagPillPad = 0.6
+      const tagPillH = Math.max(3, entryH * 0.65)
+      const tagRowGap = 0.3
 
       const renderWorkEntries = (entries: CalendarEntry[], startY: number, endY: number, label: string) => {
         // Section label
@@ -892,76 +918,100 @@ export async function exportCalendarScheduleToPdf({
         doc.setTextColor(170, 160, 150)
         doc.text(label, cx, startY + sectionLabelFontSize * 0.35)
 
-        const maxEntries = Math.max(1, Math.floor((endY - startY) / entryH))
+        const bx = cx + sectionLabelW
+        const maxX = cx + cw - 1.5
+
+        // Row height: name badge + tag row (if any entry has tags)
+        const anyTags = entries.some(e => e.render.tags.length > 0)
+        const personRowH = anyTags ? entryH + tagPillH + tagRowGap : entryH
+        const maxRows = Math.max(1, Math.floor((endY - startY) / personRowH))
+
+        // Pre-compute each person's column width
+        interface PersonLayout {
+          entry: CalendarEntry
+          shortName: string
+          nameBadgeW: number
+          shortTags: { name: string; bg: [number, number, number]; text: [number, number, number]; width: number }[]
+          columnW: number
+        }
+        const layouts: PersonLayout[] = entries.map((entry) => {
+          const shortName = entry.staffName.slice(0, 2)
+          doc.setFont(fontName, 'normal')
+          doc.setFontSize(badgeFontSize)
+          const nameBadgeW = doc.getTextWidth(shortName) + badgePadH * 2
+
+          doc.setFontSize(calTagFontSize)
+          let tagsRowW = 0
+          const shortTags = entry.render.tags.map((tag) => {
+            const sn = tag.name.slice(0, 2)
+            const tw = doc.getTextWidth(sn) + tagPillPad * 2
+            tagsRowW += tw + 0.3
+            return { name: sn, bg: tag.bg, text: tag.text, width: tw }
+          })
+          if (shortTags.length > 0) tagsRowW -= 0.3
+
+          return { entry, shortName, nameBadgeW, shortTags, columnW: Math.max(nameBadgeW, tagsRowW) }
+        })
+
         let ey = startY
-        entries.slice(0, maxEntries).forEach((entry) => {
-          const staffColor = staffColorMap[entry.staffId]
+        let currentX = bx
+        let rowCount = 0
+        let renderedCount = 0
+
+        for (const layout of layouts) {
+          if (rowCount >= maxRows) break
+
+          // Wrap to next row if doesn't fit
+          if (currentX + layout.columnW > maxX && currentX > bx) {
+            currentX = bx
+            ey += personRowH
+            rowCount++
+            if (rowCount >= maxRows) break
+          }
+
+          const staffColor = staffColorMap[layout.entry.staffId]
           const badgeBg = staffColor?.bg || [107, 93, 85] as [number, number, number]
           const badgeTextColor = staffColor?.text || [255, 255, 255] as [number, number, number]
 
-          const bx = cx + sectionLabelW
+          // ── Name badge (top) ──
+          doc.setFillColor(...badgeBg)
+          doc.roundedRect(currentX, ey - 0.3, layout.nameBadgeW, entryH - 0.2, badgeR, badgeR, 'F')
 
-          // Build text first to measure
           doc.setFont(fontName, 'normal')
           doc.setFontSize(badgeFontSize)
-
-          const r = entry.render
-          let text = entry.staffName
-          if (r.shiftName) text += ` ${r.shiftName}`
-          else if (r.timeRange) text += ` ${r.timeRange}`
-
-          // Truncate if exceeds max cell width
-          while (doc.getTextWidth(text) > maxBadgeW - badgePadH * 2 && text.length > 3) {
-            text = text.slice(0, -2) + '\u2026'
-          }
-
-          // Badge width = text width + padding, capped at cell width
-          const textW = doc.getTextWidth(text)
-          const bw = Math.min(textW + badgePadH * 2, maxBadgeW)
-
-          doc.setFillColor(...badgeBg)
-          doc.roundedRect(bx, ey - 0.3, bw, entryH - 0.2, badgeR, badgeR, 'F')
-
           calSetBold(doc, badgeTextColor, 0.25)
-          doc.text(text, bx + badgePadH, ey + entryH * 0.52)
+          doc.text(layout.shortName, currentX + badgePadH, ey + entryH * 0.52)
           calEndBold(doc)
 
-          // Render tag pills right after the badge (wrap to next row if overflow)
-          if (r.tags.length > 0) {
-            const calTagFontSize = Math.max(badgeFontSize - 2, 4.5)
-            const tagPillPad = 0.8
-            const tagPillH2 = entryH - 0.8
+          // ── Tag pills (below name) ──
+          if (layout.shortTags.length > 0) {
+            const tagY = ey + entryH - 0.2 + tagRowGap
+            let tagX = currentX
             doc.setFont(fontName, 'normal')
             doc.setFontSize(calTagFontSize)
-            let tagX = bx + bw + 0.5
-            let tagY = ey
-            const tagMaxX = cx + cw - 1
-            r.tags.forEach((tag) => {
-              const tw = doc.getTextWidth(tag.name) + tagPillPad * 2
-              if (tagX + tw > tagMaxX) {
-                // Wrap to next row
-                tagX = bx
-                tagY += tagPillH2 + 0.3
-                if (tagX + tw > tagMaxX) return // single tag too wide, skip
-              }
+            for (const tag of layout.shortTags) {
+              if (tagX + tag.width > maxX) break
               doc.setFillColor(...tag.bg)
-              doc.roundedRect(tagX, tagY - 0.1, tw, tagPillH2, 0.6, 0.6, 'F')
+              doc.roundedRect(tagX, tagY, tag.width, tagPillH, 0.6, 0.6, 'F')
               doc.setTextColor(...tag.text)
-              doc.text(tag.name, tagX + tw / 2, tagY + entryH * 0.45, { align: 'center' })
-              tagX += tw + 0.4
-            })
-            // Account for wrapped tag rows
-            if (tagY > ey) ey = tagY
+              doc.text(tag.name, tagX + tag.width / 2, tagY + tagPillH * 0.65, { align: 'center' })
+              tagX += tag.width + 0.3
+            }
           }
 
-          ey += entryH
-        })
+          currentX += layout.columnW + personGap
+          renderedCount++
+        }
 
-        if (entries.length > maxEntries) {
+        if (renderedCount < entries.length) {
+          if (currentX > bx && currentX + 8 > maxX) {
+            currentX = bx
+            ey += personRowH
+          }
           doc.setFont(fontName, 'normal')
           doc.setFontSize(sectionLabelFontSize)
           doc.setTextColor(140, 130, 120)
-          doc.text(`+${entries.length - maxEntries}`, cx + sectionLabelW + 0.5, ey + entryH * 0.4)
+          doc.text(`+${entries.length - renderedCount}`, currentX > bx ? currentX + 0.5 : bx + 0.5, ey + entryH * 0.4)
         }
       }
 
@@ -997,11 +1047,11 @@ export async function exportCalendarScheduleToPdf({
           doc.setLineWidth(0.2)
           doc.circle(bx + dotR, leaveY + leaveEntryH * 0.35, dotR, 'S')
 
-          // Text: "人名 假別"
+          // Text: "名字 假別" (2-char short name)
           doc.setFont(fontName, 'normal')
           doc.setFontSize(leaveFontSize)
 
-          let text = `${leave.staffName} ${leave.leaveName}`
+          let text = `${leave.staffName.slice(0, 2)} ${leave.leaveName}`
           const textStartX = bx + dotR * 2 + 1.2
           while (doc.getTextWidth(text) > maxLeaveW - dotR * 2 - 2 && text.length > 3) {
             text = text.slice(0, -2) + '\u2026'

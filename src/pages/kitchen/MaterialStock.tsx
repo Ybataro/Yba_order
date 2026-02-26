@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from 'react'
 import { TopNav } from '@/components/TopNav'
 import { DateNav } from '@/components/DateNav'
-import { NumericInput } from '@/components/NumericInput'
+import { DualUnitInput } from '@/components/DualUnitInput'
 import { SectionHeader } from '@/components/SectionHeader'
 import { BottomAction } from '@/components/BottomAction'
 import { useToast } from '@/components/Toast'
@@ -12,6 +12,8 @@ import { materialStockSessionId, getTodayTW } from '@/lib/session'
 import { formatDate } from '@/lib/utils'
 import { Save, AlertTriangle, UserCheck, RefreshCw } from 'lucide-react'
 import { useStaffStore } from '@/stores/useStaffStore'
+import { useStoreSortOrder } from '@/hooks/useStoreSortOrder'
+import { buildSortedByCategory } from '@/lib/sortByStore'
 
 export default function MaterialStock() {
   const { showToast } = useToast()
@@ -51,12 +53,6 @@ export default function MaterialStock() {
     return init
   })
 
-  const [bulk, setBulk] = useState<Record<string, string>>(() => {
-    const init: Record<string, string> = {}
-    rawMaterials.forEach(m => { init[m.id] = '' })
-    return init
-  })
-
   const [submitting, setSubmitting] = useState(false)
   const [isEdit, setIsEdit] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -67,10 +63,8 @@ export default function MaterialStock() {
     setLoading(true)
     // Reset state for new date
     const initStock: Record<string, string> = {}
-    const initBulk: Record<string, string> = {}
-    rawMaterials.forEach(m => { initStock[m.id] = ''; initBulk[m.id] = '' })
+    rawMaterials.forEach(m => { initStock[m.id] = '' })
     setStock(initStock)
-    setBulk(initBulk)
     setIsEdit(false)
     setConfirmBy('')
 
@@ -91,14 +85,11 @@ export default function MaterialStock() {
           .then(({ data: items }) => {
             if (items && items.length > 0) {
               const loadedStock: Record<string, string> = {}
-              const loadedBulk: Record<string, string> = {}
-              rawMaterials.forEach(m => { loadedStock[m.id] = ''; loadedBulk[m.id] = '' })
+              rawMaterials.forEach(m => { loadedStock[m.id] = '' })
               items.forEach(item => {
                 loadedStock[item.material_id] = item.stock_qty != null ? String(item.stock_qty) : ''
-                loadedBulk[item.material_id] = item.bulk_qty != null ? String(item.bulk_qty) : ''
               })
               setStock(loadedStock)
-              setBulk(loadedBulk)
             }
             setLoading(false)
           })
@@ -149,13 +140,10 @@ export default function MaterialStock() {
     load()
   }, [today])
 
-  const materialsByCategory = useMemo(() => {
-    const map = new Map<string, typeof rawMaterials>()
-    for (const cat of materialCategories) {
-      map.set(cat, rawMaterials.filter(m => m.category === cat))
-    }
-    return map
-  }, [rawMaterials, materialCategories])
+  const { sortCategories, sortItems } = useStoreSortOrder('kitchen', 'material')
+  const materialsByCategory = useMemo(() =>
+    buildSortedByCategory(materialCategories, rawMaterials, sortCategories, sortItems),
+    [materialCategories, rawMaterials, sortCategories, sortItems])
 
   const getStatus = (id: string): 'ok' | 'low' | 'danger' => {
     const qty = parseFloat(stock[id]) || 0
@@ -201,12 +189,12 @@ export default function MaterialStock() {
     }
 
     const items = rawMaterials
-      .filter(m => stock[m.id] !== '' || bulk[m.id] !== '')
+      .filter(m => stock[m.id] !== '')
       .map(m => ({
         session_id: sessionId,
         material_id: m.id,
         stock_qty: stock[m.id] !== '' ? parseFloat(stock[m.id]) : null,
-        bulk_qty: bulk[m.id] !== '' ? parseFloat(bulk[m.id]) : null,
+        bulk_qty: null,
       }))
 
     if (items.length > 0) {
@@ -274,8 +262,7 @@ export default function MaterialStock() {
               <SectionHeader title={category} icon="■" />
               <div className="flex items-center px-4 py-1 bg-surface-section text-[11px] text-brand-lotus border-b border-gray-100">
                 <span className="flex-1">品名</span>
-                <span className="w-[56px] text-center">庫存</span>
-                <span className="w-[56px] text-center">散裝</span>
+                <span className="w-[110px] text-center">庫存</span>
                 <span className="w-[36px] text-center">週用</span>
                 <span className="w-[18px]"></span>
               </div>
@@ -293,9 +280,9 @@ export default function MaterialStock() {
                         <p className="text-sm font-medium text-brand-oak leading-tight">{material.name}</p>
                         {material.spec && <p className="text-[10px] text-brand-lotus leading-tight">{material.spec}</p>}
                       </div>
-                      <NumericInput value={stock[material.id]} onChange={(v) => setStock(prev => ({ ...prev, [material.id]: v }))} isFilled onNext={focusNext} data-mat="" />
-                      <div className="w-2 shrink-0"></div>
-                      <NumericInput value={bulk[material.id]} onChange={(v) => setBulk(prev => ({ ...prev, [material.id]: v }))} isFilled onNext={focusNext} data-mat="" />
+                      <div className="w-[110px] shrink-0 flex justify-center">
+                        <DualUnitInput value={stock[material.id]} onChange={(v) => setStock(prev => ({ ...prev, [material.id]: v }))} unit={material.unit} box_unit={material.box_unit} box_ratio={material.box_ratio} isFilled onNext={focusNext} data-mat="" />
+                      </div>
                       <span className="w-[36px] text-center text-[11px] font-num text-brand-lotus">{weeklyUsage[material.id] || '-'}</span>
                       <div className="w-[18px] flex justify-center">
                         {status === 'danger' && stock[material.id] && <AlertTriangle size={13} className="text-status-danger" />}

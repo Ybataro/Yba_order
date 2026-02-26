@@ -9,7 +9,7 @@ import { useStaffStore } from '@/stores/useStaffStore'
 import { useCanSchedule } from '@/hooks/useCanSchedule'
 import { getMonthDates } from '@/lib/schedule'
 import { getSession } from '@/lib/auth'
-import { exportCalendarScheduleToPdf } from '@/lib/exportSchedulePdf'
+import { exportScheduleToPdf, exportCalendarScheduleToPdf } from '@/lib/exportSchedulePdf'
 import { supabase } from '@/lib/supabase'
 import { useToast } from '@/components/Toast'
 import { FileText, Printer, CalendarDays, LayoutGrid } from 'lucide-react'
@@ -161,15 +161,29 @@ export default function KitchenSchedules() {
         }
       }
 
-      await exportCalendarScheduleToPdf({
-        title: '央廚排班表',
-        year: calYear,
-        month: calMonth,
-        staff: kitchenStaff,
-        schedules: pdfSchedules,
-        shiftTypes,
-        fileName: `央廚_排班表_${calYear}年${calMonth}月.pdf`,
-      })
+      if (viewMode === 'grid') {
+        const firstDate = monthDates[0]
+        const lastDate = monthDates[monthDates.length - 1]
+        await exportScheduleToPdf({
+          title: '央廚排班表',
+          dateRange: `${calYear}年${calMonth}月（${firstDate} ~ ${lastDate}）`,
+          weekDates: monthDates,
+          staff: kitchenStaff,
+          schedules: pdfSchedules,
+          shiftTypes,
+          fileName: `央廚_月檢視_${calYear}年${calMonth}月.pdf`,
+        })
+      } else {
+        await exportCalendarScheduleToPdf({
+          title: '央廚排班表',
+          year: calYear,
+          month: calMonth,
+          staff: kitchenStaff,
+          schedules: pdfSchedules,
+          shiftTypes,
+          fileName: `央廚_排班表_${calYear}年${calMonth}月.pdf`,
+        })
+      }
     } catch (e) {
       console.error('[PDF export error]', e)
       showToast('PDF 匯出失敗', 'error')

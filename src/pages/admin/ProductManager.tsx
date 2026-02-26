@@ -12,7 +12,7 @@ import type { StoreProduct, VisibleIn } from '@/data/storeProducts'
 import type { FrozenProduct } from '@/lib/frozenProducts'
 import { Plus, FolderCog, Snowflake } from 'lucide-react'
 
-const emptyProduct: StoreProduct = { id: '', name: '', category: '', unit: '', shelfLifeDays: '', baseStock: '', ourCost: 0, franchisePrice: 0, visibleIn: 'both', linkable: false, linkedInventoryIds: [] }
+const emptyProduct: StoreProduct = { id: '', name: '', category: '', unit: '', shelfLifeDays: '', baseStock: '', ourCost: 0, franchisePrice: 0, visibleIn: 'both', linkable: false, linkedInventoryIds: [], box_unit: undefined, box_ratio: undefined }
 
 const visibleInOptions: { value: VisibleIn; label: string }[] = [
   { value: 'both', label: '盤點＋叫貨' },
@@ -228,7 +228,7 @@ export default function ProductManager() {
                       </span>
                     )}
                   </div>
-                  <p className="text-[10px] text-brand-lotus">{p.unit}{p.shelfLifeDays ? ` · 期效${p.shelfLifeDays}` : ''}</p>
+                  <p className="text-[10px] text-brand-lotus">{p.unit}{p.box_unit && p.box_ratio ? ` (1${p.box_unit}=${p.box_ratio}${p.unit})` : ''}{p.shelfLifeDays ? ` · 期效${p.shelfLifeDays}` : ''}</p>
                 </div>
               ),
             },
@@ -254,7 +254,7 @@ export default function ProductManager() {
                     render: (p) => (
                       <div>
                         <p className="text-sm font-medium text-brand-oak">{p.name}</p>
-                        <p className="text-[10px] text-brand-lotus">{p.unit}{p.shelfLifeDays ? ` · 期效${p.shelfLifeDays}` : ''}</p>
+                        <p className="text-[10px] text-brand-lotus">{p.unit}{p.box_unit && p.box_ratio ? ` (1${p.box_unit}=${p.box_ratio}${p.unit})` : ''}{p.shelfLifeDays ? ` · 期效${p.shelfLifeDays}` : ''}</p>
                       </div>
                     ),
                   },
@@ -292,6 +292,12 @@ export default function ProductManager() {
         </ModalField>
         <ModalField label="單位">
           <ModalInput value={form.unit} onChange={(v) => setForm({ ...form, unit: v })} placeholder="例：盒、袋、桶" />
+        </ModalField>
+        <ModalField label="箱入單位">
+          <ModalInput value={form.box_unit ?? ''} onChange={(v) => setForm({ ...form, box_unit: v || undefined })} placeholder="例：箱（留空表示無箱規）" />
+        </ModalField>
+        <ModalField label="箱入數量">
+          <ModalInput value={form.box_ratio ? String(form.box_ratio) : ''} onChange={(v) => setForm({ ...form, box_ratio: parseInt(v) || undefined })} placeholder="例：6（1箱=6袋）" />
         </ModalField>
         <ModalField label="保存期限">
           <ModalInput value={String(form.shelfLifeDays ?? '')} onChange={(v) => setForm({ ...form, shelfLifeDays: v })} placeholder="例：7 或 冷凍45天" />

@@ -10,7 +10,7 @@ import { useMaterialStore } from '@/stores/useMaterialStore'
 import type { RawMaterial } from '@/data/rawMaterials'
 import { Plus, FolderCog } from 'lucide-react'
 
-const emptyMaterial: RawMaterial = { id: '', name: '', category: '', spec: '', unit: '', notes: '' }
+const emptyMaterial: RawMaterial = { id: '', name: '', category: '', spec: '', unit: '', notes: '', box_unit: undefined, box_ratio: undefined }
 
 export default function MaterialManager() {
   const { items, categories, add, update, remove, reorder, renameCategory, addCategory, removeCategory, reorderCategory } = useMaterialStore()
@@ -134,7 +134,7 @@ export default function MaterialManager() {
               render: (m) => (
                 <div>
                   <p className="text-sm font-medium text-brand-oak">{m.name}</p>
-                  <p className="text-[10px] text-brand-lotus">{m.spec ? m.spec : m.unit}{m.notes ? ` · ${m.notes}` : ''}</p>
+                  <p className="text-[10px] text-brand-lotus">{m.spec ? m.spec : m.unit}{m.box_unit && m.box_ratio ? ` (1${m.box_unit}=${m.box_ratio}${m.unit})` : ''}{m.notes ? ` · ${m.notes}` : ''}</p>
                 </div>
               ),
             },
@@ -164,7 +164,7 @@ export default function MaterialManager() {
                     render: (m) => (
                       <div>
                         <p className="text-sm font-medium text-brand-oak">{m.name}</p>
-                        <p className="text-[10px] text-brand-lotus">{m.spec ? m.spec : m.unit}{m.notes ? ` · ${m.notes}` : ''}</p>
+                        <p className="text-[10px] text-brand-lotus">{m.spec ? m.spec : m.unit}{m.box_unit && m.box_ratio ? ` (1${m.box_unit}=${m.box_ratio}${m.unit})` : ''}{m.notes ? ` · ${m.notes}` : ''}</p>
                       </div>
                     ),
                   },
@@ -197,6 +197,12 @@ export default function MaterialManager() {
         </ModalField>
         <ModalField label="單位">
           <ModalInput value={form.unit} onChange={(v) => setForm({ ...form, unit: v })} placeholder="例：袋、包、箱" />
+        </ModalField>
+        <ModalField label="箱入單位">
+          <ModalInput value={form.box_unit ?? ''} onChange={(v) => setForm({ ...form, box_unit: v || undefined })} placeholder="例：箱（留空表示無箱規）" />
+        </ModalField>
+        <ModalField label="箱入數量">
+          <ModalInput value={form.box_ratio ? String(form.box_ratio) : ''} onChange={(v) => setForm({ ...form, box_ratio: parseInt(v) || undefined })} placeholder="例：6（1箱=6袋）" />
         </ModalField>
         <ModalField label="備註">
           <ModalInput value={form.notes ?? ''} onChange={(v) => setForm({ ...form, notes: v })} placeholder="選填" />

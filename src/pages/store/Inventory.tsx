@@ -2,6 +2,7 @@ import { useState, useCallback, useMemo, useEffect, useRef } from 'react'
 import { useParams, useSearchParams } from 'react-router-dom'
 import { TopNav } from '@/components/TopNav'
 import { NumericInput } from '@/components/NumericInput'
+import { DualUnitInput } from '@/components/DualUnitInput'
 import { SectionHeader } from '@/components/SectionHeader'
 import { ProgressBar } from '@/components/ProgressBar'
 import { BottomAction } from '@/components/BottomAction'
@@ -17,6 +18,8 @@ import { Send, RefreshCw, ChevronDown, ChevronUp } from 'lucide-react'
 import { StockEntryPanel, type StockEntry } from '@/components/StockEntryPanel'
 import { useFrozenProductStore } from '@/stores/useFrozenProductStore'
 import { useZoneStore } from '@/stores/useZoneStore'
+import { useStoreSortOrder } from '@/hooks/useStoreSortOrder'
+import { buildSortedByCategory } from '@/lib/sortByStore'
 
 interface InventoryEntry {
   onShelf: string
@@ -447,13 +450,10 @@ export default function Inventory() {
     }).length
   }, [data, storeProducts, getEntry])
 
-  const productsByCategory = useMemo(() => {
-    const map = new Map<string, typeof storeProducts>()
-    for (const cat of productCategories) {
-      map.set(cat, storeProducts.filter(p => p.category === cat))
-    }
-    return map
-  }, [storeProducts, productCategories])
+  const { sortCategories, sortItems } = useStoreSortOrder(storeId || '', 'product')
+  const productsByCategory = useMemo(() =>
+    buildSortedByCategory(productCategories, storeProducts, sortCategories, sortItems),
+    [productCategories, storeProducts, sortCategories, sortItems])
 
   const isItemModified = useCallback((productId: string): boolean => {
     if (!isEdit) return false
@@ -682,10 +682,10 @@ export default function Inventory() {
               {/* 欄位標題列 */}
               <div className="flex items-center px-4 py-1 bg-surface-section text-[11px] text-brand-lotus border-b border-gray-100">
                 <span className="flex-1">品名</span>
-                <span className="w-[60px] text-center">架上</span>
-                <span className="w-[60px] text-center">庫存</span>
-                <span className="w-[60px] text-center">倒掉</span>
-                <span className="w-[50px] text-center text-[9px]">前日用量</span>
+                <span className="w-[56px] text-center">架上</span>
+                <span className="w-[110px] text-center">庫存</span>
+                <span className="w-[56px] text-center">倒掉</span>
+                <span className="w-[40px] text-center text-[9px]">前日用量</span>
               </div>
               <div className="bg-white">
                 {products.map((product, idx) => {
@@ -707,74 +707,83 @@ export default function Inventory() {
                             {product.baseStock ? ` · ${product.baseStock}` : ''}
                           </p>
                         </div>
-                        <div className="flex items-center gap-1">
+                        <div className="flex items-center gap-1 shrink-0">
                           {isMergedView ? (
                             <>
-                              <span className="w-[60px] text-center text-sm text-brand-oak">{entry.onShelf || '-'}</span>
-                              <span className="w-[60px] text-center text-sm text-brand-oak">{entry.stock || '-'}</span>
-                              <span className={`w-[60px] text-center text-sm ${entry.discarded && parseFloat(entry.discarded) > 0 ? 'text-status-danger' : 'text-brand-oak'}`}>{entry.discarded || '-'}</span>
-                              <span className={`w-[50px] text-center text-sm ${prevUsage[product.id] !== undefined ? (prevUsage[product.id] < 0 ? 'text-status-danger' : 'text-brand-oak') : 'text-brand-lotus'}`}>
+                              <span className="w-[56px] shrink-0 text-center text-sm text-brand-oak">{entry.onShelf || '-'}</span>
+                              <span className="w-[110px] shrink-0 text-center text-sm text-brand-oak">{entry.stock || '-'}</span>
+                              <span className={`w-[56px] shrink-0 text-center text-sm ${entry.discarded && parseFloat(entry.discarded) > 0 ? 'text-status-danger' : 'text-brand-oak'}`}>{entry.discarded || '-'}</span>
+                              <span className={`w-[40px] shrink-0 text-center text-sm ${prevUsage[product.id] !== undefined ? (prevUsage[product.id] < 0 ? 'text-status-danger' : 'text-brand-oak') : 'text-brand-lotus'}`}>
                                 {prevUsage[product.id] !== undefined ? prevUsage[product.id] : '-'}
                               </span>
                             </>
                           ) : (
                             <>
-                              <NumericInput
-                                value={entry.onShelf}
-                                onChange={(v) => updateField(product.id, 'onShelf', v)}
-                                isFilled
-                                onNext={focusNext}
-                                data-inv=""
-                              />
+                              <div className="w-[56px] shrink-0">
+                                <NumericInput
+                                  value={entry.onShelf}
+                                  onChange={(v) => updateField(product.id, 'onShelf', v)}
+                                  isFilled
+                                  onNext={focusNext}
+                                  data-inv=""
+                                />
+                              </div>
                               {/* 庫存欄：有到期日資料 → 顯示合計+展開按鈕；否則原始輸入 */}
-                              {hasStockEntries || isExpanded ? (
-                                <button
-                                  type="button"
-                                  onClick={() => setExpandedStockId(isExpanded ? null : product.id)}
-                                  className={`w-[56px] h-9 rounded-lg flex items-center justify-center gap-0.5 text-base font-semibold transition-colors ${
-                                    entry.stock !== '' ? 'bg-green-50 text-brand-oak' : 'bg-gray-50 text-brand-lotus'
-                                  } border border-gray-200`}
-                                >
-                                  <span className="text-sm">{entry.stock || '0'}</span>
-                                  {isExpanded
-                                    ? <ChevronUp size={12} className="text-brand-lotus" />
-                                    : <ChevronDown size={12} className="text-brand-lotus" />
-                                  }
-                                </button>
-                              ) : (
-                                <div className="relative">
-                                  <NumericInput
-                                    value={entry.stock}
-                                    onChange={(v) => updateField(product.id, 'stock', v)}
-                                    isFilled
-                                    onNext={focusNext}
-                                    data-inv=""
-                                  />
+                              <div className="w-[110px] shrink-0 flex justify-center">
+                                {hasStockEntries || isExpanded ? (
                                   <button
                                     type="button"
-                                    title="依到期日分批輸入"
-                                    onClick={() => {
-                                      setStockEntries(prev => ({
-                                        ...prev,
-                                        [product.id]: [{ expiryDate: '', quantity: entry.stock || '' }],
-                                      }))
-                                      setExpandedStockId(product.id)
-                                    }}
-                                    className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-brand-oak/70 text-white flex items-center justify-center text-[10px] leading-none"
+                                    onClick={() => setExpandedStockId(isExpanded ? null : product.id)}
+                                    className={`w-[56px] h-9 rounded-lg flex items-center justify-center gap-0.5 text-base font-semibold transition-colors ${
+                                      entry.stock !== '' ? 'bg-green-50 text-brand-oak' : 'bg-gray-50 text-brand-lotus'
+                                    } border border-gray-200`}
                                   >
-                                    +
+                                    <span className="text-sm">{entry.stock || '0'}</span>
+                                    {isExpanded
+                                      ? <ChevronUp size={12} className="text-brand-lotus" />
+                                      : <ChevronDown size={12} className="text-brand-lotus" />
+                                    }
                                   </button>
-                                </div>
-                              )}
-                              <NumericInput
-                                value={entry.discarded}
-                                onChange={(v) => updateField(product.id, 'discarded', v)}
-                                isFilled
-                                className={entry.discarded && parseFloat(entry.discarded) > 0 ? '!text-status-danger' : ''}
-                                onNext={focusNext}
-                                data-inv=""
-                              />
-                              <span className={`w-[50px] text-center text-sm ${prevUsage[product.id] !== undefined ? (prevUsage[product.id] < 0 ? 'text-status-danger' : 'text-brand-oak') : 'text-brand-lotus'}`}>
+                                ) : (
+                                  <div className="relative">
+                                    <DualUnitInput
+                                      value={entry.stock}
+                                      onChange={(v) => updateField(product.id, 'stock', v)}
+                                      unit={product.unit}
+                                      box_unit={product.box_unit}
+                                      box_ratio={product.box_ratio}
+                                      isFilled
+                                      onNext={focusNext}
+                                      data-inv=""
+                                    />
+                                    <button
+                                      type="button"
+                                      title="依到期日分批輸入"
+                                      onClick={() => {
+                                        setStockEntries(prev => ({
+                                          ...prev,
+                                          [product.id]: [{ expiryDate: '', quantity: entry.stock || '' }],
+                                        }))
+                                        setExpandedStockId(product.id)
+                                      }}
+                                      className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-brand-oak/70 text-white flex items-center justify-center text-[10px] leading-none"
+                                    >
+                                      +
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
+                              <div className="w-[56px] shrink-0">
+                                <NumericInput
+                                  value={entry.discarded}
+                                  onChange={(v) => updateField(product.id, 'discarded', v)}
+                                  isFilled
+                                  className={entry.discarded && parseFloat(entry.discarded) > 0 ? '!text-status-danger' : ''}
+                                  onNext={focusNext}
+                                  data-inv=""
+                                />
+                              </div>
+                              <span className={`w-[40px] shrink-0 text-center text-sm ${prevUsage[product.id] !== undefined ? (prevUsage[product.id] < 0 ? 'text-status-danger' : 'text-brand-oak') : 'text-brand-lotus'}`}>
                                 {prevUsage[product.id] !== undefined ? prevUsage[product.id] : '-'}
                               </span>
                             </>
@@ -803,22 +812,21 @@ export default function Inventory() {
                           }}
                           onCollapse={() => {
                             setExpandedStockId(null)
-                            // Focus next discard input after collapse
                             requestAnimationFrame(() => {
                               const allInputs = document.querySelectorAll<HTMLInputElement>('[data-inv]')
                               const arr = Array.from(allInputs)
-                              // Find the discard input for this product (3rd input in the product's group)
-                              // Since stock is a button when expanded, the discard is next data-inv after onShelf
                               for (let i = 0; i < arr.length; i++) {
                                 const row = arr[i].closest('[data-product-id]')
                                 if (row?.getAttribute('data-product-id') === product.id) {
-                                  // This is the onShelf, next one should be discard
                                   if (arr[i + 1]) arr[i + 1].focus()
                                   break
                                 }
                               }
                             })
                           }}
+                          unit={product.unit}
+                          box_unit={product.box_unit}
+                          box_ratio={product.box_ratio}
                         />
                       )}
                       {isExpanded && idx < products.length - 1 && (

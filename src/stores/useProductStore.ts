@@ -46,6 +46,8 @@ export const useProductStore = create<ProductState>()((set, get) => ({
           visibleIn: (d.visible_in as VisibleIn) || 'both',
           linkable: d.linkable || false,
           linkedInventoryIds: d.linked_inventory_ids || [],
+          box_unit: d.box_unit ?? undefined,
+          box_ratio: d.box_ratio ?? undefined,
         })),
       })
     }
@@ -70,6 +72,8 @@ export const useProductStore = create<ProductState>()((set, get) => ({
         visible_in: item.visibleIn || 'both',
         linkable: item.linkable || false,
         linked_inventory_ids: item.linkedInventoryIds || [],
+        box_unit: item.box_unit ?? null,
+        box_ratio: item.box_ratio ?? null,
         sort_order: get().items.length - 1,
       }).then(({ error }) => {
         if (error) console.error('[store_products] insert failed:', error.message)
@@ -93,6 +97,8 @@ export const useProductStore = create<ProductState>()((set, get) => ({
       if (partial.visibleIn !== undefined) db.visible_in = partial.visibleIn || 'both'
       if (partial.linkable !== undefined) db.linkable = partial.linkable
       if (partial.linkedInventoryIds !== undefined) db.linked_inventory_ids = partial.linkedInventoryIds
+      if (partial.box_unit !== undefined) db.box_unit = partial.box_unit ?? null
+      if (partial.box_ratio !== undefined) db.box_ratio = partial.box_ratio ?? null
       if (Object.keys(db).length > 0) {
         supabase.from('store_products').update(db).eq('id', id).then(({ error }) => {
           if (error) console.error('[store_products] update failed:', error.message)

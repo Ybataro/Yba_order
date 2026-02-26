@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Package, Warehouse, Users, Store, Receipt, QrCode, Layers, ClipboardList, FileText, DollarSign, CloudSun, ChefHat, LayoutDashboard, LogOut, KeyRound, ScrollText, Wallet, TrendingUp, ChevronDown, CalendarClock, Clock, Snowflake, CalendarDays } from 'lucide-react'
+import { Package, Warehouse, Users, Store, Receipt, QrCode, Layers, ClipboardList, FileText, DollarSign, CloudSun, ChefHat, LayoutDashboard, LogOut, KeyRound, ScrollText, Wallet, TrendingUp, ChevronDown, CalendarClock, Clock, Snowflake, CalendarDays, ArrowUpDown } from 'lucide-react'
 import { getTodayString, formatDate } from '@/lib/utils'
 import { useStoreStore } from '@/stores/useStoreStore'
 import { clearSession } from '@/lib/auth'
@@ -42,6 +42,7 @@ const menuGroups: MenuGroup[] = [
       { icon: Layers, label: '樓層品項管理', desc: '設定門店樓層及品項分配', path: '/admin/zones', color: 'bg-brand-camel' },
       { icon: CalendarDays, label: '排班管理', desc: 'PC 全寬行事曆排班、快速排班模式', path: '/admin/schedule', color: 'bg-brand-lotus' },
       { icon: CalendarClock, label: '班次與職位管理', desc: '設定班次時段、職位與標籤', path: '/admin/shift-types', color: 'bg-brand-oak' },
+      { icon: ArrowUpDown, label: '品項排序管理', desc: '設定各門店叫貨/盤點品項的顯示順序', path: '/admin/item-sort', color: 'bg-brand-mocha' },
     ],
   },
   {

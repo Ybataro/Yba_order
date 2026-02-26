@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect } from 'react'
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom'
 import { TopNav } from '@/components/TopNav'
 import { NumericInput } from '@/components/NumericInput'
+import { DualUnitInput } from '@/components/DualUnitInput'
 import { SectionHeader } from '@/components/SectionHeader'
 import { BottomAction } from '@/components/BottomAction'
 import { useToast } from '@/components/Toast'
@@ -15,6 +16,8 @@ import { logAudit } from '@/lib/auditLog'
 import { formatDate } from '@/lib/utils'
 import { fetchWeather, type WeatherData, type WeatherCondition } from '@/lib/weather'
 import { Send, Lightbulb, Sun, CloudRain, Cloud, CloudSun, Thermometer, Droplets, TrendingUp, TrendingDown, Lock, RefreshCw, History, AlertTriangle } from 'lucide-react'
+import { useStoreSortOrder } from '@/hooks/useStoreSortOrder'
+import { buildSortedByCategory } from '@/lib/sortByStore'
 
 const weatherIcons: Record<WeatherCondition, typeof Sun> = {
   sunny: Sun,
@@ -624,13 +627,10 @@ export default function Order() {
     return dow === 2 || dow === 6
   })()
 
-  const productsByCategory = useMemo(() => {
-    const map = new Map<string, typeof storeProducts>()
-    for (const cat of productCategories) {
-      map.set(cat, storeProducts.filter(p => p.category === cat))
-    }
-    return map
-  }, [])
+  const { sortCategories, sortItems } = useStoreSortOrder(storeId || '', 'product')
+  const productsByCategory = useMemo(() =>
+    buildSortedByCategory(productCategories, storeProducts, sortCategories, sortItems),
+    [productCategories, storeProducts, sortCategories, sortItems])
 
   const focusNext = () => {
     const allInputs = document.querySelectorAll<HTMLInputElement>('[data-ord]')
@@ -797,7 +797,7 @@ export default function Order() {
             <span className="w-[36px] text-center text-[9px]">前日用量</span>
             <span className="w-[40px] text-center">庫存</span>
             <span className="w-[40px] text-center text-status-info">建議</span>
-            <span className="w-[60px] text-center">叫貨量</span>
+            <span className="w-[110px] text-center">叫貨量</span>
           </div>
 
           {Array.from(productsByCategory.entries()).map(([category, products]) => (
@@ -821,10 +821,13 @@ export default function Order() {
                       >
                         {suggested[product.id] > 0 ? suggested[product.id] : '-'}
                       </button>
-                      <div className="w-[60px] flex justify-center">
-                        <NumericInput
+                      <div className="w-[110px] shrink-0 flex justify-center">
+                        <DualUnitInput
                           value={orders[product.id]}
                           onChange={(v) => !locked && setOrders(prev => ({ ...prev, [product.id]: v }))}
+                          unit={product.unit}
+                          box_unit={product.box_unit}
+                          box_ratio={product.box_ratio}
                           isFilled
                           onNext={focusNext}
                           data-ord=""

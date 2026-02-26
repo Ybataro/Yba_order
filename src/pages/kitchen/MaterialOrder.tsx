@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react'
 import { TopNav } from '@/components/TopNav'
-import { NumericInput } from '@/components/NumericInput'
+import { DualUnitInput } from '@/components/DualUnitInput'
 import { SectionHeader } from '@/components/SectionHeader'
 import { BottomAction } from '@/components/BottomAction'
 import { useToast } from '@/components/Toast'
@@ -9,6 +9,8 @@ import { supabase } from '@/lib/supabase'
 import { materialOrderSessionId, getTodayTW } from '@/lib/session'
 import { Send, UserCheck, RefreshCw } from 'lucide-react'
 import { useStaffStore } from '@/stores/useStaffStore'
+import { useStoreSortOrder } from '@/hooks/useStoreSortOrder'
+import { buildSortedByCategory } from '@/lib/sortByStore'
 
 export default function MaterialOrder() {
   const { showToast } = useToast()
@@ -138,13 +140,10 @@ export default function MaterialOrder() {
     load()
   }, [today])
 
-  const materialsByCategory = useMemo(() => {
-    const map = new Map<string, typeof rawMaterials>()
-    for (const cat of materialCategories) {
-      map.set(cat, rawMaterials.filter(m => m.category === cat))
-    }
-    return map
-  }, [])
+  const { sortCategories, sortItems } = useStoreSortOrder('kitchen', 'material')
+  const materialsByCategory = useMemo(() =>
+    buildSortedByCategory(materialCategories, rawMaterials, sortCategories, sortItems),
+    [materialCategories, rawMaterials, sortCategories, sortItems])
 
   const focusNext = () => {
     const allInputs = document.querySelectorAll<HTMLInputElement>('[data-mo]')
@@ -259,7 +258,7 @@ export default function MaterialOrder() {
                     <div className="flex items-center gap-2">
                       <span className={`w-[50px] text-center text-xs font-num ${matStock[material.id] != null && matStock[material.id] <= 1 ? 'text-status-danger font-bold' : 'text-brand-oak'}`}>{matStock[material.id] != null ? matStock[material.id] : '-'}</span>
                       <span className="w-[50px] text-center text-xs font-num text-brand-lotus">{weeklyUsage[material.id] || '-'}</span>
-                      <NumericInput value={orders[material.id]} onChange={(v) => setOrders(prev => ({ ...prev, [material.id]: v }))} unit={material.unit} isFilled onNext={focusNext} data-mo="" />
+                      <DualUnitInput value={orders[material.id]} onChange={(v) => setOrders(prev => ({ ...prev, [material.id]: v }))} unit={material.unit} box_unit={material.box_unit} box_ratio={material.box_ratio} isFilled onNext={focusNext} data-mo="" />
                     </div>
                   </div>
                 ))}

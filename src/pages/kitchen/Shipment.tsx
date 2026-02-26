@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from 'react'
 import { TopNav } from '@/components/TopNav'
 import { DateNav } from '@/components/DateNav'
-import { NumericInput } from '@/components/NumericInput'
+import { DualUnitInput } from '@/components/DualUnitInput'
 import { SectionHeader } from '@/components/SectionHeader'
 import { BottomAction } from '@/components/BottomAction'
 import { useToast } from '@/components/Toast'
@@ -299,7 +299,6 @@ export default function Shipment() {
       product_id: p.id,
       order_qty: orderQty[activeStore]?.[p.id] || 0,
       actual_qty: parseFloat(actualQty[activeStore]?.[p.id] || '0') || 0,
-      received: false,
     }))
 
     // 加入未叫貨品項（order_qty: 0）
@@ -312,18 +311,35 @@ export default function Shipment() {
           product_id: productId,
           order_qty: 0,
           actual_qty: qty,
-          received: false,
         })
       }
     })
 
-    // Delete old shipment items first (handles removed order items)
+    // 從 DB 即時讀取現有的 received 狀態（避免 stale state 覆蓋門店確認）
+    const { data: existingItems } = await supabase
+      .from('shipment_items')
+      .select('product_id, received')
+      .eq('session_id', sid)
+
+    const receivedMap: Record<string, boolean> = {}
+    if (existingItems) {
+      existingItems.forEach(item => {
+        receivedMap[item.product_id] = item.received || false
+      })
+    }
+
+    // Delete old + Insert new（保留 received 狀態）
     await supabase.from('shipment_items').delete().eq('session_id', sid)
 
-    if (shipItems.length > 0) {
+    const shipItemsWithReceived = shipItems.map(item => ({
+      ...item,
+      received: receivedMap[item.product_id] || false,
+    }))
+
+    if (shipItemsWithReceived.length > 0) {
       const { error: itemErr } = await supabase
         .from('shipment_items')
-        .insert(shipItems)
+        .insert(shipItemsWithReceived)
 
       if (itemErr) {
         showToast('提交失敗：' + itemErr.message, 'error')
@@ -498,13 +514,16 @@ export default function Shipment() {
                             )}
                           </div>
                           <span className="w-[50px] text-center text-sm font-num text-brand-lotus">{ordered}</span>
-                          <div className="w-[60px] flex justify-center">
-                            <NumericInput
+                          <div className={`${product.box_ratio ? 'w-[110px]' : 'w-[60px]'} flex justify-center`}>
+                            <DualUnitInput
                               value={actualQty[activeStore]?.[product.id] || ''}
                               onChange={(v) => setActualQty(prev => ({
                                 ...prev,
                                 [activeStore]: { ...prev[activeStore], [product.id]: v }
                               }))}
+                              unit={product.unit}
+                              box_unit={product.box_unit}
+                              box_ratio={product.box_ratio}
                               isFilled
                               onNext={focusNext}
                               className={hasDiff ? '!border-status-warning' : ''}
@@ -588,10 +607,13 @@ export default function Shipment() {
                             <p className="text-sm font-medium text-brand-oak leading-tight">{product.name}</p>
                             <p className="text-[10px] text-brand-lotus leading-tight">{product.unit}</p>
                           </div>
-                          <div className="w-[60px] flex justify-center">
-                            <NumericInput
+                          <div className={`${product.box_ratio ? 'w-[110px]' : 'w-[60px]'} flex justify-center`}>
+                            <DualUnitInput
                               value={extraItems[activeStore]?.[product.id] || ''}
                               onChange={(v) => updateExtraQty(product.id, v)}
+                              unit={product.unit}
+                              box_unit={product.box_unit}
+                              box_ratio={product.box_ratio}
                               isFilled
                               onNext={focusNext}
                               data-ship=""

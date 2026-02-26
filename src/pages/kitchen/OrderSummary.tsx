@@ -8,6 +8,7 @@ import { useProductStore } from '@/stores/useProductStore'
 import { useStoreStore } from '@/stores/useStoreStore'
 import { supabase } from '@/lib/supabase'
 import { getTodayTW } from '@/lib/session'
+import { formatDualUnit } from '@/lib/utils'
 import { FileText, MessageSquareText, Package } from 'lucide-react'
 import { exportOrderSummaryToPdf } from '@/lib/exportOrderSummaryPdf'
 
@@ -241,14 +242,14 @@ export default function OrderSummary() {
                         const qty = storeOrders[store.id]?.[product.id] || 0
                         return (
                           <span key={store.id} className={`w-10 text-center text-sm font-num ${qty === 0 ? 'text-gray-300' : 'text-blue-700 font-semibold'}`}>
-                            {qty || '-'}
+                            {qty ? formatDualUnit(qty, product.unit, product.box_unit, product.box_ratio) : '-'}
                           </span>
                         )
                       })}
                       <span className={`w-10 text-center text-sm font-num font-bold rounded py-0.5 ${
                         hasOrder ? 'text-red-600 bg-red-50 ring-1 ring-red-200' : 'text-gray-300'
                       }`}>
-                        {total || '-'}
+                        {total ? formatDualUnit(total, product.unit, product.box_unit, product.box_ratio) : '-'}
                       </span>
                       {(() => {
                         const remaining = stock != null ? Math.round((stock - total) * 10) / 10 : null

@@ -33,3 +33,14 @@ export function formatDate(date: string): string {
   const d = new Date(date + 'T00:00:00')
   return `${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}（${WEEKDAYS[d.getDay()]}）`
 }
+
+export function formatDualUnit(qty: number, unit: string, boxUnit?: string, boxRatio?: number): string {
+  if (!boxUnit || !boxRatio || boxRatio <= 0 || qty === 0) {
+    return `${qty}${unit}`
+  }
+  const boxQty = Math.floor(qty / boxRatio)
+  const unitQty = Math.round((qty - boxQty * boxRatio) * 100) / 100
+  if (boxQty > 0 && unitQty > 0) return `${boxQty}${boxUnit}${unitQty}${unit}`
+  if (boxQty > 0) return `${boxQty}${boxUnit}`
+  return `${unitQty}${unit}`
+}

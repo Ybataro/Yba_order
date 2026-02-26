@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect, useCallback, useRef } from 'react'
 import { TopNav } from '@/components/TopNav'
 import { DateNav } from '@/components/DateNav'
-import { NumericInput } from '@/components/NumericInput'
+import { DualUnitInput } from '@/components/DualUnitInput'
 import { SectionHeader } from '@/components/SectionHeader'
 import { BottomAction } from '@/components/BottomAction'
 import { useToast } from '@/components/Toast'
@@ -13,6 +13,8 @@ import { formatDate } from '@/lib/utils'
 import { Save, UserCheck, RefreshCw, ChevronDown, ChevronUp } from 'lucide-react'
 import { useStaffStore } from '@/stores/useStaffStore'
 import { StockEntryPanel, type StockEntry } from '@/components/StockEntryPanel'
+import { useStoreSortOrder } from '@/hooks/useStoreSortOrder'
+import { buildSortedByCategory } from '@/lib/sortByStore'
 
 export default function ProductStock() {
   const { showToast } = useToast()
@@ -129,13 +131,10 @@ export default function ProductStock() {
     load()
   }, [selectedDate])
 
-  const productsByCategory = useMemo(() => {
-    const map = new Map<string, typeof storeProducts>()
-    for (const cat of productCategories) {
-      map.set(cat, storeProducts.filter(p => p.category === cat))
-    }
-    return map
-  }, [storeProducts, productCategories])
+  const { sortCategories, sortItems } = useStoreSortOrder('kitchen', 'product')
+  const productsByCategory = useMemo(() =>
+    buildSortedByCategory(productCategories, storeProducts, sortCategories, sortItems),
+    [productCategories, storeProducts, sortCategories, sortItems])
 
   const focusNext = () => {
     const allInputs = document.querySelectorAll<HTMLInputElement>('[data-pst]')
@@ -306,7 +305,7 @@ export default function ProductStock() {
                           </button>
                         ) : (
                           <div className="relative">
-                            <NumericInput value={stock[product.id]} onChange={(v) => setStock(prev => ({ ...prev, [product.id]: v }))} unit={product.unit} isFilled onNext={focusNext} data-pst="" />
+                            <DualUnitInput value={stock[product.id]} onChange={(v) => setStock(prev => ({ ...prev, [product.id]: v }))} unit={product.unit} box_unit={product.box_unit} box_ratio={product.box_ratio} isFilled onNext={focusNext} data-pst="" />
                             <button
                               type="button"
                               title="依到期日分批輸入"
@@ -330,7 +329,6 @@ export default function ProductStock() {
                           entries={stockEntries[product.id] || []}
                           onChange={(entries) => {
                             if (entries.length === 0) {
-                              // All entries removed → revert to plain input mode
                               setStockEntries(prev => {
                                 const next = { ...prev }
                                 delete next[product.id]
@@ -344,6 +342,9 @@ export default function ProductStock() {
                             updateStockFromEntries(product.id, entries)
                           }}
                           onCollapse={() => setExpandedStockId(null)}
+                          unit={product.unit}
+                          box_unit={product.box_unit}
+                          box_ratio={product.box_ratio}
                         />
                       )}
                       {isExpanded && idx < products.length - 1 && (

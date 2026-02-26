@@ -12,6 +12,8 @@ export interface StoreProduct {
   visibleIn?: VisibleIn
   linkable?: boolean
   linkedInventoryIds?: string[]
+  box_unit?: string
+  box_ratio?: number
 }
 
 export const productCategories = [
@@ -47,7 +49,7 @@ export const storeProducts: StoreProduct[] = [
 
   { id: 'p011', name: '芋圓', category: '主食類（袋裝）', unit: '袋', shelfLifeDays: '冷凍45天', baseStock: '3000g/袋' },
   { id: 'p012', name: '白玉', category: '主食類（袋裝）', unit: '袋', shelfLifeDays: '冷凍45天', baseStock: '3000g/袋' },
-  { id: 'p013', name: '粉圓', category: '主食類（袋裝）', unit: '袋', baseStock: '3000g/袋' },
+  { id: 'p013', name: '粉圓', category: '主食類（袋裝）', unit: '袋', baseStock: '3000g/袋', box_unit: '箱', box_ratio: 6 },
 
   { id: 'p014', name: '粉圓糖水', category: '液體類', unit: '袋', baseStock: '4500g/1袋' },
   { id: 'p015', name: '炒糖糖水', category: '液體類', unit: '袋', baseStock: '4500g/1袋' },
@@ -62,7 +64,7 @@ export const storeProducts: StoreProduct[] = [
   { id: 'p028', name: '草莓冰淇淋(杯)', category: '冰品類', unit: '杯', shelfLifeDays: '6個月' },
   { id: 'p029', name: '蔗片冰', category: '冰品類', unit: '袋', baseStock: '8公斤/袋' },
 
-  { id: 'p016', name: '芝麻湯圓', category: '其他', unit: '盒', baseStock: '盒' },
+  { id: 'p016', name: '芝麻湯圓', category: '其他', unit: '盒', baseStock: '盒', box_unit: '箱', box_ratio: 25 },
   { id: 'p017', name: '鮮奶', category: '其他', unit: '瓶', baseStock: '瓶' },
   { id: 'p032', name: '冷凍薑汁', category: '其他', unit: '瓶', shelfLifeDays: '冷藏7天' },
 ]
