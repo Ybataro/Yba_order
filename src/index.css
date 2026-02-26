@@ -129,8 +129,12 @@
   }
 
   /* 隱藏非列印元素 */
-  body {
+  html, body, #root, #root > *, #root > * > * {
     background: white !important;
+    background-color: white !important;
+    min-height: auto !important;
+  }
+  body {
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
@@ -231,5 +235,48 @@
   .overflow-x-auto table {
     width: 100% !important;
     min-width: unset !important;
+  }
+
+  /* 列印時移除手機寬度限制，讓行事曆填滿 A4 */
+  .max-w-lg {
+    max-width: none !important;
+  }
+  .min-w-\[700px\] {
+    min-width: 100% !important;
+  }
+
+  /* 行事曆列印：撐滿整頁高度 */
+  .page-container {
+    height: 100vh !important;
+    display: flex !important;
+    flex-direction: column !important;
+  }
+
+  .page-container > .overflow-x-auto {
+    flex: 1 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    padding-bottom: 0 !important;
+  }
+
+  .page-container > .overflow-x-auto > div {
+    flex: 1 !important;
+    display: flex !important;
+    flex-direction: column !important;
+  }
+
+  /* 星期標題列：固定高度 */
+  .page-container > .overflow-x-auto > div > div:first-child {
+    flex: none !important;
+  }
+
+  /* 每週列：平均撐滿剩餘空間 */
+  .page-container > .overflow-x-auto > div > div:not(:first-child) {
+    flex: 1 !important;
+  }
+
+  /* 日期格子跟隨列高 */
+  .page-container > .overflow-x-auto > div > div:not(:first-child) > div {
+    min-height: 0 !important;
   }
 }
