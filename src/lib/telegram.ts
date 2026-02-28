@@ -32,6 +32,39 @@ function loadConfig(): Promise<{ token: string; chatId: string } | null> {
 const GROUP_CHAT_ID = '-4715692611'
 const ELLEN_CHAT_ID = '8515675347'  // 老闆娘
 
+const MAX_PHOTO_SIZE = 1600
+const JPEG_QUALITY = 0.7
+
+function compressPhoto(file: File): Promise<Blob> {
+  return new Promise((resolve, reject) => {
+    const img = new Image()
+    img.onload = () => {
+      let { width, height } = img
+      if (width > MAX_PHOTO_SIZE || height > MAX_PHOTO_SIZE) {
+        const ratio = Math.min(MAX_PHOTO_SIZE / width, MAX_PHOTO_SIZE / height)
+        width = Math.round(width * ratio)
+        height = Math.round(height * ratio)
+      }
+      const canvas = document.createElement('canvas')
+      canvas.width = width
+      canvas.height = height
+      const ctx = canvas.getContext('2d')!
+      ctx.drawImage(img, 0, 0, width, height)
+      canvas.toBlob(
+        (blob) => {
+          if (blob) resolve(blob)
+          else reject(new Error('Canvas toBlob failed'))
+        },
+        'image/jpeg',
+        JPEG_QUALITY
+      )
+      URL.revokeObjectURL(img.src)
+    }
+    img.onerror = () => { URL.revokeObjectURL(img.src); reject(new Error('Image load failed')) }
+    img.src = URL.createObjectURL(file)
+  })
+}
+
 export async function sendTelegramNotification(message: string, privateOnly = false, extraChatIds?: string[]): Promise<boolean> {
   try {
     const config = await loadConfig()
@@ -74,6 +107,9 @@ export async function sendTelegramPhotos(
     if (!config) return false
     if (photos.length === 0) return true
 
+    // 壓縮照片（手機原圖太大會觸發 HTTP/2 錯誤）
+    const compressed = await Promise.all(photos.map((f) => compressPhoto(f)))
+
     const baseUrl = `https://api.telegram.org/bot${config.token}`
     const targetIds = privateOnly ? [config.chatId, ELLEN_CHAT_ID] : [config.chatId, ELLEN_CHAT_ID, GROUP_CHAT_ID]
     if (extraChatIds) targetIds.push(...extraChatIds)
@@ -81,42 +117,33 @@ export async function sendTelegramPhotos(
     const results = await Promise.all(
       targetIds.map(async (chatId) => {
         try {
-          if (photos.length === 1) {
+          if (compressed.length === 1) {
             const form = new FormData()
             form.append('chat_id', chatId)
-            form.append('photo', photos[0])
+            form.append('photo', compressed[0], 'photo.jpg')
             form.append('caption', caption)
             form.append('parse_mode', 'HTML')
 
             const r = await fetch(`${baseUrl}/sendPhoto`, { method: 'POST', body: form })
-            if (!r.ok) {
-              const body = await r.text().catch(() => '')
-              console.warn(`[Telegram Photo] sendPhoto chat_id=${chatId} status=${r.status}`, body)
-            }
+            if (!r.ok) console.warn(`[Telegram Photo] sendPhoto chat_id=${chatId} status=${r.status}`)
             return r.ok
           } else {
             const form = new FormData()
             form.append('chat_id', chatId)
 
-            const media = photos.map((_, i) => ({
+            const media = compressed.map((_, i) => ({
               type: 'photo' as const,
               media: `attach://photo${i}`,
               ...(i === 0 ? { caption, parse_mode: 'HTML' } : {}),
             }))
             form.append('media', JSON.stringify(media))
 
-            photos.forEach((photo, i) => {
-              form.append(`photo${i}`, photo)
+            compressed.forEach((blob, i) => {
+              form.append(`photo${i}`, blob, `photo${i}.jpg`)
             })
 
-            console.log('[Telegram Photo] sendMediaGroup media:', JSON.stringify(media))
-            console.log('[Telegram Photo] files:', photos.map((p, i) => `photo${i}: ${p.name} ${p.type} ${p.size}b`))
-
             const r = await fetch(`${baseUrl}/sendMediaGroup`, { method: 'POST', body: form })
-            if (!r.ok) {
-              const body = await r.text().catch(() => '')
-              console.warn(`[Telegram Photo] sendMediaGroup chat_id=${chatId} status=${r.status}`, body)
-            }
+            if (!r.ok) console.warn(`[Telegram Photo] sendMediaGroup chat_id=${chatId} status=${r.status}`)
             return r.ok
           }
         } catch (err) {
