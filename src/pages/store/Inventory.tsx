@@ -117,6 +117,8 @@ export default function Inventory() {
   // Load existing session
   useEffect(() => {
     if (!supabase || !storeId) { setLoading(false); return }
+    // 有樓層但 zone 尚未自動設定（首次 render），跳過此次避免用錯 session ID
+    if (storeZones.length > 0 && !currentZone && !searchParams.get('zone')) return
     const sid = inventorySessionId(storeId, selectedDate, currentZone || '')
     setLoading(true)
     setIsEdit(false)
@@ -181,7 +183,7 @@ export default function Inventory() {
     }
 
     load()
-  }, [storeId, currentZone, selectedDate])
+  }, [storeId, storeZones, currentZone, selectedDate])
 
   // Auto-sum stock entries → data[productId].stock
   const updateStockFromEntries = useCallback((productId: string, entries: StockEntry[]) => {
