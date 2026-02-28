@@ -1,33 +1,32 @@
 import { supabase } from '@/lib/supabase'
 
-let cachedToken: string | null = null
-let cachedChatId: string | null = null
-let cacheLoaded = false
+let configPromise: Promise<{ token: string; chatId: string } | null> | null = null
 
-async function loadConfig(): Promise<{ token: string; chatId: string } | null> {
-  if (cacheLoaded) {
-    if (cachedToken && cachedChatId) return { token: cachedToken, chatId: cachedChatId }
-    return null
-  }
+function loadConfig(): Promise<{ token: string; chatId: string } | null> {
+  if (configPromise) return configPromise
 
-  cacheLoaded = true
+  configPromise = (async () => {
+    if (!supabase) return null
 
-  if (!supabase) return null
+    const { data } = await supabase
+      .from('app_settings')
+      .select('key, value')
+      .in('key', ['telegram_bot_token', 'telegram_chat_id'])
 
-  const { data } = await supabase
-    .from('app_settings')
-    .select('key, value')
-    .in('key', ['telegram_bot_token', 'telegram_chat_id'])
+    if (!data || data.length < 2) return null
 
-  if (!data || data.length < 2) return null
+    let token: string | null = null
+    let chatId: string | null = null
+    for (const row of data) {
+      if (row.key === 'telegram_bot_token') token = row.value
+      if (row.key === 'telegram_chat_id') chatId = row.value
+    }
 
-  for (const row of data) {
-    if (row.key === 'telegram_bot_token') cachedToken = row.value
-    if (row.key === 'telegram_chat_id') cachedChatId = row.value
-  }
+    if (!token || !chatId) return null
+    return { token, chatId }
+  })()
 
-  if (!cachedToken || !cachedChatId) return null
-  return { token: cachedToken, chatId: cachedChatId }
+  return configPromise
 }
 
 const GROUP_CHAT_ID = '-4715692611'
