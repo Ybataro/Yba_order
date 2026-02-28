@@ -786,9 +786,13 @@ export default function Inventory() {
                               </span>
                               {hasBagWeightItems && (
                                 <span className="w-[44px] shrink-0 text-center text-xs font-num text-brand-mocha">
-                                  {product.bag_weight && entry.onShelf
-                                    ? (Math.round((parseFloat(entry.onShelf) / product.bag_weight + (parseFloat(entry.stock) || 0)) * 100) / 100)
-                                    : ''}
+                                  {product.bag_weight
+                                    ? (entry.onShelf || entry.stock
+                                      ? (Math.round(((parseFloat(entry.onShelf) || 0) / product.bag_weight + (parseFloat(entry.stock) || 0)) * 100) / 100)
+                                      : '')
+                                    : (entry.onShelf || entry.stock
+                                      ? (Math.round(((parseFloat(entry.onShelf) || 0) + (parseFloat(entry.stock) || 0)) * 100) / 100)
+                                      : '')}
                                 </span>
                               )}
                               <span className="w-[110px] shrink-0 text-center text-sm text-brand-oak">{entry.stock || '-'}</span>
@@ -827,7 +831,9 @@ export default function Inventory() {
                                     ? (entry.onShelf || entry.stock
                                       ? (Math.round(((parseFloat(entry.onShelf) || 0) / product.bag_weight + (parseFloat(entry.stock) || 0)) * 100) / 100)
                                       : '')
-                                    : ''}
+                                    : (entry.onShelf || entry.stock
+                                      ? (Math.round(((parseFloat(entry.onShelf) || 0) + (parseFloat(entry.stock) || 0)) * 100) / 100)
+                                      : '')}
                                 </span>
                               )}
                               {/* 庫存欄：有到期日資料 → 顯示合計+展開按鈕；否則原始輸入 */}
