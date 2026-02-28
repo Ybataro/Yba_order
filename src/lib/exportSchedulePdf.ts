@@ -126,14 +126,15 @@ function buildCellRender(
 }
 
 export async function exportScheduleToPdf({
-  title,
-  dateRange,
+  title: _title,
+  dateRange: _dateRange,
   weekDates,
   staff,
   schedules,
   shiftTypes,
   fileName,
 }: SchedulePdfOptions) {
+  void _title; void _dateRange
   const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' })
   const pageW = doc.internal.pageSize.getWidth()   // 297
   const pageH = doc.internal.pageSize.getHeight()  // 210
@@ -147,86 +148,71 @@ export async function exportScheduleToPdf({
   const scheduleMap: Record<string, Schedule> = {}
   schedules.forEach((s) => { scheduleMap[`${s.staff_id}_${s.date}`] = s })
 
-  // Layout constants
-  const marginLR = 8
-  const marginTop = 5
-  const marginBottom = 3
+  // ── Extract year/month from first date ──
+  const firstD = new Date(weekDates[0] + 'T00:00:00')
+  const pdfYear = firstD.getFullYear()
+  const pdfMonth = firstD.getMonth() + 1
 
-  // ── Compact header (single line) ──
-  const headerY = marginTop + 3.5
+  // ── Layout constants ──
+  const marginLR = 5
+  const marginTop = 3
+  const tableGap = 2.5 // gap between upper and lower table
+
+  // ── Header: "2026  3月" ──
+  const headerY = marginTop + 5
   doc.setFont(fontName, 'normal')
-  doc.setFontSize(9)
-  calSetBold(doc, [139, 115, 85], 0.35)
-  doc.text('\u963F\u7238\u7684\u828B\u5713', marginLR, headerY)
+  doc.setFontSize(18)
+  calSetBold(doc, [60, 46, 38], 0.55)
+  doc.text(`${pdfYear}  ${pdfMonth}\u6708`, marginLR, headerY)
   calEndBold(doc)
 
-  const brandW = doc.getTextWidth('\u963F\u7238\u7684\u828B\u5713 ')
-  doc.setFontSize(8)
-  calSetBold(doc, [60, 46, 38], 0.25)
-  doc.text(title, marginLR + brandW + 2, headerY)
-  calEndBold(doc)
+  const contentStartY = headerY + 3
 
-  doc.setFontSize(6.5)
-  doc.setTextColor(140, 140, 140)
-  doc.text(dateRange, pageW - marginLR, headerY, { align: 'right' })
+  // ── Split dates into 2 halves: 1-15, 16-end ──
+  const halfA = weekDates.filter((d) => {
+    const day = new Date(d + 'T00:00:00').getDate()
+    return day <= 15
+  })
+  const halfB = weekDates.filter((d) => {
+    const day = new Date(d + 'T00:00:00').getDate()
+    return day > 15
+  })
+  const halves = [halfA, halfB].filter((h) => h.length > 0)
 
-  const separatorY = headerY + 2
-  doc.setDrawColor(139, 115, 85)
-  doc.setLineWidth(0.25)
-  doc.line(marginLR, separatorY, pageW - marginLR, separatorY)
+  // ── Adaptive sizing — maximize font while fitting 1 A4 page ──
+  const maxCols = Math.max(halfA.length, halfB.length, 1)
+  const numStaff = Math.max(staff.length, 1)
+  const availableH = pageH - contentStartY - 1 // bottom margin
+  const perTableH = (availableH - tableGap) / 2
 
-  // Split into weekly chunks
-  const chunks: string[][] = []
-  for (let i = 0; i < weekDates.length; i += 7) {
-    chunks.push(weekDates.slice(i, i + 7))
-  }
-  const numChunks = chunks.length
-  const isMultiWeek = numChunks > 1
+  // Row heights — strictly calculated to fit
+  const headRowH = 9
+  const dataRowH = (perTableH - headRowH) / numStaff
 
-  // ── Adaptive sizing to fit one landscape A4 page ──
-  const contentStartY = separatorY + 1
-  const availableH = pageH - contentStartY - marginBottom
-  const tableGap = isMultiWeek ? 0.8 : 0
-  const weekLabelH = isMultiWeek ? 2.5 : 0
-  const totalOverhead = Math.max(0, numChunks - 1) * tableGap + numChunks * weekLabelH
-  const totalTableH = availableH - totalOverhead
-  const perTableH = totalTableH / numChunks
+  // Font sizes — maximize to fill row height
+  const shiftNameFS = Math.min(11, Math.max(6, dataRowH * 0.75))
+  const timeFS = Math.min(9, Math.max(5, shiftNameFS * 0.8))
+  const headWeekdayFS = Math.min(11, Math.max(7, headRowH * 0.7))
+  const headDateFS = Math.min(9, Math.max(5.5, headWeekdayFS * 0.8))
+  const staffNameFS = shiftNameFS
+  const plusFS = Math.min(10, Math.max(6, dataRowH * 0.6))
 
-  const headRowH = Math.max(3, Math.min(5, perTableH * 0.08))
-  const dataRowH = (perTableH - headRowH) / Math.max(staff.length, 1)
+  // Name column width
+  const nameColW = 13
 
-  // Font sizes scaled to row height
-  const shiftNameFS = Math.min(7, Math.max(4, dataRowH * 0.9))
-  const timeFS = Math.min(5.5, Math.max(3.2, shiftNameFS * 0.7))
-  const headFS = Math.min(6, Math.max(4, headRowH * 1.0))
-  const tagFS = Math.min(4, Math.max(2.5, shiftNameFS * 0.55))
-  const staffNameFS = Math.min(6.5, Math.max(4, dataRowH * 0.85))
+  // Date column width — auto-distribute remaining space
+  const tableW = pageW - marginLR * 2
+  const dateColW = (tableW - nameColW) / maxCols
 
-  // Column widths
-  const nameColW = Math.min(16, Math.max(12, (pageW - marginLR * 2) * 0.05))
-
-  // Badge sizing
+  // Badge sizing — adaptive
   const badgePadV = Math.max(0.3, dataRowH * 0.05)
-  const badgeR = Math.min(1.2, dataRowH * 0.12)
-  const lineGap = Math.max(1.8, dataRowH * 0.3)
-  const tagPillH = Math.max(1.5, dataRowH * 0.2)
+  const badgeR = 1.0
+  const lineGap = Math.min(5, Math.max(2.8, dataRowH * 0.38))
 
-  let currentY = contentStartY
-
-  chunks.forEach((chunk) => {
-    // Week sub-label
-    if (isMultiWeek) {
-      const wkStart = formatShortDate(chunk[0])
-      const wkEnd = formatShortDate(chunk[chunk.length - 1])
-      doc.setFont(fontName, 'normal')
-      doc.setFontSize(5)
-      doc.setTextColor(150, 140, 130)
-      doc.text(
-        `${wkStart}\uFF08${getWeekdayLabel(chunk[0])}\uFF09\uFF5E ${wkEnd}\uFF08${getWeekdayLabel(chunk[chunk.length - 1])}\uFF09`,
-        marginLR, currentY + 2,
-      )
-      currentY += weekLabelH
-    }
+  // ── Manual draw (no autoTable) to guarantee single-page fit ──
+  const drawTable = (chunk: string[], tableStartY: number) => {
+    const totalCols = chunk.length + 1 // +1 for name column
+    const colWidths = [nameColW, ...chunk.map(() => dateColW)]
 
     // Build cell render data
     const renderMap: Record<string, CellRender> = {}
@@ -234,174 +220,146 @@ export async function exportScheduleToPdf({
       chunk.forEach((date, colIdx) => {
         const sch = scheduleMap[`${member.id}_${date}`]
         const render = buildCellRender(sch, shiftMap)
-        if (render) {
-          renderMap[`${rowIdx}_${colIdx + 1}`] = render
-        }
+        if (render) renderMap[`${rowIdx}_${colIdx}`] = render
       })
     })
 
-    const head = ['\u54E1\u5DE5', ...chunk.map((d) => `${getWeekdayLabel(d)} ${formatShortDate(d)}`)]
-    const body = staff.map((member) => [
-      member.name,
-      ...chunk.map(() => ' '),
-    ])
+    const drawHLine = (y: number) => {
+      doc.setDrawColor(225, 220, 215)
+      doc.setLineWidth(0.15)
+      doc.line(marginLR, y, marginLR + tableW, y)
+    }
 
-    let tableEndY = currentY
+    const drawVLines = () => {
+      const totalH = headRowH + numStaff * dataRowH
+      doc.setDrawColor(225, 220, 215)
+      doc.setLineWidth(0.15)
+      let vx = marginLR
+      for (let c = 0; c <= totalCols; c++) {
+        doc.line(vx, tableStartY, vx, tableStartY + totalH)
+        vx += c < totalCols ? colWidths[c] : 0
+      }
+    }
 
-    autoTable(doc, {
-      startY: currentY,
-      head: [head],
-      body,
-      styles: {
-        font: fontName,
-        fontSize: 1,
-        cellPadding: 0,
-        halign: 'center',
-        valign: 'middle',
-        lineWidth: 0.1,
-        lineColor: [225, 220, 215],
-        minCellHeight: dataRowH,
-        overflow: 'hidden',
-      },
-      headStyles: {
-        fillColor: [139, 115, 85],
-        textColor: 255,
-        fontStyle: 'normal',
-        font: fontName,
-        halign: 'center',
-        cellPadding: 0,
-        fontSize: 1,
-        minCellHeight: headRowH,
-      },
-      columnStyles: {
-        0: { halign: 'left', cellWidth: nameColW },
-      },
-      alternateRowStyles: {
-        fillColor: [253, 251, 249],
-      },
-      margin: { left: marginLR, right: marginLR },
+    // ── Draw header row background ──
+    doc.setFillColor(250, 248, 245)
+    doc.rect(marginLR, tableStartY, tableW, headRowH, 'F')
 
-      willDrawCell: (hookData) => {
-        if (hookData.section === 'head') {
-          hookData.cell.text = []
-          return
-        }
-        if (hookData.section !== 'body') return
-        hookData.cell.text = []
-      },
+    // ── Draw header content ──
+    let hx = marginLR
+    // "員工" header
+    doc.setFont(fontName, 'normal')
+    doc.setFontSize(staffNameFS)
+    calSetBold(doc, [139, 115, 85], 0.3)
+    doc.text('\u54E1\u5DE5', hx + 1.5, tableStartY + headRowH / 2, { baseline: 'middle' })
+    calEndBold(doc)
+    hx += nameColW
 
-      didDrawCell: (hookData) => {
-        // Bold table header
-        if (hookData.section === 'head') {
-          const cell = hookData.cell
-          const colIdx = hookData.column.index
-          const label = head[colIdx]
-          doc.setFont(fontName, 'normal')
-          doc.setFontSize(headFS)
-          calSetBold(doc, [255, 255, 255], 0.3)
-          doc.text(label, cell.x + cell.width / 2, cell.y + cell.height / 2, {
-            align: 'center', baseline: 'middle',
-          })
-          calEndBold(doc)
-          return
-        }
-        if (hookData.section !== 'body') return
+    // Date headers
+    chunk.forEach((d) => {
+      const weekday = getWeekdayLabel(d)
+      const dateStr = formatShortDate(d)
 
-        const cell = hookData.cell
+      doc.setFont(fontName, 'normal')
+      doc.setFontSize(headWeekdayFS)
+      calSetBold(doc, [100, 85, 70], 0.3)
+      doc.text(weekday, hx + dateColW / 2, tableStartY + headRowH * 0.33, {
+        align: 'center', baseline: 'middle',
+      })
+      calEndBold(doc)
 
-        // Staff name column — bold
-        if (hookData.column.index === 0) {
-          const name = staff[hookData.row.index]?.name || ''
-          doc.setFont(fontName, 'normal')
-          doc.setFontSize(staffNameFS)
-          calSetBold(doc, [60, 46, 38], 0.2)
-          doc.text(name, cell.x + 1, cell.y + cell.height / 2, { baseline: 'middle' })
-          calEndBold(doc)
-          return
-        }
+      doc.setFontSize(headDateFS)
+      calSetBold(doc, [140, 125, 110], 0.2)
+      doc.text(dateStr, hx + dateColW / 2, tableStartY + headRowH * 0.72, {
+        align: 'center', baseline: 'middle',
+      })
+      calEndBold(doc)
 
-        const key = `${hookData.row.index}_${hookData.column.index}`
-        const r = renderMap[key]
-        if (!r) return
-
-        // Calculate badge width based on text content
-        doc.setFont(fontName, 'normal')
-        let maxTextW = 0
-        if (r.shiftName) {
-          doc.setFontSize(shiftNameFS)
-          maxTextW = Math.max(maxTextW, doc.getTextWidth(r.shiftName))
-        }
-        if (r.timeRange) {
-          doc.setFontSize(timeFS)
-          maxTextW = Math.max(maxTextW, doc.getTextWidth(r.timeRange))
-        }
-        const badgePadH = 1.5
-        const bw = Math.min(cell.width - 0.6, maxTextW + badgePadH * 2)
-        const bh = cell.height - badgePadV * 2
-        const bx = cell.x + (cell.width - bw) / 2
-        const by = cell.y + badgePadV
-
-        if (r.badgeFill) {
-          doc.setFillColor(...r.badgeFill)
-          doc.roundedRect(bx, by, bw, bh, badgeR, badgeR, 'F')
-        }
-
-        // Centered text
-        const centerX = cell.x + cell.width / 2
-        const hasTags = r.tags.length > 0
-        const lc = (r.shiftName ? 1 : 0) + (r.timeRange ? 1 : 0)
-        const tagH = hasTags ? tagPillH + 0.6 : 0
-        const textBlockH = lc * lineGap + tagH
-        let textY = cell.y + (cell.height - textBlockH) / 2 + lineGap * 0.6
-
-        if (r.shiftName) {
-          doc.setFont(fontName, 'normal')
-          doc.setFontSize(shiftNameFS)
-          calSetBold(doc, r.badgeText, 0.2)
-          doc.text(r.shiftName, centerX, textY, { align: 'center' })
-          calEndBold(doc)
-          textY += lineGap
-        }
-
-        if (r.timeRange) {
-          doc.setFont(fontName, 'normal')
-          doc.setFontSize(timeFS)
-          const tc: [number, number, number] = r.badgeFill ? r.badgeText : [120, 110, 100]
-          doc.setTextColor(...tc)
-          doc.text(r.timeRange, centerX, textY, { align: 'center' })
-          textY += lineGap
-        }
-
-        if (hasTags) {
-          doc.setFont(fontName, 'normal')
-          doc.setFontSize(tagFS)
-          let totalTagW = 0
-          const tagWidths: number[] = []
-          r.tags.forEach((tag) => {
-            const tw = doc.getTextWidth(tag.name) + 1.5
-            tagWidths.push(tw)
-            totalTagW += tw
-          })
-          totalTagW += Math.max(0, r.tags.length - 1) * 0.5
-          let tagX = centerX - totalTagW / 2
-          r.tags.forEach((tag, i) => {
-            const tw = tagWidths[i]
-            doc.setFillColor(...tag.bg)
-            doc.roundedRect(tagX, textY - tagPillH * 0.6, tw, tagPillH, 0.5, 0.5, 'F')
-            doc.setTextColor(...tag.text)
-            doc.text(tag.name, tagX + tw / 2, textY, { align: 'center' })
-            tagX += tw + 0.5
-          })
-        }
-      },
-
-      didDrawPage: (hookData) => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        tableEndY = (hookData as any).cursor?.y ?? currentY + 20
-      },
+      hx += dateColW
     })
 
-    currentY = tableEndY + tableGap
+    drawHLine(tableStartY)
+    drawHLine(tableStartY + headRowH)
+
+    // ── Draw body rows ──
+    staff.forEach((member, rowIdx) => {
+      const ry = tableStartY + headRowH + rowIdx * dataRowH
+
+      // Alternate row background
+      if (rowIdx % 2 === 1) {
+        doc.setFillColor(253, 251, 249)
+        doc.rect(marginLR, ry, tableW, dataRowH, 'F')
+      }
+
+      let cx = marginLR
+
+      // Staff name
+      doc.setFont(fontName, 'normal')
+      doc.setFontSize(staffNameFS)
+      calSetBold(doc, [60, 46, 38], 0.2)
+      doc.text(member.name, cx + 1.5, ry + dataRowH / 2, { baseline: 'middle' })
+      calEndBold(doc)
+      cx += nameColW
+
+      // Date cells
+      chunk.forEach((_date, colIdx) => {
+        const r = renderMap[`${rowIdx}_${colIdx}`]
+        const cellCx = cx + dateColW / 2
+
+        if (!r) {
+          // Empty cell — "+"
+          doc.setFont(fontName, 'normal')
+          doc.setFontSize(plusFS)
+          doc.setTextColor(210, 205, 200)
+          doc.text('+', cellCx, ry + dataRowH / 2, { align: 'center', baseline: 'middle' })
+        } else {
+          // Colored badge
+          const bw = dateColW - 1.0
+          const bh = dataRowH - badgePadV * 2
+          const bx = cx + (dateColW - bw) / 2
+          const by = ry + badgePadV
+
+          if (r.badgeFill) {
+            doc.setFillColor(...r.badgeFill)
+            doc.roundedRect(bx, by, bw, bh, badgeR, badgeR, 'F')
+          }
+
+          // Text
+          const lc = (r.shiftName ? 1 : 0) + (r.timeRange ? 1 : 0)
+          const textBlockH = lc * lineGap
+          let textY = ry + (dataRowH - textBlockH) / 2 + lineGap * 0.55
+
+          if (r.shiftName) {
+            doc.setFont(fontName, 'normal')
+            doc.setFontSize(shiftNameFS)
+            calSetBold(doc, r.badgeText, 0.25)
+            doc.text(r.shiftName, cellCx, textY, { align: 'center' })
+            calEndBold(doc)
+            textY += lineGap
+          }
+
+          if (r.timeRange) {
+            doc.setFont(fontName, 'normal')
+            doc.setFontSize(timeFS)
+            const tc: [number, number, number] = r.badgeFill ? r.badgeText : [120, 110, 100]
+            doc.setTextColor(...tc)
+            doc.text(r.timeRange, cellCx, textY, { align: 'center' })
+          }
+        }
+
+        cx += dateColW
+      })
+
+      drawHLine(ry + dataRowH)
+    })
+
+    // Vertical lines
+    drawVLines()
+  }
+
+  halves.forEach((chunk, halfIdx) => {
+    const startY = contentStartY + halfIdx * (perTableH + tableGap)
+    drawTable(chunk, startY)
   })
 
   // Page number

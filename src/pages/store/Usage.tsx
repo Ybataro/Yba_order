@@ -72,9 +72,14 @@ export default function Usage() {
           .in('session_id', latestSids)
 
         if (invItems) {
+          // bag_weight 品項的 on_shelf 是 g 數，需換算成袋數
+          const bagWeightMap: Record<string, number> = {}
+          storeProducts.forEach(p => { if (p.bag_weight) bagWeightMap[p.id] = p.bag_weight })
           invItems.forEach(item => {
             if (result[item.product_id]) {
-              result[item.product_id].stock += (item.on_shelf || 0) + (item.stock || 0)
+              const bw = bagWeightMap[item.product_id]
+              const onShelfBags = bw ? (item.on_shelf || 0) / bw : (item.on_shelf || 0)
+              result[item.product_id].stock += onShelfBags + (item.stock || 0)
               result[item.product_id].discarded += (item.discarded || 0)
             }
           })

@@ -3,7 +3,7 @@ import { formatShortDate, getWeekdayLabel, formatTime, getAttendanceType, getTag
 import type { ShiftType, Schedule, Position } from '@/lib/schedule'
 import type { StaffMember } from '@/data/staff'
 import { getTodayString } from '@/lib/utils'
-import { Plus } from 'lucide-react'
+import { Plus, CalendarCheck } from 'lucide-react'
 import type { PaintBrush } from './AdminScheduleToolbar'
 
 interface AdminScheduleGridProps {
@@ -14,10 +14,11 @@ interface AdminScheduleGridProps {
   positions: Position[]
   paintBrush: PaintBrush | null
   onCellClick: (staffId: string, date: string, existing?: Schedule) => void
+  onAutoFill?: (staffId: string, staffName: string) => void
 }
 
 export function AdminScheduleGrid({
-  dates, staff, schedules, shiftTypes, positions, paintBrush, onCellClick,
+  dates, staff, schedules, shiftTypes, positions, paintBrush, onCellClick, onAutoFill,
 }: AdminScheduleGridProps) {
   const today = getTodayString()
 
@@ -129,10 +130,21 @@ export function AdminScheduleGrid({
           {staff.map((member) => (
             <tr key={member.id} className="border-t border-gray-100 hover:bg-gray-50/50">
               <td
-                className="sticky left-0 z-10 bg-white px-2 py-2 text-xs font-medium text-brand-oak border-r border-gray-100 truncate"
+                className="sticky left-0 z-10 bg-white px-2 py-2 text-xs font-medium text-brand-oak border-r border-gray-100"
                 style={{ width: nameColWidth, minWidth: nameColWidth }}
               >
-                {member.name}
+                <div className="flex items-center justify-between gap-0.5">
+                  <span className="truncate">{member.name}</span>
+                  {onAutoFill && (
+                    <button
+                      onClick={() => onAutoFill(member.id, member.name)}
+                      className="flex-shrink-0 p-0.5 rounded hover:bg-gray-100 active:bg-gray-200 text-brand-lotus hover:text-brand-oak"
+                      title="自動填入排班"
+                    >
+                      <CalendarCheck size={13} />
+                    </button>
+                  )}
+                </div>
               </td>
               {dates.map((date) => {
                 const key = `${member.id}_${date}`

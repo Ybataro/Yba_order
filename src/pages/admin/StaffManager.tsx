@@ -73,7 +73,7 @@ export default function StaffManager() {
       } else {
         updateStore(editing.group, editing.member.id, { name: formName })
       }
-      // Update employment_type, hourly_rate, monthly_salary
+      // Update employment_type, hourly_rate, monthly_salary, rest_days
       if (supabase) {
         await supabase.from('staff').update({
           employment_type: formEmployment,

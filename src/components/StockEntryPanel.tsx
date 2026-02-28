@@ -10,7 +10,7 @@ export interface StockEntry {
 
 interface StockEntryPanelProps {
   entries: StockEntry[]
-  onChange: (entries: StockEntry[]) => void
+  onChange: (entries: StockEntry[], changedField?: keyof StockEntry) => void
   onCollapse: () => void
   unit?: string
   box_unit?: string
@@ -39,7 +39,7 @@ export function StockEntryPanel({ entries, onChange, onCollapse, unit, box_unit,
 
   const updateEntry = (index: number, field: keyof StockEntry, value: string) => {
     const next = entries.map((e, i) => (i === index ? { ...e, [field]: value } : e))
-    onChange(next)
+    onChange(next, field)
   }
 
   const addEntry = () => {

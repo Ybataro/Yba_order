@@ -204,9 +204,9 @@ export default function OrderSummary() {
           <span className="flex-1 font-semibold">品項</span>
           <span className="w-9 text-center font-semibold bg-yellow-400/20 rounded py-0.5">庫存</span>
           {stores.map(s => (
-            <span key={s.id} className="w-10 text-center font-semibold">{s.name.replace('店', '')}</span>
+            <span key={s.id} className="w-[60px] text-center font-semibold">{s.name.replace('店', '')}</span>
           ))}
-          <span className="w-10 text-center font-bold bg-white/15 rounded py-0.5">加總</span>
+          <span className="w-[60px] text-center font-bold bg-white/15 rounded py-0.5">加總</span>
           <span className="w-11 text-center font-semibold text-[10px] leading-tight bg-white/10 rounded py-0.5">剩餘庫存</span>
         </div>
 
@@ -241,12 +241,12 @@ export default function OrderSummary() {
                       {stores.map(store => {
                         const qty = storeOrders[store.id]?.[product.id] || 0
                         return (
-                          <span key={store.id} className={`w-10 text-center text-sm font-num ${qty === 0 ? 'text-gray-300' : 'text-blue-700 font-semibold'}`}>
+                          <span key={store.id} className={`w-[60px] text-center text-sm font-num ${qty === 0 ? 'text-gray-300' : 'text-blue-700 font-semibold'}`}>
                             {qty ? formatDualUnit(qty, product.unit, product.box_unit, product.box_ratio) : '-'}
                           </span>
                         )
                       })}
-                      <span className={`w-10 text-center text-sm font-num font-bold rounded py-0.5 ${
+                      <span className={`w-[60px] text-center text-sm font-num font-bold rounded py-0.5 ${
                         hasOrder ? 'text-red-600 bg-red-50 ring-1 ring-red-200' : 'text-gray-300'
                       }`}>
                         {total ? formatDualUnit(total, product.unit, product.box_unit, product.box_ratio) : '-'}

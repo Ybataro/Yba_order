@@ -14,7 +14,10 @@ import { getSession } from '@/lib/auth'
 import { exportScheduleToPdf, exportCalendarScheduleToPdf } from '@/lib/exportSchedulePdf'
 import { supabase } from '@/lib/supabase'
 import { useToast } from '@/components/Toast'
-import { FileText, Printer, CalendarDays, LayoutGrid } from 'lucide-react'
+import { FileText, Printer, CalendarDays, LayoutGrid, CalendarOff } from 'lucide-react'
+import LeaveRequestModal from '@/components/LeaveRequestModal'
+import LeaveRequestCard from '@/components/LeaveRequestCard'
+import { useLeaveStore } from '@/stores/useLeaveStore'
 import type { Schedule } from '@/lib/schedule'
 
 export default function StoreSchedules() {
@@ -50,6 +53,15 @@ export default function StoreSchedules() {
   const [pickerStaffId, setPickerStaffId] = useState('')
   const [pickerDate, setPickerDate] = useState('')
   const [pickerExisting, setPickerExisting] = useState<Schedule | undefined>()
+
+  // Leave request state
+  const [leaveModalOpen, setLeaveModalOpen] = useState(false)
+  const session = getSession()
+  const { requests: myLeaveRequests, fetchByStaff: fetchMyLeave, remove: removeLeave } = useLeaveStore()
+
+  useEffect(() => {
+    if (session?.staffId) fetchMyLeave(session.staffId)
+  }, [session?.staffId, fetchMyLeave])
 
   // Month schedules (shared between both views)
   const [monthSchedules, setMonthSchedules] = useState<Schedule[]>([])
@@ -233,25 +245,34 @@ export default function StoreSchedules() {
         <MonthNav year={calYear} month={calMonth} onChange={(y, m) => { setCalYear(y); setCalMonth(m) }} />
       </div>
 
-      {/* Action buttons — only show for schedule managers */}
-      {canSchedule && (
-        <div className="flex items-center justify-end gap-1.5 px-4 py-2 no-print">
-          <button
-            onClick={handlePdf}
-            className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-brand-lotus text-white text-xs font-medium active:scale-95 transition-transform"
-          >
-            <FileText size={14} />
-            PDF
-          </button>
-          <button
-            onClick={() => window.print()}
-            className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-brand-mocha text-white text-xs font-medium active:scale-95 transition-transform"
-          >
-            <Printer size={14} />
-            列印
-          </button>
-        </div>
-      )}
+      {/* Action buttons */}
+      <div className="flex items-center justify-end gap-1.5 px-4 py-2 no-print">
+        <button
+          onClick={() => setLeaveModalOpen(true)}
+          className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-brand-camel text-white text-xs font-medium active:scale-95 transition-transform"
+        >
+          <CalendarOff size={14} />
+          請假
+        </button>
+        {canSchedule && (
+          <>
+            <button
+              onClick={handlePdf}
+              className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-brand-lotus text-white text-xs font-medium active:scale-95 transition-transform"
+            >
+              <FileText size={14} />
+              PDF
+            </button>
+            <button
+              onClick={() => window.print()}
+              className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-brand-mocha text-white text-xs font-medium active:scale-95 transition-transform"
+            >
+              <Printer size={14} />
+              列印
+            </button>
+          </>
+        )}
+      </div>
 
       {/* Grid — non-schedulers always see calendar */}
       {canSchedule && viewMode === 'grid' ? (
@@ -282,6 +303,26 @@ export default function StoreSchedules() {
         </div>
       )}
 
+      {/* 我的請假申請 */}
+      {session?.staffId && myLeaveRequests.length > 0 && (
+        <div className="px-4 py-3 space-y-2 no-print">
+          <h3 className="text-sm font-bold text-brand-oak">我的請假申請</h3>
+          {myLeaveRequests.map((req) => (
+            <LeaveRequestCard
+              key={req.id}
+              request={req}
+              onDelete={req.status === 'pending' ? async () => {
+                if (confirm('確定要刪除這筆請假申請嗎？')) {
+                  const ok = await removeLeave(req.id)
+                  if (ok) showToast('已刪除')
+                  else showToast('刪除失敗', 'error')
+                }
+              } : undefined}
+            />
+          ))}
+        </div>
+      )}
+
       <ShiftPickerModal
         open={pickerOpen}
         onClose={() => setPickerOpen(false)}
@@ -299,6 +340,16 @@ export default function StoreSchedules() {
         date={pickerDate}
         onSelect={handleSelect}
         onRemove={pickerExisting ? handleRemove : undefined}
+      />
+
+      <LeaveRequestModal
+        open={leaveModalOpen}
+        onClose={() => {
+          setLeaveModalOpen(false)
+          if (session?.staffId) fetchMyLeave(session.staffId)
+        }}
+        staffId={session?.staffId ?? ''}
+        staffName={session?.staffName ?? ''}
       />
     </div>
   )

@@ -14,12 +14,15 @@ import { supabase } from '@/lib/supabase'
 import { inventorySessionId, getTodayTW } from '@/lib/session'
 import { submitWithOffline } from '@/lib/submitWithOffline'
 import { logAudit } from '@/lib/auditLog'
-import { Send, RefreshCw, ChevronDown, ChevronUp } from 'lucide-react'
+import { Send, RefreshCw, ChevronDown, ChevronUp, CheckCircle } from 'lucide-react'
+import { sendTelegramNotification } from '@/lib/telegram'
 import { StockEntryPanel, type StockEntry } from '@/components/StockEntryPanel'
 import { useFrozenProductStore } from '@/stores/useFrozenProductStore'
 import { useZoneStore } from '@/stores/useZoneStore'
 import { useStoreSortOrder } from '@/hooks/useStoreSortOrder'
 import { buildSortedByCategory } from '@/lib/sortByStore'
+import { useSupplyTracker } from '@/hooks/useSupplyTracker'
+import { SUPPLY_ITEMS } from '@/lib/supplyItems'
 
 interface InventoryEntry {
   onShelf: string
@@ -56,6 +59,22 @@ export default function Inventory() {
     return allFrozenProducts.filter(fp => assignedIds.has(fp.key))
   }, [allFrozenProducts, storeZones, currentZone, zoneProducts])
 
+  // Filter supply items: only show if at least one deductionKey exists in current FROZEN_PRODUCTS
+  const visibleSupplyItems = useMemo(() => {
+    const frozenKeys = new Set(FROZEN_PRODUCTS.map(fp => fp.key))
+    return SUPPLY_ITEMS.filter(item =>
+      item.deductionKeys.some(dk => frozenKeys.has(dk))
+    )
+  }, [FROZEN_PRODUCTS])
+
+  // Build bag_weight lookup from all products (allZoneProducts includes all filtered products)
+  const bagWeightMap = useMemo(() => {
+    const m: Record<string, number> = {}
+    allZoneProducts.forEach(p => { if (p.bag_weight) m[p.id] = p.bag_weight })
+    return m
+  }, [allZoneProducts])
+  const hasBagWeightItems = useMemo(() => storeProducts.some(p => !!p.bag_weight), [storeProducts])
+
   const hasMultipleZones = storeZones.length > 1
   const isMergedView = hasMultipleZones && !currentZone
   const currentZoneObj = storeZones.find((z) => z.zoneCode === currentZone)
@@ -71,6 +90,8 @@ export default function Inventory() {
   const [submitting, setSubmitting] = useState(false)
   const [isEdit, setIsEdit] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [showSuccessModal, setShowSuccessModal] = useState(false)
+  const [successInfo, setSuccessInfo] = useState({ itemCount: 0, date: '' })
 
   // Stock entries (到期日批次) state
   const [stockEntries, setStockEntries] = useState<Record<string, StockEntry[]>>({})
@@ -346,7 +367,9 @@ export default function Inventory() {
             .in('session_id', sids)
           if (prevItems) {
             prevItems.forEach(item => {
-              const val = (item.on_shelf || 0) + (item.stock || 0)
+              const bw = bagWeightMap[item.product_id]
+              const onShelfBags = bw ? (item.on_shelf || 0) / bw : (item.on_shelf || 0)
+              const val = onShelfBags + (item.stock || 0)
               prevInv[item.product_id] = (prevInv[item.product_id] || 0) + val
             })
           }
@@ -390,7 +413,9 @@ export default function Inventory() {
             .in('session_id', tsids)
           if (todayItems) {
             todayItems.forEach(item => {
-              const inv = (item.on_shelf || 0) + (item.stock || 0)
+              const bw = bagWeightMap[item.product_id]
+              const onShelfBags = bw ? (item.on_shelf || 0) / bw : (item.on_shelf || 0)
+              const inv = onShelfBags + (item.stock || 0)
               todayInv[item.product_id] = (todayInv[item.product_id] || 0) + inv
               todayDisc[item.product_id] = (todayDisc[item.product_id] || 0) + (item.discarded || 0)
             })
@@ -420,7 +445,7 @@ export default function Inventory() {
       }
     }
     load()
-  }, [storeId, selectedDate])
+  }, [storeId, selectedDate, bagWeightMap])
 
   const getEntry = useCallback((productId: string): InventoryEntry => {
     if (isMergedView) return mergedData[productId] ?? { onShelf: '', stock: '', discarded: '' }
@@ -477,6 +502,22 @@ export default function Inventory() {
     }).length
   }, [data, getEntry])
 
+  // Supply tracker (其他區)
+  const {
+    restockValues: supplyRestock,
+    remainingValues: supplyRemaining,
+    updateRestock: updateSupplyRestock,
+    saveSupplyData,
+    loading: supplyLoading,
+  } = useSupplyTracker({
+    storeId: storeId || '',
+    selectedDate,
+    currentZone,
+    isMergedView,
+    frozenData,
+    mergedFrozenData,
+  })
+
   const frozenDisplayData = isMergedView ? mergedFrozenData : frozenData
   const frozenCompletedCount = useMemo(() => {
     return FROZEN_PRODUCTS.filter(p => {
@@ -497,6 +538,16 @@ export default function Inventory() {
 
   const handleSubmit = async () => {
     if (!storeId) return
+
+    // 防呆：庫存欄必填
+    const missingStock = storeProducts.filter(p => {
+      const e = getEntry(p.id)
+      return e.stock === ''
+    })
+    if (missingStock.length > 0) {
+      showToast(`尚有 ${missingStock.length} 項品項未填庫存（無則填 0）`, 'error')
+      return
+    }
 
     setSubmitting(true)
 
@@ -552,20 +603,20 @@ export default function Inventory() {
       sessionId,
       session,
       items,
-      onSuccess: async (msg) => {
+      onConflict: 'session_id,product_id',
+      itemIdField: 'product_id',
+      onSuccess: async () => {
         // Upsert frozen sales after inventory success
         if (frozenItems.length > 0 && supabase) {
           await supabase.from('frozen_sales').upsert(frozenItems, {
             onConflict: 'store_id,date,zone_code,product_key',
           })
         }
-        // Save stock entries (到期日批次): delete + insert
-        if (supabase) {
-          await supabase
-            .from('inventory_stock_entries')
-            .delete()
-            .eq('session_id', sessionId)
-
+        // Save supply tracker (其他區)
+        await saveSupplyData(staffId)
+        // Save stock entries (到期日批次): upsert + 刪除多餘（安全模式）
+        // 只有當 stockEntries state 有資料時才執行（避免用戶未操作到期日面板時誤刪 DB 資料）
+        if (supabase && Object.keys(stockEntries).length > 0) {
           const seInserts: { session_id: string; product_id: string; expiry_date: string; quantity: number }[] = []
           Object.entries(stockEntries).forEach(([pid, entries]) => {
             entries.forEach((e) => {
@@ -580,7 +631,20 @@ export default function Inventory() {
             })
           })
           if (seInserts.length > 0) {
-            await supabase.from('inventory_stock_entries').insert(seInserts)
+            await supabase.from('inventory_stock_entries')
+              .upsert(seInserts, { onConflict: 'session_id,product_id,expiry_date' })
+          }
+          // 刪除不在新列表中的舊 entries（只在有明確操作時才刪）
+          const newKeys = new Set(seInserts.map(e => `${e.product_id}_${e.expiry_date}`))
+          const { data: existingSE } = await supabase
+            .from('inventory_stock_entries')
+            .select('id, product_id, expiry_date')
+            .eq('session_id', sessionId)
+          const toDeleteSE = existingSE
+            ?.filter(e => !newKeys.has(`${e.product_id}_${e.expiry_date}`))
+            ?.map(e => e.id) || []
+          if (toDeleteSE.length > 0) {
+            await supabase.from('inventory_stock_entries').delete().in('id', toDeleteSE)
           }
         }
         originalData.current = JSON.parse(JSON.stringify(data))
@@ -588,7 +652,11 @@ export default function Inventory() {
         originalStockEntries.current = JSON.parse(JSON.stringify(stockEntries))
         setIsEdit(true)
         logAudit('inventory_submit', storeId, sessionId, { itemCount: items.length, frozenCount: frozenItems.length })
-        showToast(msg || (isEdit ? '盤點資料已更新！' : '盤點資料已提交成功！'))
+        setSuccessInfo({ itemCount: items.length, date: selectedDate })
+        setShowSuccessModal(true)
+        sendTelegramNotification(
+          `📋 門店盤點完成\n🏪 店家：${storeName}\n📅 日期：${selectedDate}\n📊 品項數：${items.length} 項`
+        )
       },
       onError: (msg) => showToast(msg, 'error'),
     })
@@ -683,6 +751,7 @@ export default function Inventory() {
               <div className="flex items-center px-4 py-1 bg-surface-section text-[11px] text-brand-lotus border-b border-gray-100">
                 <span className="flex-1">品名</span>
                 <span className="w-[56px] text-center">架上</span>
+                {hasBagWeightItems && <span className="w-[44px] text-center text-[9px]">總計</span>}
                 <span className="w-[110px] text-center">庫存</span>
                 <span className="w-[56px] text-center">倒掉</span>
                 <span className="w-[40px] text-center text-[9px]">前日用量</span>
@@ -710,7 +779,16 @@ export default function Inventory() {
                         <div className="flex items-center gap-1 shrink-0">
                           {isMergedView ? (
                             <>
-                              <span className="w-[56px] shrink-0 text-center text-sm text-brand-oak">{entry.onShelf || '-'}</span>
+                              <span className="w-[56px] shrink-0 text-center text-sm text-brand-oak">
+                                {entry.onShelf ? (product.bag_weight ? `${entry.onShelf}g` : entry.onShelf) : '-'}
+                              </span>
+                              {hasBagWeightItems && (
+                                <span className="w-[44px] shrink-0 text-center text-xs font-num text-brand-mocha">
+                                  {product.bag_weight && entry.onShelf
+                                    ? (Math.round((parseFloat(entry.onShelf) / product.bag_weight + (parseFloat(entry.stock) || 0)) * 100) / 100)
+                                    : ''}
+                                </span>
+                              )}
                               <span className="w-[110px] shrink-0 text-center text-sm text-brand-oak">{entry.stock || '-'}</span>
                               <span className={`w-[56px] shrink-0 text-center text-sm ${entry.discarded && parseFloat(entry.discarded) > 0 ? 'text-status-danger' : 'text-brand-oak'}`}>{entry.discarded || '-'}</span>
                               <span className={`w-[40px] shrink-0 text-center text-sm ${prevUsage[product.id] !== undefined ? (prevUsage[product.id] < 0 ? 'text-status-danger' : 'text-brand-oak') : 'text-brand-lotus'}`}>
@@ -720,14 +798,36 @@ export default function Inventory() {
                           ) : (
                             <>
                               <div className="w-[56px] shrink-0">
-                                <NumericInput
-                                  value={entry.onShelf}
-                                  onChange={(v) => updateField(product.id, 'onShelf', v)}
-                                  isFilled
-                                  onNext={focusNext}
-                                  data-inv=""
-                                />
+                                {product.bag_weight ? (
+                                  <div className="relative">
+                                    <NumericInput
+                                      value={entry.onShelf}
+                                      onChange={(v) => updateField(product.id, 'onShelf', v)}
+                                      isFilled
+                                      onNext={focusNext}
+                                      data-inv=""
+                                    />
+                                    <span className="absolute -top-1 -right-1 text-[9px] text-brand-lotus font-medium bg-surface-section rounded px-0.5">g</span>
+                                  </div>
+                                ) : (
+                                  <NumericInput
+                                    value={entry.onShelf}
+                                    onChange={(v) => updateField(product.id, 'onShelf', v)}
+                                    isFilled
+                                    onNext={focusNext}
+                                    data-inv=""
+                                  />
+                                )}
                               </div>
+                              {hasBagWeightItems && (
+                                <span className="w-[44px] shrink-0 text-center text-xs font-num text-brand-mocha">
+                                  {product.bag_weight
+                                    ? (entry.onShelf || entry.stock
+                                      ? (Math.round(((parseFloat(entry.onShelf) || 0) / product.bag_weight + (parseFloat(entry.stock) || 0)) * 100) / 100)
+                                      : '')
+                                    : ''}
+                                </span>
+                              )}
                               {/* 庫存欄：有到期日資料 → 顯示合計+展開按鈕；否則原始輸入 */}
                               <div className="w-[110px] shrink-0 flex justify-center">
                                 {hasStockEntries || isExpanded ? (
@@ -755,6 +855,7 @@ export default function Inventory() {
                                       isFilled
                                       onNext={focusNext}
                                       data-inv=""
+                                      className={product.wideInput ? 'input-wide' : undefined}
                                     />
                                     <button
                                       type="button"
@@ -900,6 +1001,61 @@ export default function Inventory() {
             </div>
           )}
 
+          {/* 其他區（消耗品追蹤） */}
+          {!supplyLoading && visibleSupplyItems.length > 0 && (
+            <div>
+              <SectionHeader title="其他區" icon="■" />
+              <div className="flex items-center px-4 py-1 bg-surface-section text-[11px] text-brand-lotus border-b border-gray-100">
+                <span className="flex-1">品名</span>
+                <span className="w-[70px] text-center">補貨</span>
+                <span className="w-[70px] text-center">剩餘庫存</span>
+              </div>
+              <div className="bg-white">
+                {visibleSupplyItems.map((item, idx) => {
+                  const restock = supplyRestock[item.key] || ''
+                  const remaining = supplyRemaining[item.key] || 0
+
+                  return (
+                    <div
+                      key={item.key}
+                      className={`flex items-center px-4 py-2 ${idx < visibleSupplyItems.length - 1 ? 'border-b border-gray-50' : ''}`}
+                    >
+                      <div className="flex-1 min-w-0 pr-2">
+                        <p className="text-sm font-semibold text-brand-oak leading-tight">{item.name}</p>
+                        <p className="text-[10px] text-brand-lotus leading-tight">{item.unit}</p>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        {isMergedView ? (
+                          <>
+                            <span className="w-[70px] text-center text-sm text-brand-oak">{restock || '-'}</span>
+                            <span className={`w-[70px] text-center text-sm font-semibold ${remaining < 0 ? 'text-status-danger' : 'text-brand-oak'}`}>
+                              {remaining}
+                            </span>
+                          </>
+                        ) : (
+                          <>
+                            <div className="w-[70px] shrink-0">
+                              <NumericInput
+                                value={restock}
+                                onChange={(v) => updateSupplyRestock(item.key, v)}
+                                isFilled
+                                onNext={focusNext}
+                                data-inv=""
+                              />
+                            </div>
+                            <span className={`w-[70px] text-center text-sm font-semibold ${remaining < 0 ? 'text-status-danger' : 'text-brand-oak'}`}>
+                              {remaining}
+                            </span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+
           {!isMergedView && (
             <BottomAction
               label={submitting ? '提交中...' : isEdit ? '更新盤點資料' : '預覽並提交盤點'}
@@ -909,6 +1065,25 @@ export default function Inventory() {
             />
           )}
         </>
+      )}
+
+      {/* 送出成功確認框 */}
+      {showSuccessModal && (
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-6">
+          <div className="bg-white rounded-2xl shadow-lg p-6 w-full max-w-sm text-center">
+            <CheckCircle size={48} className="text-status-success mx-auto mb-3" />
+            <h3 className="text-lg font-bold text-brand-oak mb-1">盤點送出成功</h3>
+            <p className="text-sm text-brand-lotus mb-1">{storeName}{zoneLabel}</p>
+            <p className="text-sm text-brand-lotus mb-1">{successInfo.date.replace(/-/g, '/')}</p>
+            <p className="text-sm text-brand-lotus mb-5">共 {successInfo.itemCount} 項品項</p>
+            <button
+              onClick={() => setShowSuccessModal(false)}
+              className="w-full h-11 rounded-xl bg-status-success text-white text-sm font-semibold"
+            >
+              確認
+            </button>
+          </div>
+        </div>
       )}
     </div>
   )

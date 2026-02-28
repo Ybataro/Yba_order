@@ -33,6 +33,8 @@ export const useProductStore = create<ProductState>()((set, get) => ({
       supabase.from('categories').select('*').eq('scope', 'product').order('sort_order'),
     ])
     if (prodRes.data && prodRes.data.length > 0) {
+      // Merge static flags (wideInput) from storeProducts.ts
+      const staticFlags = new Map(storeProducts.filter(p => p.wideInput).map(p => [p.id, p]))
       set({
         items: prodRes.data.map((d) => ({
           id: d.id,
@@ -48,6 +50,8 @@ export const useProductStore = create<ProductState>()((set, get) => ({
           linkedInventoryIds: d.linked_inventory_ids || [],
           box_unit: d.box_unit ?? undefined,
           box_ratio: d.box_ratio ?? undefined,
+          bag_weight: d.bag_weight ?? undefined,
+          wideInput: staticFlags.get(d.id)?.wideInput,
         })),
       })
     }
@@ -74,6 +78,7 @@ export const useProductStore = create<ProductState>()((set, get) => ({
         linked_inventory_ids: item.linkedInventoryIds || [],
         box_unit: item.box_unit ?? null,
         box_ratio: item.box_ratio ?? null,
+        bag_weight: item.bag_weight ?? null,
         sort_order: get().items.length - 1,
       }).then(({ error }) => {
         if (error) console.error('[store_products] insert failed:', error.message)
@@ -99,6 +104,7 @@ export const useProductStore = create<ProductState>()((set, get) => ({
       if (partial.linkedInventoryIds !== undefined) db.linked_inventory_ids = partial.linkedInventoryIds
       if (partial.box_unit !== undefined) db.box_unit = partial.box_unit ?? null
       if (partial.box_ratio !== undefined) db.box_ratio = partial.box_ratio ?? null
+      if (partial.bag_weight !== undefined) db.bag_weight = partial.bag_weight ?? null
       if (Object.keys(db).length > 0) {
         supabase.from('store_products').update(db).eq('id', id).then(({ error }) => {
           if (error) console.error('[store_products] update failed:', error.message)

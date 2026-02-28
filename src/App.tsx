@@ -54,6 +54,7 @@ const ScheduleStats = lazy(() => import('@/pages/admin/ScheduleStats'))
 const FrozenStats = lazy(() => import('@/pages/admin/FrozenStats'))
 const AdminSchedule = lazy(() => import('@/pages/admin/AdminSchedule'))
 const ItemSortManager = lazy(() => import('@/pages/admin/ItemSortManager'))
+const LeaveManagement = lazy(() => import('@/pages/admin/LeaveManagement'))
 
 function Loading() {
   return (
@@ -161,6 +162,7 @@ function App() {
                 <Route path="/admin/profit-loss" element={<ProfitLoss />} />
                 <Route path="/admin/frozen-stats" element={<FrozenStats />} />
                 <Route path="/admin/item-sort" element={<ItemSortManager />} />
+                <Route path="/admin/leave" element={<LeaveManagement />} />
               </Route>
             </Route>
           </Routes>

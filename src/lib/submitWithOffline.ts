@@ -7,6 +7,8 @@ interface SubmitOptions {
   sessionId: string
   session: Record<string, unknown>
   items: Record<string, unknown>[]
+  onConflict?: string       // upsert conflict key, e.g. 'session_id,product_id'
+  itemIdField?: string      // item 的 ID 欄位名, e.g. 'product_id'
   onSuccess: (message: string) => void
   onError: (message: string) => void
 }
@@ -17,6 +19,8 @@ export async function submitWithOffline({
   sessionId,
   session,
   items,
+  onConflict,
+  itemIdField,
   onSuccess,
   onError,
 }: SubmitOptions): Promise<boolean> {
@@ -69,28 +73,33 @@ export async function submitWithOffline({
       return false
     }
 
-    // Items: delete existing + insert new（避免 upsert 與 auto-increment id 衝突）
+    // Items: upsert 新資料 → 刪除不在新列表中的舊記錄（安全：upsert 失敗不影響舊資料）
     const itemTable = type === 'settlement' ? 'settlement_values' : `${type}_items`
-
-    const { error: delErr } = await supabase
-      .from(itemTable)
-      .delete()
-      .eq('session_id', sessionId)
-
-    if (delErr) {
-      onError(`清除舊項目失敗：${delErr.message}`)
-      return false
-    }
+    const conflictKey = onConflict || 'session_id,product_id'
+    const idField = itemIdField || 'product_id'
 
     if (items.length > 0) {
       const { error: itemErr } = await supabase
         .from(itemTable)
-        .insert(items)
+        .upsert(items, { onConflict: conflictKey })
 
       if (itemErr) {
         onError(`項目儲存失敗：${itemErr.message}`)
         return false
       }
+    }
+
+    // 清除不在新列表中的舊記錄（即使失敗也只是殘留多餘資料，不影響正確性）
+    const newItemIds = new Set(items.map(i => (i as Record<string, unknown>)[idField]))
+    const { data: existing } = await supabase
+      .from(itemTable)
+      .select('*')
+      .eq('session_id', sessionId)
+    const toDelete = (existing as Record<string, unknown>[] | null)
+      ?.filter(e => !newItemIds.has(e[idField]))
+      ?.map(e => e.id as number) || []
+    if (toDelete.length > 0) {
+      await supabase.from(itemTable).delete().in('id', toDelete)
     }
 
     onSuccess('')

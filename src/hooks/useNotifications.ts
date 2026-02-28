@@ -115,10 +115,14 @@ export function useNotifications(
             .select('product_id, on_shelf, stock')
             .in('session_id', sessionIds)
 
-          // 合併同品項（跨樓層加總）
+          // 合併同品項（跨樓層加總，bag_weight 品項的 on_shelf 是 g 數需換算）
+          const bagWeightMap: Record<string, number> = {}
+          products.forEach(p => { if (p.bag_weight) bagWeightMap[p.id] = p.bag_weight })
           const inventoryMap: Record<string, number> = {}
           invItems?.forEach((item) => {
-            const qty = (Number(item.on_shelf) || 0) + (Number(item.stock) || 0)
+            const bw = bagWeightMap[item.product_id]
+            const onShelfBags = bw ? (Number(item.on_shelf) || 0) / bw : (Number(item.on_shelf) || 0)
+            const qty = onShelfBags + (Number(item.stock) || 0)
             inventoryMap[item.product_id] = (inventoryMap[item.product_id] || 0) + qty
           })
 

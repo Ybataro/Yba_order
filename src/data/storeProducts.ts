@@ -14,6 +14,8 @@ export interface StoreProduct {
   linkedInventoryIds?: string[]
   box_unit?: string
   box_ratio?: number
+  bag_weight?: number | null
+  wideInput?: boolean
 }
 
 export const productCategories = [
@@ -55,7 +57,7 @@ export const storeProducts: StoreProduct[] = [
   { id: 'p015', name: '炒糖糖水', category: '液體類', unit: '袋', baseStock: '4500g/1袋' },
   { id: 'p019', name: '微糖豆漿', category: '液體類', unit: '袋', shelfLifeDays: '開封3天', baseStock: '2500g/袋' },
   { id: 'p020', name: '無糖豆漿', category: '液體類', unit: '袋', shelfLifeDays: '開封3天', baseStock: '2500g/袋' },
-  { id: 'p023', name: '杏仁茶', category: '液體類', unit: '份', shelfLifeDays: 3 },
+  { id: 'p023', name: '杏仁茶', category: '液體類', unit: '份', shelfLifeDays: 3, wideInput: true },
 
   { id: 'p024', name: '花生冰淇淋(盒)', category: '冰品類', unit: '盒', shelfLifeDays: '6個月' },
   { id: 'p025', name: '芝麻冰淇淋(盒)', category: '冰品類', unit: '盒', shelfLifeDays: '6個月' },

@@ -15,7 +15,8 @@ import { submitWithOffline } from '@/lib/submitWithOffline'
 import { logAudit } from '@/lib/auditLog'
 import { formatDate } from '@/lib/utils'
 import { fetchWeather, type WeatherData, type WeatherCondition } from '@/lib/weather'
-import { Send, Lightbulb, Sun, CloudRain, Cloud, CloudSun, Thermometer, Droplets, TrendingUp, TrendingDown, Lock, RefreshCw, History, AlertTriangle } from 'lucide-react'
+import { Send, Lightbulb, Sun, CloudRain, Cloud, CloudSun, Thermometer, Droplets, TrendingUp, TrendingDown, Lock, RefreshCw, History, AlertTriangle, Package } from 'lucide-react'
+import { InventoryStockModal } from '@/components/InventoryStockModal'
 import { useStoreSortOrder } from '@/hooks/useStoreSortOrder'
 import { buildSortedByCategory } from '@/lib/sortByStore'
 
@@ -78,10 +79,22 @@ export default function Order() {
   const storeProducts = useMemo(() => allProducts.filter(p => !p.visibleIn || p.visibleIn === 'both' || p.visibleIn === 'order_only'), [allProducts])
   const productCategories = useProductStore((s) => s.categories)
 
+  // Build bag_weight lookup for inventory → bag conversion
+  const bagWeightMap = useMemo(() => {
+    const m: Record<string, number> = {}
+    allProducts.forEach(p => { if (p.bag_weight) m[p.id] = p.bag_weight })
+    return m
+  }, [allProducts])
+
   const inventoryIdMap = useMemo(() => {
     const m: Record<string, string[]> = {}
     storeProducts.forEach(p => {
-      m[p.id] = p.linkedInventoryIds?.length ? p.linkedInventoryIds : [p.id]
+      // Always include own ID + any linked inventory IDs (e.g. 芋圓 + 芋圓上掀)
+      const ids = [p.id]
+      if (p.linkedInventoryIds?.length) {
+        p.linkedInventoryIds.forEach(id => { if (!ids.includes(id)) ids.push(id) })
+      }
+      m[p.id] = ids
     })
     return m
   }, [storeProducts])
@@ -189,6 +202,9 @@ export default function Order() {
 
   // 最新盤點庫存（架上 + 庫存，跨樓層加總）
   const [stock, setStock] = useState<Record<string, number>>({})
+  const [stockDate, setStockDate] = useState('')
+  const [stockEntries, setStockEntries] = useState<Record<string, { expiryDate: string; quantity: number }[]>>({})
+  const [showStockModal, setShowStockModal] = useState(false)
   const [stockLoading, setStockLoading] = useState(true)
 
   useEffect(() => {
@@ -207,6 +223,7 @@ export default function Order() {
 
       if (!sessions || sessions.length === 0) {
         setStock({})
+        setStockEntries({})
         setStockLoading(false)
         return
       }
@@ -214,6 +231,8 @@ export default function Order() {
       // 按日期分組，從最新日期開始找有品項資料的
       const uniqueDates = [...new Set(sessions.map(s => s.date))]
       let items: { product_id: string; on_shelf: number | null; stock: number | null }[] | null = null
+      let foundDate = ''
+      let foundSids: string[] = []
 
       for (const date of uniqueDates) {
         const sids = sessions.filter(s => s.date === date).map(s => s.id)
@@ -223,24 +242,45 @@ export default function Order() {
           .in('session_id', sids)
         if (data && data.length > 0) {
           items = data
+          foundDate = date
+          foundSids = sids
           break
         }
       }
 
       if (!items || items.length === 0) {
         setStock({})
+        setStockDate('')
+        setStockEntries({})
         setStockLoading(false)
         return
       }
 
-      // 跨樓層加總 on_shelf + stock
+      // 跨樓層加總 on_shelf + stock（bag_weight 品項的 on_shelf 是 g 數，需換算成袋數）
       const totals: Record<string, number> = {}
       items.forEach(item => {
-        const val = (item.on_shelf || 0) + (item.stock || 0)
-        totals[item.product_id] = (totals[item.product_id] || 0) + val
+        const bw = bagWeightMap[item.product_id]
+        const onShelfBags = bw ? (item.on_shelf || 0) / bw : (item.on_shelf || 0)
+        const val = onShelfBags + (item.stock || 0)
+        totals[item.product_id] = Math.round(((totals[item.product_id] || 0) + val) * 100) / 100
+      })
+
+      // 抓到期日批次
+      const { data: seRows } = await supabase!
+        .from('inventory_stock_entries')
+        .select('product_id, expiry_date, quantity')
+        .in('session_id', foundSids)
+        .order('expiry_date', { ascending: true })
+
+      const entries: Record<string, { expiryDate: string; quantity: number }[]> = {}
+      seRows?.forEach(r => {
+        if (!entries[r.product_id]) entries[r.product_id] = []
+        entries[r.product_id].push({ expiryDate: r.expiry_date, quantity: r.quantity || 0 })
       })
 
       setStock(totals)
+      setStockDate(foundDate)
+      setStockEntries(entries)
       setStockLoading(false)
     }
 
@@ -276,7 +316,9 @@ export default function Order() {
             .from('inventory_items').select('product_id, on_shelf, stock')
             .in('session_id', prevSessions.map(s => s.id))
           items?.forEach(item => {
-            prevInv[item.product_id] = (prevInv[item.product_id] || 0) + (item.on_shelf || 0) + (item.stock || 0)
+            const bw = bagWeightMap[item.product_id]
+            const onShelfBags = bw ? (item.on_shelf || 0) / bw : (item.on_shelf || 0)
+            prevInv[item.product_id] = (prevInv[item.product_id] || 0) + onShelfBags + (item.stock || 0)
           })
         }
 
@@ -307,23 +349,42 @@ export default function Order() {
             .from('inventory_items').select('product_id, on_shelf, stock, discarded')
             .in('session_id', todaySessions.map(s => s.id))
           items?.forEach(item => {
-            todayInv[item.product_id] = (todayInv[item.product_id] || 0) + (item.on_shelf || 0) + (item.stock || 0)
+            const bw = bagWeightMap[item.product_id]
+            const onShelfBags = bw ? (item.on_shelf || 0) / bw : (item.on_shelf || 0)
+            todayInv[item.product_id] = (todayInv[item.product_id] || 0) + onShelfBags + (item.stock || 0)
             todayDisc[item.product_id] = (todayDisc[item.product_id] || 0) + (item.discarded || 0)
           })
         }
 
-        const allPids = new Set([...Object.keys(prevInv), ...Object.keys(orderQty), ...Object.keys(todayInv)])
+        // Calculate usage per order product
+        // Sum inventory across: own product_id + linkedInventoryIds (e.g. 芋圓 + 芋圓上掀)
         const usage: Record<string, number> = {}
-        allPids.forEach(pid => {
-          if (prevInv[pid] !== undefined && todayInv[pid] !== undefined) {
-            usage[pid] = Math.round(((prevInv[pid] || 0) + (orderQty[pid] || 0) - (todayInv[pid] || 0) - (todayDisc[pid] || 0)) * 10) / 10
+        storeProducts.forEach(p => {
+          // Collect all inventory IDs: own ID + linked IDs
+          const allInvIds = new Set<string>([p.id])
+          if (p.linkedInventoryIds?.length) {
+            p.linkedInventoryIds.forEach(id => allInvIds.add(id))
+          }
+          const sumInv = (data: Record<string, number>) => {
+            let total = 0, found = false
+            for (const id of allInvIds) {
+              if (data[id] != null) { total += data[id]; found = true }
+            }
+            return found ? total : null
+          }
+          const prev = sumInv(prevInv)
+          const today = sumInv(todayInv)
+          if (prev != null && today != null) {
+            const disc = sumInv(todayDisc) || 0
+            const ord = orderQty[p.id] || 0
+            usage[p.id] = Math.round((prev + ord - today - disc) * 10) / 10
           }
         })
         setPrevUsage(usage)
       } catch { /* ignore */ }
     }
     load()
-  }, [storeId, selectedDate])
+  }, [storeId, selectedDate, storeProducts, bagWeightMap])
 
   // 央廚成品庫存（抓資料庫最近一筆有資料的盤點，因週三/日休息無盤點）
   const [kitchenStock, setKitchenStock] = useState<Record<string, number>>({})
@@ -460,7 +521,9 @@ export default function Order() {
           const discMap: Record<string, number> = {}
           sids.forEach(sid => {
             (invBySession[sid] || []).forEach(item => {
-              stockMap[item.product_id] = (stockMap[item.product_id] || 0) + item.on_shelf + item.stock
+              const bw = bagWeightMap[item.product_id]
+              const onShelfBags = bw ? item.on_shelf / bw : item.on_shelf
+              stockMap[item.product_id] = (stockMap[item.product_id] || 0) + onShelfBags + item.stock
               discMap[item.product_id] = (discMap[item.product_id] || 0) + item.discarded
             })
           })
@@ -609,7 +672,7 @@ export default function Order() {
     }
 
     load()
-  }, [storeId, selectedDate, impactMap, stock, stockLoading])
+  }, [storeId, selectedDate, impactMap, stock, stockLoading, bagWeightMap])
 
   const applyAllSuggestions = () => {
     if (locked) return
@@ -673,6 +736,8 @@ export default function Order() {
       sessionId,
       session,
       items,
+      onConflict: 'session_id,product_id',
+      itemIdField: 'product_id',
       onSuccess: (msg) => {
         setIsEdit(true)
         logAudit('order_submit', storeId, sessionId, { itemCount: items.length })
@@ -729,6 +794,20 @@ export default function Order() {
           <span>已載入 {formatDate(selectedDate)} 叫貨紀錄，修改後可重新提交</span>
         </div>
       )}
+
+      {/* 門店最新盤點庫存按鈕 */}
+      <button
+        onClick={() => setShowStockModal(true)}
+        className="mx-4 mt-2 mb-1 flex items-center gap-2 w-[calc(100%-2rem)] px-3 py-2.5 rounded-card border border-gray-200 bg-white active:bg-gray-50"
+      >
+        <Package size={16} className="text-brand-mocha shrink-0" />
+        <span className="text-sm font-medium text-brand-oak flex-1 text-left">查看最新盤點庫存</span>
+        {stockDate && (
+          <span className="text-[11px] text-brand-lotus shrink-0">
+            最新：{stockDate.slice(5).replace('-', '/')}
+          </span>
+        )}
+      </button>
 
       {(loading || stockLoading || suggestedLoading) ? (
         <div className="flex items-center justify-center py-20 text-sm text-brand-lotus">載入中...</div>
@@ -798,6 +877,7 @@ export default function Order() {
             <span className="w-[40px] text-center">庫存</span>
             <span className="w-[40px] text-center text-status-info">建議</span>
             <span className="w-[110px] text-center">叫貨量</span>
+            <span className="w-[32px] text-center">總量</span>
           </div>
 
           {Array.from(productsByCategory.entries()).map(([category, products]) => (
@@ -812,7 +892,7 @@ export default function Order() {
                         <span className="text-[10px] text-brand-lotus ml-1">({product.unit})</span>
                       </div>
                       <span className="w-[32px] text-center text-xs font-num text-brand-lotus">{kitchenStock[product.id] != null ? kitchenStock[product.id] : '-'}</span>
-                      <span className={`w-[36px] text-center text-xs font-num ${(() => { const v = getLinkedSum(prevUsage, inventoryIdMap[product.id]); return v != null && v < 0 ? 'text-status-danger' : 'text-brand-mocha' })()}`}>{(() => { const v = getLinkedSum(prevUsage, inventoryIdMap[product.id]); return v != null ? v : '-' })()}</span>
+                      <span className={`w-[36px] text-center text-xs font-num ${prevUsage[product.id] != null && prevUsage[product.id] < 0 ? 'text-status-danger' : 'text-brand-mocha'}`}>{prevUsage[product.id] != null ? prevUsage[product.id] : '-'}</span>
                       <span className={`w-[40px] text-center text-xs font-num ${(() => { const v = getLinkedSum(stock, inventoryIdMap[product.id]); return v != null && v === 0 ? 'text-status-danger font-bold' : 'text-brand-oak' })()}`}>{(() => { const v = getLinkedSum(stock, inventoryIdMap[product.id]); return v != null ? v : '-' })()}</span>
                       <button
                         type="button"
@@ -832,8 +912,15 @@ export default function Order() {
                           onNext={focusNext}
                           data-ord=""
                           disabled={locked}
+                          className={product.wideInput ? 'input-wide' : undefined}
                         />
                       </div>
+                      {(() => {
+                        const inv = getLinkedSum(stock, inventoryIdMap[product.id])
+                        const ord = parseFloat(orders[product.id]) || 0
+                        const total = inv != null ? Math.round((inv + ord) * 10) / 10 : (ord > 0 ? ord : null)
+                        return <span className="w-[32px] text-center text-xs font-num text-brand-mocha">{total != null ? total : '-'}</span>
+                      })()}
                     </div>
                     {expandedSuggestionId === product.id && suggestionBreakdown[product.id] && (() => {
                       const bd = suggestionBreakdown[product.id]
@@ -923,6 +1010,18 @@ export default function Order() {
           )}
         </>
       )}
+
+      <InventoryStockModal
+        open={showStockModal}
+        onClose={() => setShowStockModal(false)}
+        stock={stock}
+        stockDate={stockDate}
+        stockEntries={stockEntries}
+        products={storeProducts}
+        productCategories={productCategories}
+        sortCategories={sortCategories}
+        sortItems={sortItems}
+      />
     </div>
   )
 }

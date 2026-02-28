@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Package, Warehouse, Users, Store, Receipt, QrCode, Layers, ClipboardList, FileText, DollarSign, CloudSun, ChefHat, LayoutDashboard, LogOut, KeyRound, ScrollText, Wallet, TrendingUp, ChevronDown, CalendarClock, Clock, Snowflake, CalendarDays, ArrowUpDown } from 'lucide-react'
+import { Package, Warehouse, Users, Store, Receipt, QrCode, Layers, ClipboardList, FileText, DollarSign, CloudSun, ChefHat, LayoutDashboard, LogOut, KeyRound, ScrollText, Wallet, TrendingUp, ChevronDown, CalendarClock, Clock, Snowflake, CalendarDays, ArrowUpDown, CalendarOff } from 'lucide-react'
 import { getTodayString, formatDate } from '@/lib/utils'
 import { useStoreStore } from '@/stores/useStoreStore'
 import { clearSession } from '@/lib/auth'
@@ -28,6 +28,7 @@ const menuGroups: MenuGroup[] = [
       { icon: ClipboardList, label: '歷史叫貨查詢', desc: '查看叫貨紀錄及品項統計分析', path: '/admin/order-history', color: 'bg-brand-lotus' },
       { icon: FileText, label: '結帳歷史查詢', desc: '各店結帳紀錄及月報表', path: '/admin/settlement-history', color: 'bg-brand-amber' },
       { icon: Wallet, label: '雜支管理', desc: '查看/管理各店日常雜支紀錄', path: '/admin/expenses', color: 'bg-brand-camel' },
+      { icon: CalendarOff, label: '請假管理', desc: '審核請假申請、管理假別餘額', path: '/admin/leave', color: 'bg-brand-lotus' },
     ],
   },
   {

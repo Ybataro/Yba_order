@@ -14,6 +14,8 @@ import { getSession, getRoleHomePath } from '@/lib/auth'
 import type { Schedule } from '@/lib/schedule'
 import type { StaffMember } from '@/data/staff'
 import { ArrowLeft } from 'lucide-react'
+import { supabase } from '@/lib/supabase'
+import { useToast } from '@/components/Toast'
 
 const KITCHEN_GROUP = { id: 'kitchen', label: '央廚' }
 
@@ -51,8 +53,10 @@ export default function AdminSchedule() {
   const {
     shiftTypes, schedules, positions, tagPresets,
     fetchShiftTypes, fetchSchedules, fetchPositions, fetchTagPresets,
-    upsertSchedule, removeSchedule,
+    upsertSchedule, removeSchedule, batchUpsertSchedules,
   } = useScheduleStore()
+
+  const { showToast } = useToast()
 
   // Current staff list based on active group
   const currentStaff: StaffMember[] = useMemo(() => {
@@ -78,6 +82,70 @@ export default function AdminSchedule() {
       fetchSchedules(staffIds, monthDates[0], monthDates[monthDates.length - 1])
     }
   }, [staffIds, monthDates, fetchSchedules])
+
+  // ── Per-staff auto-fill modal ───────────────────────
+  const [autoFillModal, setAutoFillModal] = useState<{ staffId: string; staffName: string } | null>(null)
+  const [afRestDays, setAfRestDays] = useState<number[]>([])
+  const [afShiftId, setAfShiftId] = useState<string>('')
+  const [afFilling, setAfFilling] = useState(false)
+
+  const handleOpenAutoFill = useCallback(async (staffId: string, staffName: string) => {
+    // Load saved rest_days & default_shift_type_id from DB
+    if (supabase) {
+      const { data } = await supabase.from('staff').select('rest_days, default_shift_type_id').eq('id', staffId).single()
+      setAfRestDays(data?.rest_days || [])
+      setAfShiftId(data?.default_shift_type_id || '')
+    } else {
+      setAfRestDays([])
+      setAfShiftId('')
+    }
+    setAutoFillModal({ staffId, staffName })
+  }, [])
+
+  const handleAutoFillSubmit = useCallback(async () => {
+    if (!autoFillModal || !supabase) return
+    if (afRestDays.length === 0) {
+      showToast('請至少選擇一個休假日', 'error')
+      return
+    }
+    if (!afShiftId) {
+      showToast('請選擇預設班次', 'error')
+      return
+    }
+
+    setAfFilling(true)
+    try {
+      // Save settings to DB
+      await supabase.from('staff').update({
+        rest_days: afRestDays,
+        default_shift_type_id: afShiftId,
+      }).eq('id', autoFillModal.staffId)
+
+      // Generate records for the month
+      const dates = getMonthDates(calYear, calMonth)
+      const records: Array<{ staff_id: string; date: string; attendance_type: string; shift_type_id?: string }> = []
+
+      for (const date of dates) {
+        const dayOfWeek = new Date(date + 'T00:00:00').getDay()
+        if (afRestDays.includes(dayOfWeek)) {
+          records.push({ staff_id: autoFillModal.staffId, date, attendance_type: 'rest_day' })
+        } else {
+          records.push({ staff_id: autoFillModal.staffId, date, attendance_type: 'work', shift_type_id: afShiftId })
+        }
+      }
+
+      await batchUpsertSchedules(records)
+      if (staffIds.length > 0 && monthDates.length > 0) {
+        await fetchSchedules(staffIds, monthDates[0], monthDates[monthDates.length - 1])
+      }
+      showToast(`已自動填入 ${autoFillModal.staffName} 的排班`, 'success')
+      setAutoFillModal(null)
+    } catch {
+      showToast('自動填入失敗', 'error')
+    } finally {
+      setAfFilling(false)
+    }
+  }, [autoFillModal, afRestDays, afShiftId, calYear, calMonth, staffIds, monthDates, batchUpsertSchedules, fetchSchedules, showToast])
 
   // Paint brush mode
   const [paintBrush, setPaintBrush] = useState<PaintBrush | null>(null)
@@ -206,6 +274,7 @@ export default function AdminSchedule() {
         positions={positions}
         paintBrush={paintBrush}
         onCellClick={handleCellClick}
+        onAutoFill={handleOpenAutoFill}
       />
 
       {/* Legend */}
@@ -224,6 +293,78 @@ export default function AdminSchedule() {
         onSave={handleSave}
         onRemove={modalExisting ? handleRemove : undefined}
       />
+
+      {/* Auto-fill modal */}
+      {autoFillModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center" onClick={() => setAutoFillModal(null)}>
+          <div className="absolute inset-0 bg-black/40" />
+          <div className="relative bg-white rounded-card p-5 mx-4 max-w-sm w-full" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-base font-semibold text-brand-oak mb-4">
+              自動填入排班 — {autoFillModal.staffName}
+            </h3>
+
+            {/* 固定休假日 */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-brand-oak mb-2">固定休假日</label>
+              <div className="flex gap-1.5">
+                {['日', '一', '二', '三', '四', '五', '六'].map((label, idx) => {
+                  const selected = afRestDays.includes(idx)
+                  return (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() =>
+                        setAfRestDays((prev) =>
+                          selected ? prev.filter((d) => d !== idx) : [...prev, idx]
+                        )
+                      }
+                      className={`w-9 h-9 rounded-lg text-sm font-medium transition-colors ${
+                        selected ? 'bg-brand-mocha text-white' : 'bg-gray-100 text-brand-oak'
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+
+            {/* 預設班次 */}
+            <div className="mb-5">
+              <label className="block text-sm font-medium text-brand-oak mb-2">預設班次</label>
+              <select
+                value={afShiftId}
+                onChange={(e) => setAfShiftId(e.target.value)}
+                className="w-full h-10 px-3 rounded-lg border border-gray-200 text-sm text-brand-oak bg-white"
+              >
+                <option value="">請選擇班次</option>
+                {shiftTypes.map((st) => (
+                  <option key={st.id} value={st.id}>
+                    {st.name}（{st.start_time}-{st.end_time}）
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* 按鈕 */}
+            <div className="flex gap-3">
+              <button
+                onClick={() => setAutoFillModal(null)}
+                className="btn-secondary flex-1 !h-10"
+              >
+                取消
+              </button>
+              <button
+                onClick={handleAutoFillSubmit}
+                disabled={afFilling}
+                className="flex-1 h-10 rounded-btn text-white font-semibold text-sm bg-brand-oak active:opacity-80 disabled:opacity-50"
+              >
+                {afFilling ? '填入中...' : '自動填入'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

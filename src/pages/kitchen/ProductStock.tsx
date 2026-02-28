@@ -11,6 +11,7 @@ import { supabase } from '@/lib/supabase'
 import { productStockSessionId, getTodayTW } from '@/lib/session'
 import { formatDate } from '@/lib/utils'
 import { Save, UserCheck, RefreshCw, ChevronDown, ChevronUp } from 'lucide-react'
+import { sendTelegramNotification } from '@/lib/telegram'
 import { useStaffStore } from '@/stores/useStaffStore'
 import { StockEntryPanel, type StockEntry } from '@/components/StockEntryPanel'
 import { useStoreSortOrder } from '@/hooks/useStoreSortOrder'
@@ -181,18 +182,25 @@ export default function ProductStock() {
       return
     }
 
+    // Delete all existing items first, then insert only non-empty ones
+    // This ensures cleared values are actually removed from DB
+    await supabase
+      .from('product_stock_items')
+      .delete()
+      .eq('session_id', sessionId)
+
     const items = storeProducts
       .filter(p => stock[p.id] !== '')
       .map(p => ({
         session_id: sessionId,
         product_id: p.id,
-        stock_qty: stock[p.id] !== '' ? parseFloat(stock[p.id]) : null,
+        stock_qty: parseFloat(stock[p.id]),
       }))
 
     if (items.length > 0) {
       const { error: itemErr } = await supabase
         .from('product_stock_items')
-        .upsert(items, { onConflict: 'session_id,product_id' })
+        .insert(items)
 
       if (itemErr) {
         showToast('提交失敗：' + itemErr.message, 'error')
@@ -226,9 +234,13 @@ export default function ProductStock() {
     originalStockEntries.current = JSON.parse(JSON.stringify(stockEntries))
 
     const staffName = kitchenStaff.find(s => s.id === confirmBy)?.name
+    const itemCount = storeProducts.filter(p => stock[p.id] !== '').length
     setIsEdit(true)
     setSubmitting(false)
     showToast(`成品庫存已儲存！盤點人：${staffName}`)
+    sendTelegramNotification(
+      `🏭 成品庫存盤點完成\n📅 日期：${selectedDate}\n👤 盤點人：${staffName}\n📊 品項數：${itemCount} 項`
+    )
   }
 
   const handleSubmit = () => {
@@ -327,7 +339,7 @@ export default function ProductStock() {
                       {isExpanded && (
                         <StockEntryPanel
                           entries={stockEntries[product.id] || []}
-                          onChange={(entries) => {
+                          onChange={(entries, changedField) => {
                             if (entries.length === 0) {
                               setStockEntries(prev => {
                                 const next = { ...prev }
@@ -339,7 +351,10 @@ export default function ProductStock() {
                               return
                             }
                             setStockEntries(prev => ({ ...prev, [product.id]: entries }))
-                            updateStockFromEntries(product.id, entries)
+                            // Only recalculate stock total when quantity changes (not date)
+                            if (changedField !== 'expiryDate') {
+                              updateStockFromEntries(product.id, entries)
+                            }
                           }}
                           onCollapse={() => setExpandedStockId(null)}
                           unit={product.unit}

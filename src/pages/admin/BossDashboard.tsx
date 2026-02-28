@@ -207,11 +207,17 @@ export default function BossDashboard() {
       if (!prev || s.date > prev) storeLatestDate.set(s.store_id, s.date)
     })
 
+    // bag_weight 品項的 on_shelf 是 g 數，需換算成袋數
+    const bagWeightMap: Record<string, number> = {}
+    products.forEach(p => { if (p.bag_weight) bagWeightMap[p.id] = p.bag_weight })
+
     inventorySessions.forEach((s) => {
       if (s.date !== storeLatestDate.get(s.store_id)) return
       ;(s.inventory_items || []).forEach((item) => {
         const key = `${s.store_id}__${item.product_id}`
-        const qty = (item.on_shelf || 0) + (item.stock || 0)
+        const bw = bagWeightMap[item.product_id]
+        const onShelfBags = bw ? (item.on_shelf || 0) / bw : (item.on_shelf || 0)
+        const qty = onShelfBags + (item.stock || 0)
         latestInventory.set(key, (latestInventory.get(key) || 0) + qty)
       })
     })

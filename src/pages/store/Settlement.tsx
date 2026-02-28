@@ -13,7 +13,8 @@ import { settlementSessionId, getTodayTW } from '@/lib/session'
 import { submitWithOffline } from '@/lib/submitWithOffline'
 import { logAudit } from '@/lib/auditLog'
 import { formatCurrency } from '@/lib/utils'
-import { Send, RefreshCw } from 'lucide-react'
+import { Send, RefreshCw, CheckCircle } from 'lucide-react'
+import { sendTelegramNotification } from '@/lib/telegram'
 
 export default function Settlement() {
   const { storeId } = useParams<{ storeId: string }>()
@@ -37,6 +38,7 @@ export default function Settlement() {
   const [submitting, setSubmitting] = useState(false)
   const [isEdit, setIsEdit] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [showSuccessModal, setShowSuccessModal] = useState(false)
 
   // Load existing session
   useEffect(() => {
@@ -142,10 +144,15 @@ export default function Settlement() {
       sessionId,
       session,
       items,
-      onSuccess: (msg) => {
+      onConflict: 'session_id,field_id',
+      itemIdField: 'field_id',
+      onSuccess: () => {
         setIsEdit(true)
         logAudit('settlement_submit', storeId, sessionId, { itemCount: items.length })
-        showToast(msg || (isEdit ? '結帳資料已更新！' : '結帳資料已提交成功！'))
+        setShowSuccessModal(true)
+        sendTelegramNotification(
+          `💰 門店結帳完成\n🏪 店家：${storeName}\n📅 日期：${selectedDate}`
+        )
       },
       onError: (msg) => showToast(msg, 'error'),
     })
@@ -265,6 +272,32 @@ export default function Settlement() {
             disabled={submitting}
           />
         </>
+      )}
+
+      {/* 送出成功確認框 */}
+      {showSuccessModal && (
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-6">
+          <div className="bg-white rounded-2xl shadow-lg p-6 w-full max-w-sm text-center">
+            <CheckCircle size={48} className="text-status-success mx-auto mb-3" />
+            <h3 className="text-lg font-bold text-brand-oak mb-1">結帳送出成功</h3>
+            <p className="text-sm text-brand-lotus mb-1">{storeName}</p>
+            <p className="text-sm text-brand-lotus mb-2">{selectedDate.replace(/-/g, '/')}</p>
+            <div className="flex items-center justify-between px-4 py-2 mb-1 rounded-lg bg-surface-section">
+              <span className="text-sm text-brand-oak">當日實收現金</span>
+              <span className="text-sm font-bold font-num text-brand-amber">{formatCurrency(computed.cashTotal)}</span>
+            </div>
+            <div className="flex items-center justify-between px-4 py-2 mb-4 rounded-lg bg-surface-section">
+              <span className="text-sm text-brand-oak">結帳差額</span>
+              <span className={`text-sm font-bold font-num ${computed.diff !== 0 ? 'text-status-danger' : 'text-status-success'}`}>{formatCurrency(computed.diff)}</span>
+            </div>
+            <button
+              onClick={() => setShowSuccessModal(false)}
+              className="w-full h-11 rounded-xl bg-status-success text-white text-sm font-semibold"
+            >
+              確認
+            </button>
+          </div>
+        </div>
       )}
     </div>
   )

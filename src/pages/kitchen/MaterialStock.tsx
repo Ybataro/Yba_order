@@ -11,6 +11,7 @@ import { supabase } from '@/lib/supabase'
 import { materialStockSessionId, getTodayTW } from '@/lib/session'
 import { formatDate } from '@/lib/utils'
 import { Save, AlertTriangle, UserCheck, RefreshCw } from 'lucide-react'
+import { sendTelegramNotification } from '@/lib/telegram'
 import { useStaffStore } from '@/stores/useStaffStore'
 import { useStoreSortOrder } from '@/hooks/useStoreSortOrder'
 import { buildSortedByCategory } from '@/lib/sortByStore'
@@ -60,40 +61,41 @@ export default function MaterialStock() {
   // Load existing session
   useEffect(() => {
     if (!supabase) { setLoading(false); return }
-    setLoading(true)
-    // Reset state for new date
-    const initStock: Record<string, string> = {}
-    rawMaterials.forEach(m => { initStock[m.id] = '' })
-    setStock(initStock)
-    setIsEdit(false)
-    setConfirmBy('')
+    const load = async () => {
+      setLoading(true)
+      const initStock: Record<string, string> = {}
+      rawMaterials.forEach(m => { initStock[m.id] = '' })
+      setStock(initStock)
+      setIsEdit(false)
+      setConfirmBy('')
 
-    supabase
-      .from('material_stock_sessions')
-      .select('*')
-      .eq('id', sessionId)
-      .maybeSingle()
-      .then(({ data: session }) => {
-        if (!session) { setLoading(false); return }
-        setIsEdit(true)
-        if (session.submitted_by) setConfirmBy(session.submitted_by)
+      const { data: session } = await supabase!
+        .from('material_stock_sessions')
+        .select('*')
+        .eq('id', sessionId)
+        .maybeSingle()
 
-        supabase!
-          .from('material_stock_items')
-          .select('*')
-          .eq('session_id', sessionId)
-          .then(({ data: items }) => {
-            if (items && items.length > 0) {
-              const loadedStock: Record<string, string> = {}
-              rawMaterials.forEach(m => { loadedStock[m.id] = '' })
-              items.forEach(item => {
-                loadedStock[item.material_id] = item.stock_qty != null ? String(item.stock_qty) : ''
-              })
-              setStock(loadedStock)
-            }
-            setLoading(false)
-          })
-      })
+      if (!session) { setLoading(false); return }
+      setIsEdit(true)
+      if (session.submitted_by) setConfirmBy(session.submitted_by)
+
+      const { data: items, error } = await supabase!
+        .from('material_stock_items')
+        .select('*')
+        .eq('session_id', sessionId)
+
+      if (error) {
+        showToast('載入失敗：' + error.message, 'error')
+      } else if (items && items.length > 0) {
+        const loadedStock: Record<string, string> = { ...initStock }
+        items.forEach(item => {
+          loadedStock[item.material_id] = item.stock_qty != null ? String(item.stock_qty) : ''
+        })
+        setStock(loadedStock)
+      }
+      setLoading(false)
+    }
+    load()
   }, [selectedDate])
 
   // 近 7 日原物料叫貨日均
@@ -209,10 +211,27 @@ export default function MaterialStock() {
       }
     }
 
+    // 刪除已清空的品項（不在新列表中的舊記錄）
+    const filledIds = new Set(items.map(i => i.material_id))
+    const { data: existing } = await supabase
+      .from('material_stock_items')
+      .select('id, material_id')
+      .eq('session_id', sessionId)
+    const toDelete = existing
+      ?.filter(e => !filledIds.has(e.material_id))
+      ?.map(e => e.id) || []
+    if (toDelete.length > 0) {
+      await supabase.from('material_stock_items').delete().in('id', toDelete)
+    }
+
     const staffName = kitchenStaff.find(s => s.id === confirmBy)?.name
+    const itemCount = rawMaterials.filter(m => stock[m.id] !== '').length
     setIsEdit(true)
     setSubmitting(false)
     showToast(`原物料庫存已儲存！盤點人：${staffName}`)
+    sendTelegramNotification(
+      `📦 原物料庫存盤點完成\n📅 日期：${selectedDate}\n👤 盤點人：${staffName}\n📊 品項數：${itemCount} 項`
+    )
   }
 
   const handleSubmit = () => {

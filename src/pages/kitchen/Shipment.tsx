@@ -13,6 +13,7 @@ import { shipmentSessionId, getTodayTW } from '@/lib/session'
 import { formatDate } from '@/lib/utils'
 import { logAudit } from '@/lib/auditLog'
 import { Truck, AlertTriangle, UserCheck, RefreshCw, MessageSquare, Clock, Send, Plus, X } from 'lucide-react'
+import { sendTelegramNotification } from '@/lib/telegram'
 
 export default function Shipment() {
   const { showToast } = useToast()
@@ -349,10 +350,15 @@ export default function Shipment() {
     }
 
     const staffName = kitchenStaff.find(s => s.id === confirmBy)?.name
+    const activeStoreName = stores.find(s => s.id === activeStore)?.name
+    const shipItemCount = shipItemsWithReceived.length
     setIsEdit(prev => ({ ...prev, [activeStore]: true }))
     setSubmitting(false)
     logAudit('shipment_submit', activeStore, sid)
-    showToast(`${stores.find(s => s.id === activeStore)?.name}出貨已確認！確認人：${staffName}`)
+    showToast(`${activeStoreName}出貨已確認！確認人：${staffName}`)
+    sendTelegramNotification(
+      `🚚 央廚出貨確認\n🏪 店家：${activeStoreName}\n📅 日期：${selectedDate}\n👤 確認人：${staffName}\n📊 品項數：${shipItemCount} 項`
+    )
   }
 
   const handleSubmit = () => {
@@ -514,7 +520,7 @@ export default function Shipment() {
                             )}
                           </div>
                           <span className="w-[50px] text-center text-sm font-num text-brand-lotus">{ordered}</span>
-                          <div className={`${product.box_ratio ? 'w-[110px]' : 'w-[60px]'} flex justify-center`}>
+                          <div className={`${product.box_ratio ? 'w-[110px]' : product.wideInput ? 'w-[100px]' : 'w-[60px]'} flex justify-center`}>
                             <DualUnitInput
                               value={actualQty[activeStore]?.[product.id] || ''}
                               onChange={(v) => setActualQty(prev => ({
@@ -526,7 +532,7 @@ export default function Shipment() {
                               box_ratio={product.box_ratio}
                               isFilled
                               onNext={focusNext}
-                              className={hasDiff ? '!border-status-warning' : ''}
+                              className={`${hasDiff ? '!border-status-warning' : ''} ${product.wideInput ? 'input-wide' : ''}`.trim()}
                               data-ship=""
                             />
                           </div>
@@ -607,7 +613,7 @@ export default function Shipment() {
                             <p className="text-sm font-medium text-brand-oak leading-tight">{product.name}</p>
                             <p className="text-[10px] text-brand-lotus leading-tight">{product.unit}</p>
                           </div>
-                          <div className={`${product.box_ratio ? 'w-[110px]' : 'w-[60px]'} flex justify-center`}>
+                          <div className={`${product.box_ratio ? 'w-[110px]' : product.wideInput ? 'w-[100px]' : 'w-[60px]'} flex justify-center`}>
                             <DualUnitInput
                               value={extraItems[activeStore]?.[product.id] || ''}
                               onChange={(v) => updateExtraQty(product.id, v)}
@@ -617,6 +623,7 @@ export default function Shipment() {
                               isFilled
                               onNext={focusNext}
                               data-ship=""
+                              className={product.wideInput ? 'input-wide' : undefined}
                             />
                           </div>
                           <button onClick={() => removeExtraItem(product.id)} className="w-7 flex justify-center">

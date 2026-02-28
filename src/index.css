@@ -93,6 +93,10 @@
     background-color: #E8F5E9;
   }
 
+  .input-field.input-wide {
+    width: 80px;
+  }
+
   .btn-primary {
     @apply w-full h-12 rounded-btn text-white font-semibold text-base transition-all duration-200 active:scale-[0.98];
     background-color: #7A6E5F;
