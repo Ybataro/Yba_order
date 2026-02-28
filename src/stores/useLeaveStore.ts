@@ -119,11 +119,14 @@ export const useLeaveStore = create<LeaveState>()((set, get) => ({
       .catch((err) => console.error('[請假通知] 錯誤:', err))
 
     // 照片需要 await，避免 modal 關閉後 File 物件被回收
+    // 加 timeout 避免壓縮或上傳卡住導致「一直提交中」
     if (data.photos && data.photos.length > 0) {
       const caption = `📋 ${data.staff_name} 的請假附件`
       try {
-        const ok = await sendTelegramPhotos(data.photos, caption, true)
-        if (!ok) console.warn('[請假照片] 發送失敗')
+        const photoPromise = sendTelegramPhotos(data.photos, caption, true)
+        const timeout = new Promise<boolean>((resolve) => setTimeout(() => resolve(false), 15000))
+        const ok = await Promise.race([photoPromise, timeout])
+        if (!ok) console.warn('[請假照片] 發送失敗或超時')
       } catch (err) {
         console.error('[請假照片] 錯誤:', err)
       }

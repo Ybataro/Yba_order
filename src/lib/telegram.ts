@@ -37,8 +37,14 @@ const JPEG_QUALITY = 0.7
 
 function compressPhoto(file: File): Promise<Blob> {
   return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => {
+      URL.revokeObjectURL(img.src)
+      reject(new Error('compressPhoto timeout'))
+    }, 10000)
+
     const img = new Image()
     img.onload = () => {
+      clearTimeout(timer)
       let { width, height } = img
       if (width > MAX_PHOTO_SIZE || height > MAX_PHOTO_SIZE) {
         const ratio = Math.min(MAX_PHOTO_SIZE / width, MAX_PHOTO_SIZE / height)
@@ -60,7 +66,7 @@ function compressPhoto(file: File): Promise<Blob> {
       )
       URL.revokeObjectURL(img.src)
     }
-    img.onerror = () => { URL.revokeObjectURL(img.src); reject(new Error('Image load failed')) }
+    img.onerror = () => { clearTimeout(timer); URL.revokeObjectURL(img.src); reject(new Error('Image load failed')) }
     img.src = URL.createObjectURL(file)
   })
 }
@@ -125,7 +131,10 @@ export async function sendTelegramPhotos(
             form.append('parse_mode', 'HTML')
 
             const r = await fetch(`${baseUrl}/sendPhoto`, { method: 'POST', body: form })
-            if (!r.ok) console.warn(`[Telegram Photo] sendPhoto chat_id=${chatId} status=${r.status}`)
+            if (!r.ok) {
+              const body = await r.text().catch(() => '')
+              console.warn(`[Telegram Photo] sendPhoto chat_id=${chatId} status=${r.status}`, body)
+            }
             return r.ok
           } else {
             const form = new FormData()
@@ -143,7 +152,10 @@ export async function sendTelegramPhotos(
             })
 
             const r = await fetch(`${baseUrl}/sendMediaGroup`, { method: 'POST', body: form })
-            if (!r.ok) console.warn(`[Telegram Photo] sendMediaGroup chat_id=${chatId} status=${r.status}`)
+            if (!r.ok) {
+              const body = await r.text().catch(() => '')
+              console.warn(`[Telegram Photo] sendMediaGroup chat_id=${chatId} status=${r.status}`, body)
+            }
             return r.ok
           }
         } catch (err) {
