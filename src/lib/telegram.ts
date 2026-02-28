@@ -90,7 +90,10 @@ export async function sendTelegramPhotos(
             form.append('parse_mode', 'HTML')
 
             const r = await fetch(`${baseUrl}/sendPhoto`, { method: 'POST', body: form })
-            if (!r.ok) console.warn(`[Telegram Photo] chat_id=${chatId} 回應:`, r.status)
+            if (!r.ok) {
+              const body = await r.text().catch(() => '')
+              console.warn(`[Telegram Photo] sendPhoto chat_id=${chatId} status=${r.status}`, body)
+            }
             return r.ok
           } else {
             const form = new FormData()
@@ -107,8 +110,14 @@ export async function sendTelegramPhotos(
               form.append(`photo${i}`, photo)
             })
 
+            console.log('[Telegram Photo] sendMediaGroup media:', JSON.stringify(media))
+            console.log('[Telegram Photo] files:', photos.map((p, i) => `photo${i}: ${p.name} ${p.type} ${p.size}b`))
+
             const r = await fetch(`${baseUrl}/sendMediaGroup`, { method: 'POST', body: form })
-            if (!r.ok) console.warn(`[Telegram Photo] chat_id=${chatId} 回應:`, r.status)
+            if (!r.ok) {
+              const body = await r.text().catch(() => '')
+              console.warn(`[Telegram Photo] sendMediaGroup chat_id=${chatId} status=${r.status}`, body)
+            }
             return r.ok
           }
         } catch (err) {
