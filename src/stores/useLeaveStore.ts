@@ -113,15 +113,20 @@ export const useLeaveStore = create<LeaveState>()((set, get) => ({
       data.reason ? `💬 事由：${data.reason}` : '',
     ].filter(Boolean).join('\n')
 
+    // 文字通知 fire-and-forget
     sendTelegramNotification(msg, true)
       .then((ok) => { if (!ok) console.warn('[請假通知] 發送失敗') })
       .catch((err) => console.error('[請假通知] 錯誤:', err))
 
+    // 照片需要 await，避免 modal 關閉後 File 物件被回收
     if (data.photos && data.photos.length > 0) {
       const caption = `📋 ${data.staff_name} 的請假附件`
-      sendTelegramPhotos(data.photos, caption, true)
-        .then((ok) => { if (!ok) console.warn('[請假照片] 發送失敗') })
-        .catch((err) => console.error('[請假照片] 錯誤:', err))
+      try {
+        const ok = await sendTelegramPhotos(data.photos, caption, true)
+        if (!ok) console.warn('[請假照片] 發送失敗')
+      } catch (err) {
+        console.error('[請假照片] 錯誤:', err)
+      }
     }
 
     return true
