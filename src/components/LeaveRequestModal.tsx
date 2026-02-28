@@ -215,7 +215,6 @@ export default function LeaveRequestModal({ open, onClose, staffId, staffName }:
             ref={fileInputRef}
             type="file"
             accept="image/*"
-            capture="environment"
             onChange={handleAddPhoto}
             className="hidden"
           />
