@@ -109,12 +109,15 @@ export async function sendTelegramPhotos(
   extraChatIds?: string[]
 ): Promise<boolean> {
   try {
+    console.log('[Telegram Photo] 開始處理', photos.length, '張照片')
     const config = await loadConfig()
-    if (!config) return false
+    if (!config) { console.warn('[Telegram Photo] config 載入失敗'); return false }
     if (photos.length === 0) return true
 
     // 壓縮照片（手機原圖太大會觸發 HTTP/2 錯誤）
+    console.log('[Telegram Photo] 開始壓縮...')
     const compressed = await Promise.all(photos.map((f) => compressPhoto(f)))
+    console.log('[Telegram Photo] 壓縮完成，大小:', compressed.map(b => `${(b.size / 1024).toFixed(0)}KB`))
 
     const baseUrl = `https://api.telegram.org/bot${config.token}`
     const targetIds = privateOnly ? [config.chatId, ELLEN_CHAT_ID] : [config.chatId, ELLEN_CHAT_ID, GROUP_CHAT_ID]
@@ -130,10 +133,13 @@ export async function sendTelegramPhotos(
             form.append('caption', caption)
             form.append('parse_mode', 'HTML')
 
+            console.log(`[Telegram Photo] sendPhoto chat_id=${chatId} 發送中...`)
             const r = await fetch(`${baseUrl}/sendPhoto`, { method: 'POST', body: form })
             if (!r.ok) {
               const body = await r.text().catch(() => '')
               console.warn(`[Telegram Photo] sendPhoto chat_id=${chatId} status=${r.status}`, body)
+            } else {
+              console.log(`[Telegram Photo] sendPhoto chat_id=${chatId} 成功`)
             }
             return r.ok
           } else {
