@@ -123,18 +123,27 @@ export async function sendTelegramPhotos(
     const targetIds = privateOnly ? [config.chatId, ELLEN_CHAT_ID] : [config.chatId, ELLEN_CHAT_ID, GROUP_CHAT_ID]
     if (extraChatIds) targetIds.push(...extraChatIds)
 
-    const results = await Promise.all(
-      targetIds.map(async (chatId) => {
-        try {
-          if (compressed.length === 1) {
+    // 逐一發送（避免同時多個 fetch 上傳造成 HTTP/2 連線問題）
+    let anyOk = false
+    for (const chatId of targetIds) {
+      try {
+        const sendOne = async (blobs: Blob[]): Promise<boolean> => {
+          if (blobs.length === 1) {
             const form = new FormData()
             form.append('chat_id', chatId)
-            form.append('photo', compressed[0], 'photo.jpg')
+            form.append('photo', blobs[0], 'photo.jpg')
             form.append('caption', caption)
             form.append('parse_mode', 'HTML')
 
             console.log(`[Telegram Photo] sendPhoto chat_id=${chatId} 發送中...`)
-            const r = await fetch(`${baseUrl}/sendPhoto`, { method: 'POST', body: form })
+            const controller = new AbortController()
+            const timer = setTimeout(() => controller.abort(), 12000)
+            const r = await fetch(`${baseUrl}/sendPhoto`, {
+              method: 'POST',
+              body: form,
+              signal: controller.signal,
+            })
+            clearTimeout(timer)
             if (!r.ok) {
               const body = await r.text().catch(() => '')
               console.warn(`[Telegram Photo] sendPhoto chat_id=${chatId} status=${r.status}`, body)
@@ -146,32 +155,42 @@ export async function sendTelegramPhotos(
             const form = new FormData()
             form.append('chat_id', chatId)
 
-            const media = compressed.map((_, i) => ({
+            const media = blobs.map((_, i) => ({
               type: 'photo' as const,
               media: `attach://photo${i}`,
               ...(i === 0 ? { caption, parse_mode: 'HTML' } : {}),
             }))
             form.append('media', JSON.stringify(media))
-
-            compressed.forEach((blob, i) => {
+            blobs.forEach((blob, i) => {
               form.append(`photo${i}`, blob, `photo${i}.jpg`)
             })
 
-            const r = await fetch(`${baseUrl}/sendMediaGroup`, { method: 'POST', body: form })
+            console.log(`[Telegram Photo] sendMediaGroup chat_id=${chatId} 發送中...`)
+            const controller = new AbortController()
+            const timer = setTimeout(() => controller.abort(), 12000)
+            const r = await fetch(`${baseUrl}/sendMediaGroup`, {
+              method: 'POST',
+              body: form,
+              signal: controller.signal,
+            })
+            clearTimeout(timer)
             if (!r.ok) {
               const body = await r.text().catch(() => '')
               console.warn(`[Telegram Photo] sendMediaGroup chat_id=${chatId} status=${r.status}`, body)
+            } else {
+              console.log(`[Telegram Photo] sendMediaGroup chat_id=${chatId} 成功`)
             }
             return r.ok
           }
-        } catch (err) {
-          console.error(`[Telegram Photo] chat_id=${chatId} 失敗:`, err)
-          return false
         }
-      })
-    )
+        const ok = await sendOne(compressed)
+        if (ok) anyOk = true
+      } catch (err) {
+        console.error(`[Telegram Photo] chat_id=${chatId} 失敗:`, err)
+      }
+    }
 
-    return results.some((ok) => ok)
+    return anyOk
   } catch (err) {
     console.warn('[Telegram Photo] 發送失敗:', err)
     return false
