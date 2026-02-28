@@ -1,0 +1,198 @@
+[
+  {
+    "id": 1,
+    "session_id": "kitchen_2026-02-23",
+    "material_id": "m001",
+    "stock_qty": null,
+    "bulk_qty": 0.7
+  },
+  {
+    "id": 2,
+    "session_id": "kitchen_2026-02-23",
+    "material_id": "m002",
+    "stock_qty": 4,
+    "bulk_qty": 0.3
+  },
+  {
+    "id": 3,
+    "session_id": "kitchen_2026-02-23",
+    "material_id": "m003",
+    "stock_qty": null,
+    "bulk_qty": 0.4
+  },
+  {
+    "id": 4,
+    "session_id": "kitchen_2026-02-23",
+    "material_id": "m004",
+    "stock_qty": 2,
+    "bulk_qty": 1.1
+  },
+  {
+    "id": 5,
+    "session_id": "kitchen_2026-02-23",
+    "material_id": "m005",
+    "stock_qty": 1,
+    "bulk_qty": 0.1
+  },
+  {
+    "id": 6,
+    "session_id": "kitchen_2026-02-23",
+    "material_id": "m006",
+    "stock_qty": null,
+    "bulk_qty": 0.8
+  },
+  {
+    "id": 7,
+    "session_id": "kitchen_2026-02-23",
+    "material_id": "m007",
+    "stock_qty": 4,
+    "bulk_qty": null
+  },
+  {
+    "id": 8,
+    "session_id": "kitchen_2026-02-23",
+    "material_id": "m008",
+    "stock_qty": 2,
+    "bulk_qty": null
+  },
+  {
+    "id": 9,
+    "session_id": "kitchen_2026-02-23",
+    "material_id": "m009",
+    "stock_qty": 7,
+    "bulk_qty": null
+  },
+  {
+    "id": 10,
+    "session_id": "kitchen_2026-02-23",
+    "material_id": "m010",
+    "stock_qty": 4,
+    "bulk_qty": 0.2
+  },
+  {
+    "id": 11,
+    "session_id": "kitchen_2026-02-23",
+    "material_id": "m011",
+    "stock_qty": 4,
+    "bulk_qty": 0.4
+  },
+  {
+    "id": 12,
+    "session_id": "kitchen_2026-02-23",
+    "material_id": "m012",
+    "stock_qty": 1,
+    "bulk_qty": null
+  },
+  {
+    "id": 13,
+    "session_id": "kitchen_2026-02-23",
+    "material_id": "m013",
+    "stock_qty": 1,
+    "bulk_qty": 0.1
+  },
+  {
+    "id": 14,
+    "session_id": "kitchen_2026-02-23",
+    "material_id": "m014",
+    "stock_qty": 3,
+    "bulk_qty": null
+  },
+  {
+    "id": 15,
+    "session_id": "kitchen_2026-02-23",
+    "material_id": "m015",
+    "stock_qty": null,
+    "bulk_qty": 0.2
+  },
+  {
+    "id": 16,
+    "session_id": "kitchen_2026-02-23",
+    "material_id": "m016",
+    "stock_qty": null,
+    "bulk_qty": 1.4
+  },
+  {
+    "id": 17,
+    "session_id": "kitchen_2026-02-23",
+    "material_id": "m017",
+    "stock_qty": 44,
+    "bulk_qty": 96
+  },
+  {
+    "id": 18,
+    "session_id": "kitchen_2026-02-23",
+    "material_id": "m018",
+    "stock_qty": 4,
+    "bulk_qty": 0.4
+  },
+  {
+    "id": 19,
+    "session_id": "kitchen_2026-02-23",
+    "material_id": "m019",
+    "stock_qty": 7,
+    "bulk_qty": 0.8
+  },
+  {
+    "id": 20,
+    "session_id": "kitchen_2026-02-23",
+    "material_id": "m020",
+    "stock_qty": 36,
+    "bulk_qty": 2
+  },
+  {
+    "id": 21,
+    "session_id": "kitchen_2026-02-23",
+    "material_id": "m021",
+    "stock_qty": 16,
+    "bulk_qty": 3
+  },
+  {
+    "id": 22,
+    "session_id": "kitchen_2026-02-23",
+    "material_id": "m022",
+    "stock_qty": 3,
+    "bulk_qty": 0.3
+  },
+  {
+    "id": 23,
+    "session_id": "kitchen_2026-02-23",
+    "material_id": "m023",
+    "stock_qty": null,
+    "bulk_qty": 0.3
+  },
+  {
+    "id": 24,
+    "session_id": "kitchen_2026-02-23",
+    "material_id": "m024",
+    "stock_qty": 1,
+    "bulk_qty": 1.2
+  },
+  {
+    "id": 25,
+    "session_id": "kitchen_2026-02-23",
+    "material_id": "m025",
+    "stock_qty": 12,
+    "bulk_qty": 0.2
+  },
+  {
+    "id": 26,
+    "session_id": "kitchen_2026-02-23",
+    "material_id": "m026",
+    "stock_qty": null,
+    "bulk_qty": 3
+  },
+  {
+    "id": 27,
+    "session_id": "kitchen_2026-02-23",
+    "material_id": "m027",
+    "stock_qty": 3,
+    "bulk_qty": 0.4
+  },
+  {
+    "id": 28,
+    "session_id": "kitchen_2026-02-23",
+    "material_id": "m029",
+    "stock_qty": 3,
+    "bulk_qty": null
+  }
+]

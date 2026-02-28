@@ -1,0 +1,14 @@
+[
+  {
+    "id": "lehua",
+    "name": "樂華店",
+    "code": "lehua",
+    "sort_order": 0
+  },
+  {
+    "id": "xingnan",
+    "name": "興南店",
+    "code": "xingnan",
+    "sort_order": 1
+  }
+]

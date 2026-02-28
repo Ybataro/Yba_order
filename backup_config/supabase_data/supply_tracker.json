@@ -1,0 +1,167 @@
+[
+  {
+    "id": 6,
+    "store_id": "lehua",
+    "date": "2026-02-26",
+    "zone_code": "1F",
+    "supply_key": "almond_bottle_300",
+    "restock_qty": 0,
+    "remaining_qty": 90,
+    "submitted_by": "s1",
+    "updated_at": "2026-02-27T17:24:16.858+00:00"
+  },
+  {
+    "id": 7,
+    "store_id": "lehua",
+    "date": "2026-02-26",
+    "zone_code": "1F",
+    "supply_key": "almond_bottle_1000",
+    "restock_qty": 0,
+    "remaining_qty": 56,
+    "submitted_by": "s1",
+    "updated_at": "2026-02-27T17:24:16.858+00:00"
+  },
+  {
+    "id": 8,
+    "store_id": "lehua",
+    "date": "2026-02-26",
+    "zone_code": "1F",
+    "supply_key": "bottle_cap",
+    "restock_qty": 0,
+    "remaining_qty": 146,
+    "submitted_by": "s1",
+    "updated_at": "2026-02-27T17:24:16.858+00:00"
+  },
+  {
+    "id": 9,
+    "store_id": "lehua",
+    "date": "2026-02-26",
+    "zone_code": "1F",
+    "supply_key": "taro_ball_sticker",
+    "restock_qty": 0,
+    "remaining_qty": 17,
+    "submitted_by": "s1",
+    "updated_at": "2026-02-27T17:24:16.858+00:00"
+  },
+  {
+    "id": 10,
+    "store_id": "lehua",
+    "date": "2026-02-26",
+    "zone_code": "1F",
+    "supply_key": "white_ball_sticker",
+    "restock_qty": 0,
+    "remaining_qty": 57,
+    "submitted_by": "s1",
+    "updated_at": "2026-02-27T17:24:16.858+00:00"
+  },
+  {
+    "id": 1,
+    "store_id": "lehua",
+    "date": "2026-02-25",
+    "zone_code": "1F",
+    "supply_key": "almond_bottle_300",
+    "restock_qty": 106,
+    "remaining_qty": 101,
+    "submitted_by": "s1",
+    "updated_at": "2026-02-27T17:25:27.532+00:00"
+  },
+  {
+    "id": 2,
+    "store_id": "lehua",
+    "date": "2026-02-25",
+    "zone_code": "1F",
+    "supply_key": "almond_bottle_1000",
+    "restock_qty": 63,
+    "remaining_qty": 59,
+    "submitted_by": "s1",
+    "updated_at": "2026-02-27T17:25:27.532+00:00"
+  },
+  {
+    "id": 3,
+    "store_id": "lehua",
+    "date": "2026-02-25",
+    "zone_code": "1F",
+    "supply_key": "bottle_cap",
+    "restock_qty": 169,
+    "remaining_qty": 160,
+    "submitted_by": "s1",
+    "updated_at": "2026-02-27T17:25:27.532+00:00"
+  },
+  {
+    "id": 4,
+    "store_id": "lehua",
+    "date": "2026-02-25",
+    "zone_code": "1F",
+    "supply_key": "taro_ball_sticker",
+    "restock_qty": 22,
+    "remaining_qty": 20,
+    "submitted_by": "s1",
+    "updated_at": "2026-02-27T17:25:27.532+00:00"
+  },
+  {
+    "id": 5,
+    "store_id": "lehua",
+    "date": "2026-02-25",
+    "zone_code": "1F",
+    "supply_key": "white_ball_sticker",
+    "restock_qty": 57,
+    "remaining_qty": 57,
+    "submitted_by": "s1",
+    "updated_at": "2026-02-27T17:25:27.532+00:00"
+  },
+  {
+    "id": 16,
+    "store_id": "xingnan",
+    "date": "2026-02-27",
+    "zone_code": "1F",
+    "supply_key": "almond_bottle_300",
+    "restock_qty": 0,
+    "remaining_qty": -8,
+    "submitted_by": "staff_1772009882783",
+    "updated_at": "2026-02-28T03:49:27.353+00:00"
+  },
+  {
+    "id": 17,
+    "store_id": "xingnan",
+    "date": "2026-02-27",
+    "zone_code": "1F",
+    "supply_key": "almond_bottle_1000",
+    "restock_qty": 0,
+    "remaining_qty": -1,
+    "submitted_by": "staff_1772009882783",
+    "updated_at": "2026-02-28T03:49:27.353+00:00"
+  },
+  {
+    "id": 18,
+    "store_id": "xingnan",
+    "date": "2026-02-27",
+    "zone_code": "1F",
+    "supply_key": "bottle_cap",
+    "restock_qty": 0,
+    "remaining_qty": -9,
+    "submitted_by": "staff_1772009882783",
+    "updated_at": "2026-02-28T03:49:27.353+00:00"
+  },
+  {
+    "id": 19,
+    "store_id": "xingnan",
+    "date": "2026-02-27",
+    "zone_code": "1F",
+    "supply_key": "taro_ball_sticker",
+    "restock_qty": 0,
+    "remaining_qty": -2,
+    "submitted_by": "staff_1772009882783",
+    "updated_at": "2026-02-28T03:49:27.353+00:00"
+  },
+  {
+    "id": 20,
+    "store_id": "xingnan",
+    "date": "2026-02-27",
+    "zone_code": "1F",
+    "supply_key": "white_ball_sticker",
+    "restock_qty": 0,
+    "remaining_qty": 0,
+    "submitted_by": "staff_1772009882783",
+    "updated_at": "2026-02-28T03:49:27.353+00:00"
+  }
+]

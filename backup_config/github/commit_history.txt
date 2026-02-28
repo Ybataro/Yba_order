@@ -1,0 +1,139 @@
+c571b2e feat: Day 19-22 自動排班+消耗品追蹤+散裝換算+請假系統
+71eba1c feat: 箱規雙單位輸入 + 每店品項排序功能
+8c3350a fix: 月行事曆列印樣式修正
+ae34d6d fix: 手機端PDF下載相容性處理
+0bc330b feat: 央廚出貨表新增未叫貨品項區
+63c574d 新增補休假別
+f10cd4b 修正月行事曆PDF排休顯示與標籤換行
+8c6a366 新增公休假別
+fd23916 feat: 月行事曆彈窗權限細分為正職/兼職/工讀三個獨立開關
+82614de feat: 排班權限控制、頁面權限、月行事曆開關、班次職位角色過濾
+be4c94d feat: 叫貨總表 PDF 匯出、庫存/剩餘庫存欄、PIN 修改、排班強化
+9d9b57c fix: 行事曆資訊卡手機放大時自動捲動到可見範圍
+71fc14a feat: 月行事曆點擊 badge 顯示資訊卡，取代直接開編輯 modal
+a2f9095 fix: 月行事曆手機版設最小寬度，badge 維持左右並排
+68d5afb fix: 行事曆 PDF willDrawCell 存取越界修正
+b816f33 fix: 月行事曆 PDF 同步午/晚分區、員工固定色、隱藏假別
+5e2e211 fix: 月行事曆午/晚標示、員工排序固定、隱藏假別
+334f9ce feat: 月行事曆每格分午班/晚班上下兩區
+63cbbdb fix: 月行事曆 PDF 匯出改用員工固定色，與畫面一致
+facf533 fix: 月行事曆 badge 改為員工專屬固定色，提升辨識度
+cb82157 chore: 新增 Supabase 備份腳本 + .gitignore 忽略 backup 目錄
+b624d61 feat: 排班表新增月行事曆檢視模式 + PDF 匯出
+4f7ec66 Day 13: 盤點到期日批次 + 叫貨前日用量修正
+ed3edf4 fix: 結帳提醒時間改為依門市設定（樂華 23:30、興南 22:30）
+d341d90 fix: 排班表 PDF 匯出失敗（hexToRgb NaN 防護 + await + try-catch + 時區修正）
+3e927af fix: 收貨確認需至少勾選一項才能提交，防止全部標記為未收到
+95599fc feat: 盤點頁用量改名「前日用量」+ 叫貨頁同步顯示前日用量欄
+cf4153d feat: 盤點頁新增前日用量欄位 + 修復全專案時區 Bug
+3f5fa71 fix: 叫貨用量顯示實際負數值，不再歸零
+fec1b93 feat: PDF 排班表改為 2 週 14 天，上下兩表壓縮在一頁 A4
+dd71e8e style: PDF 排班表改用圓角色塊+標籤藥丸，匹配螢幕版面
+fdad327 fix: 移除 fontRegistered 快取避免 PDF 中文亂碼
+60426da fix: PDF 排班表員工姓名亂碼
+80d2cc2 style: PDF 排班表加入班次顏色底色與假別顏色
+408f31d feat: 排班表 PDF 匯出與列印功能
+8d4683f fix: 標籤格子移除深棕色外層底色，保留彩色文字+彩色底色
+f06fae1 feat: 排班標籤自動分配不同顏色
+aab282c fix: 排班表有標籤時不顯示多餘的「班」字
+4ccd1d0 fix: 排班表假別顯示為「班」→ 正確顯示假別名稱與顏色
+e171268 fix: 新增人員時自動建立 user_pins 紀錄
+26a71df fix: 央廚首頁補上排班管理區塊（有 can_schedule 權限時顯示）
+5bdd950 chore: 專案整理 — 清除過時檔案、更新 package.json
+17de30c feat: 排班標籤改為即選即用，支援多標籤追加
+984793f fix: 排班管理頁依角色過濾可見群組（store 僅顯示允許門店）
+c5e3f5a fix: 允許手機端捏合縮放（排班表等頁面可放大查看）
+4b16502 feat: 建議量加入平日/假日用量分離計算 + 央廚成品庫存欄
+3b2b16c fix: 用量公式改為 (D-2)庫存+(D-2)叫貨量-(D-1)庫存-(D-1)倒掉，休息日倍率改週二/六×2
+81c6c2e chore: 加入 .vercel 到 .gitignore
+034717b feat: 排班系統改版 + 叫貨品項關聯盤點品項 + 用量計算修正
+04c7a5f feat: 收貨差異回饋（雙向溝通）
+bd42b2f feat: 冷凍品販售統計功能（外帶/外送雙通路）
+4cb5599 feat: 員工排班管理系統 + 叫貨更新修復 + 週導航時區修復
+d49f4e2 feat: 人員管理加入排序功能，PIN 登入依 sort_order 排列
+8e13f42 fix: PIN 登入分組標題與人數字體加大加亮
+d91e51a fix: PIN 登入統一 oak 色系 + 收合式分組卡片
+e827369 fix: PIN 登入卡片改用 brand 色系（amber/camel/oak/lotus）
+9598b5f feat: PIN 登入改為 4 色名片卡分組（管理者/央廚/樂華店/興南店）
+a5cc7d3 fix: 建議量隨所選日期變動（7日區間+休息日倍率改用 selectedDate）
+aa069f3 feat: 叫貨建議量升級為實際用量計算 + 安全庫存 + 計算明細
+16e3597 fix: 底部按鈕改 sticky 定位 + 盤點頁預設選第一樓層
+7c0c700 fix: 叫貨邏輯修正 — 歷史資料解鎖 + 央廚休息日提示
+41fef2b fix: 當班人員選擇用 sessionStorage 記憶，返回首頁不遺失
+914694b feat: 統一日期選擇器為 DateNav 元件，7 個頁面支援日曆切換歷史資料
+a7b2319 fix: 叫貨價格統計摘要合併至主表格，共用水平捲動
+0d4461e feat: 後台管理首頁改為分類摺疊式選單
+5a784f7 fix: 用量計算加四捨五入避免浮點數精度問題
+38729d0 fix: 叫貨頁用量欄位切換日期時重新計算
+a33e4ca chore: drop 誤建的翻譯欄位 from store_products
+a31a83d Revert "feat: 品項管理新增自動翻譯按鈕（EN/JA）"
+bcc6c7a Revert "fix: 翻譯區塊外層改用 div 避免 button 嵌套導致點擊失效"
+46f5cb3 fix: 翻譯區塊外層改用 div 避免 button 嵌套導致點擊失效
+73454de feat: 品項管理新增自動翻譯按鈕（EN/JA）
+d9b00ee fix: 央廚休息日倍率改為週一/週五（隔日到貨後再隔天休息）
+bfb234b feat: 叫貨頁新增前日用量欄位 + 央廚休息日建議量×2
+2b258a3 feat: 加入 Error Boundary 防止元件 crash 白屏
+6d4b649 perf: 所有頁面改為 lazy loading，主 bundle 從 1.46MB 降至 452KB
+d605eb3 fix: 各店叫貨總表加上 backTo 返回央廚首頁
+90eaa26 feat: 門店叫貨頁新增日期選擇器，可回溯補填歷史資料
+e1300e8 fix: 移除未使用的 getTodayString import
+a2d18dd feat: 央廚叫貨總表加入日期選擇器
+f4f6ca7 fix: 線上提交成功時補回 onSuccess 回呼
+22e9d7e style: 重新設計盈餘統計頁面控制區
+325d2e2 fix: 移除未使用的 SectionHeader import 修正 build 錯誤
+e83707b feat: 門店叫貨歷史紀錄頁面
+33cfcd3 feat: 所有日期顯示加上星期幾
+d5014a3 fix: 央廚/儀表板叫貨查詢改為今日，修正 Order date 欄位
+ebf7fd9 fix: 當班人員未選擇時正確禁用功能按鈕
+b0043f0 fix: QRCodePage placeholder 從 Netlify 改為 Vercel
+9f8c8e1 feat: 盤點/結帳頁面新增日期切換功能
+5ea1d65 feat: Phase 7 — 雜支申報 + 月/年盈餘統計
+fb6ca66 fix: 結帳頁面修正 — 移除鐵櫃盤點、新增次日零用金、修正應結公式
+0f516ef fix: 「當日實收總金額」改名為「當日實收現金」
+c11c6da fix: 結帳計算修正 — 應結總金額公式 + 鈔票/實收分開顯示
+da3c729 fix: 頁面過渡閃爍修復 + Vercel 部署設定
+bd14742 fix: 全面移除 useNavigate，改用 window.location.href 導航
+122ecd8 refactor: AuthGuard 改為 Layout Route 模式，修復導航不渲染
+f731f36 fix: AuthGuard 加 useLocation 訂閱路由變化，修復導航不渲染
+3de03e5 fix: AuthGuard 頁面不渲染問題 + OfflineBanner IndexedDB 錯誤處理
+c837c27 fix: PinEntry 改用 Supabase 伺服器端驗證 + 顯示具體錯誤訊息
+4cdf78c fix: PinEntry 改為先選人再輸入 PIN 的 POS 標準流程
+f717ea2 fix: PDF中文亂碼、AuthGuard角色導向、人員管理新增管理者群組
+b8db42d fix: 修正 TypeScript build 錯誤（AuthGuard .catch + ProductionSchedule join 型別）
+3316d2b fix: AuthGuard 在 user_pins 表無資料時跳過驗證（setup mode）
+19be5c7 feat: Phase 6 — 六大進階功能（通知強化、PDF匯出、PIN登入、離線暫存、生產排程、權限管理）
+381b6c0 feat: 老闆儀表板新增今日/昨日切換
+ef70914 fix: 叫貨日期邏輯修正（隔日到貨）
+5708b5e feat: 老闆儀表板 + 樓層品項過濾修正
+1d626d3 refactor: 後台快速前往改卡片按鈕排列
+920b91c fix: 門店下拉選單文字改橫式不換行
+8486046 fix: 後台門店選擇器重寫佈局
+dc16c70 style: 後台門店選擇改自訂下拉元件（圓角卡片）
+c55812b style: 後台快速前往按鈕尺寸調整
+517669f feat: App 內通知中心 + 後台門店選擇器
+9f8c84f style: 各店叫貨總表加總欄加深底色
+3d4e2da fix: 補建 store_products 的 our_cost/franchise_price 欄位
+747cec6 fix: useProductStore 新增/更新/刪除加上 error logging
+f31cfef fix: 叫貨相關頁面過濾 inventory_only 品項
+404d6b2 feat: 品項顯示範圍控制（僅盤點/僅叫貨/兩者皆顯示）
+5ab1307 feat: 天氣記錄與用量分析（Phase 4）
+bd52759 docs: 更新 Day 7 開發日誌與明日繼續指南
+c63421b feat: 叫貨價格統計新增年度成本統計區塊
+2833b13 fix: 叫貨價格統計頁面修正 — 時區Bug、本日篩選、價格可編輯、品項同步
+722ac99 docs: 更新 Day 6 開發日誌與明日繼續指南
+5becfa6 feat: Usage 頁面移除 mock 資料，改用 Supabase 真實資料
+edeffca feat: 央廚頁面移除所有 mock 資料，改用 Supabase 真實資料
+c0444c1 feat: 叫貨頁庫存欄改用真實盤點資料
+e37ff81 feat: Day 6 — 當班人員傳遞、叫貨建議量、天氣API、Excel匯出
+13dd907 feat: 新增結帳歷史查詢及叫貨價格統計報表
+cbfc638 feat: 物料盤點編輯模式顯示已修改品項標記
+73472e9 chore: 將 .env 加入 gitignore 避免金鑰外洩
+5d05b5a feat: 央廚成品庫存盤點接上 Supabase
+3097c77 feat: 盤點「全部」模式顯示合併檢視（唯讀）
+fc06a1c fix: 後台子頁面返回鍵固定導向 /admin
+cc63369 fix: 修正 supabase 可能為 null 的 TypeScript 嚴格模式錯誤
+3644fab feat: 新增歷史叫貨查詢及統計頁面 + 樓層盤點修正
+398a684 feat: 盤點分樓層功能 + 營運資料表 + 全頁面 Supabase 提交邏輯
+130d89a fix: 修正 TypeScript 嚴格模式編譯錯誤
+b78581c feat: QR Code 頁面 + Supabase 雲端整合 + Netlify 部署準備
+bad6c7c feat: 建立後台管理系統 + Zustand 狀態管理

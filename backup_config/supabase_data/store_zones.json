@@ -1,0 +1,30 @@
+[
+  {
+    "id": "lehua_1f",
+    "store_id": "lehua",
+    "zone_code": "1F",
+    "zone_name": "1樓",
+    "sort_order": 0
+  },
+  {
+    "id": "lehua_2f",
+    "store_id": "lehua",
+    "zone_code": "2F",
+    "zone_name": "2樓",
+    "sort_order": 1
+  },
+  {
+    "id": "xingnan_1f",
+    "store_id": "xingnan",
+    "zone_code": "1F",
+    "zone_name": "1樓",
+    "sort_order": 0
+  },
+  {
+    "id": "kitchen_4f",
+    "store_id": "kitchen",
+    "zone_code": "4F",
+    "zone_name": "4樓",
+    "sort_order": 0
+  }
+]

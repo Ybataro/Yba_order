@@ -1,0 +1,178 @@
+[
+  {
+    "id": "shift_0e57ccb1",
+    "name": "5點兼職",
+    "start_time": "17:00:00",
+    "end_time": "23:30:00",
+    "color": "#8B5E83",
+    "group_id": "lehua",
+    "sort_order": 0,
+    "is_active": true,
+    "created_at": "2026-02-22T17:29:59.883157+00:00",
+    "tags": []
+  },
+  {
+    "id": "shift_d23c9fe5",
+    "name": "3點半兼職",
+    "start_time": "15:30:00",
+    "end_time": "23:30:00",
+    "color": "#4A7C59",
+    "group_id": "lehua",
+    "sort_order": 5,
+    "is_active": true,
+    "created_at": "2026-02-23T14:47:49.250844+00:00",
+    "tags": []
+  },
+  {
+    "id": "shift_199de69e",
+    "name": "(店長)",
+    "start_time": "18:30:00",
+    "end_time": "23:30:00",
+    "color": "#C4A35A",
+    "group_id": "lehua",
+    "sort_order": 2,
+    "is_active": true,
+    "created_at": "2026-02-23T14:21:14.903872+00:00",
+    "tags": []
+  },
+  {
+    "id": "shift_cf57919e",
+    "name": "副店長",
+    "start_time": "15:59:00",
+    "end_time": "23:31:00",
+    "color": "#C4A35A",
+    "group_id": "lehua",
+    "sort_order": 7,
+    "is_active": true,
+    "created_at": "2026-02-24T02:26:03.131368+00:00",
+    "tags": []
+  },
+  {
+    "id": "shift_d0380da4",
+    "name": "店長假日",
+    "start_time": "15:30:00",
+    "end_time": "23:30:00",
+    "color": "#C4A35A",
+    "group_id": "lehua",
+    "sort_order": 8,
+    "is_active": true,
+    "created_at": "2026-02-25T03:42:00.177006+00:00",
+    "tags": []
+  },
+  {
+    "id": "shift_83b79a1f",
+    "name": "3點半正職",
+    "start_time": "15:30:00",
+    "end_time": "23:30:00",
+    "color": "#B87333",
+    "group_id": "lehua",
+    "sort_order": 6,
+    "is_active": true,
+    "created_at": "2026-02-23T14:49:39.911172+00:00",
+    "tags": []
+  },
+  {
+    "id": "shift_dfa532f5",
+    "name": "3點兼職",
+    "start_time": "15:00:00",
+    "end_time": "23:30:00",
+    "color": "#8B6F4E",
+    "group_id": "lehua",
+    "sort_order": 4,
+    "is_active": true,
+    "created_at": "2026-02-23T14:23:41.751496+00:00",
+    "tags": [
+      "櫃台"
+    ]
+  },
+  {
+    "id": "shift_e60b0eb4",
+    "name": "正職",
+    "start_time": "08:00:00",
+    "end_time": "16:00:00",
+    "color": "#8B5E83",
+    "group_id": "kitchen",
+    "sort_order": 0,
+    "is_active": true,
+    "created_at": "2026-02-22T17:29:04.169607+00:00",
+    "tags": [
+      "支援",
+      "洗米",
+      "盤點",
+      "出車",
+      "倒垃圾"
+    ]
+  },
+  {
+    "id": "shift_444ee4e5",
+    "name": "正職",
+    "start_time": "14:00:00",
+    "end_time": "22:30:00",
+    "color": "#B87333",
+    "group_id": "xingnan",
+    "sort_order": 0,
+    "is_active": true,
+    "created_at": "2026-02-22T17:31:02.892769+00:00",
+    "tags": []
+  },
+  {
+    "id": "shift_53c9be01",
+    "name": "兼職",
+    "start_time": "17:30:00",
+    "end_time": "22:30:00",
+    "color": "#5B7FA5",
+    "group_id": "xingnan",
+    "sort_order": 1,
+    "is_active": true,
+    "created_at": "2026-02-23T14:03:15.532936+00:00",
+    "tags": []
+  },
+  {
+    "id": "shift_dd45bbd7",
+    "name": "全班工讀",
+    "start_time": "14:30:00",
+    "end_time": "22:30:00",
+    "color": "#4A7C59",
+    "group_id": "xingnan",
+    "sort_order": 2,
+    "is_active": true,
+    "created_at": "2026-02-23T14:07:26.016084+00:00",
+    "tags": []
+  },
+  {
+    "id": "shift_393e0ef1",
+    "name": "晚班工讀",
+    "start_time": "17:30:00",
+    "end_time": "22:30:00",
+    "color": "#8B5E83",
+    "group_id": "xingnan",
+    "sort_order": 3,
+    "is_active": true,
+    "created_at": "2026-02-23T14:19:21.231228+00:00",
+    "tags": []
+  },
+  {
+    "id": "shift_45c510cd",
+    "name": "6點半兼職",
+    "start_time": "18:30:00",
+    "end_time": "23:30:00",
+    "color": "#B87333",
+    "group_id": "lehua",
+    "sort_order": 3,
+    "is_active": true,
+    "created_at": "2026-02-23T14:22:43.198784+00:00",
+    "tags": []
+  },
+  {
+    "id": "shift_1280a4af",
+    "name": "3點正職",
+    "start_time": "15:00:00",
+    "end_time": "23:30:00",
+    "color": "#5B7FA5",
+    "group_id": "lehua",
+    "sort_order": 1,
+    "is_active": true,
+    "created_at": "2026-02-22T17:32:31.504975+00:00",
+    "tags": []
+  }
+]

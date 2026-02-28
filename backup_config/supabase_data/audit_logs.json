@@ -1,0 +1,3296 @@
+[
+  {
+    "id": "65bd4b43-2b0b-44d5-9574-dac44781a82c",
+    "action": "shipment_submit",
+    "staff_id": "staff_1771597199485",
+    "staff_name": "顏孝全",
+    "store_id": "lehua",
+    "session_id": "lehua_2026-02-21",
+    "details": {},
+    "created_at": "2026-02-21T08:10:53.753375+00:00"
+  },
+  {
+    "id": "c286e305-b42c-42ee-b185-f859ab2972bd",
+    "action": "shipment_submit",
+    "staff_id": "staff_1771597199485",
+    "staff_name": "顏孝全",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-21",
+    "details": {},
+    "created_at": "2026-02-21T08:12:45.099044+00:00"
+  },
+  {
+    "id": "64e36b57-581d-43b6-9ee0-0301e1f6e1c6",
+    "action": "receive_submit",
+    "staff_id": "staff_1771597199485",
+    "staff_name": "顏孝全",
+    "store_id": "lehua",
+    "session_id": "lehua_2026-02-21",
+    "details": {},
+    "created_at": "2026-02-21T08:13:38.969082+00:00"
+  },
+  {
+    "id": "6d5e25a8-41f1-4167-9bb1-4d3a7361c1d3",
+    "action": "receive_submit",
+    "staff_id": "staff_1771597199485",
+    "staff_name": "顏孝全",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-21",
+    "details": {},
+    "created_at": "2026-02-21T08:14:24.302065+00:00"
+  },
+  {
+    "id": "56dc7e0c-b617-4b37-acd1-6a466990c11a",
+    "action": "settlement_submit",
+    "staff_id": "staff_1771597199485",
+    "staff_name": "顏孝全",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-20",
+    "details": {
+      "itemCount": 25
+    },
+    "created_at": "2026-02-21T15:46:12.724347+00:00"
+  },
+  {
+    "id": "4b23348f-5e16-4e54-ba7e-ac18485b38a7",
+    "action": "inventory_submit",
+    "staff_id": "staff_1771597199485",
+    "staff_name": "顏孝全",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-21",
+    "details": {
+      "itemCount": 28
+    },
+    "created_at": "2026-02-21T15:54:18.303185+00:00"
+  },
+  {
+    "id": "0161e779-28e2-4ed2-81c8-9e9ceda35326",
+    "action": "inventory_submit",
+    "staff_id": "staff_1771597199485",
+    "staff_name": "顏孝全",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-21",
+    "details": {
+      "itemCount": 29
+    },
+    "created_at": "2026-02-21T15:55:50.07776+00:00"
+  },
+  {
+    "id": "5ad59b2d-8882-45fc-90fa-47da027ecde7",
+    "action": "settlement_submit",
+    "staff_id": "s1",
+    "staff_name": "顏伊偲",
+    "store_id": "lehua",
+    "session_id": "lehua_2026-02-21",
+    "details": {
+      "itemCount": 27
+    },
+    "created_at": "2026-02-21T15:59:52.288009+00:00"
+  },
+  {
+    "id": "1d3c6af9-f53e-4c31-9e5c-097fb60b129b",
+    "action": "settlement_submit",
+    "staff_id": "s1",
+    "staff_name": "顏伊偲",
+    "store_id": "lehua",
+    "session_id": "lehua_2026-02-21",
+    "details": {
+      "itemCount": 27
+    },
+    "created_at": "2026-02-21T16:01:27.511219+00:00"
+  },
+  {
+    "id": "230482e7-6ebe-4165-8044-0d31a717b4f2",
+    "action": "order_submit",
+    "staff_id": "staff_1771597199485",
+    "staff_name": "顏孝全",
+    "store_id": "lehua",
+    "session_id": "lehua_2026-02-21",
+    "details": {
+      "itemCount": 20
+    },
+    "created_at": "2026-02-21T16:12:05.418664+00:00"
+  },
+  {
+    "id": "9bfea2bd-c7b3-4f37-817f-b4b4175e9262",
+    "action": "inventory_submit",
+    "staff_id": "staff_1771597199485",
+    "staff_name": "顏孝全",
+    "store_id": "lehua",
+    "session_id": "lehua_2026-02-22_1f",
+    "details": {
+      "itemCount": 13
+    },
+    "created_at": "2026-02-21T16:48:40.120688+00:00"
+  },
+  {
+    "id": "8e757b30-3af6-4258-8eda-0faef18eae7c",
+    "action": "inventory_submit",
+    "staff_id": "staff_1771597199485",
+    "staff_name": "顏孝全",
+    "store_id": "lehua",
+    "session_id": "lehua_2026-02-21_1f",
+    "details": {
+      "itemCount": 5
+    },
+    "created_at": "2026-02-22T00:38:39.447848+00:00"
+  },
+  {
+    "id": "b5f92658-c87b-4abe-ab4a-66c12d9fa2e6",
+    "action": "inventory_submit",
+    "staff_id": "staff_1771597199485",
+    "staff_name": "顏孝全",
+    "store_id": "lehua",
+    "session_id": "lehua_2026-02-21_1f",
+    "details": {
+      "itemCount": 13
+    },
+    "created_at": "2026-02-22T00:39:54.963272+00:00"
+  },
+  {
+    "id": "f131b5e0-71c4-470c-bb4b-19f53f34b027",
+    "action": "inventory_submit",
+    "staff_id": "staff_1771597199485",
+    "staff_name": "顏孝全",
+    "store_id": "lehua",
+    "session_id": "lehua_2026-02-22_1f",
+    "details": {
+      "itemCount": 13
+    },
+    "created_at": "2026-02-22T00:49:08.368344+00:00"
+  },
+  {
+    "id": "539dae51-44dc-43c4-88e0-b77211ab0344",
+    "action": "order_submit",
+    "staff_id": "staff_1771597199485",
+    "staff_name": "顏孝全",
+    "store_id": "lehua",
+    "session_id": "lehua_2026-02-20",
+    "details": {
+      "itemCount": 18
+    },
+    "created_at": "2026-02-22T14:21:25.731295+00:00"
+  },
+  {
+    "id": "44af0016-e0a9-40c9-8496-112b715ba626",
+    "action": "order_submit",
+    "staff_id": "staff_1771597199485",
+    "staff_name": "顏孝全",
+    "store_id": "lehua",
+    "session_id": "lehua_2026-02-19",
+    "details": {
+      "itemCount": 18
+    },
+    "created_at": "2026-02-22T14:21:48.640586+00:00"
+  },
+  {
+    "id": "d8ec668b-4227-4629-b29d-4d14ebd32833",
+    "action": "order_submit",
+    "staff_id": "staff_1771597199485",
+    "staff_name": "顏孝全",
+    "store_id": "lehua",
+    "session_id": "lehua_2026-02-20",
+    "details": {
+      "itemCount": 18
+    },
+    "created_at": "2026-02-22T14:21:57.291441+00:00"
+  },
+  {
+    "id": "461f5698-2b0a-4047-9afe-c15839a216d7",
+    "action": "order_submit",
+    "staff_id": "staff_1771597199485",
+    "staff_name": "顏孝全",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-19",
+    "details": {
+      "itemCount": 14
+    },
+    "created_at": "2026-02-22T14:23:24.099731+00:00"
+  },
+  {
+    "id": "79b71655-faed-46f1-ab8b-7b6fdd2915a4",
+    "action": "order_submit",
+    "staff_id": "staff_1771597199485",
+    "staff_name": "顏孝全",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-20",
+    "details": {
+      "itemCount": 14
+    },
+    "created_at": "2026-02-22T14:24:05.105298+00:00"
+  },
+  {
+    "id": "e9ded056-6c4c-482a-b83a-023d1a7725dd",
+    "action": "order_submit",
+    "staff_id": "staff_1771597199485",
+    "staff_name": "顏孝全",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-20",
+    "details": {
+      "itemCount": 14
+    },
+    "created_at": "2026-02-22T14:24:06.302578+00:00"
+  },
+  {
+    "id": "e607b650-d3e9-459c-8fc2-f50469afa6de",
+    "action": "settlement_submit",
+    "staff_id": "staff_1771597199485",
+    "staff_name": "顏孝全",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-22",
+    "details": {
+      "itemCount": 11
+    },
+    "created_at": "2026-02-22T14:28:58.809859+00:00"
+  },
+  {
+    "id": "893e00a0-bedf-46d1-a08f-e8535ed89c00",
+    "action": "inventory_submit",
+    "staff_id": "staff_1771597199485",
+    "staff_name": "顏孝全",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-22_1f",
+    "details": {
+      "itemCount": 26
+    },
+    "created_at": "2026-02-22T14:36:23.319743+00:00"
+  },
+  {
+    "id": "569aa59a-1e4d-4333-be28-f3fc7f968c72",
+    "action": "inventory_submit",
+    "staff_id": "s1",
+    "staff_name": "顏伊偲",
+    "store_id": "lehua",
+    "session_id": "lehua_2026-02-22_1f",
+    "details": {
+      "itemCount": 16
+    },
+    "created_at": "2026-02-22T15:59:09.252909+00:00"
+  },
+  {
+    "id": "b26e316d-d931-4af9-b454-994869f13bf8",
+    "action": "inventory_submit",
+    "staff_id": "s1",
+    "staff_name": "顏伊偲",
+    "store_id": "lehua",
+    "session_id": "lehua_2026-02-22_2f",
+    "details": {
+      "itemCount": 15
+    },
+    "created_at": "2026-02-22T16:01:28.546918+00:00"
+  },
+  {
+    "id": "5a9599a9-3abf-42bd-a590-24437e7fd72f",
+    "action": "settlement_submit",
+    "staff_id": "s1",
+    "staff_name": "顏伊偲",
+    "store_id": "lehua",
+    "session_id": "lehua_2026-02-22",
+    "details": {
+      "itemCount": 23
+    },
+    "created_at": "2026-02-22T16:04:14.79805+00:00"
+  },
+  {
+    "id": "b18e5b27-6305-4f9e-9f88-f43c4255b24a",
+    "action": "order_submit",
+    "staff_id": "staff_1771597211829",
+    "staff_name": "許雅侖",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-22",
+    "details": {
+      "itemCount": 35
+    },
+    "created_at": "2026-02-22T16:12:28.847907+00:00"
+  },
+  {
+    "id": "3f54da4b-b329-40e6-9343-f940c3a8ea15",
+    "action": "inventory_submit",
+    "staff_id": "s3",
+    "staff_name": "陳宣佑",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-22_1f",
+    "details": {
+      "itemCount": 27
+    },
+    "created_at": "2026-02-22T16:13:34.467384+00:00"
+  },
+  {
+    "id": "4a7e0676-b6d0-4c3d-8490-68016016f2c4",
+    "action": "inventory_submit",
+    "staff_id": "s3",
+    "staff_name": "陳宣佑",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-22_1f",
+    "details": {
+      "itemCount": 27
+    },
+    "created_at": "2026-02-22T16:13:47.567861+00:00"
+  },
+  {
+    "id": "67b70f41-9af8-4f07-a081-cc2fa335060c",
+    "action": "order_submit",
+    "staff_id": "s1",
+    "staff_name": "顏伊偲",
+    "store_id": "lehua",
+    "session_id": "lehua_2026-02-22",
+    "details": {
+      "itemCount": 14
+    },
+    "created_at": "2026-02-22T16:33:11.918151+00:00"
+  },
+  {
+    "id": "c39119f4-3bff-472d-8da4-3b8154c03457",
+    "action": "order_submit",
+    "staff_id": "s1",
+    "staff_name": "顏伊偲",
+    "store_id": "lehua",
+    "session_id": "lehua_2026-02-22",
+    "details": {
+      "itemCount": 0
+    },
+    "created_at": "2026-02-22T16:35:58.338379+00:00"
+  },
+  {
+    "id": "6a084ec1-a25c-4123-ab5d-ffe895acaeff",
+    "action": "order_submit",
+    "staff_id": "s1",
+    "staff_name": "顏伊偲",
+    "store_id": "lehua",
+    "session_id": "lehua_2026-02-22",
+    "details": {
+      "itemCount": 0
+    },
+    "created_at": "2026-02-22T16:39:52.102628+00:00"
+  },
+  {
+    "id": "73330fce-452c-4b4e-85b9-3bfa356e62ce",
+    "action": "order_submit",
+    "staff_id": "s1",
+    "staff_name": "顏伊偲",
+    "store_id": "lehua",
+    "session_id": "lehua_2026-02-23",
+    "details": {
+      "itemCount": 14
+    },
+    "created_at": "2026-02-22T16:42:22.519421+00:00"
+  },
+  {
+    "id": "a76f833a-3aa3-4583-badf-a75791dce542",
+    "action": "order_submit",
+    "staff_id": "s1",
+    "staff_name": "顏伊偲",
+    "store_id": "lehua",
+    "session_id": "lehua_2026-02-22",
+    "details": {
+      "itemCount": 13
+    },
+    "created_at": "2026-02-22T16:42:32.855327+00:00"
+  },
+  {
+    "id": "66b62522-f9b6-4832-b661-b0cd7fb4301b",
+    "action": "order_submit",
+    "staff_id": "s3",
+    "staff_name": "陳宣佑",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-23",
+    "details": {
+      "itemCount": 18
+    },
+    "created_at": "2026-02-22T16:44:46.444054+00:00"
+  },
+  {
+    "id": "144adb74-2935-4762-8518-cd1b5b1d59a0",
+    "action": "settlement_submit",
+    "staff_id": "s1",
+    "staff_name": "顏伊偲",
+    "store_id": "lehua",
+    "session_id": "lehua_2026-02-22",
+    "details": {
+      "itemCount": 23
+    },
+    "created_at": "2026-02-22T16:48:33.676521+00:00"
+  },
+  {
+    "id": "86cefd52-58a9-4529-b53a-cf980998d74d",
+    "action": "settlement_submit",
+    "staff_id": "s1",
+    "staff_name": "顏伊偲",
+    "store_id": "lehua",
+    "session_id": "lehua_2026-02-22",
+    "details": {
+      "itemCount": 23
+    },
+    "created_at": "2026-02-22T16:48:40.352209+00:00"
+  },
+  {
+    "id": "ded51125-aa37-41c1-9729-9932a2caf2c9",
+    "action": "order_submit",
+    "staff_id": "s3",
+    "staff_name": "陳宣佑",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-22",
+    "details": {
+      "itemCount": 17
+    },
+    "created_at": "2026-02-22T17:18:02.624877+00:00"
+  },
+  {
+    "id": "7c17e876-4880-4daf-9d49-51a3ba9be7b2",
+    "action": "order_submit",
+    "staff_id": "s3",
+    "staff_name": "陳宣佑",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-22",
+    "details": {
+      "itemCount": 18
+    },
+    "created_at": "2026-02-22T17:18:58.493958+00:00"
+  },
+  {
+    "id": "c6e6b2a1-adfe-4325-8827-350711920057",
+    "action": "order_submit",
+    "staff_id": "s3",
+    "staff_name": "陳宣佑",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-22",
+    "details": {
+      "itemCount": 0
+    },
+    "created_at": "2026-02-22T17:19:24.324692+00:00"
+  },
+  {
+    "id": "58b0b9f3-db01-4fb8-ad11-b6616677444c",
+    "action": "order_submit",
+    "staff_id": "s3",
+    "staff_name": "陳宣佑",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-22",
+    "details": {
+      "itemCount": 14
+    },
+    "created_at": "2026-02-22T17:19:49.919857+00:00"
+  },
+  {
+    "id": "352f1ba3-4fdb-48ed-acc7-603f6c6a8d9a",
+    "action": "order_submit",
+    "staff_id": "s1",
+    "staff_name": "顏伊偲",
+    "store_id": "lehua",
+    "session_id": "lehua_2026-02-22",
+    "details": {
+      "itemCount": 14
+    },
+    "created_at": "2026-02-22T17:20:50.504123+00:00"
+  },
+  {
+    "id": "f75083f5-8753-4c94-aadc-5a53489bb389",
+    "action": "inventory_submit",
+    "staff_id": "staff_1771597199485",
+    "staff_name": "顏孝全",
+    "store_id": "lehua",
+    "session_id": "lehua_2026-02-22_1f",
+    "details": {
+      "itemCount": 16,
+      "frozenCount": 4
+    },
+    "created_at": "2026-02-23T01:46:55.395076+00:00"
+  },
+  {
+    "id": "bc72225c-0f92-46e9-8473-9daf9e8c77b1",
+    "action": "inventory_submit",
+    "staff_id": "staff_1771597199485",
+    "staff_name": "顏孝全",
+    "store_id": "lehua",
+    "session_id": "lehua_2026-02-21_1f",
+    "details": {
+      "itemCount": 13,
+      "frozenCount": 4
+    },
+    "created_at": "2026-02-23T01:47:56.952312+00:00"
+  },
+  {
+    "id": "41f07ba5-4ec0-497d-a1ed-5df9f97fa7ff",
+    "action": "inventory_submit",
+    "staff_id": "staff_1771597199485",
+    "staff_name": "顏孝全",
+    "store_id": "lehua",
+    "session_id": "lehua_2026-02-20_1f",
+    "details": {
+      "itemCount": 19,
+      "frozenCount": 4
+    },
+    "created_at": "2026-02-23T01:48:45.518722+00:00"
+  },
+  {
+    "id": "48ccfc40-f773-4d31-b18d-aacc20eccfe5",
+    "action": "inventory_submit",
+    "staff_id": "staff_1771597199485",
+    "staff_name": "顏孝全",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-22_1f",
+    "details": {
+      "itemCount": 27,
+      "frozenCount": 3
+    },
+    "created_at": "2026-02-23T01:52:25.413382+00:00"
+  },
+  {
+    "id": "58782cea-8c1d-4d9d-9667-bb8d0500fa5a",
+    "action": "inventory_submit",
+    "staff_id": "staff_1771597199485",
+    "staff_name": "顏孝全",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-21_1f",
+    "details": {
+      "itemCount": 4,
+      "frozenCount": 0
+    },
+    "created_at": "2026-02-23T01:53:46.963193+00:00"
+  },
+  {
+    "id": "65dd0088-4fa1-4ae8-8f77-9e940b606c88",
+    "action": "inventory_submit",
+    "staff_id": "staff_1771597199485",
+    "staff_name": "顏孝全",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-21_1f",
+    "details": {
+      "itemCount": 27,
+      "frozenCount": 2
+    },
+    "created_at": "2026-02-23T01:59:32.816238+00:00"
+  },
+  {
+    "id": "f0cb96d6-8f75-4dd3-acf5-1031a302890c",
+    "action": "inventory_submit",
+    "staff_id": "staff_1771597199485",
+    "staff_name": "顏孝全",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-22_1f",
+    "details": {
+      "itemCount": 27,
+      "frozenCount": 5
+    },
+    "created_at": "2026-02-23T01:59:50.818598+00:00"
+  },
+  {
+    "id": "768983a2-9cfc-4225-a893-da306a4a4ce3",
+    "action": "shipment_submit",
+    "staff_id": "staff_1771597199485",
+    "staff_name": "顏孝全",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-23",
+    "details": {},
+    "created_at": "2026-02-23T07:35:56.852016+00:00"
+  },
+  {
+    "id": "db1ea806-478b-4d5f-974a-0e6e5202baf6",
+    "action": "shipment_submit",
+    "staff_id": "staff_1771597199485",
+    "staff_name": "顏孝全",
+    "store_id": "lehua",
+    "session_id": "lehua_2026-02-23",
+    "details": {},
+    "created_at": "2026-02-23T07:38:04.514795+00:00"
+  },
+  {
+    "id": "acaa6cc8-d8c6-4dff-bde5-c2ee46d33227",
+    "action": "inventory_submit",
+    "staff_id": "s3",
+    "staff_name": "陳宣佑",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-23_1f",
+    "details": {
+      "itemCount": 0,
+      "frozenCount": 0
+    },
+    "created_at": "2026-02-23T07:44:08.395171+00:00"
+  },
+  {
+    "id": "43efd8bd-4d0e-4241-809d-f8a5080e35da",
+    "action": "inventory_submit",
+    "staff_id": "s3",
+    "staff_name": "陳宣佑",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-23_1f",
+    "details": {
+      "itemCount": 0,
+      "frozenCount": 0
+    },
+    "created_at": "2026-02-23T07:46:01.348169+00:00"
+  },
+  {
+    "id": "3671173f-f6cb-4a74-9c1c-426107f7f8c4",
+    "action": "receive_submit",
+    "staff_id": "s3",
+    "staff_name": "陳宣佑",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-23",
+    "details": {},
+    "created_at": "2026-02-23T07:59:04.553002+00:00"
+  },
+  {
+    "id": "64753a5c-23df-47a9-a5f6-f15ea548d253",
+    "action": "receive_submit",
+    "staff_id": "staff_1771511773152",
+    "staff_name": "余姿誼",
+    "store_id": "lehua",
+    "session_id": "lehua_2026-02-23",
+    "details": {},
+    "created_at": "2026-02-23T08:15:27.426745+00:00"
+  },
+  {
+    "id": "96c66d34-fac3-4c96-9f96-95099a76cdab",
+    "action": "order_submit",
+    "staff_id": "staff_1771511773152",
+    "staff_name": "余姿誼",
+    "store_id": "lehua",
+    "session_id": "lehua_2026-02-23",
+    "details": {
+      "itemCount": 15
+    },
+    "created_at": "2026-02-23T08:15:43.129915+00:00"
+  },
+  {
+    "id": "774978f7-9bbd-448a-9766-2de21c0cb19d",
+    "action": "shipment_submit",
+    "staff_id": "k2",
+    "staff_name": "陳宣辰",
+    "store_id": "lehua",
+    "session_id": "lehua_2026-02-23",
+    "details": {},
+    "created_at": "2026-02-23T08:16:30.953124+00:00"
+  },
+  {
+    "id": "893be5e3-0436-4912-91b3-5b9d4ec4aa41",
+    "action": "shipment_submit",
+    "staff_id": "k1",
+    "staff_name": "關堉勝",
+    "store_id": "lehua",
+    "session_id": "lehua_2026-02-23",
+    "details": {},
+    "created_at": "2026-02-23T08:22:56.559092+00:00"
+  },
+  {
+    "id": "e3ca759b-dc4d-4419-84ec-2dcac15e1de5",
+    "action": "shipment_submit",
+    "staff_id": "k2",
+    "staff_name": "陳宣辰",
+    "store_id": "lehua",
+    "session_id": "lehua_2026-02-23",
+    "details": {},
+    "created_at": "2026-02-23T08:30:57.726275+00:00"
+  },
+  {
+    "id": "df4ce5a3-ba59-40e8-8019-587ed98fe6b9",
+    "action": "receive_submit",
+    "staff_id": "s1",
+    "staff_name": "顏伊偲",
+    "store_id": "lehua",
+    "session_id": "lehua_2026-02-23",
+    "details": {},
+    "created_at": "2026-02-23T08:31:22.625268+00:00"
+  },
+  {
+    "id": "cebcab3f-6289-4336-980c-c7126d134491",
+    "action": "shipment_submit",
+    "staff_id": "k1",
+    "staff_name": "關堉勝",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-23",
+    "details": {},
+    "created_at": "2026-02-23T08:32:21.707831+00:00"
+  },
+  {
+    "id": "8885b93f-3d33-4b14-93a0-a7585c4a30a9",
+    "action": "receive_submit",
+    "staff_id": "s3",
+    "staff_name": "陳宣佑",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-23",
+    "details": {},
+    "created_at": "2026-02-23T08:32:55.903125+00:00"
+  },
+  {
+    "id": "7d026f0f-2b63-44a2-8224-8df80e2279d5",
+    "action": "shipment_reply",
+    "staff_id": "k1",
+    "staff_name": "關堉勝",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-23",
+    "details": {},
+    "created_at": "2026-02-23T08:56:41.346793+00:00"
+  },
+  {
+    "id": "89d5e6a1-4260-40c2-9e39-0ae6ea1e13c9",
+    "action": "shipment_submit",
+    "staff_id": "k1",
+    "staff_name": "關堉勝",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-23",
+    "details": {},
+    "created_at": "2026-02-23T08:57:05.459417+00:00"
+  },
+  {
+    "id": "edabb487-9cbb-4722-9709-4bc66f7195b7",
+    "action": "inventory_submit",
+    "staff_id": "s3",
+    "staff_name": "陳宣佑",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-23_1f",
+    "details": {
+      "itemCount": 6,
+      "frozenCount": 0
+    },
+    "created_at": "2026-02-23T13:35:13.576037+00:00"
+  },
+  {
+    "id": "d778f08d-c87b-4ee6-8a72-2f25be425bdc",
+    "action": "inventory_submit",
+    "staff_id": "s3",
+    "staff_name": "陳宣佑",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-23_1f",
+    "details": {
+      "itemCount": 17,
+      "frozenCount": 0
+    },
+    "created_at": "2026-02-23T13:40:15.657431+00:00"
+  },
+  {
+    "id": "1d162465-1c3b-489b-9504-e9f543c9ea3c",
+    "action": "inventory_submit",
+    "staff_id": "s3",
+    "staff_name": "陳宣佑",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-23_1f",
+    "details": {
+      "itemCount": 17,
+      "frozenCount": 0
+    },
+    "created_at": "2026-02-23T13:40:17.022059+00:00"
+  },
+  {
+    "id": "4c2292ff-b30a-4c26-bff0-cb870b1e3b48",
+    "action": "inventory_submit",
+    "staff_id": "s3",
+    "staff_name": "陳宣佑",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-23_1f",
+    "details": {
+      "itemCount": 17,
+      "frozenCount": 0
+    },
+    "created_at": "2026-02-23T13:44:35.577387+00:00"
+  },
+  {
+    "id": "9575ba88-1ec3-41b5-a26c-fe58b8703f1b",
+    "action": "inventory_submit",
+    "staff_id": "s3",
+    "staff_name": "陳宣佑",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-23_1f",
+    "details": {
+      "itemCount": 29,
+      "frozenCount": 0
+    },
+    "created_at": "2026-02-23T13:59:14.60549+00:00"
+  },
+  {
+    "id": "82587abf-0e25-4f4a-b901-d920ccbe30c0",
+    "action": "settlement_submit",
+    "staff_id": "s3",
+    "staff_name": "陳宣佑",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-23",
+    "details": {
+      "itemCount": 15
+    },
+    "created_at": "2026-02-23T14:06:41.455863+00:00"
+  },
+  {
+    "id": "21a084e5-532b-47ff-ba2a-42855336841f",
+    "action": "settlement_submit",
+    "staff_id": "s3",
+    "staff_name": "陳宣佑",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-23",
+    "details": {
+      "itemCount": 15
+    },
+    "created_at": "2026-02-23T14:07:07.101234+00:00"
+  },
+  {
+    "id": "50c15081-cad6-4203-8a93-80390ebfd7c3",
+    "action": "inventory_submit",
+    "staff_id": "s3",
+    "staff_name": "陳宣佑",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-23_1f",
+    "details": {
+      "itemCount": 37,
+      "frozenCount": 0
+    },
+    "created_at": "2026-02-23T14:23:22.736515+00:00"
+  },
+  {
+    "id": "e0e89a6b-26ff-4b64-a2b2-ba6f64f363f0",
+    "action": "inventory_submit",
+    "staff_id": "s3",
+    "staff_name": "陳宣佑",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-23_1f",
+    "details": {
+      "itemCount": 37,
+      "frozenCount": 0
+    },
+    "created_at": "2026-02-23T14:23:24.191348+00:00"
+  },
+  {
+    "id": "2ee7cd4b-0590-4e6f-8b6b-fc8bb815c9f0",
+    "action": "inventory_submit",
+    "staff_id": "s3",
+    "staff_name": "陳宣佑",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-23_1f",
+    "details": {
+      "itemCount": 37,
+      "frozenCount": 1
+    },
+    "created_at": "2026-02-23T14:24:28.59058+00:00"
+  },
+  {
+    "id": "aa45c233-3633-4557-9f3e-99549ab32fd0",
+    "action": "inventory_submit",
+    "staff_id": "s3",
+    "staff_name": "陳宣佑",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-23_1f",
+    "details": {
+      "itemCount": 37,
+      "frozenCount": 1
+    },
+    "created_at": "2026-02-23T14:27:07.215065+00:00"
+  },
+  {
+    "id": "3df272f0-525e-4043-9070-d12005d60ac2",
+    "action": "order_submit",
+    "staff_id": "staff_1771597211829",
+    "staff_name": "許雅侖",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-23",
+    "details": {
+      "itemCount": 17
+    },
+    "created_at": "2026-02-23T15:05:34.953936+00:00"
+  },
+  {
+    "id": "b2bf88e1-86e1-41ad-955f-4bbbfdbb86fe",
+    "action": "order_submit",
+    "staff_id": "staff_1771597199485",
+    "staff_name": "顏孝全",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-23",
+    "details": {
+      "itemCount": 17
+    },
+    "created_at": "2026-02-23T15:14:52.251972+00:00"
+  },
+  {
+    "id": "bf4cd58d-4d64-4c02-9451-b477510f43a7",
+    "action": "settlement_submit",
+    "staff_id": "s1",
+    "staff_name": "顏伊偲",
+    "store_id": "lehua",
+    "session_id": "lehua_2026-02-23",
+    "details": {
+      "itemCount": 21
+    },
+    "created_at": "2026-02-23T15:21:04.649794+00:00"
+  },
+  {
+    "id": "077522a4-1b52-4b8b-b1cf-124070ebfa0b",
+    "action": "settlement_submit",
+    "staff_id": "s1",
+    "staff_name": "顏伊偲",
+    "store_id": "lehua",
+    "session_id": "lehua_2026-02-23",
+    "details": {
+      "itemCount": 21
+    },
+    "created_at": "2026-02-23T15:21:41.755941+00:00"
+  },
+  {
+    "id": "1a6605da-a293-40e0-b448-19c101c79dbf",
+    "action": "inventory_submit",
+    "staff_id": "staff_1771597211829",
+    "staff_name": "許雅侖",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-23_1f",
+    "details": {
+      "itemCount": 37,
+      "frozenCount": 1
+    },
+    "created_at": "2026-02-23T15:29:02.385673+00:00"
+  },
+  {
+    "id": "d87f12b6-29b1-45ff-a9e8-b6873dd0cdf9",
+    "action": "inventory_submit",
+    "staff_id": "staff_1771597211829",
+    "staff_name": "許雅侖",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-22_1f",
+    "details": {
+      "itemCount": 27,
+      "frozenCount": 5
+    },
+    "created_at": "2026-02-23T15:30:04.043872+00:00"
+  },
+  {
+    "id": "4583732b-f083-4cb6-96c1-347e57b29a1a",
+    "action": "order_submit",
+    "staff_id": "staff_1771597211829",
+    "staff_name": "許雅侖",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-23",
+    "details": {
+      "itemCount": 21
+    },
+    "created_at": "2026-02-23T15:32:52.743763+00:00"
+  },
+  {
+    "id": "e7dc878a-c1a6-497a-a4b9-b27f1797ed40",
+    "action": "shipment_submit",
+    "staff_id": "k1",
+    "staff_name": "關堉勝",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-23",
+    "details": {},
+    "created_at": "2026-02-23T15:33:25.674749+00:00"
+  },
+  {
+    "id": "7f6fb71e-66ce-4571-8f94-8fe6cfeb17a9",
+    "action": "receive_submit",
+    "staff_id": "s3",
+    "staff_name": "陳宣佑",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-23",
+    "details": {},
+    "created_at": "2026-02-23T15:34:05.017521+00:00"
+  },
+  {
+    "id": "eee111c0-da4a-43b4-934d-1e031c405845",
+    "action": "inventory_submit",
+    "staff_id": "s3",
+    "staff_name": "陳宣佑",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-24_1f",
+    "details": {
+      "itemCount": 0,
+      "frozenCount": 0
+    },
+    "created_at": "2026-02-23T16:03:48.877963+00:00"
+  },
+  {
+    "id": "a5ede585-2542-4b32-a9f8-fb105f7dc018",
+    "action": "inventory_submit",
+    "staff_id": "s1",
+    "staff_name": "顏伊偲",
+    "store_id": "lehua",
+    "session_id": "lehua_2026-02-23_2f",
+    "details": {
+      "itemCount": 22,
+      "frozenCount": 0
+    },
+    "created_at": "2026-02-23T17:29:42.386427+00:00"
+  },
+  {
+    "id": "5078792e-c533-41ec-b14c-d2ffd907cef8",
+    "action": "inventory_submit",
+    "staff_id": "s1",
+    "staff_name": "顏伊偲",
+    "store_id": "lehua",
+    "session_id": "lehua_2026-02-23_1f",
+    "details": {
+      "itemCount": 14,
+      "frozenCount": 0
+    },
+    "created_at": "2026-02-23T17:33:45.557+00:00"
+  },
+  {
+    "id": "81f00ca1-ad29-4984-8659-da213491312e",
+    "action": "inventory_submit",
+    "staff_id": "s1",
+    "staff_name": "顏伊偲",
+    "store_id": "lehua",
+    "session_id": "lehua_2026-02-23_1f",
+    "details": {
+      "itemCount": 14,
+      "frozenCount": 3
+    },
+    "created_at": "2026-02-24T00:40:59.145736+00:00"
+  },
+  {
+    "id": "4058b3ff-a179-4378-af2a-b034e3ce5753",
+    "action": "order_submit",
+    "staff_id": "s1",
+    "staff_name": "顏伊偲",
+    "store_id": "lehua",
+    "session_id": "lehua_2026-02-24",
+    "details": {
+      "itemCount": 18
+    },
+    "created_at": "2026-02-24T00:46:22.653611+00:00"
+  },
+  {
+    "id": "8568acb3-5e1b-4278-a845-13e31c57a75e",
+    "action": "order_submit",
+    "staff_id": "s3",
+    "staff_name": "陳宣佑",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-24",
+    "details": {
+      "itemCount": 15
+    },
+    "created_at": "2026-02-24T00:49:13.502053+00:00"
+  },
+  {
+    "id": "f62254bf-ed4a-40d4-bb66-be0accf53d40",
+    "action": "shipment_submit",
+    "staff_id": "k2",
+    "staff_name": "陳宣辰",
+    "store_id": "lehua",
+    "session_id": "lehua_2026-02-24",
+    "details": {},
+    "created_at": "2026-02-24T06:38:57.595485+00:00"
+  },
+  {
+    "id": "90c1122d-d354-4dce-abd4-6b33a5c84290",
+    "action": "shipment_submit",
+    "staff_id": "k2",
+    "staff_name": "陳宣辰",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-24",
+    "details": {},
+    "created_at": "2026-02-24T06:39:30.813439+00:00"
+  },
+  {
+    "id": "ff314ab5-f8cb-4d3a-9918-d4e3f073db2d",
+    "action": "shipment_reply",
+    "staff_id": "k2",
+    "staff_name": "陳宣辰",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-23",
+    "details": {},
+    "created_at": "2026-02-24T06:55:31.400481+00:00"
+  },
+  {
+    "id": "49816acd-d82e-4787-bb10-a77cb3377297",
+    "action": "shipment_reply",
+    "staff_id": "k2",
+    "staff_name": "陳宣辰",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-23",
+    "details": {},
+    "created_at": "2026-02-24T06:55:34.125166+00:00"
+  },
+  {
+    "id": "743577ee-7fc0-4bbb-96c7-212f47132877",
+    "action": "shipment_reply",
+    "staff_id": "k2",
+    "staff_name": "陳宣辰",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-23",
+    "details": {},
+    "created_at": "2026-02-24T06:55:40.404421+00:00"
+  },
+  {
+    "id": "bd0bd104-c97e-4fc5-afc6-5a6a3df58866",
+    "action": "receive_submit",
+    "staff_id": "staff_1771511773152",
+    "staff_name": "余姿誼",
+    "store_id": "lehua",
+    "session_id": "lehua_2026-02-24",
+    "details": {},
+    "created_at": "2026-02-24T08:02:58.156376+00:00"
+  },
+  {
+    "id": "bd24b217-9412-40c0-b00c-72da112b9b51",
+    "action": "receive_submit",
+    "staff_id": "s4",
+    "staff_name": "郭峻豪",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-24",
+    "details": {},
+    "created_at": "2026-02-24T08:16:30.482174+00:00"
+  },
+  {
+    "id": "be2292b1-5aa1-4864-802b-94aa931fa075",
+    "action": "receive_submit",
+    "staff_id": "s4",
+    "staff_name": "郭峻豪",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-24",
+    "details": {},
+    "created_at": "2026-02-24T08:16:56.030991+00:00"
+  },
+  {
+    "id": "b7da5cf3-1bfa-42c7-a91a-a874c5902e09",
+    "action": "receive_submit",
+    "staff_id": "s4",
+    "staff_name": "郭峻豪",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-24",
+    "details": {},
+    "created_at": "2026-02-24T08:23:49.066458+00:00"
+  },
+  {
+    "id": "18af1023-18da-4a72-b9cd-538af7e1ea11",
+    "action": "order_submit",
+    "staff_id": "s3",
+    "staff_name": "陳宣佑",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-24",
+    "details": {
+      "itemCount": 15
+    },
+    "created_at": "2026-02-24T08:24:23.246339+00:00"
+  },
+  {
+    "id": "cc72e71f-6fbe-4cff-af96-707adeb70bd7",
+    "action": "shipment_submit",
+    "staff_id": "k2",
+    "staff_name": "陳宣辰",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-24",
+    "details": {},
+    "created_at": "2026-02-24T08:24:56.687322+00:00"
+  },
+  {
+    "id": "8cb9021d-4736-4032-b672-413890947a80",
+    "action": "receive_submit",
+    "staff_id": "s4",
+    "staff_name": "郭峻豪",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-24",
+    "details": {},
+    "created_at": "2026-02-24T08:27:10.370014+00:00"
+  },
+  {
+    "id": "53a10dbe-47db-4ea1-944c-7a9e78199ba6",
+    "action": "shipment_reply",
+    "staff_id": "k1",
+    "staff_name": "關堉勝",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-24",
+    "details": {},
+    "created_at": "2026-02-24T08:27:50.257546+00:00"
+  },
+  {
+    "id": "8a3771b1-ddcb-492e-8a57-31a20fb7c51d",
+    "action": "shipment_submit",
+    "staff_id": "k1",
+    "staff_name": "關堉勝",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-24",
+    "details": {},
+    "created_at": "2026-02-24T08:28:08.280207+00:00"
+  },
+  {
+    "id": "7d32d452-47bc-413e-8c35-2d418de28cab",
+    "action": "inventory_submit",
+    "staff_id": "s1",
+    "staff_name": "顏伊偲",
+    "store_id": "lehua",
+    "session_id": "lehua_2026-02-21_1f",
+    "details": {
+      "itemCount": 13,
+      "frozenCount": 4
+    },
+    "created_at": "2026-02-24T12:09:20.880777+00:00"
+  },
+  {
+    "id": "4ae48f17-dad5-4d24-a0ff-fe3dae05a45d",
+    "action": "inventory_submit",
+    "staff_id": "s1",
+    "staff_name": "顏伊偲",
+    "store_id": "lehua",
+    "session_id": "lehua_2026-02-21_2f",
+    "details": {
+      "itemCount": 21,
+      "frozenCount": 0
+    },
+    "created_at": "2026-02-24T12:09:58.059124+00:00"
+  },
+  {
+    "id": "0401836e-5f55-48a0-a76e-ba2877b6114e",
+    "action": "inventory_submit",
+    "staff_id": "s1",
+    "staff_name": "顏伊偲",
+    "store_id": "lehua",
+    "session_id": "lehua_2026-02-21_1f",
+    "details": {
+      "itemCount": 15,
+      "frozenCount": 4
+    },
+    "created_at": "2026-02-24T12:10:26.487579+00:00"
+  },
+  {
+    "id": "8ba3508e-ea9b-4d16-89ff-b14ba9127609",
+    "action": "inventory_submit",
+    "staff_id": "s1",
+    "staff_name": "顏伊偲",
+    "store_id": "lehua",
+    "session_id": "lehua_2026-02-21_1f",
+    "details": {
+      "itemCount": 15,
+      "frozenCount": 4
+    },
+    "created_at": "2026-02-24T12:10:43.646619+00:00"
+  },
+  {
+    "id": "bbc9b9e9-bb18-4dcf-b4ef-759692006d45",
+    "action": "inventory_submit",
+    "staff_id": "s1",
+    "staff_name": "顏伊偲",
+    "store_id": "lehua",
+    "session_id": "lehua_2026-02-21_2f",
+    "details": {
+      "itemCount": 22,
+      "frozenCount": 0
+    },
+    "created_at": "2026-02-24T12:11:40.995194+00:00"
+  },
+  {
+    "id": "d3d83637-b016-4685-9717-ca40551f10e5",
+    "action": "inventory_submit",
+    "staff_id": "s1",
+    "staff_name": "顏伊偲",
+    "store_id": "lehua",
+    "session_id": "lehua_2026-02-21_1f",
+    "details": {
+      "itemCount": 15,
+      "frozenCount": 4
+    },
+    "created_at": "2026-02-24T12:11:56.456009+00:00"
+  },
+  {
+    "id": "a27bdcfd-ba45-45b0-81a7-88d2be73c451",
+    "action": "inventory_submit",
+    "staff_id": "s1",
+    "staff_name": "顏伊偲",
+    "store_id": "lehua",
+    "session_id": "lehua_2026-02-21_2f",
+    "details": {
+      "itemCount": 22,
+      "frozenCount": 0
+    },
+    "created_at": "2026-02-24T12:12:28.680362+00:00"
+  },
+  {
+    "id": "7fac9b7b-10fe-46a9-a2ba-7a285c12907c",
+    "action": "inventory_submit",
+    "staff_id": "staff_1771597211829",
+    "staff_name": "許雅侖",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-23_1f",
+    "details": {
+      "itemCount": 36,
+      "frozenCount": 1
+    },
+    "created_at": "2026-02-24T12:58:00.301596+00:00"
+  },
+  {
+    "id": "a389775e-95db-4490-a73e-73c09fc2f36d",
+    "action": "inventory_submit",
+    "staff_id": "s4",
+    "staff_name": "郭峻豪",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-24_1f",
+    "details": {
+      "itemCount": 32,
+      "frozenCount": 4
+    },
+    "created_at": "2026-02-24T14:21:52.937776+00:00"
+  },
+  {
+    "id": "95e61c45-4d77-4b46-bced-4d747f81e53c",
+    "action": "settlement_submit",
+    "staff_id": "s4",
+    "staff_name": "郭峻豪",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-24",
+    "details": {
+      "itemCount": 13
+    },
+    "created_at": "2026-02-24T14:37:27.218584+00:00"
+  },
+  {
+    "id": "cbfae5dc-421f-4c87-bb2a-e547891a7021",
+    "action": "inventory_submit",
+    "staff_id": "s1",
+    "staff_name": "顏伊偲",
+    "store_id": "lehua",
+    "session_id": "lehua_2026-02-24_1f",
+    "details": {
+      "itemCount": 14,
+      "frozenCount": 3
+    },
+    "created_at": "2026-02-24T14:45:00.68755+00:00"
+  },
+  {
+    "id": "585f1c85-f030-431a-bfd7-9154252ca493",
+    "action": "inventory_submit",
+    "staff_id": "s1",
+    "staff_name": "顏伊偲",
+    "store_id": "lehua",
+    "session_id": "lehua_2026-02-24_1f",
+    "details": {
+      "itemCount": 16,
+      "frozenCount": 3
+    },
+    "created_at": "2026-02-24T14:53:15.146159+00:00"
+  },
+  {
+    "id": "3fcfeb79-2130-4c24-9970-c44fe7eead0b",
+    "action": "inventory_submit",
+    "staff_id": "s1",
+    "staff_name": "顏伊偲",
+    "store_id": "lehua",
+    "session_id": "lehua_2026-02-24_1f",
+    "details": {
+      "itemCount": 16,
+      "frozenCount": 3
+    },
+    "created_at": "2026-02-24T14:53:18.334158+00:00"
+  },
+  {
+    "id": "c7b124b8-846f-4d8e-ace5-4ee3a1d37aef",
+    "action": "inventory_submit",
+    "staff_id": "s3",
+    "staff_name": "陳宣佑",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-24_1f",
+    "details": {
+      "itemCount": 32,
+      "frozenCount": 4
+    },
+    "created_at": "2026-02-24T14:58:47.26089+00:00"
+  },
+  {
+    "id": "0386dc80-87fa-4a00-81c8-ccc72bc5272e",
+    "action": "settlement_submit",
+    "staff_id": "s1",
+    "staff_name": "顏伊偲",
+    "store_id": "lehua",
+    "session_id": "lehua_2026-02-24",
+    "details": {
+      "itemCount": 19
+    },
+    "created_at": "2026-02-24T15:06:22.800846+00:00"
+  },
+  {
+    "id": "efbc53e2-d27e-4ed6-977e-af07fef4d5fe",
+    "action": "settlement_submit",
+    "staff_id": "s1",
+    "staff_name": "顏伊偲",
+    "store_id": "lehua",
+    "session_id": "lehua_2026-02-24",
+    "details": {
+      "itemCount": 19
+    },
+    "created_at": "2026-02-24T15:06:26.436877+00:00"
+  },
+  {
+    "id": "9740c2d9-7f11-467c-b7ab-7367883da0ff",
+    "action": "inventory_submit",
+    "staff_id": "staff_1771597199485",
+    "staff_name": "顏孝全",
+    "store_id": "lehua",
+    "session_id": "lehua_2026-02-24_1f",
+    "details": {
+      "itemCount": 16,
+      "frozenCount": 3
+    },
+    "created_at": "2026-02-24T15:13:38.352003+00:00"
+  },
+  {
+    "id": "7691e90a-1593-4ab3-9fd6-042c75e128ac",
+    "action": "inventory_submit",
+    "staff_id": "s1",
+    "staff_name": "顏伊偲",
+    "store_id": "lehua",
+    "session_id": "lehua_2026-02-24_2f",
+    "details": {
+      "itemCount": 19,
+      "frozenCount": 0
+    },
+    "created_at": "2026-02-24T15:15:13.639724+00:00"
+  },
+  {
+    "id": "99256443-450c-4323-b134-ebc271ba24b1",
+    "action": "inventory_submit",
+    "staff_id": "staff_1771597211829",
+    "staff_name": "許雅侖",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-24_1f",
+    "details": {
+      "itemCount": 32,
+      "frozenCount": 4
+    },
+    "created_at": "2026-02-24T15:20:29.285443+00:00"
+  },
+  {
+    "id": "ed4d4a6d-498f-40ba-acde-124e5c7c91ff",
+    "action": "inventory_submit",
+    "staff_id": "staff_1771597211829",
+    "staff_name": "許雅侖",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-24_1f",
+    "details": {
+      "itemCount": 32,
+      "frozenCount": 4
+    },
+    "created_at": "2026-02-24T15:22:52.188385+00:00"
+  },
+  {
+    "id": "7d52e3b2-e80f-4817-96bc-bd3b8930bea9",
+    "action": "inventory_submit",
+    "staff_id": "s4",
+    "staff_name": "小郭",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-25_1f",
+    "details": {
+      "itemCount": 1,
+      "frozenCount": 0
+    },
+    "created_at": "2026-02-25T07:14:47.453728+00:00"
+  },
+  {
+    "id": "49947661-b1f6-4d1e-90bb-b97716ce97c8",
+    "action": "inventory_submit",
+    "staff_id": "s4",
+    "staff_name": "小郭",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-25_1f",
+    "details": {
+      "itemCount": 1,
+      "frozenCount": 0
+    },
+    "created_at": "2026-02-25T07:16:45.727315+00:00"
+  },
+  {
+    "id": "2fcf0e47-0080-46ab-a31f-b9ecc1c261d5",
+    "action": "inventory_submit",
+    "staff_id": "s4",
+    "staff_name": "小郭",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-25_1f",
+    "details": {
+      "itemCount": 1,
+      "frozenCount": 0
+    },
+    "created_at": "2026-02-25T07:36:13.963721+00:00"
+  },
+  {
+    "id": "1f8fbf46-6fb6-4dac-97d0-e99cf98c1f45",
+    "action": "inventory_submit",
+    "staff_id": "s3",
+    "staff_name": "阿佑",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-25_1f",
+    "details": {
+      "itemCount": 5,
+      "frozenCount": 0
+    },
+    "created_at": "2026-02-25T10:44:47.904938+00:00"
+  },
+  {
+    "id": "76e8b675-4745-4585-9891-a5abbe1c6015",
+    "action": "inventory_submit",
+    "staff_id": "s3",
+    "staff_name": "阿佑",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-25_1f",
+    "details": {
+      "itemCount": 6,
+      "frozenCount": 0
+    },
+    "created_at": "2026-02-25T10:45:32.001191+00:00"
+  },
+  {
+    "id": "96d8d4e3-d59f-4575-aad4-f38e1a2e4201",
+    "action": "inventory_submit",
+    "staff_id": "s3",
+    "staff_name": "阿佑",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-25_1f",
+    "details": {
+      "itemCount": 13,
+      "frozenCount": 1
+    },
+    "created_at": "2026-02-25T13:47:59.206549+00:00"
+  },
+  {
+    "id": "b2c51a99-85da-41e1-88e4-bd1b22aff232",
+    "action": "inventory_submit",
+    "staff_id": "s3",
+    "staff_name": "阿佑",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-25_1f",
+    "details": {
+      "itemCount": 15,
+      "frozenCount": 1
+    },
+    "created_at": "2026-02-25T13:48:26.16689+00:00"
+  },
+  {
+    "id": "16269691-5c23-48bc-90b1-797d4c93e7e9",
+    "action": "inventory_submit",
+    "staff_id": "s3",
+    "staff_name": "阿佑",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-25_1f",
+    "details": {
+      "itemCount": 33,
+      "frozenCount": 1
+    },
+    "created_at": "2026-02-25T13:57:37.192472+00:00"
+  },
+  {
+    "id": "85cc8611-b345-4590-9129-f324f3155afc",
+    "action": "inventory_submit",
+    "staff_id": "s3",
+    "staff_name": "阿佑",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-25_1f",
+    "details": {
+      "itemCount": 33,
+      "frozenCount": 1
+    },
+    "created_at": "2026-02-25T14:00:22.004921+00:00"
+  },
+  {
+    "id": "15c91b20-ff87-4fd8-bb7d-cc27638bb638",
+    "action": "settlement_submit",
+    "staff_id": "s3",
+    "staff_name": "阿佑",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-25",
+    "details": {
+      "itemCount": 14
+    },
+    "created_at": "2026-02-25T14:06:10.566149+00:00"
+  },
+  {
+    "id": "94aaaf41-b357-4ca9-b1c0-1da65879f2a2",
+    "action": "inventory_submit",
+    "staff_id": "s3",
+    "staff_name": "阿佑",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-25_1f",
+    "details": {
+      "itemCount": 37,
+      "frozenCount": 1
+    },
+    "created_at": "2026-02-25T14:12:59.595885+00:00"
+  },
+  {
+    "id": "f81276bf-d5c0-42fc-bc6f-d709619dd293",
+    "action": "inventory_submit",
+    "staff_id": "s3",
+    "staff_name": "阿佑",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-25_1f",
+    "details": {
+      "itemCount": 37,
+      "frozenCount": 1
+    },
+    "created_at": "2026-02-25T14:15:36.259537+00:00"
+  },
+  {
+    "id": "10b95a3c-3626-4012-8fe4-b9ffae6033dc",
+    "action": "inventory_submit",
+    "staff_id": "staff_1772009882783",
+    "staff_name": "興",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-25_1f",
+    "details": {
+      "itemCount": 37,
+      "frozenCount": 1
+    },
+    "created_at": "2026-02-25T14:46:10.281831+00:00"
+  },
+  {
+    "id": "e270eb34-e573-48df-8428-3bbf34b1d3e6",
+    "action": "inventory_submit",
+    "staff_id": "staff_1771511773152",
+    "staff_name": "姿誼",
+    "store_id": "lehua",
+    "session_id": "lehua_2026-02-25_1f",
+    "details": {
+      "itemCount": 14,
+      "frozenCount": 1
+    },
+    "created_at": "2026-02-25T15:10:54.900108+00:00"
+  },
+  {
+    "id": "c437c26d-98ec-4e03-806b-0f16c5570a03",
+    "action": "order_submit",
+    "staff_id": "staff_1772009882783",
+    "staff_name": "興",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-26",
+    "details": {
+      "itemCount": 10
+    },
+    "created_at": "2026-02-25T15:16:34.989398+00:00"
+  },
+  {
+    "id": "1d959f76-8ba1-488c-878e-ead621bb8a5c",
+    "action": "inventory_submit",
+    "staff_id": "staff_1772009882783",
+    "staff_name": "興",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-25_1f",
+    "details": {
+      "itemCount": 37,
+      "frozenCount": 1
+    },
+    "created_at": "2026-02-25T15:19:08.996589+00:00"
+  },
+  {
+    "id": "f0ca2365-1d6a-4716-9040-c3b5fbc4d541",
+    "action": "inventory_submit",
+    "staff_id": "staff_1771511773152",
+    "staff_name": "姿誼",
+    "store_id": "lehua",
+    "session_id": "lehua_2026-02-25_1f",
+    "details": {
+      "itemCount": 20,
+      "frozenCount": 1
+    },
+    "created_at": "2026-02-25T15:25:50.185164+00:00"
+  },
+  {
+    "id": "7fc8b10c-ba25-4fd6-a7b5-a158427edb3a",
+    "action": "inventory_submit",
+    "staff_id": "staff_1771511773152",
+    "staff_name": "姿誼",
+    "store_id": "lehua",
+    "session_id": "lehua_2026-02-25_1f",
+    "details": {
+      "itemCount": 20,
+      "frozenCount": 1
+    },
+    "created_at": "2026-02-25T15:26:29.515428+00:00"
+  },
+  {
+    "id": "c40b130e-db32-4536-853e-26d926af8f93",
+    "action": "order_submit",
+    "staff_id": "staff_1772009882783",
+    "staff_name": "興",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-26",
+    "details": {
+      "itemCount": 11
+    },
+    "created_at": "2026-02-25T15:28:39.902676+00:00"
+  },
+  {
+    "id": "b259068c-01dd-4fd6-a339-a3bbf30b77d9",
+    "action": "inventory_submit",
+    "staff_id": "staff_1772009882783",
+    "staff_name": "興",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-25_1f",
+    "details": {
+      "itemCount": 38,
+      "frozenCount": 1
+    },
+    "created_at": "2026-02-25T15:32:53.317221+00:00"
+  },
+  {
+    "id": "05c20c3f-6c3c-4282-8533-1493cf73adf5",
+    "action": "settlement_submit",
+    "staff_id": "staff_1771511773152",
+    "staff_name": "姿誼",
+    "store_id": "lehua",
+    "session_id": "lehua_2026-02-25",
+    "details": {
+      "itemCount": 28
+    },
+    "created_at": "2026-02-25T15:35:08.956894+00:00"
+  },
+  {
+    "id": "253356e6-aa5a-4e4b-93ac-75a50659da00",
+    "action": "inventory_submit",
+    "staff_id": "staff_1771511773152",
+    "staff_name": "姿誼",
+    "store_id": "lehua",
+    "session_id": "lehua_2026-02-25_1f",
+    "details": {
+      "itemCount": 21,
+      "frozenCount": 1
+    },
+    "created_at": "2026-02-25T15:39:03.242124+00:00"
+  },
+  {
+    "id": "79a800d1-4bb1-4317-a0a6-9a4f95855fe2",
+    "action": "settlement_submit",
+    "staff_id": "staff_1771511773152",
+    "staff_name": "姿誼",
+    "store_id": "lehua",
+    "session_id": "lehua_2026-02-25",
+    "details": {
+      "itemCount": 28
+    },
+    "created_at": "2026-02-25T15:45:12.971641+00:00"
+  },
+  {
+    "id": "d43a7d78-1a45-4bc6-9fe1-7b7c042b2634",
+    "action": "settlement_submit",
+    "staff_id": "staff_1771511773152",
+    "staff_name": "姿誼",
+    "store_id": "lehua",
+    "session_id": "lehua_2026-02-25",
+    "details": {
+      "itemCount": 28
+    },
+    "created_at": "2026-02-25T15:45:50.810112+00:00"
+  },
+  {
+    "id": "ae32ddad-6f80-44d0-ab44-288afe24bd3f",
+    "action": "settlement_submit",
+    "staff_id": "staff_1771511773152",
+    "staff_name": "姿誼",
+    "store_id": "lehua",
+    "session_id": "lehua_2026-02-25",
+    "details": {
+      "itemCount": 28
+    },
+    "created_at": "2026-02-25T15:46:34.318031+00:00"
+  },
+  {
+    "id": "63548ec0-3934-4353-b8fb-a4ec431bf383",
+    "action": "settlement_submit",
+    "staff_id": "staff_1771511773152",
+    "staff_name": "姿誼",
+    "store_id": "lehua",
+    "session_id": "lehua_2026-02-25",
+    "details": {
+      "itemCount": 28
+    },
+    "created_at": "2026-02-25T15:46:45.474454+00:00"
+  },
+  {
+    "id": "cfc1474d-0f54-4ca4-bf7c-4bd3682dd735",
+    "action": "inventory_submit",
+    "staff_id": "staff_1772009874879",
+    "staff_name": "樂",
+    "store_id": "lehua",
+    "session_id": "lehua_2026-02-25_2f",
+    "details": {
+      "itemCount": 18,
+      "frozenCount": 0
+    },
+    "created_at": "2026-02-25T15:49:08.138148+00:00"
+  },
+  {
+    "id": "b62cbe84-e068-4561-a83a-3d23c1e110e2",
+    "action": "inventory_submit",
+    "staff_id": "staff_1772009874879",
+    "staff_name": "樂",
+    "store_id": "lehua",
+    "session_id": "lehua_2026-02-25_1f",
+    "details": {
+      "itemCount": 21,
+      "frozenCount": 1
+    },
+    "created_at": "2026-02-25T15:51:14.159914+00:00"
+  },
+  {
+    "id": "9dd37ad3-54ee-4049-943e-11e6effb61d1",
+    "action": "inventory_submit",
+    "staff_id": "staff_1772009882783",
+    "staff_name": "興",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-25_1f",
+    "details": {
+      "itemCount": 38,
+      "frozenCount": 1
+    },
+    "created_at": "2026-02-25T16:58:29.88519+00:00"
+  },
+  {
+    "id": "8b2ef658-acf1-4d9d-b218-31e45f23411a",
+    "action": "order_submit",
+    "staff_id": "staff_1772009874879",
+    "staff_name": "樂",
+    "store_id": "lehua",
+    "session_id": "lehua_2026-02-26",
+    "details": {
+      "itemCount": 19
+    },
+    "created_at": "2026-02-26T04:38:34.847975+00:00"
+  },
+  {
+    "id": "db93e375-6aa2-4c83-b624-d751b6b1a3b4",
+    "action": "order_submit",
+    "staff_id": "staff_1772009882783",
+    "staff_name": "興",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-26",
+    "details": {
+      "itemCount": 12
+    },
+    "created_at": "2026-02-26T04:44:02.711909+00:00"
+  },
+  {
+    "id": "cc8ec9f8-1156-4743-b534-2f0ad4e0d537",
+    "action": "shipment_submit",
+    "staff_id": "k2",
+    "staff_name": "小宣",
+    "store_id": "lehua",
+    "session_id": "lehua_2026-02-26",
+    "details": {},
+    "created_at": "2026-02-26T06:28:56.21275+00:00"
+  },
+  {
+    "id": "08f8adf9-5da8-477c-9e27-f7cc868df66c",
+    "action": "shipment_submit",
+    "staff_id": "k2",
+    "staff_name": "小宣",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-26",
+    "details": {},
+    "created_at": "2026-02-26T06:29:47.829457+00:00"
+  },
+  {
+    "id": "4fbfa16d-f392-4dad-bb84-23285fe433ab",
+    "action": "shipment_submit",
+    "staff_id": "k2",
+    "staff_name": "小宣",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-26",
+    "details": {},
+    "created_at": "2026-02-26T06:42:15.895489+00:00"
+  },
+  {
+    "id": "8ea6b564-7157-4727-9687-53a12b0f11fa",
+    "action": "receive_submit",
+    "staff_id": "s4",
+    "staff_name": "小郭",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-26",
+    "details": {},
+    "created_at": "2026-02-26T07:02:30.932073+00:00"
+  },
+  {
+    "id": "105fae9e-d83b-4f54-8c44-bc51a66fbae4",
+    "action": "receive_submit",
+    "staff_id": "s4",
+    "staff_name": "小郭",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-26",
+    "details": {},
+    "created_at": "2026-02-26T07:03:42.587438+00:00"
+  },
+  {
+    "id": "102ca926-c784-4620-8d70-8a081e897f3c",
+    "action": "receive_submit",
+    "staff_id": "s4",
+    "staff_name": "小郭",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-26",
+    "details": {},
+    "created_at": "2026-02-26T07:07:52.826186+00:00"
+  },
+  {
+    "id": "6a3dc81d-8465-400f-9418-f4db46a66640",
+    "action": "order_submit",
+    "staff_id": "staff_1772009882783",
+    "staff_name": "興",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-26",
+    "details": {
+      "itemCount": 14
+    },
+    "created_at": "2026-02-26T07:22:26.608469+00:00"
+  },
+  {
+    "id": "99d44d16-11d8-4e10-8883-537cc29998fc",
+    "action": "shipment_submit",
+    "staff_id": "k2",
+    "staff_name": "小宣",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-26",
+    "details": {},
+    "created_at": "2026-02-26T07:25:07.675268+00:00"
+  },
+  {
+    "id": "1f1b4a2a-7770-42fa-bd41-c47b3671b8fc",
+    "action": "shipment_submit",
+    "staff_id": "k2",
+    "staff_name": "小宣",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-26",
+    "details": {},
+    "created_at": "2026-02-26T07:25:26.010919+00:00"
+  },
+  {
+    "id": "28d3e15f-0ea8-495c-bf48-25cea9b0991e",
+    "action": "shipment_submit",
+    "staff_id": "k2",
+    "staff_name": "小宣",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-26",
+    "details": {},
+    "created_at": "2026-02-26T07:28:53.502929+00:00"
+  },
+  {
+    "id": "b5e16eb2-05f7-40da-811b-ee757b136ca7",
+    "action": "shipment_submit",
+    "staff_id": "k2",
+    "staff_name": "小宣",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-26",
+    "details": {},
+    "created_at": "2026-02-26T07:28:58.750504+00:00"
+  },
+  {
+    "id": "a5269160-2fd8-4d99-ac94-272fdc5580bf",
+    "action": "receive_submit",
+    "staff_id": "s4",
+    "staff_name": "小郭",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-26",
+    "details": {},
+    "created_at": "2026-02-26T07:38:13.124237+00:00"
+  },
+  {
+    "id": "64b6f691-8f5c-4383-92bd-d3db1ed1dd45",
+    "action": "receive_submit",
+    "staff_id": "staff_1771511855344",
+    "staff_name": "阿祥",
+    "store_id": "lehua",
+    "session_id": "lehua_2026-02-26",
+    "details": {},
+    "created_at": "2026-02-26T07:49:59.889156+00:00"
+  },
+  {
+    "id": "4aa3d166-0c6b-484a-bffc-f236889b6183",
+    "action": "order_submit",
+    "staff_id": "staff_1772009882783",
+    "staff_name": "興",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-26",
+    "details": {
+      "itemCount": 14
+    },
+    "created_at": "2026-02-26T11:45:48.291386+00:00"
+  },
+  {
+    "id": "1fc5682e-5470-4435-b0ee-904f323aeacd",
+    "action": "order_submit",
+    "staff_id": "staff_1772009882783",
+    "staff_name": "興",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-26",
+    "details": {
+      "itemCount": 14
+    },
+    "created_at": "2026-02-26T12:20:24.533157+00:00"
+  },
+  {
+    "id": "9576a184-a46d-49f7-9229-0b2e96870212",
+    "action": "shipment_submit",
+    "staff_id": "staff_1772009863775",
+    "staff_name": "央",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-26",
+    "details": {},
+    "created_at": "2026-02-26T12:22:17.049319+00:00"
+  },
+  {
+    "id": "af7783cd-7492-43d6-989d-0fcea4dbc8f7",
+    "action": "shipment_submit",
+    "staff_id": "staff_1771597199485",
+    "staff_name": "老闆",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-26",
+    "details": {},
+    "created_at": "2026-02-26T12:28:59.478487+00:00"
+  },
+  {
+    "id": "33f34445-0250-41d0-9e90-cd06208cef78",
+    "action": "inventory_submit",
+    "staff_id": "s4",
+    "staff_name": "小郭",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-26_1f",
+    "details": {
+      "itemCount": 18,
+      "frozenCount": 0
+    },
+    "created_at": "2026-02-26T13:34:24.468677+00:00"
+  },
+  {
+    "id": "d267b156-14b9-438d-ac5a-852c6385c074",
+    "action": "inventory_submit",
+    "staff_id": "s4",
+    "staff_name": "小郭",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-26_1f",
+    "details": {
+      "itemCount": 25,
+      "frozenCount": 0
+    },
+    "created_at": "2026-02-26T13:45:38.214911+00:00"
+  },
+  {
+    "id": "3675ff24-8d11-4435-9969-3857f5692b7e",
+    "action": "inventory_submit",
+    "staff_id": "s4",
+    "staff_name": "小郭",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-26_1f",
+    "details": {
+      "itemCount": 26,
+      "frozenCount": 0
+    },
+    "created_at": "2026-02-26T13:54:19.804024+00:00"
+  },
+  {
+    "id": "e31fb5c6-5837-4e38-bdd3-f85bad2e110c",
+    "action": "inventory_submit",
+    "staff_id": "s4",
+    "staff_name": "小郭",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-26_1f",
+    "details": {
+      "itemCount": 34,
+      "frozenCount": 3
+    },
+    "created_at": "2026-02-26T14:17:00.232811+00:00"
+  },
+  {
+    "id": "98eaf1dd-c441-440a-93dd-4bfd4ff8bd9d",
+    "action": "settlement_submit",
+    "staff_id": "staff_1771511813600",
+    "staff_name": "小慧",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-26",
+    "details": {
+      "itemCount": 11
+    },
+    "created_at": "2026-02-26T14:32:37.117692+00:00"
+  },
+  {
+    "id": "602516e3-d52e-4906-88b5-2fd58b4fb4df",
+    "action": "inventory_submit",
+    "staff_id": "s4",
+    "staff_name": "小郭",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-26_1f",
+    "details": {
+      "itemCount": 34,
+      "frozenCount": 3
+    },
+    "created_at": "2026-02-26T14:40:54.6625+00:00"
+  },
+  {
+    "id": "16b2ef46-20d9-46ef-98c9-5ae92c7b7fb0",
+    "action": "inventory_submit",
+    "staff_id": "s4",
+    "staff_name": "小郭",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-26_1f",
+    "details": {
+      "itemCount": 34,
+      "frozenCount": 3
+    },
+    "created_at": "2026-02-26T14:41:21.806605+00:00"
+  },
+  {
+    "id": "d2081d2c-43c3-431d-b20c-9a47c92c09c7",
+    "action": "inventory_submit",
+    "staff_id": "s4",
+    "staff_name": "小郭",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-26_1f",
+    "details": {
+      "itemCount": 34,
+      "frozenCount": 3
+    },
+    "created_at": "2026-02-26T14:41:41.788089+00:00"
+  },
+  {
+    "id": "98f95df7-f7c7-49a2-9d7d-b11000489815",
+    "action": "inventory_submit",
+    "staff_id": "s4",
+    "staff_name": "小郭",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-26_1f",
+    "details": {
+      "itemCount": 34,
+      "frozenCount": 3
+    },
+    "created_at": "2026-02-26T14:42:40.73723+00:00"
+  },
+  {
+    "id": "0963a621-2b83-46cd-9190-82c4cea4b73e",
+    "action": "inventory_submit",
+    "staff_id": "s4",
+    "staff_name": "小郭",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-26_1f",
+    "details": {
+      "itemCount": 34,
+      "frozenCount": 3
+    },
+    "created_at": "2026-02-26T14:43:29.4723+00:00"
+  },
+  {
+    "id": "c130e6f8-4590-4c42-b67d-0566a6a093a1",
+    "action": "inventory_submit",
+    "staff_id": "s4",
+    "staff_name": "小郭",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-26_1f",
+    "details": {
+      "itemCount": 34,
+      "frozenCount": 3
+    },
+    "created_at": "2026-02-26T14:44:06.936187+00:00"
+  },
+  {
+    "id": "89cc0ee7-c6c0-4323-89dd-af714f75b62d",
+    "action": "inventory_submit",
+    "staff_id": "s4",
+    "staff_name": "小郭",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-26_1f",
+    "details": {
+      "itemCount": 34,
+      "frozenCount": 3
+    },
+    "created_at": "2026-02-26T14:44:44.873083+00:00"
+  },
+  {
+    "id": "4a5b19e1-5711-4949-8838-43e5cf2f64d5",
+    "action": "inventory_submit",
+    "staff_id": "s4",
+    "staff_name": "小郭",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-26_1f",
+    "details": {
+      "itemCount": 34,
+      "frozenCount": 3
+    },
+    "created_at": "2026-02-26T14:45:15.826792+00:00"
+  },
+  {
+    "id": "c238f5e3-a587-4eae-a93c-dfec059e06e2",
+    "action": "inventory_submit",
+    "staff_id": "s4",
+    "staff_name": "小郭",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-26_1f",
+    "details": {
+      "itemCount": 34,
+      "frozenCount": 3
+    },
+    "created_at": "2026-02-26T14:45:53.714112+00:00"
+  },
+  {
+    "id": "3af9518e-a0d1-4422-ab26-d05eed86b568",
+    "action": "inventory_submit",
+    "staff_id": "s4",
+    "staff_name": "小郭",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-26_1f",
+    "details": {
+      "itemCount": 34,
+      "frozenCount": 3
+    },
+    "created_at": "2026-02-26T14:46:38.513562+00:00"
+  },
+  {
+    "id": "e8673d35-43b7-461c-9de0-e6b59b6bd723",
+    "action": "inventory_submit",
+    "staff_id": "s4",
+    "staff_name": "小郭",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-26_1f",
+    "details": {
+      "itemCount": 34,
+      "frozenCount": 3
+    },
+    "created_at": "2026-02-26T14:46:53.157029+00:00"
+  },
+  {
+    "id": "a3a2fe62-8432-478f-a81f-48fb6ed4e150",
+    "action": "inventory_submit",
+    "staff_id": "s4",
+    "staff_name": "小郭",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-26_1f",
+    "details": {
+      "itemCount": 34,
+      "frozenCount": 3
+    },
+    "created_at": "2026-02-26T14:47:10.70097+00:00"
+  },
+  {
+    "id": "c646b648-1a8b-4c26-a774-40fe0f7dc02b",
+    "action": "inventory_submit",
+    "staff_id": "s4",
+    "staff_name": "小郭",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-26_1f",
+    "details": {
+      "itemCount": 34,
+      "frozenCount": 3
+    },
+    "created_at": "2026-02-26T14:47:28.259567+00:00"
+  },
+  {
+    "id": "95e1afb1-d4f0-4ac2-88fd-2b26e6d4a62d",
+    "action": "inventory_submit",
+    "staff_id": "s4",
+    "staff_name": "小郭",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-26_1f",
+    "details": {
+      "itemCount": 34,
+      "frozenCount": 3
+    },
+    "created_at": "2026-02-26T14:48:48.562847+00:00"
+  },
+  {
+    "id": "256658a1-57f8-48f8-beab-fa01a4a953c2",
+    "action": "inventory_submit",
+    "staff_id": "s4",
+    "staff_name": "小郭",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-26_1f",
+    "details": {
+      "itemCount": 34,
+      "frozenCount": 3
+    },
+    "created_at": "2026-02-26T14:49:39.282812+00:00"
+  },
+  {
+    "id": "75304eec-e653-4cc1-97bf-9c16f038690d",
+    "action": "inventory_submit",
+    "staff_id": "s4",
+    "staff_name": "小郭",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-26_1f",
+    "details": {
+      "itemCount": 34,
+      "frozenCount": 3
+    },
+    "created_at": "2026-02-26T14:51:41.213378+00:00"
+  },
+  {
+    "id": "1e7aca5e-8b1d-4000-aa9b-7b631f62fa9e",
+    "action": "inventory_submit",
+    "staff_id": "s4",
+    "staff_name": "小郭",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-26_1f",
+    "details": {
+      "itemCount": 34,
+      "frozenCount": 3
+    },
+    "created_at": "2026-02-26T14:52:06.401989+00:00"
+  },
+  {
+    "id": "5e4eb14f-34b6-49eb-a726-eb3088ef5f79",
+    "action": "inventory_submit",
+    "staff_id": "s4",
+    "staff_name": "小郭",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-26_1f",
+    "details": {
+      "itemCount": 34,
+      "frozenCount": 3
+    },
+    "created_at": "2026-02-26T14:52:50.895727+00:00"
+  },
+  {
+    "id": "0126bc6e-cf8b-45b1-be6f-a53982ba9b6a",
+    "action": "inventory_submit",
+    "staff_id": "s4",
+    "staff_name": "小郭",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-26_1f",
+    "details": {
+      "itemCount": 34,
+      "frozenCount": 3
+    },
+    "created_at": "2026-02-26T14:55:58.623858+00:00"
+  },
+  {
+    "id": "e2519178-ab09-4092-8c8f-b9a89bed38d2",
+    "action": "inventory_submit",
+    "staff_id": "s4",
+    "staff_name": "小郭",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-26_1f",
+    "details": {
+      "itemCount": 34,
+      "frozenCount": 3
+    },
+    "created_at": "2026-02-26T14:56:34.287925+00:00"
+  },
+  {
+    "id": "2ac80aa0-f22d-4f88-b489-333653d7dad2",
+    "action": "inventory_submit",
+    "staff_id": "staff_1772009882783",
+    "staff_name": "興",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-26_1f",
+    "details": {
+      "itemCount": 34,
+      "frozenCount": 3
+    },
+    "created_at": "2026-02-26T15:02:19.937323+00:00"
+  },
+  {
+    "id": "636f1d87-5de4-4fbb-9e82-0ad67ad84fe9",
+    "action": "inventory_submit",
+    "staff_id": "s4",
+    "staff_name": "小郭",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-26_1f",
+    "details": {
+      "itemCount": 34,
+      "frozenCount": 3
+    },
+    "created_at": "2026-02-26T15:05:55.907181+00:00"
+  },
+  {
+    "id": "0dc39290-cf80-4031-9fc3-4da1f6ea4f9e",
+    "action": "inventory_submit",
+    "staff_id": "s4",
+    "staff_name": "小郭",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-26_1f",
+    "details": {
+      "itemCount": 34,
+      "frozenCount": 3
+    },
+    "created_at": "2026-02-26T15:09:33.293288+00:00"
+  },
+  {
+    "id": "496e96f2-789e-4ac8-8ad2-0bfbcf8acc6c",
+    "action": "inventory_submit",
+    "staff_id": "s4",
+    "staff_name": "小郭",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-26_1f",
+    "details": {
+      "itemCount": 34,
+      "frozenCount": 3
+    },
+    "created_at": "2026-02-26T15:09:43.883861+00:00"
+  },
+  {
+    "id": "4375ae8e-6776-4314-bfe3-3c63c5410622",
+    "action": "inventory_submit",
+    "staff_id": "s4",
+    "staff_name": "小郭",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-26_1f",
+    "details": {
+      "itemCount": 34,
+      "frozenCount": 3
+    },
+    "created_at": "2026-02-26T15:12:11.785277+00:00"
+  },
+  {
+    "id": "c3170c1f-8597-48d0-b16d-f65220c03f6f",
+    "action": "inventory_submit",
+    "staff_id": "s4",
+    "staff_name": "小郭",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-26_1f",
+    "details": {
+      "itemCount": 34,
+      "frozenCount": 3
+    },
+    "created_at": "2026-02-26T15:13:07.860169+00:00"
+  },
+  {
+    "id": "2e43fc5d-9627-499a-957c-1af72af81d16",
+    "action": "inventory_submit",
+    "staff_id": "s4",
+    "staff_name": "小郭",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-26_1f",
+    "details": {
+      "itemCount": 34,
+      "frozenCount": 3
+    },
+    "created_at": "2026-02-26T15:14:53.285414+00:00"
+  },
+  {
+    "id": "78b33d5a-9004-4c1c-a4de-07b51e927d01",
+    "action": "inventory_submit",
+    "staff_id": "s4",
+    "staff_name": "小郭",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-26_1f",
+    "details": {
+      "itemCount": 34,
+      "frozenCount": 3
+    },
+    "created_at": "2026-02-26T15:15:06.898084+00:00"
+  },
+  {
+    "id": "38a5dfa8-cbed-4784-814c-61c92628b49d",
+    "action": "inventory_submit",
+    "staff_id": "s4",
+    "staff_name": "小郭",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-26_1f",
+    "details": {
+      "itemCount": 34,
+      "frozenCount": 3
+    },
+    "created_at": "2026-02-26T15:15:15.352261+00:00"
+  },
+  {
+    "id": "ebda0ddd-1d40-4fe5-9b90-4a710192fbe3",
+    "action": "inventory_submit",
+    "staff_id": "s4",
+    "staff_name": "小郭",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-26_1f",
+    "details": {
+      "itemCount": 34,
+      "frozenCount": 3
+    },
+    "created_at": "2026-02-26T15:15:39.249987+00:00"
+  },
+  {
+    "id": "774b94c9-0c99-4f78-bd25-12c14a9e1f40",
+    "action": "inventory_submit",
+    "staff_id": "s4",
+    "staff_name": "小郭",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-26_1f",
+    "details": {
+      "itemCount": 34,
+      "frozenCount": 3
+    },
+    "created_at": "2026-02-26T15:15:45.937135+00:00"
+  },
+  {
+    "id": "a2e8e781-1167-4cc2-97e0-d81f1d7ddd0c",
+    "action": "inventory_submit",
+    "staff_id": "s4",
+    "staff_name": "小郭",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-26_1f",
+    "details": {
+      "itemCount": 34,
+      "frozenCount": 3
+    },
+    "created_at": "2026-02-26T15:19:43.948508+00:00"
+  },
+  {
+    "id": "4251b9fd-69aa-4a95-9ff6-f36270dae814",
+    "action": "inventory_submit",
+    "staff_id": "s4",
+    "staff_name": "小郭",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-26_1f",
+    "details": {
+      "itemCount": 34,
+      "frozenCount": 3
+    },
+    "created_at": "2026-02-26T15:21:30.18683+00:00"
+  },
+  {
+    "id": "7744d716-2d24-42cf-afe1-7ca052599d46",
+    "action": "inventory_submit",
+    "staff_id": "s4",
+    "staff_name": "小郭",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-26_1f",
+    "details": {
+      "itemCount": 34,
+      "frozenCount": 3
+    },
+    "created_at": "2026-02-26T15:23:10.062259+00:00"
+  },
+  {
+    "id": "84868da9-c184-42a6-8289-61916d1c9727",
+    "action": "inventory_submit",
+    "staff_id": "s4",
+    "staff_name": "小郭",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-26_1f",
+    "details": {
+      "itemCount": 34,
+      "frozenCount": 3
+    },
+    "created_at": "2026-02-26T15:24:01.180772+00:00"
+  },
+  {
+    "id": "7317b5ae-01e5-42a7-9192-202dbb8bdcf1",
+    "action": "settlement_submit",
+    "staff_id": "s1",
+    "staff_name": "姑姑",
+    "store_id": "lehua",
+    "session_id": "lehua_2026-02-26",
+    "details": {
+      "itemCount": 18
+    },
+    "created_at": "2026-02-26T15:25:51.126146+00:00"
+  },
+  {
+    "id": "0f17bb8b-d4a8-4759-bf8e-9bcccbc1f3ce",
+    "action": "order_submit",
+    "staff_id": "staff_1772009882783",
+    "staff_name": "興",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-27",
+    "details": {
+      "itemCount": 15
+    },
+    "created_at": "2026-02-26T15:44:58.299686+00:00"
+  },
+  {
+    "id": "b03738e9-526b-43c0-8719-53b053f16b53",
+    "action": "inventory_submit",
+    "staff_id": "staff_1772009882783",
+    "staff_name": "興",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-26_1f",
+    "details": {
+      "itemCount": 34,
+      "frozenCount": 3
+    },
+    "created_at": "2026-02-26T15:54:23.404381+00:00"
+  },
+  {
+    "id": "3707c186-cd2d-4909-80cc-9d9a7c005eee",
+    "action": "inventory_submit",
+    "staff_id": "staff_1772009882783",
+    "staff_name": "興",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-26_1f",
+    "details": {
+      "itemCount": 34,
+      "frozenCount": 3
+    },
+    "created_at": "2026-02-26T16:04:46.218899+00:00"
+  },
+  {
+    "id": "7a49e864-7330-43b4-8555-ff87e045832a",
+    "action": "order_submit",
+    "staff_id": "staff_1772009882783",
+    "staff_name": "興",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-27",
+    "details": {
+      "itemCount": 16
+    },
+    "created_at": "2026-02-26T16:07:19.716879+00:00"
+  },
+  {
+    "id": "fa26a91e-1e97-4ea9-9f07-130441b6acaa",
+    "action": "shipment_submit",
+    "staff_id": "staff_1772009863775",
+    "staff_name": "央",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-26",
+    "details": {},
+    "created_at": "2026-02-26T16:09:50.340501+00:00"
+  },
+  {
+    "id": "7751ba95-d8e3-4511-9990-3b672064112c",
+    "action": "order_submit",
+    "staff_id": "staff_1772009882783",
+    "staff_name": "興",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-26",
+    "details": {
+      "itemCount": 14
+    },
+    "created_at": "2026-02-26T16:16:08.494839+00:00"
+  },
+  {
+    "id": "4d1a7863-dcaa-4a01-9f2c-76ea013916e2",
+    "action": "inventory_submit",
+    "staff_id": "staff_1772009882783",
+    "staff_name": "興",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-26_1f",
+    "details": {
+      "itemCount": 34,
+      "frozenCount": 3
+    },
+    "created_at": "2026-02-26T16:18:31.957977+00:00"
+  },
+  {
+    "id": "1e44924c-a96f-4f65-8834-752ad5fd32c2",
+    "action": "order_submit",
+    "staff_id": "staff_1772009882783",
+    "staff_name": "興",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-26",
+    "details": {
+      "itemCount": 14
+    },
+    "created_at": "2026-02-26T16:20:24.140212+00:00"
+  },
+  {
+    "id": "d7033928-0647-4174-b9ed-d0eedbb3a963",
+    "action": "inventory_submit",
+    "staff_id": "staff_1772009874879",
+    "staff_name": "樂",
+    "store_id": "lehua",
+    "session_id": "lehua_2026-02-27_2f",
+    "details": {
+      "itemCount": 18,
+      "frozenCount": 0
+    },
+    "created_at": "2026-02-26T16:31:22.637165+00:00"
+  },
+  {
+    "id": "410c4792-7464-4315-bcf3-ac33072d3913",
+    "action": "inventory_submit",
+    "staff_id": "staff_1772009874879",
+    "staff_name": "樂",
+    "store_id": "lehua",
+    "session_id": "lehua_2026-02-27_1f",
+    "details": {
+      "itemCount": 15,
+      "frozenCount": 0
+    },
+    "created_at": "2026-02-26T16:37:08.905605+00:00"
+  },
+  {
+    "id": "eeaa421b-0d4f-4b82-ba0f-67d724d7ac1a",
+    "action": "order_submit",
+    "staff_id": "staff_1772009874879",
+    "staff_name": "樂",
+    "store_id": "lehua",
+    "session_id": "lehua_2026-02-27",
+    "details": {
+      "itemCount": 13
+    },
+    "created_at": "2026-02-26T16:40:35.74773+00:00"
+  },
+  {
+    "id": "9564eb05-b1c4-436d-b934-3f08476a05f6",
+    "action": "order_submit",
+    "staff_id": "staff_1772009882783",
+    "staff_name": "興",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-27",
+    "details": {
+      "itemCount": 16
+    },
+    "created_at": "2026-02-26T16:45:58.389451+00:00"
+  },
+  {
+    "id": "2763f64d-f371-4592-8f67-b658f562e434",
+    "action": "shipment_submit",
+    "staff_id": "k1",
+    "staff_name": "阿勝",
+    "store_id": "lehua",
+    "session_id": "lehua_2026-02-27",
+    "details": {},
+    "created_at": "2026-02-27T05:16:00.078888+00:00"
+  },
+  {
+    "id": "e69879b6-7e42-47c0-ab59-9f379e74b46f",
+    "action": "shipment_submit",
+    "staff_id": "k1",
+    "staff_name": "阿勝",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-27",
+    "details": {},
+    "created_at": "2026-02-27T05:16:23.850923+00:00"
+  },
+  {
+    "id": "e85c9d68-d763-4b55-aac0-079189518b11",
+    "action": "shipment_submit",
+    "staff_id": "k1",
+    "staff_name": "阿勝",
+    "store_id": "lehua",
+    "session_id": "lehua_2026-02-27",
+    "details": {},
+    "created_at": "2026-02-27T05:17:53.515303+00:00"
+  },
+  {
+    "id": "33a27bb8-fa22-4dd4-8aeb-94ae634711ea",
+    "action": "shipment_submit",
+    "staff_id": "k1",
+    "staff_name": "阿勝",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-27",
+    "details": {},
+    "created_at": "2026-02-27T05:18:09.521291+00:00"
+  },
+  {
+    "id": "0e4ba52b-13b5-4d5d-932a-89ae611f268a",
+    "action": "shipment_submit",
+    "staff_id": "k1",
+    "staff_name": "阿勝",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-27",
+    "details": {},
+    "created_at": "2026-02-27T05:18:12.745981+00:00"
+  },
+  {
+    "id": "877bd1f3-cfd9-4a65-9ac6-8ce83620c1d4",
+    "action": "receive_submit",
+    "staff_id": "s3",
+    "staff_name": "阿佑",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-27",
+    "details": {},
+    "created_at": "2026-02-27T06:01:17.324525+00:00"
+  },
+  {
+    "id": "f5729491-c234-48da-933d-fd280b52d529",
+    "action": "receive_submit",
+    "staff_id": "s3",
+    "staff_name": "阿佑",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-27",
+    "details": {},
+    "created_at": "2026-02-27T06:01:20.700261+00:00"
+  },
+  {
+    "id": "21d7ea95-0e62-42e7-8a2d-ba8c07b5be1b",
+    "action": "receive_submit",
+    "staff_id": "staff_1771511773152",
+    "staff_name": "姿誼",
+    "store_id": "lehua",
+    "session_id": "lehua_2026-02-27",
+    "details": {},
+    "created_at": "2026-02-27T07:21:19.65019+00:00"
+  },
+  {
+    "id": "1d21e32d-e65f-4da1-bfd8-336f6e321a8e",
+    "action": "receive_submit",
+    "staff_id": "staff_1771511773152",
+    "staff_name": "姿誼",
+    "store_id": "lehua",
+    "session_id": "lehua_2026-02-27",
+    "details": {},
+    "created_at": "2026-02-27T07:24:36.975455+00:00"
+  },
+  {
+    "id": "0577e1be-fdb3-41a3-b2bc-c1bcbc4fc87e",
+    "action": "receive_submit",
+    "staff_id": "staff_1771511773152",
+    "staff_name": "姿誼",
+    "store_id": "lehua",
+    "session_id": "lehua_2026-02-27",
+    "details": {},
+    "created_at": "2026-02-27T07:25:07.327595+00:00"
+  },
+  {
+    "id": "29311b51-fe21-46ac-a8f3-e335b9408448",
+    "action": "shipment_submit",
+    "staff_id": "k2",
+    "staff_name": "小宣",
+    "store_id": "lehua",
+    "session_id": "lehua_2026-02-27",
+    "details": {},
+    "created_at": "2026-02-27T07:28:40.652144+00:00"
+  },
+  {
+    "id": "f645977f-7b55-41bd-b871-b8fe62edf86c",
+    "action": "receive_submit",
+    "staff_id": "staff_1771511773152",
+    "staff_name": "姿誼",
+    "store_id": "lehua",
+    "session_id": "lehua_2026-02-27",
+    "details": {},
+    "created_at": "2026-02-27T09:09:10.707073+00:00"
+  },
+  {
+    "id": "b4432309-ca23-4c92-9422-161844c7bd13",
+    "action": "order_submit",
+    "staff_id": "staff_1771597199485",
+    "staff_name": "老闆",
+    "store_id": "lehua",
+    "session_id": "lehua_2026-02-27",
+    "details": {
+      "itemCount": 13
+    },
+    "created_at": "2026-02-27T09:41:26.725341+00:00"
+  },
+  {
+    "id": "09fa8855-311e-4f23-afb9-202f30b02eed",
+    "action": "inventory_submit",
+    "staff_id": "staff_1772009874879",
+    "staff_name": "樂",
+    "store_id": "lehua",
+    "session_id": "lehua_2026-02-26_1f",
+    "details": {
+      "itemCount": 22,
+      "frozenCount": 0
+    },
+    "created_at": "2026-02-27T12:08:22.061488+00:00"
+  },
+  {
+    "id": "f55b7efc-466b-4547-8534-bae797f30762",
+    "action": "inventory_submit",
+    "staff_id": "staff_1772009874879",
+    "staff_name": "樂",
+    "store_id": "lehua",
+    "session_id": "lehua_2026-02-26_2f",
+    "details": {
+      "itemCount": 29,
+      "frozenCount": 0
+    },
+    "created_at": "2026-02-27T12:09:56.135726+00:00"
+  },
+  {
+    "id": "48990330-ef0c-44be-a3eb-95ab405f5304",
+    "action": "inventory_submit",
+    "staff_id": "s3",
+    "staff_name": "阿佑",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-27_1f",
+    "details": {
+      "itemCount": 39,
+      "frozenCount": 2
+    },
+    "created_at": "2026-02-27T14:14:13.34791+00:00"
+  },
+  {
+    "id": "509d7d1e-f7f0-41c0-8edb-e09548ade75a",
+    "action": "inventory_submit",
+    "staff_id": "s3",
+    "staff_name": "阿佑",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-27_1f",
+    "details": {
+      "itemCount": 39,
+      "frozenCount": 2
+    },
+    "created_at": "2026-02-27T14:14:20.643072+00:00"
+  },
+  {
+    "id": "5954cb11-6786-4848-8cbd-3b1bec6c4eb1",
+    "action": "settlement_submit",
+    "staff_id": "s3",
+    "staff_name": "阿佑",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-27",
+    "details": {
+      "itemCount": 11
+    },
+    "created_at": "2026-02-27T14:18:56.137818+00:00"
+  },
+  {
+    "id": "c0618b3e-ec76-4f5f-839c-c3b05d34dacd",
+    "action": "inventory_submit",
+    "staff_id": "staff_1772009874879",
+    "staff_name": "樂",
+    "store_id": "lehua",
+    "session_id": "lehua_2026-02-27_1f",
+    "details": {
+      "itemCount": 22,
+      "frozenCount": 0
+    },
+    "created_at": "2026-02-27T14:21:46.572639+00:00"
+  },
+  {
+    "id": "87564f28-b7b2-42d9-9270-a7c5813e5915",
+    "action": "inventory_submit",
+    "staff_id": "staff_1772009874879",
+    "staff_name": "樂",
+    "store_id": "lehua",
+    "session_id": "lehua_2026-02-27_2f",
+    "details": {
+      "itemCount": 29,
+      "frozenCount": 0
+    },
+    "created_at": "2026-02-27T14:22:16.150169+00:00"
+  },
+  {
+    "id": "4a4a6a49-2d97-483e-a05e-31a66b05aa31",
+    "action": "inventory_submit",
+    "staff_id": "staff_1772009874879",
+    "staff_name": "樂",
+    "store_id": "lehua",
+    "session_id": "lehua_2026-02-27_2f",
+    "details": {
+      "itemCount": 29,
+      "frozenCount": 0
+    },
+    "created_at": "2026-02-27T14:22:24.312818+00:00"
+  },
+  {
+    "id": "9041a725-3d8e-420e-8379-2096d34f4882",
+    "action": "inventory_submit",
+    "staff_id": "staff_1772009874879",
+    "staff_name": "樂",
+    "store_id": "lehua",
+    "session_id": "lehua_2026-02-27_1f",
+    "details": {
+      "itemCount": 22,
+      "frozenCount": 0
+    },
+    "created_at": "2026-02-27T14:37:32.436266+00:00"
+  },
+  {
+    "id": "3fdbff6b-0e62-414e-be39-2194252d03c7",
+    "action": "inventory_submit",
+    "staff_id": "staff_1772009874879",
+    "staff_name": "樂",
+    "store_id": "lehua",
+    "session_id": "lehua_2026-02-27_1f",
+    "details": {
+      "itemCount": 22,
+      "frozenCount": 0
+    },
+    "created_at": "2026-02-27T14:39:01.026552+00:00"
+  },
+  {
+    "id": "b53d6707-f477-430b-b227-4cecb61611ce",
+    "action": "order_submit",
+    "staff_id": "staff_1772009882783",
+    "staff_name": "興",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-28",
+    "details": {
+      "itemCount": 16
+    },
+    "created_at": "2026-02-27T15:08:29.008144+00:00"
+  },
+  {
+    "id": "2663804a-57e1-4b8a-a9b5-bb62db34adeb",
+    "action": "settlement_submit",
+    "staff_id": "s1",
+    "staff_name": "姑姑",
+    "store_id": "lehua",
+    "session_id": "lehua_2026-02-27",
+    "details": {
+      "itemCount": 23
+    },
+    "created_at": "2026-02-27T15:13:36.12378+00:00"
+  },
+  {
+    "id": "b5870f7f-2545-47d3-a0fc-402ad6804e71",
+    "action": "order_submit",
+    "staff_id": "staff_1772009882783",
+    "staff_name": "興",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-28",
+    "details": {
+      "itemCount": 14
+    },
+    "created_at": "2026-02-27T15:24:37.632927+00:00"
+  },
+  {
+    "id": "ae8cd672-642d-4190-80aa-5b426c347bc0",
+    "action": "inventory_submit",
+    "staff_id": "s2",
+    "staff_name": "博達",
+    "store_id": "lehua",
+    "session_id": "lehua_2026-02-27_2f",
+    "details": {
+      "itemCount": 29,
+      "frozenCount": 0
+    },
+    "created_at": "2026-02-27T15:30:56.115616+00:00"
+  },
+  {
+    "id": "ae86587a-fc73-4988-87a7-801238152aaa",
+    "action": "order_submit",
+    "staff_id": "staff_1772009882783",
+    "staff_name": "興",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-28",
+    "details": {
+      "itemCount": 16
+    },
+    "created_at": "2026-02-27T15:32:51.929102+00:00"
+  },
+  {
+    "id": "8ca2f79b-37d2-45ab-859a-800e2f2368f2",
+    "action": "inventory_submit",
+    "staff_id": "staff_1772009882783",
+    "staff_name": "興",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-27_1f",
+    "details": {
+      "itemCount": 39,
+      "frozenCount": 2
+    },
+    "created_at": "2026-02-27T15:34:17.087852+00:00"
+  },
+  {
+    "id": "0347b265-2c87-470c-b3b9-c5ca8c1c5a75",
+    "action": "inventory_submit",
+    "staff_id": "staff_1772009874879",
+    "staff_name": "樂",
+    "store_id": "lehua",
+    "session_id": "lehua_2026-02-27_1f",
+    "details": {
+      "itemCount": 22,
+      "frozenCount": 0
+    },
+    "created_at": "2026-02-27T15:35:47.755287+00:00"
+  },
+  {
+    "id": "01538587-51b5-49d6-9e75-9900f6d7c941",
+    "action": "inventory_submit",
+    "staff_id": "staff_1772009874879",
+    "staff_name": "樂",
+    "store_id": "lehua",
+    "session_id": "lehua_2026-02-27_1f",
+    "details": {
+      "itemCount": 22,
+      "frozenCount": 4
+    },
+    "created_at": "2026-02-27T15:39:13.713691+00:00"
+  },
+  {
+    "id": "08a0e876-d76d-42e6-b30a-83df4ffdb12e",
+    "action": "order_submit",
+    "staff_id": "staff_1772009882783",
+    "staff_name": "興",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-28",
+    "details": {
+      "itemCount": 16
+    },
+    "created_at": "2026-02-27T15:41:04.809519+00:00"
+  },
+  {
+    "id": "25e6bee1-1f24-48a4-8835-eb21e4e6a938",
+    "action": "order_submit",
+    "staff_id": "s1",
+    "staff_name": "姑姑",
+    "store_id": "lehua",
+    "session_id": "lehua_2026-02-28",
+    "details": {
+      "itemCount": 32
+    },
+    "created_at": "2026-02-27T16:35:43.67126+00:00"
+  },
+  {
+    "id": "326c7c69-831e-4532-a885-80453a03d6b1",
+    "action": "order_submit",
+    "staff_id": "s1",
+    "staff_name": "姑姑",
+    "store_id": "lehua",
+    "session_id": "lehua_2026-02-28",
+    "details": {
+      "itemCount": 24
+    },
+    "created_at": "2026-02-27T16:41:14.42643+00:00"
+  },
+  {
+    "id": "53f160e0-da35-444d-80a3-294fed41150b",
+    "action": "inventory_submit",
+    "staff_id": "s1",
+    "staff_name": "姑姑",
+    "store_id": "lehua",
+    "session_id": "lehua_2026-02-27_1f",
+    "details": {
+      "itemCount": 22,
+      "frozenCount": 5
+    },
+    "created_at": "2026-02-27T16:50:10.408356+00:00"
+  },
+  {
+    "id": "56343b76-598c-4e8d-a2d8-1526caadfabc",
+    "action": "inventory_submit",
+    "staff_id": "staff_1771597199485",
+    "staff_name": "老闆",
+    "store_id": "lehua",
+    "session_id": "lehua_2026-02-25_1f",
+    "details": {
+      "itemCount": 22,
+      "frozenCount": 1
+    },
+    "created_at": "2026-02-27T17:03:26.019353+00:00"
+  },
+  {
+    "id": "4aa00815-4739-4ff3-bab4-ba2571763e32",
+    "action": "inventory_submit",
+    "staff_id": "staff_1771597199485",
+    "staff_name": "老闆",
+    "store_id": "lehua",
+    "session_id": "lehua_2026-02-26_1f",
+    "details": {
+      "itemCount": 22,
+      "frozenCount": 3
+    },
+    "created_at": "2026-02-27T17:24:13.661909+00:00"
+  },
+  {
+    "id": "952d6794-a067-4de2-b5f7-c004cb0579b2",
+    "action": "inventory_submit",
+    "staff_id": "staff_1771597199485",
+    "staff_name": "老闆",
+    "store_id": "lehua",
+    "session_id": "lehua_2026-02-25_1f",
+    "details": {
+      "itemCount": 22,
+      "frozenCount": 1
+    },
+    "created_at": "2026-02-27T17:25:24.116547+00:00"
+  },
+  {
+    "id": "3e9a5f5d-450d-4df0-8c43-06611d144708",
+    "action": "inventory_submit",
+    "staff_id": "staff_1772009882783",
+    "staff_name": "興",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-27_1f",
+    "details": {
+      "itemCount": 39,
+      "frozenCount": 2
+    },
+    "created_at": "2026-02-28T03:49:28.056769+00:00"
+  },
+  {
+    "id": "0f2017a8-97f5-44f2-b340-1eb8057ae8a9",
+    "action": "shipment_submit",
+    "staff_id": "k1",
+    "staff_name": "阿勝",
+    "store_id": "lehua",
+    "session_id": "lehua_2026-02-28",
+    "details": {},
+    "created_at": "2026-02-28T05:12:07.95155+00:00"
+  },
+  {
+    "id": "a0b48d2e-cceb-4fde-8d18-3279a743a80d",
+    "action": "shipment_submit",
+    "staff_id": "k1",
+    "staff_name": "阿勝",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-28",
+    "details": {},
+    "created_at": "2026-02-28T05:12:12.166938+00:00"
+  },
+  {
+    "id": "a9262326-ab96-486b-b862-d3bd2649c05c",
+    "action": "shipment_submit",
+    "staff_id": "k1",
+    "staff_name": "阿勝",
+    "store_id": "lehua",
+    "session_id": "lehua_2026-02-28",
+    "details": {},
+    "created_at": "2026-02-28T05:19:33.623673+00:00"
+  },
+  {
+    "id": "0d305c6e-2ea9-4719-8f59-16d0d196be34",
+    "action": "receive_submit",
+    "staff_id": "s3",
+    "staff_name": "阿佑",
+    "store_id": "xingnan",
+    "session_id": "xingnan_2026-02-28",
+    "details": {},
+    "created_at": "2026-02-28T06:12:58.145618+00:00"
+  },
+  {
+    "id": "f6ced7f2-24a4-4f42-b52e-c84bccc60df8",
+    "action": "receive_submit",
+    "staff_id": "staff_1771511773152",
+    "staff_name": "姿誼",
+    "store_id": "lehua",
+    "session_id": "lehua_2026-02-28",
+    "details": {},
+    "created_at": "2026-02-28T07:29:48.863095+00:00"
+  },
+  {
+    "id": "c69009bc-a0ab-43c2-8a41-633a9c1d34bf",
+    "action": "shipment_submit",
+    "staff_id": "k1",
+    "staff_name": "阿勝",
+    "store_id": "lehua",
+    "session_id": "lehua_2026-02-28",
+    "details": {},
+    "created_at": "2026-02-28T07:32:54.392787+00:00"
+  },
+  {
+    "id": "2a6f2613-7f54-4e3a-9050-f1c0d5ac59e7",
+    "action": "shipment_submit",
+    "staff_id": "k2",
+    "staff_name": "小宣",
+    "store_id": "lehua",
+    "session_id": "lehua_2026-02-28",
+    "details": {},
+    "created_at": "2026-02-28T07:40:37.264462+00:00"
+  },
+  {
+    "id": "52f2dffc-7515-41ee-a49e-8f9388006ce3",
+    "action": "shipment_submit",
+    "staff_id": "k1",
+    "staff_name": "阿勝",
+    "store_id": "lehua",
+    "session_id": "lehua_2026-02-28",
+    "details": {},
+    "created_at": "2026-02-28T07:44:44.646667+00:00"
+  },
+  {
+    "id": "caa2f627-25f2-4c80-9553-65cb577cc095",
+    "action": "shipment_submit",
+    "staff_id": "k1",
+    "staff_name": "阿勝",
+    "store_id": "lehua",
+    "session_id": "lehua_2026-02-28",
+    "details": {},
+    "created_at": "2026-02-28T07:44:58.273404+00:00"
+  },
+  {
+    "id": "46f20ad1-af1c-4cdf-a6f8-06b44fe3bcc9",
+    "action": "shipment_reply",
+    "staff_id": "k1",
+    "staff_name": "阿勝",
+    "store_id": "lehua",
+    "session_id": "lehua_2026-02-28",
+    "details": {},
+    "created_at": "2026-02-28T07:48:51.018293+00:00"
+  },
+  {
+    "id": "c3f79bbc-d7ac-47f1-8d1b-053046bb9b7f",
+    "action": "shipment_submit",
+    "staff_id": "k1",
+    "staff_name": "阿勝",
+    "store_id": "lehua",
+    "session_id": "lehua_2026-02-28",
+    "details": {},
+    "created_at": "2026-02-28T07:48:58.81762+00:00"
+  },
+  {
+    "id": "1b50c750-3ca0-4122-827c-35a29573dcce",
+    "action": "receive_submit",
+    "staff_id": "staff_1771511773152",
+    "staff_name": "姿誼",
+    "store_id": "lehua",
+    "session_id": "lehua_2026-02-28",
+    "details": {},
+    "created_at": "2026-02-28T08:28:28.39367+00:00"
+  },
+  {
+    "id": "2c1769f0-7557-482f-af22-a4eb358c2c0a",
+    "action": "receive_submit",
+    "staff_id": "staff_1771511773152",
+    "staff_name": "姿誼",
+    "store_id": "lehua",
+    "session_id": "lehua_2026-02-28",
+    "details": {},
+    "created_at": "2026-02-28T08:29:05.054133+00:00"
+  }
+]

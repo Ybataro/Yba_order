@@ -1,0 +1,2098 @@
+[
+  {
+    "id": 1,
+    "session_id": "xingnan_2026-02-19",
+    "product_id": "p001",
+    "order_qty": 6,
+    "actual_qty": 6,
+    "received": false
+  },
+  {
+    "id": 2,
+    "session_id": "xingnan_2026-02-19",
+    "product_id": "p002",
+    "order_qty": 4,
+    "actual_qty": 4,
+    "received": false
+  },
+  {
+    "id": 3,
+    "session_id": "xingnan_2026-02-19",
+    "product_id": "p003",
+    "order_qty": 4,
+    "actual_qty": 4,
+    "received": false
+  },
+  {
+    "id": 4,
+    "session_id": "xingnan_2026-02-19",
+    "product_id": "p004",
+    "order_qty": 10,
+    "actual_qty": 10,
+    "received": false
+  },
+  {
+    "id": 5,
+    "session_id": "xingnan_2026-02-19",
+    "product_id": "p005",
+    "order_qty": 6,
+    "actual_qty": 6,
+    "received": false
+  },
+  {
+    "id": 6,
+    "session_id": "xingnan_2026-02-19",
+    "product_id": "p006",
+    "order_qty": 6,
+    "actual_qty": 6,
+    "received": false
+  },
+  {
+    "id": 7,
+    "session_id": "xingnan_2026-02-19",
+    "product_id": "p010",
+    "order_qty": 2,
+    "actual_qty": 2,
+    "received": false
+  },
+  {
+    "id": 8,
+    "session_id": "xingnan_2026-02-19",
+    "product_id": "p007",
+    "order_qty": 2,
+    "actual_qty": 2,
+    "received": false
+  },
+  {
+    "id": 9,
+    "session_id": "xingnan_2026-02-19",
+    "product_id": "p021",
+    "order_qty": 4,
+    "actual_qty": 3,
+    "received": false
+  },
+  {
+    "id": 10,
+    "session_id": "xingnan_2026-02-19",
+    "product_id": "p030",
+    "order_qty": 6,
+    "actual_qty": 6,
+    "received": false
+  },
+  {
+    "id": 11,
+    "session_id": "xingnan_2026-02-19",
+    "product_id": "p031",
+    "order_qty": 6,
+    "actual_qty": 6,
+    "received": false
+  },
+  {
+    "id": 12,
+    "session_id": "xingnan_2026-02-19",
+    "product_id": "p009",
+    "order_qty": 1,
+    "actual_qty": 1,
+    "received": false
+  },
+  {
+    "id": 13,
+    "session_id": "xingnan_2026-02-19",
+    "product_id": "p011",
+    "order_qty": 10,
+    "actual_qty": 12,
+    "received": false
+  },
+  {
+    "id": 14,
+    "session_id": "xingnan_2026-02-19",
+    "product_id": "p012",
+    "order_qty": 10,
+    "actual_qty": 10,
+    "received": false
+  },
+  {
+    "id": 15,
+    "session_id": "xingnan_2026-02-19",
+    "product_id": "p013",
+    "order_qty": 6,
+    "actual_qty": 6,
+    "received": false
+  },
+  {
+    "id": 16,
+    "session_id": "xingnan_2026-02-19",
+    "product_id": "p014",
+    "order_qty": 4,
+    "actual_qty": 4,
+    "received": false
+  },
+  {
+    "id": 17,
+    "session_id": "xingnan_2026-02-19",
+    "product_id": "p015",
+    "order_qty": 4,
+    "actual_qty": 4,
+    "received": false
+  },
+  {
+    "id": 18,
+    "session_id": "xingnan_2026-02-19",
+    "product_id": "p019",
+    "order_qty": 4,
+    "actual_qty": 4,
+    "received": false
+  },
+  {
+    "id": 19,
+    "session_id": "xingnan_2026-02-19",
+    "product_id": "p020",
+    "order_qty": 4,
+    "actual_qty": 4,
+    "received": false
+  },
+  {
+    "id": 20,
+    "session_id": "xingnan_2026-02-19",
+    "product_id": "p023",
+    "order_qty": 1,
+    "actual_qty": 1,
+    "received": false
+  },
+  {
+    "id": 21,
+    "session_id": "xingnan_2026-02-19",
+    "product_id": "p024",
+    "order_qty": 5,
+    "actual_qty": 5,
+    "received": false
+  },
+  {
+    "id": 22,
+    "session_id": "xingnan_2026-02-19",
+    "product_id": "p025",
+    "order_qty": 6,
+    "actual_qty": 6,
+    "received": false
+  },
+  {
+    "id": 23,
+    "session_id": "xingnan_2026-02-19",
+    "product_id": "p026",
+    "order_qty": 4,
+    "actual_qty": 4,
+    "received": false
+  },
+  {
+    "id": 24,
+    "session_id": "xingnan_2026-02-19",
+    "product_id": "p027",
+    "order_qty": 6,
+    "actual_qty": 6,
+    "received": false
+  },
+  {
+    "id": 25,
+    "session_id": "xingnan_2026-02-19",
+    "product_id": "p028",
+    "order_qty": 5,
+    "actual_qty": 5,
+    "received": false
+  },
+  {
+    "id": 26,
+    "session_id": "xingnan_2026-02-19",
+    "product_id": "p029",
+    "order_qty": 12,
+    "actual_qty": 12,
+    "received": false
+  },
+  {
+    "id": 27,
+    "session_id": "xingnan_2026-02-19",
+    "product_id": "p016",
+    "order_qty": 1,
+    "actual_qty": 1,
+    "received": false
+  },
+  {
+    "id": 28,
+    "session_id": "xingnan_2026-02-19",
+    "product_id": "p017",
+    "order_qty": 3,
+    "actual_qty": 3,
+    "received": false
+  },
+  {
+    "id": 29,
+    "session_id": "xingnan_2026-02-19",
+    "product_id": "p032",
+    "order_qty": 1,
+    "actual_qty": 1,
+    "received": false
+  },
+  {
+    "id": 44,
+    "session_id": "lehua_2026-02-20",
+    "product_id": "p003",
+    "order_qty": 4,
+    "actual_qty": 4,
+    "received": true
+  },
+  {
+    "id": 45,
+    "session_id": "lehua_2026-02-20",
+    "product_id": "p001",
+    "order_qty": 4,
+    "actual_qty": 4,
+    "received": true
+  },
+  {
+    "id": 46,
+    "session_id": "lehua_2026-02-20",
+    "product_id": "p002",
+    "order_qty": 4,
+    "actual_qty": 4,
+    "received": true
+  },
+  {
+    "id": 47,
+    "session_id": "lehua_2026-02-20",
+    "product_id": "p004",
+    "order_qty": 14,
+    "actual_qty": 16,
+    "received": true
+  },
+  {
+    "id": 48,
+    "session_id": "lehua_2026-02-20",
+    "product_id": "p005",
+    "order_qty": 8,
+    "actual_qty": 8.8,
+    "received": true
+  },
+  {
+    "id": 49,
+    "session_id": "lehua_2026-02-20",
+    "product_id": "p006",
+    "order_qty": 12,
+    "actual_qty": 12.5,
+    "received": true
+  },
+  {
+    "id": 50,
+    "session_id": "lehua_2026-02-20",
+    "product_id": "p010",
+    "order_qty": 2,
+    "actual_qty": 2,
+    "received": true
+  },
+  {
+    "id": 51,
+    "session_id": "lehua_2026-02-20",
+    "product_id": "p007",
+    "order_qty": 1,
+    "actual_qty": 1,
+    "received": true
+  },
+  {
+    "id": 52,
+    "session_id": "lehua_2026-02-20",
+    "product_id": "p021",
+    "order_qty": 5,
+    "actual_qty": 5,
+    "received": true
+  },
+  {
+    "id": 53,
+    "session_id": "lehua_2026-02-20",
+    "product_id": "p009",
+    "order_qty": 1,
+    "actual_qty": 1,
+    "received": true
+  },
+  {
+    "id": 54,
+    "session_id": "lehua_2026-02-20",
+    "product_id": "p014",
+    "order_qty": 3,
+    "actual_qty": 3.3,
+    "received": true
+  },
+  {
+    "id": 55,
+    "session_id": "lehua_2026-02-20",
+    "product_id": "p015",
+    "order_qty": 3,
+    "actual_qty": 3.2,
+    "received": true
+  },
+  {
+    "id": 56,
+    "session_id": "lehua_2026-02-20",
+    "product_id": "p019",
+    "order_qty": 2,
+    "actual_qty": 2,
+    "received": true
+  },
+  {
+    "id": 57,
+    "session_id": "lehua_2026-02-20",
+    "product_id": "p020",
+    "order_qty": 2,
+    "actual_qty": 2,
+    "received": true
+  },
+  {
+    "id": 58,
+    "session_id": "lehua_2026-02-20",
+    "product_id": "p023",
+    "order_qty": 2,
+    "actual_qty": 2,
+    "received": true
+  },
+  {
+    "id": 59,
+    "session_id": "lehua_2026-02-20",
+    "product_id": "p024",
+    "order_qty": 2,
+    "actual_qty": 2,
+    "received": true
+  },
+  {
+    "id": 60,
+    "session_id": "lehua_2026-02-20",
+    "product_id": "p025",
+    "order_qty": 1,
+    "actual_qty": 1,
+    "received": true
+  },
+  {
+    "id": 61,
+    "session_id": "lehua_2026-02-20",
+    "product_id": "p029",
+    "order_qty": 16,
+    "actual_qty": 16,
+    "received": true
+  },
+  {
+    "id": 30,
+    "session_id": "xingnan_2026-02-20",
+    "product_id": "p003",
+    "order_qty": 4,
+    "actual_qty": 4,
+    "received": true
+  },
+  {
+    "id": 31,
+    "session_id": "xingnan_2026-02-20",
+    "product_id": "p001",
+    "order_qty": 2,
+    "actual_qty": 2,
+    "received": true
+  },
+  {
+    "id": 32,
+    "session_id": "xingnan_2026-02-20",
+    "product_id": "p002",
+    "order_qty": 2,
+    "actual_qty": 2,
+    "received": true
+  },
+  {
+    "id": 33,
+    "session_id": "xingnan_2026-02-20",
+    "product_id": "p004",
+    "order_qty": 6,
+    "actual_qty": 6,
+    "received": true
+  },
+  {
+    "id": 34,
+    "session_id": "xingnan_2026-02-20",
+    "product_id": "p005",
+    "order_qty": 3,
+    "actual_qty": 3,
+    "received": true
+  },
+  {
+    "id": 35,
+    "session_id": "xingnan_2026-02-20",
+    "product_id": "p006",
+    "order_qty": 3,
+    "actual_qty": 3,
+    "received": true
+  },
+  {
+    "id": 36,
+    "session_id": "xingnan_2026-02-20",
+    "product_id": "p010",
+    "order_qty": 1.5,
+    "actual_qty": 1.4,
+    "received": true
+  },
+  {
+    "id": 37,
+    "session_id": "xingnan_2026-02-20",
+    "product_id": "p007",
+    "order_qty": 1,
+    "actual_qty": 1,
+    "received": true
+  },
+  {
+    "id": 38,
+    "session_id": "xingnan_2026-02-20",
+    "product_id": "p021",
+    "order_qty": 4,
+    "actual_qty": 4,
+    "received": true
+  },
+  {
+    "id": 39,
+    "session_id": "xingnan_2026-02-20",
+    "product_id": "p009",
+    "order_qty": 1,
+    "actual_qty": 1,
+    "received": true
+  },
+  {
+    "id": 40,
+    "session_id": "xingnan_2026-02-20",
+    "product_id": "p014",
+    "order_qty": 2,
+    "actual_qty": 2,
+    "received": true
+  },
+  {
+    "id": 41,
+    "session_id": "xingnan_2026-02-20",
+    "product_id": "p015",
+    "order_qty": 2,
+    "actual_qty": 2,
+    "received": true
+  },
+  {
+    "id": 42,
+    "session_id": "xingnan_2026-02-20",
+    "product_id": "p020",
+    "order_qty": 2,
+    "actual_qty": 2,
+    "received": true
+  },
+  {
+    "id": 43,
+    "session_id": "xingnan_2026-02-20",
+    "product_id": "p023",
+    "order_qty": 1,
+    "actual_qty": 1,
+    "received": true
+  },
+  {
+    "id": 62,
+    "session_id": "lehua_2026-02-21",
+    "product_id": "p003",
+    "order_qty": 6,
+    "actual_qty": 6,
+    "received": true
+  },
+  {
+    "id": 63,
+    "session_id": "lehua_2026-02-21",
+    "product_id": "p001",
+    "order_qty": 6,
+    "actual_qty": 6,
+    "received": true
+  },
+  {
+    "id": 64,
+    "session_id": "lehua_2026-02-21",
+    "product_id": "p002",
+    "order_qty": 4,
+    "actual_qty": 4,
+    "received": true
+  },
+  {
+    "id": 65,
+    "session_id": "lehua_2026-02-21",
+    "product_id": "p004",
+    "order_qty": 20,
+    "actual_qty": 20.5,
+    "received": true
+  },
+  {
+    "id": 66,
+    "session_id": "lehua_2026-02-21",
+    "product_id": "p005",
+    "order_qty": 10,
+    "actual_qty": 10.8,
+    "received": true
+  },
+  {
+    "id": 67,
+    "session_id": "lehua_2026-02-21",
+    "product_id": "p006",
+    "order_qty": 15,
+    "actual_qty": 15,
+    "received": true
+  },
+  {
+    "id": 68,
+    "session_id": "lehua_2026-02-21",
+    "product_id": "p010",
+    "order_qty": 2,
+    "actual_qty": 2,
+    "received": true
+  },
+  {
+    "id": 69,
+    "session_id": "lehua_2026-02-21",
+    "product_id": "p007",
+    "order_qty": 2,
+    "actual_qty": 2,
+    "received": true
+  },
+  {
+    "id": 70,
+    "session_id": "lehua_2026-02-21",
+    "product_id": "p021",
+    "order_qty": 10,
+    "actual_qty": 10,
+    "received": true
+  },
+  {
+    "id": 71,
+    "session_id": "lehua_2026-02-21",
+    "product_id": "p022",
+    "order_qty": 1,
+    "actual_qty": 1,
+    "received": true
+  },
+  {
+    "id": 72,
+    "session_id": "lehua_2026-02-21",
+    "product_id": "p009",
+    "order_qty": 2,
+    "actual_qty": 2,
+    "received": true
+  },
+  {
+    "id": 73,
+    "session_id": "lehua_2026-02-21",
+    "product_id": "p011",
+    "order_qty": 35,
+    "actual_qty": 35,
+    "received": true
+  },
+  {
+    "id": 74,
+    "session_id": "lehua_2026-02-21",
+    "product_id": "p012",
+    "order_qty": 20,
+    "actual_qty": 20,
+    "received": true
+  },
+  {
+    "id": 75,
+    "session_id": "lehua_2026-02-21",
+    "product_id": "p013",
+    "order_qty": 9,
+    "actual_qty": 9,
+    "received": true
+  },
+  {
+    "id": 76,
+    "session_id": "lehua_2026-02-21",
+    "product_id": "p014",
+    "order_qty": 3,
+    "actual_qty": 3,
+    "received": true
+  },
+  {
+    "id": 77,
+    "session_id": "lehua_2026-02-21",
+    "product_id": "p015",
+    "order_qty": 5,
+    "actual_qty": 5.1,
+    "received": true
+  },
+  {
+    "id": 78,
+    "session_id": "lehua_2026-02-21",
+    "product_id": "p019",
+    "order_qty": 2,
+    "actual_qty": 3,
+    "received": true
+  },
+  {
+    "id": 79,
+    "session_id": "lehua_2026-02-21",
+    "product_id": "p020",
+    "order_qty": 3,
+    "actual_qty": 2,
+    "received": true
+  },
+  {
+    "id": 80,
+    "session_id": "lehua_2026-02-21",
+    "product_id": "p023",
+    "order_qty": 1,
+    "actual_qty": 2,
+    "received": true
+  },
+  {
+    "id": 81,
+    "session_id": "lehua_2026-02-21",
+    "product_id": "p029",
+    "order_qty": 24,
+    "actual_qty": 24,
+    "received": true
+  },
+  {
+    "id": 82,
+    "session_id": "xingnan_2026-02-21",
+    "product_id": "p003",
+    "order_qty": 2,
+    "actual_qty": 2,
+    "received": true
+  },
+  {
+    "id": 83,
+    "session_id": "xingnan_2026-02-21",
+    "product_id": "p001",
+    "order_qty": 2,
+    "actual_qty": 2,
+    "received": true
+  },
+  {
+    "id": 84,
+    "session_id": "xingnan_2026-02-21",
+    "product_id": "p004",
+    "order_qty": 8,
+    "actual_qty": 8,
+    "received": true
+  },
+  {
+    "id": 85,
+    "session_id": "xingnan_2026-02-21",
+    "product_id": "p005",
+    "order_qty": 4,
+    "actual_qty": 4,
+    "received": true
+  },
+  {
+    "id": 86,
+    "session_id": "xingnan_2026-02-21",
+    "product_id": "p006",
+    "order_qty": 4,
+    "actual_qty": 4,
+    "received": true
+  },
+  {
+    "id": 87,
+    "session_id": "xingnan_2026-02-21",
+    "product_id": "p021",
+    "order_qty": 6,
+    "actual_qty": 6,
+    "received": true
+  },
+  {
+    "id": 226,
+    "session_id": "lehua_2026-02-24",
+    "product_id": "p001",
+    "order_qty": 2,
+    "actual_qty": 2,
+    "received": true
+  },
+  {
+    "id": 225,
+    "session_id": "lehua_2026-02-24",
+    "product_id": "p003",
+    "order_qty": 2,
+    "actual_qty": 2,
+    "received": true
+  },
+  {
+    "id": 227,
+    "session_id": "lehua_2026-02-24",
+    "product_id": "p004",
+    "order_qty": 6,
+    "actual_qty": 7,
+    "received": true
+  },
+  {
+    "id": 228,
+    "session_id": "lehua_2026-02-24",
+    "product_id": "p005",
+    "order_qty": 3,
+    "actual_qty": 3.2,
+    "received": true
+  },
+  {
+    "id": 229,
+    "session_id": "lehua_2026-02-24",
+    "product_id": "p006",
+    "order_qty": 5,
+    "actual_qty": 5.4,
+    "received": true
+  },
+  {
+    "id": 232,
+    "session_id": "lehua_2026-02-24",
+    "product_id": "p009",
+    "order_qty": 1,
+    "actual_qty": 1,
+    "received": true
+  },
+  {
+    "id": 233,
+    "session_id": "lehua_2026-02-24",
+    "product_id": "p011",
+    "order_qty": 20,
+    "actual_qty": 21.3,
+    "received": true
+  },
+  {
+    "id": 234,
+    "session_id": "lehua_2026-02-24",
+    "product_id": "p012",
+    "order_qty": 10,
+    "actual_qty": 10,
+    "received": true
+  },
+  {
+    "id": 235,
+    "session_id": "lehua_2026-02-24",
+    "product_id": "p013",
+    "order_qty": 6,
+    "actual_qty": 6,
+    "received": true
+  },
+  {
+    "id": 236,
+    "session_id": "lehua_2026-02-24",
+    "product_id": "p014",
+    "order_qty": 1,
+    "actual_qty": 1.3,
+    "received": true
+  },
+  {
+    "id": 237,
+    "session_id": "lehua_2026-02-24",
+    "product_id": "p015",
+    "order_qty": 1,
+    "actual_qty": 1.2,
+    "received": true
+  },
+  {
+    "id": 240,
+    "session_id": "lehua_2026-02-24",
+    "product_id": "p017",
+    "order_qty": 3,
+    "actual_qty": 0,
+    "received": true
+  },
+  {
+    "id": 238,
+    "session_id": "lehua_2026-02-24",
+    "product_id": "p019",
+    "order_qty": 1,
+    "actual_qty": 1,
+    "received": true
+  },
+  {
+    "id": 239,
+    "session_id": "lehua_2026-02-24",
+    "product_id": "p020",
+    "order_qty": 2,
+    "actual_qty": 2,
+    "received": true
+  },
+  {
+    "id": 230,
+    "session_id": "lehua_2026-02-24",
+    "product_id": "p021",
+    "order_qty": 2,
+    "actual_qty": 2,
+    "received": true
+  },
+  {
+    "id": 231,
+    "session_id": "lehua_2026-02-24",
+    "product_id": "p022",
+    "order_qty": 0.5,
+    "actual_qty": 0.5,
+    "received": true
+  },
+  {
+    "id": 503,
+    "session_id": "lehua_2026-02-27",
+    "product_id": "p002",
+    "order_qty": 2,
+    "actual_qty": 2,
+    "received": true
+  },
+  {
+    "id": 501,
+    "session_id": "lehua_2026-02-27",
+    "product_id": "p003",
+    "order_qty": 2,
+    "actual_qty": 2,
+    "received": true
+  },
+  {
+    "id": 504,
+    "session_id": "lehua_2026-02-27",
+    "product_id": "p004",
+    "order_qty": 10,
+    "actual_qty": 10,
+    "received": true
+  },
+  {
+    "id": 505,
+    "session_id": "lehua_2026-02-27",
+    "product_id": "p005",
+    "order_qty": 4,
+    "actual_qty": 4.3,
+    "received": true
+  },
+  {
+    "id": 506,
+    "session_id": "lehua_2026-02-27",
+    "product_id": "p006",
+    "order_qty": 7,
+    "actual_qty": 7.8,
+    "received": true
+  },
+  {
+    "id": 507,
+    "session_id": "lehua_2026-02-27",
+    "product_id": "p007",
+    "order_qty": 1,
+    "actual_qty": 1,
+    "received": true
+  },
+  {
+    "id": 510,
+    "session_id": "lehua_2026-02-27",
+    "product_id": "p014",
+    "order_qty": 1,
+    "actual_qty": 1,
+    "received": true
+  },
+  {
+    "id": 511,
+    "session_id": "lehua_2026-02-27",
+    "product_id": "p015",
+    "order_qty": 1,
+    "actual_qty": 1,
+    "received": true
+  },
+  {
+    "id": 512,
+    "session_id": "lehua_2026-02-27",
+    "product_id": "p020",
+    "order_qty": 2,
+    "actual_qty": 2,
+    "received": true
+  },
+  {
+    "id": 508,
+    "session_id": "lehua_2026-02-27",
+    "product_id": "p021",
+    "order_qty": 2,
+    "actual_qty": 2,
+    "received": true
+  },
+  {
+    "id": 509,
+    "session_id": "lehua_2026-02-27",
+    "product_id": "p022",
+    "order_qty": 1,
+    "actual_qty": 1,
+    "received": true
+  },
+  {
+    "id": 88,
+    "session_id": "xingnan_2026-02-21",
+    "product_id": "p022",
+    "order_qty": 0.5,
+    "actual_qty": 0.5,
+    "received": true
+  },
+  {
+    "id": 89,
+    "session_id": "xingnan_2026-02-21",
+    "product_id": "p009",
+    "order_qty": 1.5,
+    "actual_qty": 1.5,
+    "received": true
+  },
+  {
+    "id": 90,
+    "session_id": "xingnan_2026-02-21",
+    "product_id": "p011",
+    "order_qty": 12,
+    "actual_qty": 12,
+    "received": true
+  },
+  {
+    "id": 91,
+    "session_id": "xingnan_2026-02-21",
+    "product_id": "p014",
+    "order_qty": 1,
+    "actual_qty": 1,
+    "received": true
+  },
+  {
+    "id": 92,
+    "session_id": "xingnan_2026-02-21",
+    "product_id": "p015",
+    "order_qty": 2,
+    "actual_qty": 2,
+    "received": true
+  },
+  {
+    "id": 93,
+    "session_id": "xingnan_2026-02-21",
+    "product_id": "p019",
+    "order_qty": 2,
+    "actual_qty": 2,
+    "received": true
+  },
+  {
+    "id": 94,
+    "session_id": "xingnan_2026-02-21",
+    "product_id": "p020",
+    "order_qty": 2,
+    "actual_qty": 2,
+    "received": true
+  },
+  {
+    "id": 95,
+    "session_id": "xingnan_2026-02-21",
+    "product_id": "p023",
+    "order_qty": 0.5,
+    "actual_qty": 0.5,
+    "received": true
+  },
+  {
+    "id": 96,
+    "session_id": "xingnan_2026-02-21",
+    "product_id": "p029",
+    "order_qty": 8,
+    "actual_qty": 8,
+    "received": true
+  },
+  {
+    "id": 514,
+    "session_id": "lehua_2026-02-27",
+    "product_id": "p023",
+    "order_qty": 0,
+    "actual_qty": 1,
+    "received": true
+  },
+  {
+    "id": 513,
+    "session_id": "lehua_2026-02-27",
+    "product_id": "p029",
+    "order_qty": 12,
+    "actual_qty": 12,
+    "received": true
+  },
+  {
+    "id": 286,
+    "session_id": "lehua_2026-02-26",
+    "product_id": "p003",
+    "order_qty": 2,
+    "actual_qty": 2,
+    "received": true
+  },
+  {
+    "id": 287,
+    "session_id": "lehua_2026-02-26",
+    "product_id": "p001",
+    "order_qty": 1,
+    "actual_qty": 1,
+    "received": true
+  },
+  {
+    "id": 288,
+    "session_id": "lehua_2026-02-26",
+    "product_id": "p004",
+    "order_qty": 4,
+    "actual_qty": 4,
+    "received": true
+  },
+  {
+    "id": 289,
+    "session_id": "lehua_2026-02-26",
+    "product_id": "p005",
+    "order_qty": 4,
+    "actual_qty": 4.4,
+    "received": true
+  },
+  {
+    "id": 290,
+    "session_id": "lehua_2026-02-26",
+    "product_id": "p006",
+    "order_qty": 5,
+    "actual_qty": 5.2,
+    "received": true
+  },
+  {
+    "id": 271,
+    "session_id": "xingnan_2026-02-24",
+    "product_id": "p004",
+    "order_qty": 4,
+    "actual_qty": 4,
+    "received": true
+  },
+  {
+    "id": 272,
+    "session_id": "xingnan_2026-02-24",
+    "product_id": "p005",
+    "order_qty": 2,
+    "actual_qty": 2,
+    "received": true
+  },
+  {
+    "id": 273,
+    "session_id": "xingnan_2026-02-24",
+    "product_id": "p006",
+    "order_qty": 2,
+    "actual_qty": 2,
+    "received": true
+  },
+  {
+    "id": 274,
+    "session_id": "xingnan_2026-02-24",
+    "product_id": "p007",
+    "order_qty": 0.5,
+    "actual_qty": 0.5,
+    "received": true
+  },
+  {
+    "id": 275,
+    "session_id": "xingnan_2026-02-24",
+    "product_id": "p021",
+    "order_qty": 2,
+    "actual_qty": 2,
+    "received": true
+  },
+  {
+    "id": 276,
+    "session_id": "xingnan_2026-02-24",
+    "product_id": "p022",
+    "order_qty": 0.5,
+    "actual_qty": 0.5,
+    "received": true
+  },
+  {
+    "id": 277,
+    "session_id": "xingnan_2026-02-24",
+    "product_id": "p031",
+    "order_qty": 4,
+    "actual_qty": 4,
+    "received": true
+  },
+  {
+    "id": 278,
+    "session_id": "xingnan_2026-02-24",
+    "product_id": "p009",
+    "order_qty": 0.5,
+    "actual_qty": 0.5,
+    "received": true
+  },
+  {
+    "id": 279,
+    "session_id": "xingnan_2026-02-24",
+    "product_id": "p011",
+    "order_qty": 12,
+    "actual_qty": 12,
+    "received": true
+  },
+  {
+    "id": 280,
+    "session_id": "xingnan_2026-02-24",
+    "product_id": "p012",
+    "order_qty": 6,
+    "actual_qty": 6,
+    "received": true
+  },
+  {
+    "id": 281,
+    "session_id": "xingnan_2026-02-24",
+    "product_id": "p015",
+    "order_qty": 1,
+    "actual_qty": 1,
+    "received": true
+  },
+  {
+    "id": 282,
+    "session_id": "xingnan_2026-02-24",
+    "product_id": "p019",
+    "order_qty": 2,
+    "actual_qty": 2,
+    "received": true
+  },
+  {
+    "id": 283,
+    "session_id": "xingnan_2026-02-24",
+    "product_id": "p020",
+    "order_qty": 2,
+    "actual_qty": 2,
+    "received": true
+  },
+  {
+    "id": 284,
+    "session_id": "xingnan_2026-02-24",
+    "product_id": "p029",
+    "order_qty": 8,
+    "actual_qty": 8,
+    "received": true
+  },
+  {
+    "id": 285,
+    "session_id": "xingnan_2026-02-24",
+    "product_id": "p017",
+    "order_qty": 1,
+    "actual_qty": 0,
+    "received": true
+  },
+  {
+    "id": 157,
+    "session_id": "lehua_2026-02-23",
+    "product_id": "p003",
+    "order_qty": 2,
+    "actual_qty": 2,
+    "received": true
+  },
+  {
+    "id": 158,
+    "session_id": "lehua_2026-02-23",
+    "product_id": "p010",
+    "order_qty": 2,
+    "actual_qty": 2.5,
+    "received": true
+  },
+  {
+    "id": 159,
+    "session_id": "lehua_2026-02-23",
+    "product_id": "p007",
+    "order_qty": 1,
+    "actual_qty": 1,
+    "received": true
+  },
+  {
+    "id": 160,
+    "session_id": "lehua_2026-02-23",
+    "product_id": "p021",
+    "order_qty": 1,
+    "actual_qty": 1,
+    "received": true
+  },
+  {
+    "id": 161,
+    "session_id": "lehua_2026-02-23",
+    "product_id": "p022",
+    "order_qty": 0.5,
+    "actual_qty": 0.5,
+    "received": true
+  },
+  {
+    "id": 162,
+    "session_id": "lehua_2026-02-23",
+    "product_id": "p009",
+    "order_qty": 1,
+    "actual_qty": 1,
+    "received": true
+  },
+  {
+    "id": 163,
+    "session_id": "lehua_2026-02-23",
+    "product_id": "p011",
+    "order_qty": 36,
+    "actual_qty": 36,
+    "received": true
+  },
+  {
+    "id": 164,
+    "session_id": "lehua_2026-02-23",
+    "product_id": "p015",
+    "order_qty": 1,
+    "actual_qty": 1,
+    "received": true
+  },
+  {
+    "id": 165,
+    "session_id": "lehua_2026-02-23",
+    "product_id": "p020",
+    "order_qty": 2,
+    "actual_qty": 0,
+    "received": true
+  },
+  {
+    "id": 166,
+    "session_id": "lehua_2026-02-23",
+    "product_id": "p023",
+    "order_qty": 1,
+    "actual_qty": 0.5,
+    "received": true
+  },
+  {
+    "id": 167,
+    "session_id": "lehua_2026-02-23",
+    "product_id": "p024",
+    "order_qty": 2,
+    "actual_qty": 2,
+    "received": true
+  },
+  {
+    "id": 168,
+    "session_id": "lehua_2026-02-23",
+    "product_id": "p025",
+    "order_qty": 1,
+    "actual_qty": 1,
+    "received": true
+  },
+  {
+    "id": 169,
+    "session_id": "lehua_2026-02-23",
+    "product_id": "p026",
+    "order_qty": 6,
+    "actual_qty": 6,
+    "received": true
+  },
+  {
+    "id": 170,
+    "session_id": "lehua_2026-02-23",
+    "product_id": "p028",
+    "order_qty": 6,
+    "actual_qty": 4,
+    "received": true
+  },
+  {
+    "id": 291,
+    "session_id": "lehua_2026-02-26",
+    "product_id": "p010",
+    "order_qty": 2,
+    "actual_qty": 2,
+    "received": true
+  },
+  {
+    "id": 292,
+    "session_id": "lehua_2026-02-26",
+    "product_id": "p021",
+    "order_qty": 4,
+    "actual_qty": 4,
+    "received": true
+  },
+  {
+    "id": 293,
+    "session_id": "lehua_2026-02-26",
+    "product_id": "p022",
+    "order_qty": 1,
+    "actual_qty": 1,
+    "received": true
+  },
+  {
+    "id": 294,
+    "session_id": "lehua_2026-02-26",
+    "product_id": "p031",
+    "order_qty": 10,
+    "actual_qty": 10,
+    "received": true
+  },
+  {
+    "id": 295,
+    "session_id": "lehua_2026-02-26",
+    "product_id": "p009",
+    "order_qty": 1,
+    "actual_qty": 1,
+    "received": true
+  },
+  {
+    "id": 296,
+    "session_id": "lehua_2026-02-26",
+    "product_id": "p011",
+    "order_qty": 20,
+    "actual_qty": 20.9,
+    "received": true
+  },
+  {
+    "id": 297,
+    "session_id": "lehua_2026-02-26",
+    "product_id": "p012",
+    "order_qty": 10,
+    "actual_qty": 10,
+    "received": true
+  },
+  {
+    "id": 298,
+    "session_id": "lehua_2026-02-26",
+    "product_id": "p014",
+    "order_qty": 1,
+    "actual_qty": 1,
+    "received": true
+  },
+  {
+    "id": 299,
+    "session_id": "lehua_2026-02-26",
+    "product_id": "p015",
+    "order_qty": 2,
+    "actual_qty": 2.3,
+    "received": true
+  },
+  {
+    "id": 300,
+    "session_id": "lehua_2026-02-26",
+    "product_id": "p019",
+    "order_qty": 2,
+    "actual_qty": 2,
+    "received": true
+  },
+  {
+    "id": 301,
+    "session_id": "lehua_2026-02-26",
+    "product_id": "p020",
+    "order_qty": 1,
+    "actual_qty": 1,
+    "received": true
+  },
+  {
+    "id": 302,
+    "session_id": "lehua_2026-02-26",
+    "product_id": "p023",
+    "order_qty": 1,
+    "actual_qty": 1,
+    "received": true
+  },
+  {
+    "id": 303,
+    "session_id": "lehua_2026-02-26",
+    "product_id": "p029",
+    "order_qty": 20,
+    "actual_qty": 20,
+    "received": true
+  },
+  {
+    "id": 304,
+    "session_id": "lehua_2026-02-26",
+    "product_id": "p017",
+    "order_qty": 3,
+    "actual_qty": 3,
+    "received": true
+  },
+  {
+    "id": 207,
+    "session_id": "xingnan_2026-02-23",
+    "product_id": "p003",
+    "order_qty": 4,
+    "actual_qty": 4,
+    "received": true
+  },
+  {
+    "id": 208,
+    "session_id": "xingnan_2026-02-23",
+    "product_id": "p001",
+    "order_qty": 3,
+    "actual_qty": 3,
+    "received": true
+  },
+  {
+    "id": 209,
+    "session_id": "xingnan_2026-02-23",
+    "product_id": "p002",
+    "order_qty": 3,
+    "actual_qty": 3,
+    "received": true
+  },
+  {
+    "id": 210,
+    "session_id": "xingnan_2026-02-23",
+    "product_id": "p004",
+    "order_qty": 6,
+    "actual_qty": 6,
+    "received": true
+  },
+  {
+    "id": 211,
+    "session_id": "xingnan_2026-02-23",
+    "product_id": "p005",
+    "order_qty": 1,
+    "actual_qty": 0,
+    "received": true
+  },
+  {
+    "id": 212,
+    "session_id": "xingnan_2026-02-23",
+    "product_id": "p006",
+    "order_qty": 1,
+    "actual_qty": 1,
+    "received": true
+  },
+  {
+    "id": 213,
+    "session_id": "xingnan_2026-02-23",
+    "product_id": "p010",
+    "order_qty": 1.5,
+    "actual_qty": 1.5,
+    "received": true
+  },
+  {
+    "id": 214,
+    "session_id": "xingnan_2026-02-23",
+    "product_id": "p021",
+    "order_qty": 2,
+    "actual_qty": 2,
+    "received": true
+  },
+  {
+    "id": 215,
+    "session_id": "xingnan_2026-02-23",
+    "product_id": "p022",
+    "order_qty": 0.5,
+    "actual_qty": 0.5,
+    "received": true
+  },
+  {
+    "id": 216,
+    "session_id": "xingnan_2026-02-23",
+    "product_id": "p031",
+    "order_qty": 4,
+    "actual_qty": 4,
+    "received": false
+  },
+  {
+    "id": 217,
+    "session_id": "xingnan_2026-02-23",
+    "product_id": "p009",
+    "order_qty": 0.5,
+    "actual_qty": 0.5,
+    "received": true
+  },
+  {
+    "id": 218,
+    "session_id": "xingnan_2026-02-23",
+    "product_id": "p011",
+    "order_qty": 12,
+    "actual_qty": 12,
+    "received": true
+  },
+  {
+    "id": 219,
+    "session_id": "xingnan_2026-02-23",
+    "product_id": "p012",
+    "order_qty": 6,
+    "actual_qty": 6,
+    "received": true
+  },
+  {
+    "id": 220,
+    "session_id": "xingnan_2026-02-23",
+    "product_id": "p015",
+    "order_qty": 2,
+    "actual_qty": 2,
+    "received": true
+  },
+  {
+    "id": 221,
+    "session_id": "xingnan_2026-02-23",
+    "product_id": "p023",
+    "order_qty": 1,
+    "actual_qty": 0.5,
+    "received": true
+  },
+  {
+    "id": 222,
+    "session_id": "xingnan_2026-02-23",
+    "product_id": "p024",
+    "order_qty": 1,
+    "actual_qty": 1,
+    "received": true
+  },
+  {
+    "id": 223,
+    "session_id": "xingnan_2026-02-23",
+    "product_id": "p028",
+    "order_qty": 2,
+    "actual_qty": 2,
+    "received": true
+  },
+  {
+    "id": 224,
+    "session_id": "xingnan_2026-02-23",
+    "product_id": "p029",
+    "order_qty": 8,
+    "actual_qty": 8,
+    "received": true
+  },
+  {
+    "id": 677,
+    "session_id": "lehua_2026-02-28",
+    "product_id": "p002",
+    "order_qty": 2,
+    "actual_qty": 2,
+    "received": true
+  },
+  {
+    "id": 675,
+    "session_id": "lehua_2026-02-28",
+    "product_id": "p003",
+    "order_qty": 6,
+    "actual_qty": 6,
+    "received": true
+  },
+  {
+    "id": 678,
+    "session_id": "lehua_2026-02-28",
+    "product_id": "p004",
+    "order_qty": 14,
+    "actual_qty": 14.4,
+    "received": true
+  },
+  {
+    "id": 679,
+    "session_id": "lehua_2026-02-28",
+    "product_id": "p005",
+    "order_qty": 12,
+    "actual_qty": 12.9,
+    "received": true
+  },
+  {
+    "id": 680,
+    "session_id": "lehua_2026-02-28",
+    "product_id": "p006",
+    "order_qty": 14,
+    "actual_qty": 16.2,
+    "received": true
+  },
+  {
+    "id": 682,
+    "session_id": "lehua_2026-02-28",
+    "product_id": "p007",
+    "order_qty": 1,
+    "actual_qty": 1,
+    "received": true
+  },
+  {
+    "id": 685,
+    "session_id": "lehua_2026-02-28",
+    "product_id": "p009",
+    "order_qty": 1.5,
+    "actual_qty": 1.5,
+    "received": true
+  },
+  {
+    "id": 681,
+    "session_id": "lehua_2026-02-28",
+    "product_id": "p010",
+    "order_qty": 2,
+    "actual_qty": 2,
+    "received": true
+  },
+  {
+    "id": 686,
+    "session_id": "lehua_2026-02-28",
+    "product_id": "p011",
+    "order_qty": 25,
+    "actual_qty": 25,
+    "received": false
+  },
+  {
+    "id": 687,
+    "session_id": "lehua_2026-02-28",
+    "product_id": "p012",
+    "order_qty": 13,
+    "actual_qty": 13,
+    "received": false
+  },
+  {
+    "id": 688,
+    "session_id": "lehua_2026-02-28",
+    "product_id": "p013",
+    "order_qty": 12,
+    "actual_qty": 12,
+    "received": false
+  },
+  {
+    "id": 689,
+    "session_id": "lehua_2026-02-28",
+    "product_id": "p014",
+    "order_qty": 2,
+    "actual_qty": 2,
+    "received": true
+  },
+  {
+    "id": 690,
+    "session_id": "lehua_2026-02-28",
+    "product_id": "p015",
+    "order_qty": 2,
+    "actual_qty": 2,
+    "received": true
+  },
+  {
+    "id": 697,
+    "session_id": "lehua_2026-02-28",
+    "product_id": "p017",
+    "order_qty": 3,
+    "actual_qty": 3,
+    "received": true
+  },
+  {
+    "id": 691,
+    "session_id": "lehua_2026-02-28",
+    "product_id": "p019",
+    "order_qty": 4,
+    "actual_qty": 4,
+    "received": true
+  },
+  {
+    "id": 692,
+    "session_id": "lehua_2026-02-28",
+    "product_id": "p020",
+    "order_qty": 4,
+    "actual_qty": 4,
+    "received": true
+  },
+  {
+    "id": 683,
+    "session_id": "lehua_2026-02-28",
+    "product_id": "p021",
+    "order_qty": 8,
+    "actual_qty": 8,
+    "received": true
+  },
+  {
+    "id": 684,
+    "session_id": "lehua_2026-02-28",
+    "product_id": "p022",
+    "order_qty": 1,
+    "actual_qty": 1,
+    "received": true
+  },
+  {
+    "id": 693,
+    "session_id": "lehua_2026-02-28",
+    "product_id": "p023",
+    "order_qty": 9000,
+    "actual_qty": 13500,
+    "received": true
+  },
+  {
+    "id": 694,
+    "session_id": "lehua_2026-02-28",
+    "product_id": "p024",
+    "order_qty": 2,
+    "actual_qty": 2,
+    "received": false
+  },
+  {
+    "id": 695,
+    "session_id": "lehua_2026-02-28",
+    "product_id": "p025",
+    "order_qty": 1,
+    "actual_qty": 1,
+    "received": false
+  },
+  {
+    "id": 696,
+    "session_id": "lehua_2026-02-28",
+    "product_id": "p029",
+    "order_qty": 12,
+    "actual_qty": 12,
+    "received": false
+  },
+  {
+    "id": 698,
+    "session_id": "lehua_2026-02-28",
+    "product_id": "p032",
+    "order_qty": 2,
+    "actual_qty": 2,
+    "received": false
+  },
+  {
+    "id": 676,
+    "session_id": "lehua_2026-02-28",
+    "product_id": "p001",
+    "order_qty": 3,
+    "actual_qty": 2.9,
+    "received": true
+  },
+  {
+    "id": 413,
+    "session_id": "xingnan_2026-02-26",
+    "product_id": "p003",
+    "order_qty": 2,
+    "actual_qty": 2,
+    "received": true
+  },
+  {
+    "id": 414,
+    "session_id": "xingnan_2026-02-26",
+    "product_id": "p004",
+    "order_qty": 2,
+    "actual_qty": 2,
+    "received": true
+  },
+  {
+    "id": 415,
+    "session_id": "xingnan_2026-02-26",
+    "product_id": "p005",
+    "order_qty": 1,
+    "actual_qty": 1,
+    "received": true
+  },
+  {
+    "id": 416,
+    "session_id": "xingnan_2026-02-26",
+    "product_id": "p006",
+    "order_qty": 0.1,
+    "actual_qty": 0.1,
+    "received": true
+  },
+  {
+    "id": 417,
+    "session_id": "xingnan_2026-02-26",
+    "product_id": "p021",
+    "order_qty": 1,
+    "actual_qty": 1,
+    "received": true
+  },
+  {
+    "id": 418,
+    "session_id": "xingnan_2026-02-26",
+    "product_id": "p022",
+    "order_qty": 0.5,
+    "actual_qty": 0.5,
+    "received": true
+  },
+  {
+    "id": 419,
+    "session_id": "xingnan_2026-02-26",
+    "product_id": "p031",
+    "order_qty": 4,
+    "actual_qty": 5,
+    "received": true
+  },
+  {
+    "id": 420,
+    "session_id": "xingnan_2026-02-26",
+    "product_id": "p009",
+    "order_qty": 0.5,
+    "actual_qty": 0.5,
+    "received": true
+  },
+  {
+    "id": 421,
+    "session_id": "xingnan_2026-02-26",
+    "product_id": "p013",
+    "order_qty": 1,
+    "actual_qty": 6,
+    "received": true
+  },
+  {
+    "id": 422,
+    "session_id": "xingnan_2026-02-26",
+    "product_id": "p014",
+    "order_qty": 0.4,
+    "actual_qty": 0.4,
+    "received": true
+  },
+  {
+    "id": 423,
+    "session_id": "xingnan_2026-02-26",
+    "product_id": "p015",
+    "order_qty": 1,
+    "actual_qty": 1,
+    "received": true
+  },
+  {
+    "id": 424,
+    "session_id": "xingnan_2026-02-26",
+    "product_id": "p020",
+    "order_qty": 1,
+    "actual_qty": 1,
+    "received": true
+  },
+  {
+    "id": 425,
+    "session_id": "xingnan_2026-02-26",
+    "product_id": "p023",
+    "order_qty": 1,
+    "actual_qty": 1,
+    "received": true
+  },
+  {
+    "id": 426,
+    "session_id": "xingnan_2026-02-26",
+    "product_id": "p017",
+    "order_qty": 2,
+    "actual_qty": 2,
+    "received": true
+  },
+  {
+    "id": 502,
+    "session_id": "lehua_2026-02-27",
+    "product_id": "p001",
+    "order_qty": 2,
+    "actual_qty": 2,
+    "received": true
+  },
+  {
+    "id": 486,
+    "session_id": "xingnan_2026-02-27",
+    "product_id": "p001",
+    "order_qty": 2,
+    "actual_qty": 2,
+    "received": true
+  },
+  {
+    "id": 487,
+    "session_id": "xingnan_2026-02-27",
+    "product_id": "p002",
+    "order_qty": 2,
+    "actual_qty": 2,
+    "received": true
+  },
+  {
+    "id": 485,
+    "session_id": "xingnan_2026-02-27",
+    "product_id": "p003",
+    "order_qty": 2,
+    "actual_qty": 2,
+    "received": true
+  },
+  {
+    "id": 488,
+    "session_id": "xingnan_2026-02-27",
+    "product_id": "p004",
+    "order_qty": 6,
+    "actual_qty": 6,
+    "received": true
+  },
+  {
+    "id": 489,
+    "session_id": "xingnan_2026-02-27",
+    "product_id": "p005",
+    "order_qty": 2,
+    "actual_qty": 2,
+    "received": true
+  },
+  {
+    "id": 490,
+    "session_id": "xingnan_2026-02-27",
+    "product_id": "p006",
+    "order_qty": 3,
+    "actual_qty": 3,
+    "received": true
+  },
+  {
+    "id": 492,
+    "session_id": "xingnan_2026-02-27",
+    "product_id": "p007",
+    "order_qty": 0.5,
+    "actual_qty": 0.5,
+    "received": true
+  },
+  {
+    "id": 495,
+    "session_id": "xingnan_2026-02-27",
+    "product_id": "p009",
+    "order_qty": 1,
+    "actual_qty": 1,
+    "received": true
+  },
+  {
+    "id": 491,
+    "session_id": "xingnan_2026-02-27",
+    "product_id": "p010",
+    "order_qty": 1.5,
+    "actual_qty": 1.5,
+    "received": true
+  },
+  {
+    "id": 496,
+    "session_id": "xingnan_2026-02-27",
+    "product_id": "p011",
+    "order_qty": 12,
+    "actual_qty": 12,
+    "received": true
+  },
+  {
+    "id": 497,
+    "session_id": "xingnan_2026-02-27",
+    "product_id": "p012",
+    "order_qty": 6,
+    "actual_qty": 6,
+    "received": true
+  },
+  {
+    "id": 498,
+    "session_id": "xingnan_2026-02-27",
+    "product_id": "p014",
+    "order_qty": 1,
+    "actual_qty": 1,
+    "received": true
+  },
+  {
+    "id": 499,
+    "session_id": "xingnan_2026-02-27",
+    "product_id": "p015",
+    "order_qty": 2,
+    "actual_qty": 2,
+    "received": true
+  },
+  {
+    "id": 493,
+    "session_id": "xingnan_2026-02-27",
+    "product_id": "p021",
+    "order_qty": 3,
+    "actual_qty": 3,
+    "received": true
+  },
+  {
+    "id": 494,
+    "session_id": "xingnan_2026-02-27",
+    "product_id": "p022",
+    "order_qty": 1,
+    "actual_qty": 1,
+    "received": true
+  },
+  {
+    "id": 500,
+    "session_id": "xingnan_2026-02-27",
+    "product_id": "p029",
+    "order_qty": 8,
+    "actual_qty": 8,
+    "received": true
+  },
+  {
+    "id": 540,
+    "session_id": "xingnan_2026-02-28",
+    "product_id": "p001",
+    "order_qty": 1,
+    "actual_qty": 1,
+    "received": true
+  },
+  {
+    "id": 539,
+    "session_id": "xingnan_2026-02-28",
+    "product_id": "p003",
+    "order_qty": 2,
+    "actual_qty": 2,
+    "received": true
+  },
+  {
+    "id": 541,
+    "session_id": "xingnan_2026-02-28",
+    "product_id": "p004",
+    "order_qty": 2,
+    "actual_qty": 2,
+    "received": true
+  },
+  {
+    "id": 542,
+    "session_id": "xingnan_2026-02-28",
+    "product_id": "p005",
+    "order_qty": 2.5,
+    "actual_qty": 2.5,
+    "received": true
+  },
+  {
+    "id": 543,
+    "session_id": "xingnan_2026-02-28",
+    "product_id": "p006",
+    "order_qty": 1,
+    "actual_qty": 1,
+    "received": true
+  },
+  {
+    "id": 545,
+    "session_id": "xingnan_2026-02-28",
+    "product_id": "p007",
+    "order_qty": 1,
+    "actual_qty": 1,
+    "received": true
+  },
+  {
+    "id": 548,
+    "session_id": "xingnan_2026-02-28",
+    "product_id": "p009",
+    "order_qty": 0.5,
+    "actual_qty": 0.5,
+    "received": true
+  },
+  {
+    "id": 544,
+    "session_id": "xingnan_2026-02-28",
+    "product_id": "p010",
+    "order_qty": 1.5,
+    "actual_qty": 1.5,
+    "received": true
+  },
+  {
+    "id": 553,
+    "session_id": "xingnan_2026-02-28",
+    "product_id": "p017",
+    "order_qty": 1,
+    "actual_qty": 1,
+    "received": true
+  },
+  {
+    "id": 549,
+    "session_id": "xingnan_2026-02-28",
+    "product_id": "p019",
+    "order_qty": 2,
+    "actual_qty": 2,
+    "received": true
+  },
+  {
+    "id": 550,
+    "session_id": "xingnan_2026-02-28",
+    "product_id": "p020",
+    "order_qty": 2,
+    "actual_qty": 2,
+    "received": true
+  },
+  {
+    "id": 546,
+    "session_id": "xingnan_2026-02-28",
+    "product_id": "p021",
+    "order_qty": 3,
+    "actual_qty": 3,
+    "received": true
+  },
+  {
+    "id": 547,
+    "session_id": "xingnan_2026-02-28",
+    "product_id": "p022",
+    "order_qty": 1,
+    "actual_qty": 1,
+    "received": true
+  },
+  {
+    "id": 551,
+    "session_id": "xingnan_2026-02-28",
+    "product_id": "p023",
+    "order_qty": 4500,
+    "actual_qty": 4500,
+    "received": true
+  },
+  {
+    "id": 552,
+    "session_id": "xingnan_2026-02-28",
+    "product_id": "p029",
+    "order_qty": 8,
+    "actual_qty": 8,
+    "received": true
+  },
+  {
+    "id": 554,
+    "session_id": "xingnan_2026-02-28",
+    "product_id": "p032",
+    "order_qty": 1,
+    "actual_qty": 1,
+    "received": true
+  }
+]

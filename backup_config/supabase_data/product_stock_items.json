@@ -1,0 +1,704 @@
+[
+  {
+    "id": 1,
+    "session_id": "kitchen_products_2026-02-21",
+    "product_id": "p006",
+    "stock_qty": 2.4
+  },
+  {
+    "id": 2,
+    "session_id": "kitchen_products_2026-02-21",
+    "product_id": "p010",
+    "stock_qty": 0.9
+  },
+  {
+    "id": 3,
+    "session_id": "kitchen_products_2026-02-21",
+    "product_id": "p011",
+    "stock_qty": 107.2
+  },
+  {
+    "id": 4,
+    "session_id": "kitchen_products_2026-02-21",
+    "product_id": "p012",
+    "stock_qty": 108.3
+  },
+  {
+    "id": 5,
+    "session_id": "kitchen_products_2026-02-21",
+    "product_id": "p020",
+    "stock_qty": 82
+  },
+  {
+    "id": 6,
+    "session_id": "kitchen_products_2026-02-21",
+    "product_id": "p024",
+    "stock_qty": 5
+  },
+  {
+    "id": 7,
+    "session_id": "kitchen_products_2026-02-21",
+    "product_id": "p025",
+    "stock_qty": 4
+  },
+  {
+    "id": 8,
+    "session_id": "kitchen_products_2026-02-21",
+    "product_id": "p026",
+    "stock_qty": 21
+  },
+  {
+    "id": 9,
+    "session_id": "kitchen_products_2026-02-21",
+    "product_id": "p027",
+    "stock_qty": 15
+  },
+  {
+    "id": 10,
+    "session_id": "kitchen_products_2026-02-21",
+    "product_id": "p028",
+    "stock_qty": 6
+  },
+  {
+    "id": 11,
+    "session_id": "kitchen_products_2026-02-21",
+    "product_id": "p029",
+    "stock_qty": 53.5
+  },
+  {
+    "id": 12,
+    "session_id": "kitchen_products_2026-02-21",
+    "product_id": "p016",
+    "stock_qty": 80
+  },
+  {
+    "id": 13,
+    "session_id": "kitchen_products_2026-02-21",
+    "product_id": "p1771513523503",
+    "stock_qty": null
+  },
+  {
+    "id": 14,
+    "session_id": "kitchen_products_2026-02-21",
+    "product_id": "p1771513573239",
+    "stock_qty": null
+  },
+  {
+    "id": 15,
+    "session_id": "kitchen_products_2026-02-21",
+    "product_id": "p1771513626343",
+    "stock_qty": null
+  },
+  {
+    "id": 16,
+    "session_id": "kitchen_products_2026-02-21",
+    "product_id": "p1771513693518",
+    "stock_qty": null
+  },
+  {
+    "id": 17,
+    "session_id": "kitchen_products_2026-02-21",
+    "product_id": "p1771513729598",
+    "stock_qty": null
+  },
+  {
+    "id": 18,
+    "session_id": "kitchen_products_2026-02-21",
+    "product_id": "p1771513755567",
+    "stock_qty": null
+  },
+  {
+    "id": 19,
+    "session_id": "kitchen_products_2026-02-21",
+    "product_id": "p1771513777998",
+    "stock_qty": null
+  },
+  {
+    "id": 20,
+    "session_id": "kitchen_products_2026-02-21",
+    "product_id": "p1771513802158",
+    "stock_qty": null
+  },
+  {
+    "id": 21,
+    "session_id": "kitchen_products_2026-02-23",
+    "product_id": "p003",
+    "stock_qty": 2
+  },
+  {
+    "id": 22,
+    "session_id": "kitchen_products_2026-02-23",
+    "product_id": "p001",
+    "stock_qty": 3
+  },
+  {
+    "id": 23,
+    "session_id": "kitchen_products_2026-02-23",
+    "product_id": "p004",
+    "stock_qty": 7
+  },
+  {
+    "id": 40,
+    "session_id": "kitchen_products_2026-02-23",
+    "product_id": "p006",
+    "stock_qty": 1.4
+  },
+  {
+    "id": 24,
+    "session_id": "kitchen_products_2026-02-23",
+    "product_id": "p030",
+    "stock_qty": 20
+  },
+  {
+    "id": 25,
+    "session_id": "kitchen_products_2026-02-23",
+    "product_id": "p031",
+    "stock_qty": 15
+  },
+  {
+    "id": 26,
+    "session_id": "kitchen_products_2026-02-23",
+    "product_id": "p011",
+    "stock_qty": 95.2
+  },
+  {
+    "id": 27,
+    "session_id": "kitchen_products_2026-02-23",
+    "product_id": "p012",
+    "stock_qty": 102.3
+  },
+  {
+    "id": 28,
+    "session_id": "kitchen_products_2026-02-23",
+    "product_id": "p013",
+    "stock_qty": 21
+  },
+  {
+    "id": 29,
+    "session_id": "kitchen_products_2026-02-23",
+    "product_id": "p015",
+    "stock_qty": 2.2
+  },
+  {
+    "id": 30,
+    "session_id": "kitchen_products_2026-02-23",
+    "product_id": "p024",
+    "stock_qty": 2
+  },
+  {
+    "id": 31,
+    "session_id": "kitchen_products_2026-02-23",
+    "product_id": "p025",
+    "stock_qty": 3
+  },
+  {
+    "id": 32,
+    "session_id": "kitchen_products_2026-02-23",
+    "product_id": "p026",
+    "stock_qty": 15
+  },
+  {
+    "id": 33,
+    "session_id": "kitchen_products_2026-02-23",
+    "product_id": "p027",
+    "stock_qty": 15
+  },
+  {
+    "id": 34,
+    "session_id": "kitchen_products_2026-02-23",
+    "product_id": "p029",
+    "stock_qty": 39.5
+  },
+  {
+    "id": 35,
+    "session_id": "kitchen_products_2026-02-23",
+    "product_id": "p016",
+    "stock_qty": 8
+  },
+  {
+    "id": 36,
+    "session_id": "kitchen_products_2026-02-23",
+    "product_id": "p032",
+    "stock_qty": 5
+  },
+  {
+    "id": 54,
+    "session_id": "kitchen_products_2026-02-24",
+    "product_id": "p001",
+    "stock_qty": 1
+  },
+  {
+    "id": 55,
+    "session_id": "kitchen_products_2026-02-24",
+    "product_id": "p006",
+    "stock_qty": 0.2
+  },
+  {
+    "id": 56,
+    "session_id": "kitchen_products_2026-02-24",
+    "product_id": "p030",
+    "stock_qty": 20
+  },
+  {
+    "id": 57,
+    "session_id": "kitchen_products_2026-02-24",
+    "product_id": "p031",
+    "stock_qty": 15
+  },
+  {
+    "id": 58,
+    "session_id": "kitchen_products_2026-02-24",
+    "product_id": "p011",
+    "stock_qty": 119.2
+  },
+  {
+    "id": 59,
+    "session_id": "kitchen_products_2026-02-24",
+    "product_id": "p012",
+    "stock_qty": 86.3
+  },
+  {
+    "id": 60,
+    "session_id": "kitchen_products_2026-02-24",
+    "product_id": "p013",
+    "stock_qty": 15
+  },
+  {
+    "id": 61,
+    "session_id": "kitchen_products_2026-02-24",
+    "product_id": "p019",
+    "stock_qty": 12
+  },
+  {
+    "id": 62,
+    "session_id": "kitchen_products_2026-02-24",
+    "product_id": "p020",
+    "stock_qty": 14
+  },
+  {
+    "id": 63,
+    "session_id": "kitchen_products_2026-02-24",
+    "product_id": "p024",
+    "stock_qty": 2
+  },
+  {
+    "id": 64,
+    "session_id": "kitchen_products_2026-02-24",
+    "product_id": "p025",
+    "stock_qty": 3
+  },
+  {
+    "id": 65,
+    "session_id": "kitchen_products_2026-02-24",
+    "product_id": "p026",
+    "stock_qty": 15
+  },
+  {
+    "id": 66,
+    "session_id": "kitchen_products_2026-02-24",
+    "product_id": "p027",
+    "stock_qty": 15
+  },
+  {
+    "id": 67,
+    "session_id": "kitchen_products_2026-02-24",
+    "product_id": "p029",
+    "stock_qty": 82.8
+  },
+  {
+    "id": 68,
+    "session_id": "kitchen_products_2026-02-24",
+    "product_id": "p016",
+    "stock_qty": 8
+  },
+  {
+    "id": 69,
+    "session_id": "kitchen_products_2026-02-24",
+    "product_id": "p032",
+    "stock_qty": 5
+  },
+  {
+    "id": 70,
+    "session_id": "kitchen_products_2026-02-24",
+    "product_id": "p1771513523503",
+    "stock_qty": null
+  },
+  {
+    "id": 71,
+    "session_id": "kitchen_products_2026-02-24",
+    "product_id": "p1771513573239",
+    "stock_qty": null
+  },
+  {
+    "id": 72,
+    "session_id": "kitchen_products_2026-02-24",
+    "product_id": "p1771513626343",
+    "stock_qty": null
+  },
+  {
+    "id": 73,
+    "session_id": "kitchen_products_2026-02-24",
+    "product_id": "p1771513693518",
+    "stock_qty": null
+  },
+  {
+    "id": 74,
+    "session_id": "kitchen_products_2026-02-24",
+    "product_id": "p1771513729598",
+    "stock_qty": null
+  },
+  {
+    "id": 75,
+    "session_id": "kitchen_products_2026-02-24",
+    "product_id": "p1771513755567",
+    "stock_qty": null
+  },
+  {
+    "id": 76,
+    "session_id": "kitchen_products_2026-02-24",
+    "product_id": "p1771513777998",
+    "stock_qty": null
+  },
+  {
+    "id": 77,
+    "session_id": "kitchen_products_2026-02-24",
+    "product_id": "p1771513802158",
+    "stock_qty": null
+  },
+  {
+    "id": 78,
+    "session_id": "kitchen_products_2026-02-24",
+    "product_id": "p1771866613374",
+    "stock_qty": null
+  },
+  {
+    "id": 79,
+    "session_id": "kitchen_products_2026-02-26",
+    "product_id": "p003",
+    "stock_qty": 4
+  },
+  {
+    "id": 80,
+    "session_id": "kitchen_products_2026-02-26",
+    "product_id": "p004",
+    "stock_qty": 7
+  },
+  {
+    "id": 81,
+    "session_id": "kitchen_products_2026-02-26",
+    "product_id": "p006",
+    "stock_qty": 1
+  },
+  {
+    "id": 82,
+    "session_id": "kitchen_products_2026-02-26",
+    "product_id": "p010",
+    "stock_qty": 1.5
+  },
+  {
+    "id": 83,
+    "session_id": "kitchen_products_2026-02-26",
+    "product_id": "p030",
+    "stock_qty": 20
+  },
+  {
+    "id": 84,
+    "session_id": "kitchen_products_2026-02-26",
+    "product_id": "p031",
+    "stock_qty": 0
+  },
+  {
+    "id": 85,
+    "session_id": "kitchen_products_2026-02-26",
+    "product_id": "p011",
+    "stock_qty": 98.3
+  },
+  {
+    "id": 86,
+    "session_id": "kitchen_products_2026-02-26",
+    "product_id": "p012",
+    "stock_qty": 76.3
+  },
+  {
+    "id": 87,
+    "session_id": "kitchen_products_2026-02-26",
+    "product_id": "p013",
+    "stock_qty": 33
+  },
+  {
+    "id": 88,
+    "session_id": "kitchen_products_2026-02-26",
+    "product_id": "p014",
+    "stock_qty": 2
+  },
+  {
+    "id": 89,
+    "session_id": "kitchen_products_2026-02-26",
+    "product_id": "p015",
+    "stock_qty": 2
+  },
+  {
+    "id": 90,
+    "session_id": "kitchen_products_2026-02-26",
+    "product_id": "p019",
+    "stock_qty": 10
+  },
+  {
+    "id": 91,
+    "session_id": "kitchen_products_2026-02-26",
+    "product_id": "p020",
+    "stock_qty": 12
+  },
+  {
+    "id": 92,
+    "session_id": "kitchen_products_2026-02-26",
+    "product_id": "p024",
+    "stock_qty": 2
+  },
+  {
+    "id": 93,
+    "session_id": "kitchen_products_2026-02-26",
+    "product_id": "p025",
+    "stock_qty": 3
+  },
+  {
+    "id": 94,
+    "session_id": "kitchen_products_2026-02-26",
+    "product_id": "p026",
+    "stock_qty": 15
+  },
+  {
+    "id": 95,
+    "session_id": "kitchen_products_2026-02-26",
+    "product_id": "p027",
+    "stock_qty": 15
+  },
+  {
+    "id": 96,
+    "session_id": "kitchen_products_2026-02-26",
+    "product_id": "p028",
+    "stock_qty": 0
+  },
+  {
+    "id": 97,
+    "session_id": "kitchen_products_2026-02-26",
+    "product_id": "p029",
+    "stock_qty": 129
+  },
+  {
+    "id": 98,
+    "session_id": "kitchen_products_2026-02-26",
+    "product_id": "p017",
+    "stock_qty": 15
+  },
+  {
+    "id": 99,
+    "session_id": "kitchen_products_2026-02-26",
+    "product_id": "p016",
+    "stock_qty": 200
+  },
+  {
+    "id": 100,
+    "session_id": "kitchen_products_2026-02-26",
+    "product_id": "p032",
+    "stock_qty": 5
+  },
+  {
+    "id": 101,
+    "session_id": "kitchen_products_2026-02-26",
+    "product_id": "p1772086986908",
+    "stock_qty": null
+  },
+  {
+    "id": 353,
+    "session_id": "kitchen_products_2026-02-28",
+    "product_id": "p030",
+    "stock_qty": 20
+  },
+  {
+    "id": 354,
+    "session_id": "kitchen_products_2026-02-28",
+    "product_id": "p011",
+    "stock_qty": 118.7
+  },
+  {
+    "id": 355,
+    "session_id": "kitchen_products_2026-02-28",
+    "product_id": "p012",
+    "stock_qty": 57.3
+  },
+  {
+    "id": 356,
+    "session_id": "kitchen_products_2026-02-28",
+    "product_id": "p013",
+    "stock_qty": 21
+  },
+  {
+    "id": 357,
+    "session_id": "kitchen_products_2026-02-28",
+    "product_id": "p019",
+    "stock_qty": 4
+  },
+  {
+    "id": 358,
+    "session_id": "kitchen_products_2026-02-28",
+    "product_id": "p020",
+    "stock_qty": 4
+  },
+  {
+    "id": 359,
+    "session_id": "kitchen_products_2026-02-28",
+    "product_id": "p024",
+    "stock_qty": 5
+  },
+  {
+    "id": 360,
+    "session_id": "kitchen_products_2026-02-28",
+    "product_id": "p025",
+    "stock_qty": 2
+  },
+  {
+    "id": 361,
+    "session_id": "kitchen_products_2026-02-28",
+    "product_id": "p026",
+    "stock_qty": 24
+  },
+  {
+    "id": 362,
+    "session_id": "kitchen_products_2026-02-28",
+    "product_id": "p027",
+    "stock_qty": 15
+  },
+  {
+    "id": 363,
+    "session_id": "kitchen_products_2026-02-28",
+    "product_id": "p028",
+    "stock_qty": 15
+  },
+  {
+    "id": 364,
+    "session_id": "kitchen_products_2026-02-28",
+    "product_id": "p029",
+    "stock_qty": 118.1
+  },
+  {
+    "id": 365,
+    "session_id": "kitchen_products_2026-02-28",
+    "product_id": "p017",
+    "stock_qty": 7
+  },
+  {
+    "id": 366,
+    "session_id": "kitchen_products_2026-02-28",
+    "product_id": "p016",
+    "stock_qty": 200
+  },
+  {
+    "id": 367,
+    "session_id": "kitchen_products_2026-02-28",
+    "product_id": "p032",
+    "stock_qty": 2
+  },
+  {
+    "id": 368,
+    "session_id": "kitchen_products_2026-02-28",
+    "product_id": "p1772086986908",
+    "stock_qty": null
+  },
+  {
+    "id": 319,
+    "session_id": "kitchen_products_2026-02-27",
+    "product_id": "p001",
+    "stock_qty": 2
+  },
+  {
+    "id": 320,
+    "session_id": "kitchen_products_2026-02-27",
+    "product_id": "p004",
+    "stock_qty": 9
+  },
+  {
+    "id": 321,
+    "session_id": "kitchen_products_2026-02-27",
+    "product_id": "p030",
+    "stock_qty": 20
+  },
+  {
+    "id": 322,
+    "session_id": "kitchen_products_2026-02-27",
+    "product_id": "p011",
+    "stock_qty": 143.7
+  },
+  {
+    "id": 323,
+    "session_id": "kitchen_products_2026-02-27",
+    "product_id": "p012",
+    "stock_qty": 70.3
+  },
+  {
+    "id": 324,
+    "session_id": "kitchen_products_2026-02-27",
+    "product_id": "p013",
+    "stock_qty": 33
+  },
+  {
+    "id": 325,
+    "session_id": "kitchen_products_2026-02-27",
+    "product_id": "p019",
+    "stock_qty": 10
+  },
+  {
+    "id": 326,
+    "session_id": "kitchen_products_2026-02-27",
+    "product_id": "p020",
+    "stock_qty": 10
+  },
+  {
+    "id": 327,
+    "session_id": "kitchen_products_2026-02-27",
+    "product_id": "p024",
+    "stock_qty": 7
+  },
+  {
+    "id": 328,
+    "session_id": "kitchen_products_2026-02-27",
+    "product_id": "p025",
+    "stock_qty": 3
+  },
+  {
+    "id": 329,
+    "session_id": "kitchen_products_2026-02-27",
+    "product_id": "p026",
+    "stock_qty": 24
+  },
+  {
+    "id": 330,
+    "session_id": "kitchen_products_2026-02-27",
+    "product_id": "p027",
+    "stock_qty": 15
+  },
+  {
+    "id": 331,
+    "session_id": "kitchen_products_2026-02-27",
+    "product_id": "p028",
+    "stock_qty": 15
+  },
+  {
+    "id": 332,
+    "session_id": "kitchen_products_2026-02-27",
+    "product_id": "p029",
+    "stock_qty": 138.1
+  },
+  {
+    "id": 333,
+    "session_id": "kitchen_products_2026-02-27",
+    "product_id": "p017",
+    "stock_qty": 11
+  },
+  {
+    "id": 334,
+    "session_id": "kitchen_products_2026-02-27",
+    "product_id": "p032",
+    "stock_qty": 5
+  }
+]

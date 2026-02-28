@@ -1,0 +1,172 @@
+[
+  {
+    "id": "b5983db5-8efe-4dad-b088-0d7d44861e24",
+    "store_id": "xingnan",
+    "date": "2026-02-01",
+    "item_name": "拜拜",
+    "amount": 673,
+    "note": "4434",
+    "submitted_by": "staff_1771511813600",
+    "created_at": "2026-02-23T09:17:58.291101+00:00"
+  },
+  {
+    "id": "e50b2dc4-4fc7-45eb-8518-78b56cc65dea",
+    "store_id": "xingnan",
+    "date": "2026-02-01",
+    "item_name": "夜市清潔費",
+    "amount": 1000,
+    "note": "3434",
+    "submitted_by": "staff_1771511813600",
+    "created_at": "2026-02-23T09:25:04.209877+00:00"
+  },
+  {
+    "id": "ab3e736f-d054-420b-9896-55c2e066dfad",
+    "store_id": "xingnan",
+    "date": "2026-02-05",
+    "item_name": "影印",
+    "amount": 20,
+    "note": "2714",
+    "submitted_by": "staff_1771511813600",
+    "created_at": "2026-02-23T09:27:45.87802+00:00"
+  },
+  {
+    "id": "366cb468-8305-4299-ad06-543e57986f4d",
+    "store_id": "xingnan",
+    "date": "2026-02-05",
+    "item_name": "影印",
+    "amount": 10,
+    "note": "2704",
+    "submitted_by": "staff_1771511813600",
+    "created_at": "2026-02-23T09:28:30.718537+00:00"
+  },
+  {
+    "id": "98b33fec-211f-403d-aa9b-e0fa467f6ad6",
+    "store_id": "xingnan",
+    "date": "2026-02-20",
+    "item_name": "鮮奶2 瓶",
+    "amount": 179,
+    "note": "2525",
+    "submitted_by": "staff_1771511813600",
+    "created_at": "2026-02-23T09:29:39.336442+00:00"
+  },
+  {
+    "id": "9cd20c50-8318-434f-90e6-c6592986728d",
+    "store_id": "xingnan",
+    "date": "2026-02-22",
+    "item_name": "開工貢品",
+    "amount": 236,
+    "note": "2289",
+    "submitted_by": "staff_1771511813600",
+    "created_at": "2026-02-23T09:33:01.736565+00:00"
+  },
+  {
+    "id": "c55b7bca-bc56-4bae-aea0-324b82fdfd13",
+    "store_id": "xingnan",
+    "date": "2026-02-22",
+    "item_name": "開工水果",
+    "amount": 288,
+    "note": "2001",
+    "submitted_by": "staff_1771511813600",
+    "created_at": "2026-02-23T09:34:31.177078+00:00"
+  },
+  {
+    "id": "6285bba7-f54f-4e26-be50-e57253b501ea",
+    "store_id": "xingnan",
+    "date": "2026-02-22",
+    "item_name": "鮮奶2 瓶",
+    "amount": 179,
+    "note": "1822",
+    "submitted_by": "staff_1771511813600",
+    "created_at": "2026-02-23T09:35:25.030965+00:00"
+  },
+  {
+    "id": "efe11b6a-28ec-4ec0-b1e5-bc82d2baf871",
+    "store_id": "xingnan",
+    "date": "2026-02-04",
+    "item_name": "生活用品",
+    "amount": 700,
+    "note": "2734",
+    "submitted_by": "staff_1771511813600",
+    "created_at": "2026-02-23T09:38:04.572113+00:00"
+  },
+  {
+    "id": "05a66d19-eaab-42ba-bcb7-9706100a3c7b",
+    "store_id": "kitchen",
+    "date": "2026-02-24",
+    "item_name": "貨車加油",
+    "amount": 5000,
+    "note": "",
+    "submitted_by": "k2",
+    "created_at": "2026-02-28T06:05:57.193682+00:00"
+  },
+  {
+    "id": "8276d435-c5ab-4d47-ac70-16040141675c",
+    "store_id": "kitchen",
+    "date": "2026-02-06",
+    "item_name": "檸檬、布丁",
+    "amount": 264,
+    "note": "",
+    "submitted_by": "k2",
+    "created_at": "2026-02-28T06:06:42.744572+00:00"
+  },
+  {
+    "id": "1c03ecf0-8f0c-4714-911f-dcbbe96109fd",
+    "store_id": "kitchen",
+    "date": "2026-02-09",
+    "item_name": "咖啡膠囊",
+    "amount": 2524,
+    "note": "",
+    "submitted_by": "k2",
+    "created_at": "2026-02-28T06:07:03.581119+00:00"
+  },
+  {
+    "id": "b4fab684-ef24-44d9-96c0-9968b64f8cab",
+    "store_id": "kitchen",
+    "date": "2026-02-09",
+    "item_name": "鏡子",
+    "amount": 576,
+    "note": "",
+    "submitted_by": "k2",
+    "created_at": "2026-02-28T06:07:15.444915+00:00"
+  },
+  {
+    "id": "57f11adc-ee08-497a-ab55-81b3920061af",
+    "store_id": "kitchen",
+    "date": "2026-02-05",
+    "item_name": "運費",
+    "amount": 67,
+    "note": "",
+    "submitted_by": "k2",
+    "created_at": "2026-02-28T06:07:32.513309+00:00"
+  },
+  {
+    "id": "ec34fdea-e184-4cb2-ac53-e14dae2593c2",
+    "store_id": "kitchen",
+    "date": "2026-02-12",
+    "item_name": "Ok蹦",
+    "amount": 79,
+    "note": "",
+    "submitted_by": "k2",
+    "created_at": "2026-02-28T06:07:58.12007+00:00"
+  },
+  {
+    "id": "8d373e8d-52bf-4c15-9b0d-122524d33b3b",
+    "store_id": "kitchen",
+    "date": "2026-02-13",
+    "item_name": "地基主",
+    "amount": 1051,
+    "note": "",
+    "submitted_by": "k2",
+    "created_at": "2026-02-28T06:08:18.854003+00:00"
+  },
+  {
+    "id": "a6f66b9d-ee14-4c84-bb70-d0f99c4f5a75",
+    "store_id": "kitchen",
+    "date": "2026-02-24",
+    "item_name": "運費",
+    "amount": 150,
+    "note": "",
+    "submitted_by": "k2",
+    "created_at": "2026-02-28T06:08:40.342841+00:00"
+  }
+]

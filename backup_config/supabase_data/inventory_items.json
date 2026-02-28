@@ -1,0 +1,4938 @@
+[
+  {
+    "id": 1269,
+    "session_id": "xingnan_2026-02-24_1f",
+    "product_id": "p003",
+    "on_shelf": 0.7,
+    "stock": 2,
+    "discarded": null
+  },
+  {
+    "id": 1270,
+    "session_id": "xingnan_2026-02-24_1f",
+    "product_id": "p001",
+    "on_shelf": 0,
+    "stock": 2,
+    "discarded": 0.3
+  },
+  {
+    "id": 1271,
+    "session_id": "xingnan_2026-02-24_1f",
+    "product_id": "p002",
+    "on_shelf": null,
+    "stock": 2,
+    "discarded": 0.3
+  },
+  {
+    "id": 1272,
+    "session_id": "xingnan_2026-02-24_1f",
+    "product_id": "p004",
+    "on_shelf": 0.1,
+    "stock": 6,
+    "discarded": null
+  },
+  {
+    "id": 1273,
+    "session_id": "xingnan_2026-02-24_1f",
+    "product_id": "p005",
+    "on_shelf": 0.5,
+    "stock": 1,
+    "discarded": null
+  },
+  {
+    "id": 1274,
+    "session_id": "xingnan_2026-02-24_1f",
+    "product_id": "p006",
+    "on_shelf": 0.8,
+    "stock": 2,
+    "discarded": null
+  },
+  {
+    "id": 1275,
+    "session_id": "xingnan_2026-02-24_1f",
+    "product_id": "p010",
+    "on_shelf": 0.2,
+    "stock": 1,
+    "discarded": null
+  },
+  {
+    "id": 1276,
+    "session_id": "xingnan_2026-02-24_1f",
+    "product_id": "p007",
+    "on_shelf": 0.2,
+    "stock": 0.5,
+    "discarded": null
+  },
+  {
+    "id": 1277,
+    "session_id": "xingnan_2026-02-24_1f",
+    "product_id": "p021",
+    "on_shelf": 0.2,
+    "stock": 3,
+    "discarded": null
+  },
+  {
+    "id": 1278,
+    "session_id": "xingnan_2026-02-24_1f",
+    "product_id": "p022",
+    "on_shelf": null,
+    "stock": null,
+    "discarded": 0.2
+  },
+  {
+    "id": 1279,
+    "session_id": "xingnan_2026-02-24_1f",
+    "product_id": "p030",
+    "on_shelf": null,
+    "stock": 7,
+    "discarded": null
+  },
+  {
+    "id": 1280,
+    "session_id": "xingnan_2026-02-24_1f",
+    "product_id": "p031",
+    "on_shelf": null,
+    "stock": 4,
+    "discarded": null
+  },
+  {
+    "id": 1281,
+    "session_id": "xingnan_2026-02-24_1f",
+    "product_id": "p008",
+    "on_shelf": null,
+    "stock": null,
+    "discarded": 0.4
+  },
+  {
+    "id": 1282,
+    "session_id": "xingnan_2026-02-24_1f",
+    "product_id": "p009",
+    "on_shelf": 0.2,
+    "stock": 0.5,
+    "discarded": null
+  },
+  {
+    "id": 1283,
+    "session_id": "xingnan_2026-02-24_1f",
+    "product_id": "p011",
+    "on_shelf": 12.2,
+    "stock": 17,
+    "discarded": null
+  },
+  {
+    "id": 1284,
+    "session_id": "xingnan_2026-02-24_1f",
+    "product_id": "p012",
+    "on_shelf": 8.8,
+    "stock": 5,
+    "discarded": null
+  },
+  {
+    "id": 1285,
+    "session_id": "xingnan_2026-02-24_1f",
+    "product_id": "p014",
+    "on_shelf": 0.8,
+    "stock": 0,
+    "discarded": null
+  },
+  {
+    "id": 1286,
+    "session_id": "xingnan_2026-02-24_1f",
+    "product_id": "p015",
+    "on_shelf": 0.9,
+    "stock": 1,
+    "discarded": null
+  },
+  {
+    "id": 1287,
+    "session_id": "xingnan_2026-02-24_1f",
+    "product_id": "p019",
+    "on_shelf": 0.8,
+    "stock": 2,
+    "discarded": null
+  },
+  {
+    "id": 1288,
+    "session_id": "xingnan_2026-02-24_1f",
+    "product_id": "p020",
+    "on_shelf": 0,
+    "stock": 2,
+    "discarded": null
+  },
+  {
+    "id": 1289,
+    "session_id": "xingnan_2026-02-24_1f",
+    "product_id": "p023",
+    "on_shelf": 0.1,
+    "stock": null,
+    "discarded": null
+  },
+  {
+    "id": 1290,
+    "session_id": "xingnan_2026-02-24_1f",
+    "product_id": "p024",
+    "on_shelf": 0.6,
+    "stock": 1,
+    "discarded": null
+  },
+  {
+    "id": 1291,
+    "session_id": "xingnan_2026-02-24_1f",
+    "product_id": "p025",
+    "on_shelf": 0.7,
+    "stock": 1,
+    "discarded": null
+  },
+  {
+    "id": 1292,
+    "session_id": "xingnan_2026-02-24_1f",
+    "product_id": "p026",
+    "on_shelf": null,
+    "stock": 5,
+    "discarded": null
+  },
+  {
+    "id": 1293,
+    "session_id": "xingnan_2026-02-24_1f",
+    "product_id": "p027",
+    "on_shelf": null,
+    "stock": 5,
+    "discarded": null
+  },
+  {
+    "id": 1294,
+    "session_id": "xingnan_2026-02-24_1f",
+    "product_id": "p028",
+    "on_shelf": null,
+    "stock": 5,
+    "discarded": null
+  },
+  {
+    "id": 1295,
+    "session_id": "xingnan_2026-02-24_1f",
+    "product_id": "p029",
+    "on_shelf": 0.8,
+    "stock": 15,
+    "discarded": null
+  },
+  {
+    "id": 1296,
+    "session_id": "xingnan_2026-02-24_1f",
+    "product_id": "p016",
+    "on_shelf": null,
+    "stock": 58,
+    "discarded": null
+  },
+  {
+    "id": 1297,
+    "session_id": "xingnan_2026-02-24_1f",
+    "product_id": "p017",
+    "on_shelf": 0.9,
+    "stock": null,
+    "discarded": null
+  },
+  {
+    "id": 1298,
+    "session_id": "xingnan_2026-02-24_1f",
+    "product_id": "p032",
+    "on_shelf": null,
+    "stock": 2,
+    "discarded": null
+  },
+  {
+    "id": 56,
+    "session_id": "xingnan_2026-02-19",
+    "product_id": "p001",
+    "on_shelf": null,
+    "stock": 2,
+    "discarded": null
+  },
+  {
+    "id": 57,
+    "session_id": "xingnan_2026-02-19",
+    "product_id": "p002",
+    "on_shelf": null,
+    "stock": 1,
+    "discarded": null
+  },
+  {
+    "id": 58,
+    "session_id": "xingnan_2026-02-19",
+    "product_id": "p003",
+    "on_shelf": null,
+    "stock": 1,
+    "discarded": null
+  },
+  {
+    "id": 59,
+    "session_id": "xingnan_2026-02-19",
+    "product_id": "p004",
+    "on_shelf": null,
+    "stock": 2,
+    "discarded": 1
+  },
+  {
+    "id": 60,
+    "session_id": "xingnan_2026-02-19",
+    "product_id": "p005",
+    "on_shelf": null,
+    "stock": 3,
+    "discarded": 0.3
+  },
+  {
+    "id": 61,
+    "session_id": "xingnan_2026-02-19",
+    "product_id": "p006",
+    "on_shelf": null,
+    "stock": 3,
+    "discarded": 0.2
+  },
+  {
+    "id": 62,
+    "session_id": "xingnan_2026-02-19",
+    "product_id": "p010",
+    "on_shelf": null,
+    "stock": 1,
+    "discarded": null
+  },
+  {
+    "id": 63,
+    "session_id": "xingnan_2026-02-19",
+    "product_id": "p007",
+    "on_shelf": null,
+    "stock": 1,
+    "discarded": 0.1
+  },
+  {
+    "id": 64,
+    "session_id": "xingnan_2026-02-19",
+    "product_id": "p021",
+    "on_shelf": null,
+    "stock": 3,
+    "discarded": 0.1
+  },
+  {
+    "id": 65,
+    "session_id": "xingnan_2026-02-19",
+    "product_id": "p022",
+    "on_shelf": null,
+    "stock": null,
+    "discarded": 0.3
+  },
+  {
+    "id": 66,
+    "session_id": "xingnan_2026-02-19",
+    "product_id": "p030",
+    "on_shelf": null,
+    "stock": 2,
+    "discarded": null
+  },
+  {
+    "id": 67,
+    "session_id": "xingnan_2026-02-19",
+    "product_id": "p031",
+    "on_shelf": null,
+    "stock": 3,
+    "discarded": null
+  },
+  {
+    "id": 68,
+    "session_id": "xingnan_2026-02-19",
+    "product_id": "p033",
+    "on_shelf": null,
+    "stock": 3,
+    "discarded": null
+  },
+  {
+    "id": 69,
+    "session_id": "xingnan_2026-02-19",
+    "product_id": "p009",
+    "on_shelf": null,
+    "stock": 1,
+    "discarded": null
+  },
+  {
+    "id": 70,
+    "session_id": "xingnan_2026-02-19",
+    "product_id": "p035",
+    "on_shelf": null,
+    "stock": 0.5,
+    "discarded": null
+  },
+  {
+    "id": 71,
+    "session_id": "xingnan_2026-02-19",
+    "product_id": "p011",
+    "on_shelf": null,
+    "stock": 10,
+    "discarded": null
+  },
+  {
+    "id": 72,
+    "session_id": "xingnan_2026-02-19",
+    "product_id": "p012",
+    "on_shelf": null,
+    "stock": 10,
+    "discarded": null
+  },
+  {
+    "id": 73,
+    "session_id": "xingnan_2026-02-19",
+    "product_id": "p013",
+    "on_shelf": null,
+    "stock": 3,
+    "discarded": null
+  },
+  {
+    "id": 74,
+    "session_id": "xingnan_2026-02-19",
+    "product_id": "p014",
+    "on_shelf": null,
+    "stock": 1,
+    "discarded": null
+  },
+  {
+    "id": 75,
+    "session_id": "xingnan_2026-02-19",
+    "product_id": "p015",
+    "on_shelf": null,
+    "stock": 2,
+    "discarded": null
+  },
+  {
+    "id": 76,
+    "session_id": "xingnan_2026-02-19",
+    "product_id": "p019",
+    "on_shelf": null,
+    "stock": 2,
+    "discarded": null
+  },
+  {
+    "id": 77,
+    "session_id": "xingnan_2026-02-19",
+    "product_id": "p020",
+    "on_shelf": null,
+    "stock": 2,
+    "discarded": null
+  },
+  {
+    "id": 78,
+    "session_id": "xingnan_2026-02-19",
+    "product_id": "p023",
+    "on_shelf": null,
+    "stock": 1,
+    "discarded": null
+  },
+  {
+    "id": 79,
+    "session_id": "xingnan_2026-02-19",
+    "product_id": "p024",
+    "on_shelf": null,
+    "stock": 2,
+    "discarded": null
+  },
+  {
+    "id": 80,
+    "session_id": "xingnan_2026-02-19",
+    "product_id": "p025",
+    "on_shelf": null,
+    "stock": 1,
+    "discarded": null
+  },
+  {
+    "id": 81,
+    "session_id": "xingnan_2026-02-19",
+    "product_id": "p026",
+    "on_shelf": null,
+    "stock": 1,
+    "discarded": null
+  },
+  {
+    "id": 82,
+    "session_id": "xingnan_2026-02-19",
+    "product_id": "p027",
+    "on_shelf": null,
+    "stock": 2,
+    "discarded": null
+  },
+  {
+    "id": 83,
+    "session_id": "xingnan_2026-02-19",
+    "product_id": "p028",
+    "on_shelf": null,
+    "stock": 1,
+    "discarded": null
+  },
+  {
+    "id": 84,
+    "session_id": "xingnan_2026-02-19",
+    "product_id": "p029",
+    "on_shelf": null,
+    "stock": 5,
+    "discarded": null
+  },
+  {
+    "id": 85,
+    "session_id": "xingnan_2026-02-19",
+    "product_id": "p016",
+    "on_shelf": null,
+    "stock": 1,
+    "discarded": null
+  },
+  {
+    "id": 86,
+    "session_id": "xingnan_2026-02-19",
+    "product_id": "p017",
+    "on_shelf": null,
+    "stock": 2,
+    "discarded": null
+  },
+  {
+    "id": 1,
+    "session_id": "lehua_2026-02-19_1f",
+    "product_id": "p001",
+    "on_shelf": 2,
+    "stock": 2,
+    "discarded": 1
+  },
+  {
+    "id": 2,
+    "session_id": "lehua_2026-02-19_1f",
+    "product_id": "p002",
+    "on_shelf": 0,
+    "stock": 7,
+    "discarded": 1
+  },
+  {
+    "id": 3,
+    "session_id": "lehua_2026-02-19_1f",
+    "product_id": "p003",
+    "on_shelf": 0,
+    "stock": 6,
+    "discarded": 1
+  },
+  {
+    "id": 7,
+    "session_id": "lehua_2026-02-19_1f",
+    "product_id": "p004",
+    "on_shelf": 0,
+    "stock": 2,
+    "discarded": 1
+  },
+  {
+    "id": 8,
+    "session_id": "lehua_2026-02-19_1f",
+    "product_id": "p005",
+    "on_shelf": 5,
+    "stock": 2,
+    "discarded": 1.5
+  },
+  {
+    "id": 9,
+    "session_id": "lehua_2026-02-19_1f",
+    "product_id": "p006",
+    "on_shelf": 2,
+    "stock": 2,
+    "discarded": null
+  },
+  {
+    "id": 22,
+    "session_id": "lehua_2026-02-19_1f",
+    "product_id": "p010",
+    "on_shelf": 2,
+    "stock": 5,
+    "discarded": null
+  },
+  {
+    "id": 23,
+    "session_id": "lehua_2026-02-19_1f",
+    "product_id": "p007",
+    "on_shelf": 6,
+    "stock": 2,
+    "discarded": null
+  },
+  {
+    "id": 24,
+    "session_id": "lehua_2026-02-19_1f",
+    "product_id": "p021",
+    "on_shelf": null,
+    "stock": 1,
+    "discarded": 3
+  },
+  {
+    "id": 25,
+    "session_id": "lehua_2026-02-19_1f",
+    "product_id": "p022",
+    "on_shelf": null,
+    "stock": 2,
+    "discarded": null
+  },
+  {
+    "id": 1299,
+    "session_id": "xingnan_2026-02-24_1f",
+    "product_id": "p1771513573239",
+    "on_shelf": null,
+    "stock": 2,
+    "discarded": null
+  },
+  {
+    "id": 1300,
+    "session_id": "xingnan_2026-02-24_1f",
+    "product_id": "p1771513626343",
+    "on_shelf": null,
+    "stock": 3,
+    "discarded": null
+  },
+  {
+    "id": 142,
+    "session_id": "xingnan_2026-02-20",
+    "product_id": "p003",
+    "on_shelf": 0,
+    "stock": 0,
+    "discarded": 0.4
+  },
+  {
+    "id": 143,
+    "session_id": "xingnan_2026-02-20",
+    "product_id": "p001",
+    "on_shelf": 0,
+    "stock": 0,
+    "discarded": 0
+  },
+  {
+    "id": 144,
+    "session_id": "xingnan_2026-02-20",
+    "product_id": "p002",
+    "on_shelf": 0,
+    "stock": 0,
+    "discarded": 0.8
+  },
+  {
+    "id": 145,
+    "session_id": "xingnan_2026-02-20",
+    "product_id": "p004",
+    "on_shelf": 0,
+    "stock": 0,
+    "discarded": 1.1
+  },
+  {
+    "id": 146,
+    "session_id": "xingnan_2026-02-20",
+    "product_id": "p005",
+    "on_shelf": null,
+    "stock": null,
+    "discarded": 0.4
+  },
+  {
+    "id": 147,
+    "session_id": "xingnan_2026-02-20",
+    "product_id": "p010",
+    "on_shelf": null,
+    "stock": null,
+    "discarded": 0.2
+  },
+  {
+    "id": 148,
+    "session_id": "xingnan_2026-02-20",
+    "product_id": "p007",
+    "on_shelf": null,
+    "stock": null,
+    "discarded": 0.2
+  },
+  {
+    "id": 149,
+    "session_id": "xingnan_2026-02-20",
+    "product_id": "p021",
+    "on_shelf": null,
+    "stock": null,
+    "discarded": 0.3
+  },
+  {
+    "id": 165,
+    "session_id": "xingnan_2026-02-20",
+    "product_id": "p009",
+    "on_shelf": null,
+    "stock": null,
+    "discarded": 0.1
+  },
+  {
+    "id": 150,
+    "session_id": "xingnan_2026-02-20",
+    "product_id": "p011",
+    "on_shelf": 12,
+    "stock": 10,
+    "discarded": null
+  },
+  {
+    "id": 151,
+    "session_id": "xingnan_2026-02-20",
+    "product_id": "p012",
+    "on_shelf": 8.9,
+    "stock": 6,
+    "discarded": null
+  },
+  {
+    "id": 152,
+    "session_id": "xingnan_2026-02-20",
+    "product_id": "p015",
+    "on_shelf": null,
+    "stock": 1,
+    "discarded": 0.4
+  },
+  {
+    "id": 153,
+    "session_id": "xingnan_2026-02-20",
+    "product_id": "p019",
+    "on_shelf": null,
+    "stock": 2,
+    "discarded": 0.4
+  },
+  {
+    "id": 154,
+    "session_id": "xingnan_2026-02-20",
+    "product_id": "p020",
+    "on_shelf": null,
+    "stock": null,
+    "discarded": 0.7
+  },
+  {
+    "id": 171,
+    "session_id": "xingnan_2026-02-20",
+    "product_id": "p017",
+    "on_shelf": null,
+    "stock": null,
+    "discarded": 1.1
+  },
+  {
+    "id": 116,
+    "session_id": "lehua_2026-02-20_2f",
+    "product_id": "p007",
+    "on_shelf": 0,
+    "stock": 0,
+    "discarded": 0
+  },
+  {
+    "id": 117,
+    "session_id": "lehua_2026-02-20_2f",
+    "product_id": "p021",
+    "on_shelf": 0,
+    "stock": 0,
+    "discarded": 0
+  },
+  {
+    "id": 118,
+    "session_id": "lehua_2026-02-20_2f",
+    "product_id": "p030",
+    "on_shelf": 0,
+    "stock": 7,
+    "discarded": 0
+  },
+  {
+    "id": 119,
+    "session_id": "lehua_2026-02-20_2f",
+    "product_id": "p031",
+    "on_shelf": 0,
+    "stock": 6,
+    "discarded": 0
+  },
+  {
+    "id": 120,
+    "session_id": "lehua_2026-02-20_2f",
+    "product_id": "p033",
+    "on_shelf": 0,
+    "stock": 0,
+    "discarded": 0
+  },
+  {
+    "id": 121,
+    "session_id": "lehua_2026-02-20_2f",
+    "product_id": "p034",
+    "on_shelf": 0,
+    "stock": 0,
+    "discarded": 0
+  },
+  {
+    "id": 122,
+    "session_id": "lehua_2026-02-20_2f",
+    "product_id": "p009",
+    "on_shelf": 0,
+    "stock": 0,
+    "discarded": 0
+  },
+  {
+    "id": 123,
+    "session_id": "lehua_2026-02-20_2f",
+    "product_id": "p035",
+    "on_shelf": 0,
+    "stock": 0,
+    "discarded": 0
+  },
+  {
+    "id": 124,
+    "session_id": "lehua_2026-02-20_2f",
+    "product_id": "p011",
+    "on_shelf": 0,
+    "stock": 17,
+    "discarded": 0
+  },
+  {
+    "id": 125,
+    "session_id": "lehua_2026-02-20_2f",
+    "product_id": "p012",
+    "on_shelf": 0,
+    "stock": 17.5,
+    "discarded": 0
+  },
+  {
+    "id": 126,
+    "session_id": "lehua_2026-02-20_2f",
+    "product_id": "p014",
+    "on_shelf": 0,
+    "stock": 1.8,
+    "discarded": 0
+  },
+  {
+    "id": 127,
+    "session_id": "lehua_2026-02-20_2f",
+    "product_id": "p015",
+    "on_shelf": 0,
+    "stock": 0.7,
+    "discarded": 0
+  },
+  {
+    "id": 128,
+    "session_id": "lehua_2026-02-20_2f",
+    "product_id": "p023",
+    "on_shelf": 0,
+    "stock": 0,
+    "discarded": 0
+  },
+  {
+    "id": 129,
+    "session_id": "lehua_2026-02-20_2f",
+    "product_id": "p024",
+    "on_shelf": 0,
+    "stock": 0,
+    "discarded": 0
+  },
+  {
+    "id": 130,
+    "session_id": "lehua_2026-02-20_2f",
+    "product_id": "p025",
+    "on_shelf": 0,
+    "stock": 0,
+    "discarded": 0
+  },
+  {
+    "id": 919,
+    "session_id": "lehua_2026-02-23_1f",
+    "product_id": "p003",
+    "on_shelf": null,
+    "stock": 2,
+    "discarded": null
+  },
+  {
+    "id": 920,
+    "session_id": "lehua_2026-02-23_1f",
+    "product_id": "p001",
+    "on_shelf": null,
+    "stock": 1,
+    "discarded": null
+  },
+  {
+    "id": 921,
+    "session_id": "lehua_2026-02-23_1f",
+    "product_id": "p002",
+    "on_shelf": 1,
+    "stock": 3,
+    "discarded": null
+  },
+  {
+    "id": 922,
+    "session_id": "lehua_2026-02-23_1f",
+    "product_id": "p004",
+    "on_shelf": null,
+    "stock": 4.2,
+    "discarded": null
+  },
+  {
+    "id": 923,
+    "session_id": "lehua_2026-02-23_1f",
+    "product_id": "p005",
+    "on_shelf": null,
+    "stock": null,
+    "discarded": 1.3
+  },
+  {
+    "id": 155,
+    "session_id": "xingnan_2026-02-20",
+    "product_id": "p1771513573239",
+    "on_shelf": 0,
+    "stock": 8,
+    "discarded": null
+  },
+  {
+    "id": 156,
+    "session_id": "xingnan_2026-02-20",
+    "product_id": "p1771513626343",
+    "on_shelf": null,
+    "stock": 3.1,
+    "discarded": null
+  },
+  {
+    "id": 856,
+    "session_id": "xingnan_2026-02-22_1f",
+    "product_id": "p001",
+    "on_shelf": 0.3,
+    "stock": null,
+    "discarded": null
+  },
+  {
+    "id": 857,
+    "session_id": "xingnan_2026-02-22_1f",
+    "product_id": "p004",
+    "on_shelf": 0.6,
+    "stock": null,
+    "discarded": null
+  },
+  {
+    "id": 858,
+    "session_id": "xingnan_2026-02-22_1f",
+    "product_id": "p005",
+    "on_shelf": null,
+    "stock": 1,
+    "discarded": null
+  },
+  {
+    "id": 859,
+    "session_id": "xingnan_2026-02-22_1f",
+    "product_id": "p006",
+    "on_shelf": 0.4,
+    "stock": 1,
+    "discarded": null
+  },
+  {
+    "id": 860,
+    "session_id": "xingnan_2026-02-22_1f",
+    "product_id": "p010",
+    "on_shelf": 0.4,
+    "stock": null,
+    "discarded": null
+  },
+  {
+    "id": 861,
+    "session_id": "xingnan_2026-02-22_1f",
+    "product_id": "p007",
+    "on_shelf": null,
+    "stock": 0.6,
+    "discarded": null
+  },
+  {
+    "id": 862,
+    "session_id": "xingnan_2026-02-22_1f",
+    "product_id": "p021",
+    "on_shelf": 0.2,
+    "stock": 1,
+    "discarded": null
+  },
+  {
+    "id": 863,
+    "session_id": "xingnan_2026-02-22_1f",
+    "product_id": "p030",
+    "on_shelf": null,
+    "stock": 7,
+    "discarded": null
+  },
+  {
+    "id": 864,
+    "session_id": "xingnan_2026-02-22_1f",
+    "product_id": "p031",
+    "on_shelf": null,
+    "stock": 2,
+    "discarded": null
+  },
+  {
+    "id": 865,
+    "session_id": "xingnan_2026-02-22_1f",
+    "product_id": "p009",
+    "on_shelf": null,
+    "stock": 0.4,
+    "discarded": null
+  },
+  {
+    "id": 866,
+    "session_id": "xingnan_2026-02-22_1f",
+    "product_id": "p011",
+    "on_shelf": 12.1,
+    "stock": null,
+    "discarded": null
+  },
+  {
+    "id": 867,
+    "session_id": "xingnan_2026-02-22_1f",
+    "product_id": "p012",
+    "on_shelf": 4.8,
+    "stock": null,
+    "discarded": null
+  },
+  {
+    "id": 868,
+    "session_id": "xingnan_2026-02-22_1f",
+    "product_id": "p014",
+    "on_shelf": 0.35,
+    "stock": 1,
+    "discarded": null
+  },
+  {
+    "id": 869,
+    "session_id": "xingnan_2026-02-22_1f",
+    "product_id": "p015",
+    "on_shelf": 0.3,
+    "stock": null,
+    "discarded": null
+  },
+  {
+    "id": 870,
+    "session_id": "xingnan_2026-02-22_1f",
+    "product_id": "p019",
+    "on_shelf": 0.9,
+    "stock": 1,
+    "discarded": null
+  },
+  {
+    "id": 871,
+    "session_id": "xingnan_2026-02-22_1f",
+    "product_id": "p020",
+    "on_shelf": 0.8,
+    "stock": null,
+    "discarded": null
+  },
+  {
+    "id": 872,
+    "session_id": "xingnan_2026-02-22_1f",
+    "product_id": "p023",
+    "on_shelf": 0.06,
+    "stock": null,
+    "discarded": null
+  },
+  {
+    "id": 873,
+    "session_id": "xingnan_2026-02-22_1f",
+    "product_id": "p024",
+    "on_shelf": 0.9,
+    "stock": null,
+    "discarded": null
+  },
+  {
+    "id": 874,
+    "session_id": "xingnan_2026-02-22_1f",
+    "product_id": "p025",
+    "on_shelf": 1.8,
+    "stock": null,
+    "discarded": null
+  },
+  {
+    "id": 875,
+    "session_id": "xingnan_2026-02-22_1f",
+    "product_id": "p026",
+    "on_shelf": null,
+    "stock": 6,
+    "discarded": null
+  },
+  {
+    "id": 876,
+    "session_id": "xingnan_2026-02-22_1f",
+    "product_id": "p027",
+    "on_shelf": null,
+    "stock": 6,
+    "discarded": null
+  },
+  {
+    "id": 877,
+    "session_id": "xingnan_2026-02-22_1f",
+    "product_id": "p028",
+    "on_shelf": null,
+    "stock": 3,
+    "discarded": null
+  },
+  {
+    "id": 878,
+    "session_id": "xingnan_2026-02-22_1f",
+    "product_id": "p029",
+    "on_shelf": 0.7,
+    "stock": 4,
+    "discarded": null
+  },
+  {
+    "id": 879,
+    "session_id": "xingnan_2026-02-22_1f",
+    "product_id": "p017",
+    "on_shelf": 0.4,
+    "stock": 1,
+    "discarded": null
+  },
+  {
+    "id": 880,
+    "session_id": "xingnan_2026-02-22_1f",
+    "product_id": "p032",
+    "on_shelf": null,
+    "stock": 1.8,
+    "discarded": null
+  },
+  {
+    "id": 881,
+    "session_id": "xingnan_2026-02-22_1f",
+    "product_id": "p1771513573239",
+    "on_shelf": null,
+    "stock": 3,
+    "discarded": null
+  },
+  {
+    "id": 882,
+    "session_id": "xingnan_2026-02-22_1f",
+    "product_id": "p1771513626343",
+    "on_shelf": null,
+    "stock": 3.5,
+    "discarded": null
+  },
+  {
+    "id": 924,
+    "session_id": "lehua_2026-02-23_1f",
+    "product_id": "p006",
+    "on_shelf": null,
+    "stock": 2,
+    "discarded": null
+  },
+  {
+    "id": 925,
+    "session_id": "lehua_2026-02-23_1f",
+    "product_id": "p010",
+    "on_shelf": null,
+    "stock": 2,
+    "discarded": null
+  },
+  {
+    "id": 926,
+    "session_id": "lehua_2026-02-23_1f",
+    "product_id": "p007",
+    "on_shelf": 0.2,
+    "stock": 1,
+    "discarded": null
+  },
+  {
+    "id": 927,
+    "session_id": "lehua_2026-02-23_1f",
+    "product_id": "p021",
+    "on_shelf": 0.2,
+    "stock": 1,
+    "discarded": null
+  },
+  {
+    "id": 928,
+    "session_id": "lehua_2026-02-23_1f",
+    "product_id": "p009",
+    "on_shelf": null,
+    "stock": 0.7,
+    "discarded": null
+  },
+  {
+    "id": 929,
+    "session_id": "lehua_2026-02-23_1f",
+    "product_id": "p019",
+    "on_shelf": null,
+    "stock": 1.2,
+    "discarded": null
+  },
+  {
+    "id": 930,
+    "session_id": "lehua_2026-02-23_1f",
+    "product_id": "p023",
+    "on_shelf": null,
+    "stock": 1.2,
+    "discarded": null
+  },
+  {
+    "id": 931,
+    "session_id": "lehua_2026-02-23_1f",
+    "product_id": "p024",
+    "on_shelf": null,
+    "stock": 1,
+    "discarded": null
+  },
+  {
+    "id": 932,
+    "session_id": "lehua_2026-02-23_1f",
+    "product_id": "p025",
+    "on_shelf": 0.1,
+    "stock": null,
+    "discarded": null
+  },
+  {
+    "id": 1056,
+    "session_id": "xingnan_2026-02-23_1f",
+    "product_id": "p003",
+    "on_shelf": 0.1,
+    "stock": 3,
+    "discarded": 0
+  },
+  {
+    "id": 1057,
+    "session_id": "xingnan_2026-02-23_1f",
+    "product_id": "p001",
+    "on_shelf": 0.8,
+    "stock": 2,
+    "discarded": 0
+  },
+  {
+    "id": 1058,
+    "session_id": "xingnan_2026-02-23_1f",
+    "product_id": "p002",
+    "on_shelf": 0.5,
+    "stock": 2,
+    "discarded": 0
+  },
+  {
+    "id": 1059,
+    "session_id": "xingnan_2026-02-23_1f",
+    "product_id": "p004",
+    "on_shelf": 0.9,
+    "stock": 3,
+    "discarded": 0
+  },
+  {
+    "id": 1060,
+    "session_id": "xingnan_2026-02-23_1f",
+    "product_id": "p005",
+    "on_shelf": null,
+    "stock": 0,
+    "discarded": 0
+  },
+  {
+    "id": 1061,
+    "session_id": "xingnan_2026-02-23_1f",
+    "product_id": "p006",
+    "on_shelf": 0.2,
+    "stock": 1,
+    "discarded": 0
+  },
+  {
+    "id": 1062,
+    "session_id": "xingnan_2026-02-23_1f",
+    "product_id": "p010",
+    "on_shelf": 0,
+    "stock": 1.5,
+    "discarded": 0.2
+  },
+  {
+    "id": 1063,
+    "session_id": "xingnan_2026-02-23_1f",
+    "product_id": "p007",
+    "on_shelf": 0.4,
+    "stock": 0,
+    "discarded": 0
+  },
+  {
+    "id": 1064,
+    "session_id": "xingnan_2026-02-23_1f",
+    "product_id": "p021",
+    "on_shelf": 0.1,
+    "stock": 2,
+    "discarded": 0
+  },
+  {
+    "id": 1065,
+    "session_id": "xingnan_2026-02-23_1f",
+    "product_id": "p022",
+    "on_shelf": null,
+    "stock": 0,
+    "discarded": 0.05
+  },
+  {
+    "id": 1066,
+    "session_id": "xingnan_2026-02-23_1f",
+    "product_id": "p030",
+    "on_shelf": null,
+    "stock": 7,
+    "discarded": null
+  },
+  {
+    "id": 1067,
+    "session_id": "xingnan_2026-02-23_1f",
+    "product_id": "p031",
+    "on_shelf": null,
+    "stock": 1,
+    "discarded": null
+  },
+  {
+    "id": 1068,
+    "session_id": "xingnan_2026-02-23_1f",
+    "product_id": "p008",
+    "on_shelf": 1,
+    "stock": null,
+    "discarded": 0.5
+  },
+  {
+    "id": 1069,
+    "session_id": "xingnan_2026-02-23_1f",
+    "product_id": "p033",
+    "on_shelf": null,
+    "stock": 0,
+    "discarded": null
+  },
+  {
+    "id": 1070,
+    "session_id": "xingnan_2026-02-23_1f",
+    "product_id": "p034",
+    "on_shelf": null,
+    "stock": 0,
+    "discarded": null
+  },
+  {
+    "id": 1071,
+    "session_id": "xingnan_2026-02-23_1f",
+    "product_id": "p009",
+    "on_shelf": null,
+    "stock": 0.5,
+    "discarded": 0.05
+  },
+  {
+    "id": 1072,
+    "session_id": "xingnan_2026-02-23_1f",
+    "product_id": "p035",
+    "on_shelf": null,
+    "stock": 0,
+    "discarded": 0
+  },
+  {
+    "id": 1073,
+    "session_id": "xingnan_2026-02-23_1f",
+    "product_id": "p036",
+    "on_shelf": null,
+    "stock": 0,
+    "discarded": 0
+  },
+  {
+    "id": 1074,
+    "session_id": "xingnan_2026-02-23_1f",
+    "product_id": "p037",
+    "on_shelf": null,
+    "stock": 0,
+    "discarded": 0
+  },
+  {
+    "id": 1075,
+    "session_id": "xingnan_2026-02-23_1f",
+    "product_id": "p011",
+    "on_shelf": 12.5,
+    "stock": 8,
+    "discarded": 0
+  },
+  {
+    "id": 1076,
+    "session_id": "xingnan_2026-02-23_1f",
+    "product_id": "p012",
+    "on_shelf": 8,
+    "stock": 1,
+    "discarded": 0
+  },
+  {
+    "id": 1077,
+    "session_id": "xingnan_2026-02-23_1f",
+    "product_id": "p014",
+    "on_shelf": 0.1,
+    "stock": 1,
+    "discarded": 0
+  },
+  {
+    "id": 1078,
+    "session_id": "xingnan_2026-02-23_1f",
+    "product_id": "p015",
+    "on_shelf": 0.2,
+    "stock": 1,
+    "discarded": 0
+  },
+  {
+    "id": 1079,
+    "session_id": "xingnan_2026-02-23_1f",
+    "product_id": "p019",
+    "on_shelf": 0.1,
+    "stock": 1,
+    "discarded": 0
+  },
+  {
+    "id": 1080,
+    "session_id": "xingnan_2026-02-23_1f",
+    "product_id": "p020",
+    "on_shelf": 0.1,
+    "stock": 0,
+    "discarded": 0
+  },
+  {
+    "id": 1081,
+    "session_id": "xingnan_2026-02-23_1f",
+    "product_id": "p023",
+    "on_shelf": 0.5,
+    "stock": 0,
+    "discarded": 0
+  },
+  {
+    "id": 1082,
+    "session_id": "xingnan_2026-02-23_1f",
+    "product_id": "p024",
+    "on_shelf": 0.7,
+    "stock": 1,
+    "discarded": 0
+  },
+  {
+    "id": 1083,
+    "session_id": "xingnan_2026-02-23_1f",
+    "product_id": "p025",
+    "on_shelf": 1.7,
+    "stock": 0,
+    "discarded": 0
+  },
+  {
+    "id": 1084,
+    "session_id": "xingnan_2026-02-23_1f",
+    "product_id": "p026",
+    "on_shelf": 0,
+    "stock": 6,
+    "discarded": 0
+  },
+  {
+    "id": 1085,
+    "session_id": "xingnan_2026-02-23_1f",
+    "product_id": "p027",
+    "on_shelf": 0,
+    "stock": 6,
+    "discarded": 0
+  },
+  {
+    "id": 1086,
+    "session_id": "xingnan_2026-02-23_1f",
+    "product_id": "p028",
+    "on_shelf": 0,
+    "stock": 5,
+    "discarded": 0
+  },
+  {
+    "id": 1087,
+    "session_id": "xingnan_2026-02-23_1f",
+    "product_id": "p016",
+    "on_shelf": 9,
+    "stock": 59,
+    "discarded": 0
+  },
+  {
+    "id": 1088,
+    "session_id": "xingnan_2026-02-23_1f",
+    "product_id": "p017",
+    "on_shelf": 0.05,
+    "stock": 1,
+    "discarded": 0
+  },
+  {
+    "id": 1089,
+    "session_id": "xingnan_2026-02-23_1f",
+    "product_id": "p032",
+    "on_shelf": 0,
+    "stock": 2,
+    "discarded": 0
+  },
+  {
+    "id": 1090,
+    "session_id": "xingnan_2026-02-23_1f",
+    "product_id": "p1771513573239",
+    "on_shelf": 0,
+    "stock": 2,
+    "discarded": 0
+  },
+  {
+    "id": 1091,
+    "session_id": "xingnan_2026-02-23_1f",
+    "product_id": "p1771513626343",
+    "on_shelf": 0,
+    "stock": 3.8,
+    "discarded": 0
+  },
+  {
+    "id": 3142,
+    "session_id": "lehua_2026-02-27_2f",
+    "product_id": "p030",
+    "on_shelf": null,
+    "stock": 4,
+    "discarded": null
+  },
+  {
+    "id": 3143,
+    "session_id": "lehua_2026-02-27_2f",
+    "product_id": "p031",
+    "on_shelf": null,
+    "stock": 8,
+    "discarded": null
+  },
+  {
+    "id": 3144,
+    "session_id": "lehua_2026-02-27_2f",
+    "product_id": "p011",
+    "on_shelf": null,
+    "stock": 15,
+    "discarded": null
+  },
+  {
+    "id": 3175,
+    "session_id": "lehua_2026-02-26_1f",
+    "product_id": "p003",
+    "on_shelf": null,
+    "stock": 2.2,
+    "discarded": null
+  },
+  {
+    "id": 3176,
+    "session_id": "lehua_2026-02-26_1f",
+    "product_id": "p001",
+    "on_shelf": null,
+    "stock": 1,
+    "discarded": null
+  },
+  {
+    "id": 3177,
+    "session_id": "lehua_2026-02-26_1f",
+    "product_id": "p002",
+    "on_shelf": null,
+    "stock": 0,
+    "discarded": null
+  },
+  {
+    "id": 3184,
+    "session_id": "lehua_2026-02-26_1f",
+    "product_id": "p022",
+    "on_shelf": null,
+    "stock": 0,
+    "discarded": null
+  },
+  {
+    "id": 3288,
+    "session_id": "xingnan_2026-02-27_1f",
+    "product_id": "p019",
+    "on_shelf": 0.5,
+    "stock": 1,
+    "discarded": 0
+  },
+  {
+    "id": 3289,
+    "session_id": "xingnan_2026-02-27_1f",
+    "product_id": "p020",
+    "on_shelf": 0.7,
+    "stock": 0,
+    "discarded": 0
+  },
+  {
+    "id": 3290,
+    "session_id": "xingnan_2026-02-27_1f",
+    "product_id": "p023",
+    "on_shelf": 0.3,
+    "stock": 0,
+    "discarded": 0
+  },
+  {
+    "id": 3291,
+    "session_id": "xingnan_2026-02-27_1f",
+    "product_id": "p024",
+    "on_shelf": 1.5,
+    "stock": 0,
+    "discarded": 0
+  },
+  {
+    "id": 3292,
+    "session_id": "xingnan_2026-02-27_1f",
+    "product_id": "p025",
+    "on_shelf": 1.4,
+    "stock": 0,
+    "discarded": 0
+  },
+  {
+    "id": 3293,
+    "session_id": "xingnan_2026-02-27_1f",
+    "product_id": "p026",
+    "on_shelf": 0,
+    "stock": 4,
+    "discarded": 0
+  },
+  {
+    "id": 3294,
+    "session_id": "xingnan_2026-02-27_1f",
+    "product_id": "p027",
+    "on_shelf": 0,
+    "stock": 5,
+    "discarded": 0
+  },
+  {
+    "id": 3295,
+    "session_id": "xingnan_2026-02-27_1f",
+    "product_id": "p028",
+    "on_shelf": 0,
+    "stock": 5,
+    "discarded": 0
+  },
+  {
+    "id": 3296,
+    "session_id": "xingnan_2026-02-27_1f",
+    "product_id": "p029",
+    "on_shelf": 0,
+    "stock": 13,
+    "discarded": 0
+  },
+  {
+    "id": 3297,
+    "session_id": "xingnan_2026-02-27_1f",
+    "product_id": "p017",
+    "on_shelf": 0.5,
+    "stock": 1,
+    "discarded": 0
+  },
+  {
+    "id": 3298,
+    "session_id": "xingnan_2026-02-27_1f",
+    "product_id": "p016",
+    "on_shelf": 2.2,
+    "stock": 53,
+    "discarded": 0.3
+  },
+  {
+    "id": 3299,
+    "session_id": "xingnan_2026-02-27_1f",
+    "product_id": "p032",
+    "on_shelf": 0,
+    "stock": 1,
+    "discarded": 0
+  },
+  {
+    "id": 3300,
+    "session_id": "xingnan_2026-02-27_1f",
+    "product_id": "p1771513573239",
+    "on_shelf": 0,
+    "stock": 5,
+    "discarded": 0
+  },
+  {
+    "id": 131,
+    "session_id": "lehua_2026-02-20_2f",
+    "product_id": "p026",
+    "on_shelf": null,
+    "stock": 4,
+    "discarded": null
+  },
+  {
+    "id": 132,
+    "session_id": "lehua_2026-02-20_2f",
+    "product_id": "p027",
+    "on_shelf": null,
+    "stock": 11,
+    "discarded": null
+  },
+  {
+    "id": 133,
+    "session_id": "lehua_2026-02-20_2f",
+    "product_id": "p028",
+    "on_shelf": null,
+    "stock": 3,
+    "discarded": null
+  },
+  {
+    "id": 134,
+    "session_id": "lehua_2026-02-20_2f",
+    "product_id": "p016",
+    "on_shelf": null,
+    "stock": 36,
+    "discarded": null
+  },
+  {
+    "id": 135,
+    "session_id": "lehua_2026-02-20_2f",
+    "product_id": "p1771513523503",
+    "on_shelf": null,
+    "stock": 2.3,
+    "discarded": null
+  },
+  {
+    "id": 136,
+    "session_id": "lehua_2026-02-20_2f",
+    "product_id": "p1771513573239",
+    "on_shelf": 0,
+    "stock": 1,
+    "discarded": 0
+  },
+  {
+    "id": 137,
+    "session_id": "lehua_2026-02-20_2f",
+    "product_id": "p1771513626343",
+    "on_shelf": 0,
+    "stock": 4,
+    "discarded": 0
+  },
+  {
+    "id": 138,
+    "session_id": "lehua_2026-02-20_2f",
+    "product_id": "p1771513693518",
+    "on_shelf": null,
+    "stock": 6,
+    "discarded": null
+  },
+  {
+    "id": 139,
+    "session_id": "lehua_2026-02-20_2f",
+    "product_id": "p1771513729598",
+    "on_shelf": null,
+    "stock": 16,
+    "discarded": null
+  },
+  {
+    "id": 140,
+    "session_id": "lehua_2026-02-20_2f",
+    "product_id": "p1771513755567",
+    "on_shelf": null,
+    "stock": 8,
+    "discarded": null
+  },
+  {
+    "id": 141,
+    "session_id": "lehua_2026-02-20_2f",
+    "product_id": "p1771513777998",
+    "on_shelf": null,
+    "stock": 0,
+    "discarded": null
+  },
+  {
+    "id": 1691,
+    "session_id": "lehua_2026-02-25_1f",
+    "product_id": "p004",
+    "on_shelf": null,
+    "stock": 5.7,
+    "discarded": null
+  },
+  {
+    "id": 1693,
+    "session_id": "lehua_2026-02-25_1f",
+    "product_id": "p006",
+    "on_shelf": null,
+    "stock": 2,
+    "discarded": null
+  },
+  {
+    "id": 1694,
+    "session_id": "lehua_2026-02-25_1f",
+    "product_id": "p010",
+    "on_shelf": null,
+    "stock": 0.8,
+    "discarded": null
+  },
+  {
+    "id": 1695,
+    "session_id": "lehua_2026-02-25_1f",
+    "product_id": "p007",
+    "on_shelf": null,
+    "stock": 0.6,
+    "discarded": null
+  },
+  {
+    "id": 1696,
+    "session_id": "lehua_2026-02-25_1f",
+    "product_id": "p021",
+    "on_shelf": null,
+    "stock": 0,
+    "discarded": null
+  },
+  {
+    "id": 3571,
+    "session_id": "lehua_2026-02-25_1f",
+    "product_id": "p022",
+    "on_shelf": null,
+    "stock": 0,
+    "discarded": null
+  },
+  {
+    "id": 1697,
+    "session_id": "lehua_2026-02-25_1f",
+    "product_id": "p009",
+    "on_shelf": null,
+    "stock": 0.7,
+    "discarded": null
+  },
+  {
+    "id": 1698,
+    "session_id": "lehua_2026-02-25_1f",
+    "product_id": "p035",
+    "on_shelf": null,
+    "stock": 0,
+    "discarded": null
+  },
+  {
+    "id": 1699,
+    "session_id": "lehua_2026-02-25_1f",
+    "product_id": "p036",
+    "on_shelf": null,
+    "stock": 0,
+    "discarded": null
+  },
+  {
+    "id": 1700,
+    "session_id": "lehua_2026-02-25_1f",
+    "product_id": "p019",
+    "on_shelf": null,
+    "stock": 0.7,
+    "discarded": null
+  },
+  {
+    "id": 3301,
+    "session_id": "xingnan_2026-02-27_1f",
+    "product_id": "p1771513626343",
+    "on_shelf": 0.1,
+    "stock": 3,
+    "discarded": 0
+  },
+  {
+    "id": 3302,
+    "session_id": "xingnan_2026-02-27_1f",
+    "product_id": "p1772032716535",
+    "on_shelf": 0,
+    "stock": 4.5,
+    "discarded": 0
+  },
+  {
+    "id": 3303,
+    "session_id": "xingnan_2026-02-27_1f",
+    "product_id": "p1772032863551",
+    "on_shelf": 5400,
+    "stock": 0,
+    "discarded": 1800
+  },
+  {
+    "id": 1670,
+    "session_id": "lehua_2026-02-25_2f",
+    "product_id": "p030",
+    "on_shelf": null,
+    "stock": 4,
+    "discarded": null
+  },
+  {
+    "id": 1671,
+    "session_id": "lehua_2026-02-25_2f",
+    "product_id": "p031",
+    "on_shelf": null,
+    "stock": 1,
+    "discarded": null
+  },
+  {
+    "id": 1672,
+    "session_id": "lehua_2026-02-25_2f",
+    "product_id": "p011",
+    "on_shelf": null,
+    "stock": 18.9,
+    "discarded": null
+  },
+  {
+    "id": 1673,
+    "session_id": "lehua_2026-02-25_2f",
+    "product_id": "p012",
+    "on_shelf": null,
+    "stock": 19.8,
+    "discarded": null
+  },
+  {
+    "id": 1019,
+    "session_id": "lehua_2026-02-21_1f",
+    "product_id": "p003",
+    "on_shelf": null,
+    "stock": 4.4,
+    "discarded": null
+  },
+  {
+    "id": 1020,
+    "session_id": "lehua_2026-02-21_1f",
+    "product_id": "p001",
+    "on_shelf": null,
+    "stock": 4.9,
+    "discarded": null
+  },
+  {
+    "id": 1021,
+    "session_id": "lehua_2026-02-21_1f",
+    "product_id": "p002",
+    "on_shelf": null,
+    "stock": 4.2,
+    "discarded": null
+  },
+  {
+    "id": 1022,
+    "session_id": "lehua_2026-02-21_1f",
+    "product_id": "p004",
+    "on_shelf": null,
+    "stock": 17.4,
+    "discarded": null
+  },
+  {
+    "id": 1023,
+    "session_id": "lehua_2026-02-21_1f",
+    "product_id": "p005",
+    "on_shelf": null,
+    "stock": 8.5,
+    "discarded": null
+  },
+  {
+    "id": 1024,
+    "session_id": "lehua_2026-02-21_1f",
+    "product_id": "p006",
+    "on_shelf": null,
+    "stock": 12.7,
+    "discarded": null
+  },
+  {
+    "id": 1025,
+    "session_id": "lehua_2026-02-21_1f",
+    "product_id": "p010",
+    "on_shelf": null,
+    "stock": 1.3,
+    "discarded": null
+  },
+  {
+    "id": 1026,
+    "session_id": "lehua_2026-02-21_1f",
+    "product_id": "p007",
+    "on_shelf": null,
+    "stock": 1.4,
+    "discarded": null
+  },
+  {
+    "id": 1027,
+    "session_id": "lehua_2026-02-21_1f",
+    "product_id": "p021",
+    "on_shelf": null,
+    "stock": 6.6,
+    "discarded": null
+  },
+  {
+    "id": 1028,
+    "session_id": "lehua_2026-02-21_1f",
+    "product_id": "p009",
+    "on_shelf": null,
+    "stock": 1,
+    "discarded": null
+  },
+  {
+    "id": 1029,
+    "session_id": "lehua_2026-02-21_1f",
+    "product_id": "p019",
+    "on_shelf": null,
+    "stock": 3.5,
+    "discarded": null
+  },
+  {
+    "id": 1030,
+    "session_id": "lehua_2026-02-21_1f",
+    "product_id": "p020",
+    "on_shelf": null,
+    "stock": 0.6,
+    "discarded": null
+  },
+  {
+    "id": 1031,
+    "session_id": "lehua_2026-02-21_1f",
+    "product_id": "p024",
+    "on_shelf": null,
+    "stock": 1,
+    "discarded": null
+  },
+  {
+    "id": 1032,
+    "session_id": "lehua_2026-02-21_1f",
+    "product_id": "p025",
+    "on_shelf": null,
+    "stock": 0.9,
+    "discarded": null
+  },
+  {
+    "id": 1033,
+    "session_id": "lehua_2026-02-21_1f",
+    "product_id": "p017",
+    "on_shelf": null,
+    "stock": 1.4,
+    "discarded": null
+  },
+  {
+    "id": 531,
+    "session_id": "xingnan_2026-02-21_1f",
+    "product_id": "p003",
+    "on_shelf": 0.1,
+    "stock": 2,
+    "discarded": null
+  },
+  {
+    "id": 532,
+    "session_id": "xingnan_2026-02-21_1f",
+    "product_id": "p001",
+    "on_shelf": 0.4,
+    "stock": 1,
+    "discarded": null
+  },
+  {
+    "id": 533,
+    "session_id": "xingnan_2026-02-21_1f",
+    "product_id": "p002",
+    "on_shelf": 1,
+    "stock": null,
+    "discarded": null
+  },
+  {
+    "id": 534,
+    "session_id": "xingnan_2026-02-21_1f",
+    "product_id": "p004",
+    "on_shelf": 0.1,
+    "stock": 0.5,
+    "discarded": null
+  },
+  {
+    "id": 535,
+    "session_id": "xingnan_2026-02-21_1f",
+    "product_id": "p005",
+    "on_shelf": 0.9,
+    "stock": 2,
+    "discarded": null
+  },
+  {
+    "id": 536,
+    "session_id": "xingnan_2026-02-21_1f",
+    "product_id": "p006",
+    "on_shelf": 0.2,
+    "stock": 3,
+    "discarded": null
+  },
+  {
+    "id": 537,
+    "session_id": "xingnan_2026-02-21_1f",
+    "product_id": "p010",
+    "on_shelf": 0.2,
+    "stock": 0.5,
+    "discarded": null
+  },
+  {
+    "id": 538,
+    "session_id": "xingnan_2026-02-21_1f",
+    "product_id": "p030",
+    "on_shelf": null,
+    "stock": 7,
+    "discarded": null
+  },
+  {
+    "id": 539,
+    "session_id": "xingnan_2026-02-21_1f",
+    "product_id": "p031",
+    "on_shelf": null,
+    "stock": 3,
+    "discarded": null
+  },
+  {
+    "id": 540,
+    "session_id": "xingnan_2026-02-21_1f",
+    "product_id": "p011",
+    "on_shelf": 12,
+    "stock": 7,
+    "discarded": null
+  },
+  {
+    "id": 541,
+    "session_id": "xingnan_2026-02-21_1f",
+    "product_id": "p012",
+    "on_shelf": 8.1,
+    "stock": null,
+    "discarded": null
+  },
+  {
+    "id": 542,
+    "session_id": "xingnan_2026-02-21_1f",
+    "product_id": "p014",
+    "on_shelf": 0.8,
+    "stock": 1,
+    "discarded": null
+  },
+  {
+    "id": 543,
+    "session_id": "xingnan_2026-02-21_1f",
+    "product_id": "p015",
+    "on_shelf": 0.4,
+    "stock": 1,
+    "discarded": null
+  },
+  {
+    "id": 544,
+    "session_id": "xingnan_2026-02-21_1f",
+    "product_id": "p019",
+    "on_shelf": 0.4,
+    "stock": 2,
+    "discarded": null
+  },
+  {
+    "id": 545,
+    "session_id": "xingnan_2026-02-21_1f",
+    "product_id": "p020",
+    "on_shelf": 0.4,
+    "stock": 2,
+    "discarded": null
+  },
+  {
+    "id": 546,
+    "session_id": "xingnan_2026-02-21_1f",
+    "product_id": "p023",
+    "on_shelf": 0.2,
+    "stock": 1,
+    "discarded": null
+  },
+  {
+    "id": 547,
+    "session_id": "xingnan_2026-02-21_1f",
+    "product_id": "p024",
+    "on_shelf": 1.1,
+    "stock": null,
+    "discarded": null
+  },
+  {
+    "id": 548,
+    "session_id": "xingnan_2026-02-21_1f",
+    "product_id": "p025",
+    "on_shelf": 1.9,
+    "stock": null,
+    "discarded": null
+  },
+  {
+    "id": 549,
+    "session_id": "xingnan_2026-02-21_1f",
+    "product_id": "p026",
+    "on_shelf": null,
+    "stock": 7,
+    "discarded": null
+  },
+  {
+    "id": 550,
+    "session_id": "xingnan_2026-02-21_1f",
+    "product_id": "p027",
+    "on_shelf": null,
+    "stock": 6,
+    "discarded": null
+  },
+  {
+    "id": 551,
+    "session_id": "xingnan_2026-02-21_1f",
+    "product_id": "p028",
+    "on_shelf": null,
+    "stock": 7,
+    "discarded": null
+  },
+  {
+    "id": 552,
+    "session_id": "xingnan_2026-02-21_1f",
+    "product_id": "p029",
+    "on_shelf": 0.6,
+    "stock": 7,
+    "discarded": null
+  },
+  {
+    "id": 553,
+    "session_id": "xingnan_2026-02-21_1f",
+    "product_id": "p016",
+    "on_shelf": null,
+    "stock": 2.7,
+    "discarded": 0.4
+  },
+  {
+    "id": 554,
+    "session_id": "xingnan_2026-02-21_1f",
+    "product_id": "p017",
+    "on_shelf": 0.1,
+    "stock": null,
+    "discarded": null
+  },
+  {
+    "id": 555,
+    "session_id": "xingnan_2026-02-21_1f",
+    "product_id": "p032",
+    "on_shelf": null,
+    "stock": 2.5,
+    "discarded": null
+  },
+  {
+    "id": 556,
+    "session_id": "xingnan_2026-02-21_1f",
+    "product_id": "p1771513573239",
+    "on_shelf": null,
+    "stock": 4,
+    "discarded": null
+  },
+  {
+    "id": 557,
+    "session_id": "xingnan_2026-02-21_1f",
+    "product_id": "p1771513626343",
+    "on_shelf": null,
+    "stock": 3.7,
+    "discarded": null
+  },
+  {
+    "id": 883,
+    "session_id": "lehua_2026-02-23_2f",
+    "product_id": "p007",
+    "on_shelf": null,
+    "stock": 0,
+    "discarded": null
+  },
+  {
+    "id": 884,
+    "session_id": "lehua_2026-02-23_2f",
+    "product_id": "p021",
+    "on_shelf": null,
+    "stock": 0,
+    "discarded": null
+  },
+  {
+    "id": 885,
+    "session_id": "lehua_2026-02-23_2f",
+    "product_id": "p030",
+    "on_shelf": null,
+    "stock": 5,
+    "discarded": null
+  },
+  {
+    "id": 886,
+    "session_id": "lehua_2026-02-23_2f",
+    "product_id": "p031",
+    "on_shelf": null,
+    "stock": 3,
+    "discarded": null
+  },
+  {
+    "id": 887,
+    "session_id": "lehua_2026-02-23_2f",
+    "product_id": "p009",
+    "on_shelf": null,
+    "stock": 0,
+    "discarded": null
+  },
+  {
+    "id": 888,
+    "session_id": "lehua_2026-02-23_2f",
+    "product_id": "p011",
+    "on_shelf": null,
+    "stock": 10,
+    "discarded": null
+  },
+  {
+    "id": 889,
+    "session_id": "lehua_2026-02-23_2f",
+    "product_id": "p012",
+    "on_shelf": null,
+    "stock": 16,
+    "discarded": null
+  },
+  {
+    "id": 890,
+    "session_id": "lehua_2026-02-23_2f",
+    "product_id": "p014",
+    "on_shelf": null,
+    "stock": 1.4,
+    "discarded": null
+  },
+  {
+    "id": 891,
+    "session_id": "lehua_2026-02-23_2f",
+    "product_id": "p015",
+    "on_shelf": null,
+    "stock": 1.8,
+    "discarded": null
+  },
+  {
+    "id": 892,
+    "session_id": "lehua_2026-02-23_2f",
+    "product_id": "p024",
+    "on_shelf": null,
+    "stock": 1,
+    "discarded": null
+  },
+  {
+    "id": 893,
+    "session_id": "lehua_2026-02-23_2f",
+    "product_id": "p025",
+    "on_shelf": null,
+    "stock": 2,
+    "discarded": null
+  },
+  {
+    "id": 894,
+    "session_id": "lehua_2026-02-23_2f",
+    "product_id": "p026",
+    "on_shelf": null,
+    "stock": 6,
+    "discarded": null
+  },
+  {
+    "id": 895,
+    "session_id": "lehua_2026-02-23_2f",
+    "product_id": "p027",
+    "on_shelf": null,
+    "stock": 9,
+    "discarded": null
+  },
+  {
+    "id": 896,
+    "session_id": "lehua_2026-02-23_2f",
+    "product_id": "p028",
+    "on_shelf": null,
+    "stock": 7,
+    "discarded": null
+  },
+  {
+    "id": 897,
+    "session_id": "lehua_2026-02-23_2f",
+    "product_id": "p016",
+    "on_shelf": null,
+    "stock": 68,
+    "discarded": null
+  },
+  {
+    "id": 898,
+    "session_id": "lehua_2026-02-23_2f",
+    "product_id": "p1771513523503",
+    "on_shelf": null,
+    "stock": 1.5,
+    "discarded": null
+  },
+  {
+    "id": 899,
+    "session_id": "lehua_2026-02-23_2f",
+    "product_id": "p1771513573239",
+    "on_shelf": null,
+    "stock": 2,
+    "discarded": null
+  },
+  {
+    "id": 900,
+    "session_id": "lehua_2026-02-23_2f",
+    "product_id": "p1771513626343",
+    "on_shelf": null,
+    "stock": 2.8,
+    "discarded": null
+  },
+  {
+    "id": 901,
+    "session_id": "lehua_2026-02-23_2f",
+    "product_id": "p1771513693518",
+    "on_shelf": null,
+    "stock": 8,
+    "discarded": null
+  },
+  {
+    "id": 902,
+    "session_id": "lehua_2026-02-23_2f",
+    "product_id": "p1771513729598",
+    "on_shelf": null,
+    "stock": 16,
+    "discarded": null
+  },
+  {
+    "id": 903,
+    "session_id": "lehua_2026-02-23_2f",
+    "product_id": "p1771513755567",
+    "on_shelf": null,
+    "stock": 12,
+    "discarded": null
+  },
+  {
+    "id": 904,
+    "session_id": "lehua_2026-02-23_2f",
+    "product_id": "p1771513777998",
+    "on_shelf": null,
+    "stock": 9,
+    "discarded": null
+  },
+  {
+    "id": 1034,
+    "session_id": "lehua_2026-02-21_2f",
+    "product_id": "p007",
+    "on_shelf": null,
+    "stock": 1,
+    "discarded": null
+  },
+  {
+    "id": 1035,
+    "session_id": "lehua_2026-02-21_2f",
+    "product_id": "p021",
+    "on_shelf": null,
+    "stock": 5,
+    "discarded": null
+  },
+  {
+    "id": 383,
+    "session_id": "lehua_2026-02-22_2f",
+    "product_id": "p030",
+    "on_shelf": null,
+    "stock": 5,
+    "discarded": null
+  },
+  {
+    "id": 384,
+    "session_id": "lehua_2026-02-22_2f",
+    "product_id": "p031",
+    "on_shelf": null,
+    "stock": 4,
+    "discarded": null
+  },
+  {
+    "id": 385,
+    "session_id": "lehua_2026-02-22_2f",
+    "product_id": "p011",
+    "on_shelf": null,
+    "stock": 18.5,
+    "discarded": null
+  },
+  {
+    "id": 386,
+    "session_id": "lehua_2026-02-22_2f",
+    "product_id": "p012",
+    "on_shelf": null,
+    "stock": 20,
+    "discarded": null
+  },
+  {
+    "id": 387,
+    "session_id": "lehua_2026-02-22_2f",
+    "product_id": "p014",
+    "on_shelf": null,
+    "stock": 1.95,
+    "discarded": null
+  },
+  {
+    "id": 388,
+    "session_id": "lehua_2026-02-22_2f",
+    "product_id": "p015",
+    "on_shelf": null,
+    "stock": 1.8,
+    "discarded": null
+  },
+  {
+    "id": 389,
+    "session_id": "lehua_2026-02-22_2f",
+    "product_id": "p025",
+    "on_shelf": null,
+    "stock": 1,
+    "discarded": null
+  },
+  {
+    "id": 390,
+    "session_id": "lehua_2026-02-22_2f",
+    "product_id": "p026",
+    "on_shelf": null,
+    "stock": 1,
+    "discarded": null
+  },
+  {
+    "id": 391,
+    "session_id": "lehua_2026-02-22_2f",
+    "product_id": "p027",
+    "on_shelf": null,
+    "stock": 9,
+    "discarded": null
+  },
+  {
+    "id": 392,
+    "session_id": "lehua_2026-02-22_2f",
+    "product_id": "p016",
+    "on_shelf": null,
+    "stock": 42,
+    "discarded": null
+  },
+  {
+    "id": 393,
+    "session_id": "lehua_2026-02-22_2f",
+    "product_id": "p1771513523503",
+    "on_shelf": null,
+    "stock": 1.7,
+    "discarded": null
+  },
+  {
+    "id": 394,
+    "session_id": "lehua_2026-02-22_2f",
+    "product_id": "p1771513573239",
+    "on_shelf": null,
+    "stock": 3,
+    "discarded": null
+  },
+  {
+    "id": 395,
+    "session_id": "lehua_2026-02-22_2f",
+    "product_id": "p1771513626343",
+    "on_shelf": null,
+    "stock": 3.8,
+    "discarded": null
+  },
+  {
+    "id": 396,
+    "session_id": "lehua_2026-02-22_2f",
+    "product_id": "p1771513755567",
+    "on_shelf": null,
+    "stock": 2,
+    "discarded": null
+  },
+  {
+    "id": 397,
+    "session_id": "lehua_2026-02-22_2f",
+    "product_id": "p1771513777998",
+    "on_shelf": null,
+    "stock": 16,
+    "discarded": null
+  },
+  {
+    "id": 1036,
+    "session_id": "lehua_2026-02-21_2f",
+    "product_id": "p030",
+    "on_shelf": null,
+    "stock": 6,
+    "discarded": null
+  },
+  {
+    "id": 1037,
+    "session_id": "lehua_2026-02-21_2f",
+    "product_id": "p031",
+    "on_shelf": null,
+    "stock": 5,
+    "discarded": null
+  },
+  {
+    "id": 1038,
+    "session_id": "lehua_2026-02-21_2f",
+    "product_id": "p011",
+    "on_shelf": null,
+    "stock": 33,
+    "discarded": null
+  },
+  {
+    "id": 1039,
+    "session_id": "lehua_2026-02-21_2f",
+    "product_id": "p012",
+    "on_shelf": null,
+    "stock": 27,
+    "discarded": null
+  },
+  {
+    "id": 1040,
+    "session_id": "lehua_2026-02-21_2f",
+    "product_id": "p014",
+    "on_shelf": null,
+    "stock": 3.3,
+    "discarded": null
+  },
+  {
+    "id": 1041,
+    "session_id": "lehua_2026-02-21_2f",
+    "product_id": "p015",
+    "on_shelf": null,
+    "stock": 4,
+    "discarded": null
+  },
+  {
+    "id": 1042,
+    "session_id": "lehua_2026-02-21_2f",
+    "product_id": "p023",
+    "on_shelf": null,
+    "stock": 1.2,
+    "discarded": null
+  },
+  {
+    "id": 1043,
+    "session_id": "lehua_2026-02-21_2f",
+    "product_id": "p024",
+    "on_shelf": null,
+    "stock": 0,
+    "discarded": null
+  },
+  {
+    "id": 1044,
+    "session_id": "lehua_2026-02-21_2f",
+    "product_id": "p025",
+    "on_shelf": null,
+    "stock": 1,
+    "discarded": null
+  },
+  {
+    "id": 1045,
+    "session_id": "lehua_2026-02-21_2f",
+    "product_id": "p026",
+    "on_shelf": null,
+    "stock": 2,
+    "discarded": null
+  },
+  {
+    "id": 1046,
+    "session_id": "lehua_2026-02-21_2f",
+    "product_id": "p027",
+    "on_shelf": null,
+    "stock": 9,
+    "discarded": null
+  },
+  {
+    "id": 1047,
+    "session_id": "lehua_2026-02-21_2f",
+    "product_id": "p028",
+    "on_shelf": null,
+    "stock": 6,
+    "discarded": null
+  },
+  {
+    "id": 1048,
+    "session_id": "lehua_2026-02-21_2f",
+    "product_id": "p016",
+    "on_shelf": null,
+    "stock": 77,
+    "discarded": null
+  },
+  {
+    "id": 1049,
+    "session_id": "lehua_2026-02-21_2f",
+    "product_id": "p1771513523503",
+    "on_shelf": null,
+    "stock": 2,
+    "discarded": null
+  },
+  {
+    "id": 1050,
+    "session_id": "lehua_2026-02-21_2f",
+    "product_id": "p1771513573239",
+    "on_shelf": null,
+    "stock": 6,
+    "discarded": null
+  },
+  {
+    "id": 1051,
+    "session_id": "lehua_2026-02-21_2f",
+    "product_id": "p1771513626343",
+    "on_shelf": null,
+    "stock": 4,
+    "discarded": null
+  },
+  {
+    "id": 1052,
+    "session_id": "lehua_2026-02-21_2f",
+    "product_id": "p1771513693518",
+    "on_shelf": null,
+    "stock": 0,
+    "discarded": null
+  },
+  {
+    "id": 1053,
+    "session_id": "lehua_2026-02-21_2f",
+    "product_id": "p1771513729598",
+    "on_shelf": null,
+    "stock": 1,
+    "discarded": null
+  },
+  {
+    "id": 1054,
+    "session_id": "lehua_2026-02-21_2f",
+    "product_id": "p1771513755567",
+    "on_shelf": null,
+    "stock": 16,
+    "discarded": null
+  },
+  {
+    "id": 1055,
+    "session_id": "lehua_2026-02-21_2f",
+    "product_id": "p1771513777998",
+    "on_shelf": null,
+    "stock": 16,
+    "discarded": null
+  },
+  {
+    "id": 452,
+    "session_id": "lehua_2026-02-22_1f",
+    "product_id": "p003",
+    "on_shelf": null,
+    "stock": 1.8,
+    "discarded": null
+  },
+  {
+    "id": 453,
+    "session_id": "lehua_2026-02-22_1f",
+    "product_id": "p001",
+    "on_shelf": null,
+    "stock": 2.9,
+    "discarded": null
+  },
+  {
+    "id": 454,
+    "session_id": "lehua_2026-02-22_1f",
+    "product_id": "p002",
+    "on_shelf": null,
+    "stock": 2.1,
+    "discarded": null
+  },
+  {
+    "id": 455,
+    "session_id": "lehua_2026-02-22_1f",
+    "product_id": "p004",
+    "on_shelf": null,
+    "stock": 9.4,
+    "discarded": null
+  },
+  {
+    "id": 456,
+    "session_id": "lehua_2026-02-22_1f",
+    "product_id": "p005",
+    "on_shelf": null,
+    "stock": 3.9,
+    "discarded": null
+  },
+  {
+    "id": 457,
+    "session_id": "lehua_2026-02-22_1f",
+    "product_id": "p006",
+    "on_shelf": null,
+    "stock": 6,
+    "discarded": null
+  },
+  {
+    "id": 458,
+    "session_id": "lehua_2026-02-22_1f",
+    "product_id": "p010",
+    "on_shelf": null,
+    "stock": 0.1,
+    "discarded": null
+  },
+  {
+    "id": 459,
+    "session_id": "lehua_2026-02-22_1f",
+    "product_id": "p007",
+    "on_shelf": null,
+    "stock": 0.6,
+    "discarded": null
+  },
+  {
+    "id": 460,
+    "session_id": "lehua_2026-02-22_1f",
+    "product_id": "p021",
+    "on_shelf": null,
+    "stock": 2.4,
+    "discarded": null
+  },
+  {
+    "id": 461,
+    "session_id": "lehua_2026-02-22_1f",
+    "product_id": "p009",
+    "on_shelf": null,
+    "stock": 0.4,
+    "discarded": null
+  },
+  {
+    "id": 462,
+    "session_id": "lehua_2026-02-22_1f",
+    "product_id": "p019",
+    "on_shelf": null,
+    "stock": 2.8,
+    "discarded": null
+  },
+  {
+    "id": 463,
+    "session_id": "lehua_2026-02-22_1f",
+    "product_id": "p020",
+    "on_shelf": null,
+    "stock": 0.2,
+    "discarded": null
+  },
+  {
+    "id": 464,
+    "session_id": "lehua_2026-02-22_1f",
+    "product_id": "p023",
+    "on_shelf": null,
+    "stock": 1,
+    "discarded": null
+  },
+  {
+    "id": 465,
+    "session_id": "lehua_2026-02-22_1f",
+    "product_id": "p024",
+    "on_shelf": null,
+    "stock": 0.5,
+    "discarded": null
+  },
+  {
+    "id": 466,
+    "session_id": "lehua_2026-02-22_1f",
+    "product_id": "p025",
+    "on_shelf": null,
+    "stock": 0.2,
+    "discarded": null
+  },
+  {
+    "id": 467,
+    "session_id": "lehua_2026-02-22_1f",
+    "product_id": "p017",
+    "on_shelf": 0.1,
+    "stock": null,
+    "discarded": null
+  },
+  {
+    "id": 1202,
+    "session_id": "lehua_2026-02-24_1f",
+    "product_id": "p003",
+    "on_shelf": 0.9,
+    "stock": 2,
+    "discarded": null
+  },
+  {
+    "id": 1203,
+    "session_id": "lehua_2026-02-24_1f",
+    "product_id": "p001",
+    "on_shelf": 0.9,
+    "stock": 1,
+    "discarded": null
+  },
+  {
+    "id": 1204,
+    "session_id": "lehua_2026-02-24_1f",
+    "product_id": "p002",
+    "on_shelf": 0,
+    "stock": 3,
+    "discarded": null
+  },
+  {
+    "id": 1205,
+    "session_id": "lehua_2026-02-24_1f",
+    "product_id": "p004",
+    "on_shelf": 0,
+    "stock": 8,
+    "discarded": null
+  },
+  {
+    "id": 481,
+    "session_id": "lehua_2026-02-20_1f",
+    "product_id": "p003",
+    "on_shelf": 0,
+    "stock": 1.1,
+    "discarded": 0
+  },
+  {
+    "id": 482,
+    "session_id": "lehua_2026-02-20_1f",
+    "product_id": "p001",
+    "on_shelf": 0,
+    "stock": 1.5,
+    "discarded": 0
+  },
+  {
+    "id": 483,
+    "session_id": "lehua_2026-02-20_1f",
+    "product_id": "p002",
+    "on_shelf": 0,
+    "stock": 2.5,
+    "discarded": 0
+  },
+  {
+    "id": 484,
+    "session_id": "lehua_2026-02-20_1f",
+    "product_id": "p004",
+    "on_shelf": 0,
+    "stock": 7.3,
+    "discarded": 0
+  },
+  {
+    "id": 485,
+    "session_id": "lehua_2026-02-20_1f",
+    "product_id": "p005",
+    "on_shelf": 0,
+    "stock": 3.4,
+    "discarded": 0
+  },
+  {
+    "id": 486,
+    "session_id": "lehua_2026-02-20_1f",
+    "product_id": "p006",
+    "on_shelf": 0,
+    "stock": 5.8,
+    "discarded": 0
+  },
+  {
+    "id": 487,
+    "session_id": "lehua_2026-02-20_1f",
+    "product_id": "p010",
+    "on_shelf": 0,
+    "stock": 0.9,
+    "discarded": 0
+  },
+  {
+    "id": 488,
+    "session_id": "lehua_2026-02-20_1f",
+    "product_id": "p007",
+    "on_shelf": 0,
+    "stock": 0.2,
+    "discarded": 0
+  },
+  {
+    "id": 489,
+    "session_id": "lehua_2026-02-20_1f",
+    "product_id": "p021",
+    "on_shelf": 0,
+    "stock": 0.5,
+    "discarded": 0
+  },
+  {
+    "id": 490,
+    "session_id": "lehua_2026-02-20_1f",
+    "product_id": "p009",
+    "on_shelf": 0,
+    "stock": 0,
+    "discarded": 0
+  },
+  {
+    "id": 491,
+    "session_id": "lehua_2026-02-20_1f",
+    "product_id": "p035",
+    "on_shelf": 0,
+    "stock": 0,
+    "discarded": 0
+  },
+  {
+    "id": 492,
+    "session_id": "lehua_2026-02-20_1f",
+    "product_id": "p036",
+    "on_shelf": 0,
+    "stock": 0,
+    "discarded": 0
+  },
+  {
+    "id": 493,
+    "session_id": "lehua_2026-02-20_1f",
+    "product_id": "p019",
+    "on_shelf": 0,
+    "stock": 1.9,
+    "discarded": 0
+  },
+  {
+    "id": 494,
+    "session_id": "lehua_2026-02-20_1f",
+    "product_id": "p020",
+    "on_shelf": 0,
+    "stock": 0.7,
+    "discarded": 0
+  },
+  {
+    "id": 495,
+    "session_id": "lehua_2026-02-20_1f",
+    "product_id": "p023",
+    "on_shelf": 0,
+    "stock": 2,
+    "discarded": 0
+  },
+  {
+    "id": 496,
+    "session_id": "lehua_2026-02-20_1f",
+    "product_id": "p024",
+    "on_shelf": 0,
+    "stock": 0.9,
+    "discarded": 0
+  },
+  {
+    "id": 497,
+    "session_id": "lehua_2026-02-20_1f",
+    "product_id": "p025",
+    "on_shelf": 0,
+    "stock": 0,
+    "discarded": 0
+  },
+  {
+    "id": 498,
+    "session_id": "lehua_2026-02-20_1f",
+    "product_id": "p017",
+    "on_shelf": 0,
+    "stock": 0,
+    "discarded": 0
+  },
+  {
+    "id": 499,
+    "session_id": "lehua_2026-02-20_1f",
+    "product_id": "p032",
+    "on_shelf": 0,
+    "stock": 0,
+    "discarded": 0
+  },
+  {
+    "id": 1206,
+    "session_id": "lehua_2026-02-24_1f",
+    "product_id": "p005",
+    "on_shelf": 0.2,
+    "stock": 1,
+    "discarded": null
+  },
+  {
+    "id": 1207,
+    "session_id": "lehua_2026-02-24_1f",
+    "product_id": "p006",
+    "on_shelf": 0.5,
+    "stock": 4,
+    "discarded": null
+  },
+  {
+    "id": 1208,
+    "session_id": "lehua_2026-02-24_1f",
+    "product_id": "p010",
+    "on_shelf": 0.2,
+    "stock": 1,
+    "discarded": null
+  },
+  {
+    "id": 1209,
+    "session_id": "lehua_2026-02-24_1f",
+    "product_id": "p007",
+    "on_shelf": 0.9,
+    "stock": null,
+    "discarded": null
+  },
+  {
+    "id": 1210,
+    "session_id": "lehua_2026-02-24_1f",
+    "product_id": "p021",
+    "on_shelf": 0.6,
+    "stock": 1,
+    "discarded": null
+  },
+  {
+    "id": 1211,
+    "session_id": "lehua_2026-02-24_1f",
+    "product_id": "p009",
+    "on_shelf": 0.4,
+    "stock": 1,
+    "discarded": null
+  },
+  {
+    "id": 1212,
+    "session_id": "lehua_2026-02-24_1f",
+    "product_id": "p019",
+    "on_shelf": null,
+    "stock": 1.4,
+    "discarded": null
+  },
+  {
+    "id": 1213,
+    "session_id": "lehua_2026-02-24_1f",
+    "product_id": "p020",
+    "on_shelf": null,
+    "stock": 1.3,
+    "discarded": null
+  },
+  {
+    "id": 1214,
+    "session_id": "lehua_2026-02-24_1f",
+    "product_id": "p024",
+    "on_shelf": null,
+    "stock": 0.8,
+    "discarded": null
+  },
+  {
+    "id": 1215,
+    "session_id": "lehua_2026-02-24_1f",
+    "product_id": "p029",
+    "on_shelf": null,
+    "stock": 1.1,
+    "discarded": null
+  },
+  {
+    "id": 1216,
+    "session_id": "lehua_2026-02-24_1f",
+    "product_id": "p017",
+    "on_shelf": null,
+    "stock": 1.4,
+    "discarded": null
+  },
+  {
+    "id": 1217,
+    "session_id": "lehua_2026-02-24_1f",
+    "product_id": "p032",
+    "on_shelf": 0.2,
+    "stock": null,
+    "discarded": null
+  },
+  {
+    "id": 1218,
+    "session_id": "lehua_2026-02-24_2f",
+    "product_id": "p031",
+    "on_shelf": null,
+    "stock": 2,
+    "discarded": null
+  },
+  {
+    "id": 1219,
+    "session_id": "lehua_2026-02-24_2f",
+    "product_id": "p033",
+    "on_shelf": null,
+    "stock": 5,
+    "discarded": null
+  },
+  {
+    "id": 1220,
+    "session_id": "lehua_2026-02-24_2f",
+    "product_id": "p011",
+    "on_shelf": null,
+    "stock": 25,
+    "discarded": null
+  },
+  {
+    "id": 1221,
+    "session_id": "lehua_2026-02-24_2f",
+    "product_id": "p012",
+    "on_shelf": null,
+    "stock": 22.5,
+    "discarded": null
+  },
+  {
+    "id": 1222,
+    "session_id": "lehua_2026-02-24_2f",
+    "product_id": "p014",
+    "on_shelf": null,
+    "stock": 2,
+    "discarded": null
+  },
+  {
+    "id": 1223,
+    "session_id": "lehua_2026-02-24_2f",
+    "product_id": "p015",
+    "on_shelf": null,
+    "stock": 2.1,
+    "discarded": null
+  },
+  {
+    "id": 1224,
+    "session_id": "lehua_2026-02-24_2f",
+    "product_id": "p024",
+    "on_shelf": null,
+    "stock": 1,
+    "discarded": null
+  },
+  {
+    "id": 1225,
+    "session_id": "lehua_2026-02-24_2f",
+    "product_id": "p025",
+    "on_shelf": null,
+    "stock": 2,
+    "discarded": null
+  },
+  {
+    "id": 1226,
+    "session_id": "lehua_2026-02-24_2f",
+    "product_id": "p026",
+    "on_shelf": null,
+    "stock": 5,
+    "discarded": null
+  },
+  {
+    "id": 1227,
+    "session_id": "lehua_2026-02-24_2f",
+    "product_id": "p027",
+    "on_shelf": null,
+    "stock": 9,
+    "discarded": null
+  },
+  {
+    "id": 1228,
+    "session_id": "lehua_2026-02-24_2f",
+    "product_id": "p028",
+    "on_shelf": null,
+    "stock": 7,
+    "discarded": null
+  },
+  {
+    "id": 1229,
+    "session_id": "lehua_2026-02-24_2f",
+    "product_id": "p016",
+    "on_shelf": null,
+    "stock": 65,
+    "discarded": null
+  },
+  {
+    "id": 1230,
+    "session_id": "lehua_2026-02-24_2f",
+    "product_id": "p1771513523503",
+    "on_shelf": null,
+    "stock": 1.4,
+    "discarded": null
+  },
+  {
+    "id": 1231,
+    "session_id": "lehua_2026-02-24_2f",
+    "product_id": "p1771513573239",
+    "on_shelf": null,
+    "stock": 7,
+    "discarded": null
+  },
+  {
+    "id": 1232,
+    "session_id": "lehua_2026-02-24_2f",
+    "product_id": "p1771513626343",
+    "on_shelf": null,
+    "stock": 2,
+    "discarded": null
+  },
+  {
+    "id": 1233,
+    "session_id": "lehua_2026-02-24_2f",
+    "product_id": "p1771513693518",
+    "on_shelf": null,
+    "stock": 8,
+    "discarded": null
+  },
+  {
+    "id": 1234,
+    "session_id": "lehua_2026-02-24_2f",
+    "product_id": "p1771513729598",
+    "on_shelf": null,
+    "stock": 16,
+    "discarded": null
+  },
+  {
+    "id": 1235,
+    "session_id": "lehua_2026-02-24_2f",
+    "product_id": "p1771513755567",
+    "on_shelf": null,
+    "stock": 12,
+    "discarded": null
+  },
+  {
+    "id": 1236,
+    "session_id": "lehua_2026-02-24_2f",
+    "product_id": "p1771513777998",
+    "on_shelf": null,
+    "stock": 3,
+    "discarded": null
+  },
+  {
+    "id": 3108,
+    "session_id": "xingnan_2026-02-26_1f",
+    "product_id": "p003",
+    "on_shelf": 0.8,
+    "stock": 2,
+    "discarded": null
+  },
+  {
+    "id": 3109,
+    "session_id": "xingnan_2026-02-26_1f",
+    "product_id": "p001",
+    "on_shelf": null,
+    "stock": 1,
+    "discarded": 0.2
+  },
+  {
+    "id": 3110,
+    "session_id": "xingnan_2026-02-26_1f",
+    "product_id": "p002",
+    "on_shelf": null,
+    "stock": 1,
+    "discarded": 0.2
+  },
+  {
+    "id": 3111,
+    "session_id": "xingnan_2026-02-26_1f",
+    "product_id": "p004",
+    "on_shelf": 0.1,
+    "stock": 4,
+    "discarded": null
+  },
+  {
+    "id": 3112,
+    "session_id": "xingnan_2026-02-26_1f",
+    "product_id": "p005",
+    "on_shelf": 0.7,
+    "stock": null,
+    "discarded": null
+  },
+  {
+    "id": 3113,
+    "session_id": "xingnan_2026-02-26_1f",
+    "product_id": "p006",
+    "on_shelf": 0.9,
+    "stock": 0.1,
+    "discarded": null
+  },
+  {
+    "id": 3114,
+    "session_id": "xingnan_2026-02-26_1f",
+    "product_id": "p010",
+    "on_shelf": 0.2,
+    "stock": null,
+    "discarded": null
+  },
+  {
+    "id": 3115,
+    "session_id": "xingnan_2026-02-26_1f",
+    "product_id": "p007",
+    "on_shelf": 0.25,
+    "stock": null,
+    "discarded": null
+  },
+  {
+    "id": 3116,
+    "session_id": "xingnan_2026-02-26_1f",
+    "product_id": "p021",
+    "on_shelf": 0.6,
+    "stock": 1,
+    "discarded": null
+  },
+  {
+    "id": 3117,
+    "session_id": "xingnan_2026-02-26_1f",
+    "product_id": "p022",
+    "on_shelf": 0,
+    "stock": null,
+    "discarded": 0
+  },
+  {
+    "id": 3118,
+    "session_id": "xingnan_2026-02-26_1f",
+    "product_id": "p030",
+    "on_shelf": null,
+    "stock": 7,
+    "discarded": null
+  },
+  {
+    "id": 3119,
+    "session_id": "xingnan_2026-02-26_1f",
+    "product_id": "p031",
+    "on_shelf": null,
+    "stock": 7,
+    "discarded": null
+  },
+  {
+    "id": 3120,
+    "session_id": "xingnan_2026-02-26_1f",
+    "product_id": "p009",
+    "on_shelf": null,
+    "stock": 0.5,
+    "discarded": 0.2
+  },
+  {
+    "id": 3121,
+    "session_id": "xingnan_2026-02-26_1f",
+    "product_id": "p008",
+    "on_shelf": 1,
+    "stock": 0,
+    "discarded": 0.01
+  },
+  {
+    "id": 3122,
+    "session_id": "xingnan_2026-02-26_1f",
+    "product_id": "p011",
+    "on_shelf": 12.2,
+    "stock": 10,
+    "discarded": null
+  },
+  {
+    "id": 3123,
+    "session_id": "xingnan_2026-02-26_1f",
+    "product_id": "p012",
+    "on_shelf": 8.3,
+    "stock": 2,
+    "discarded": null
+  },
+  {
+    "id": 3124,
+    "session_id": "xingnan_2026-02-26_1f",
+    "product_id": "p014",
+    "on_shelf": 0.17,
+    "stock": 0.4,
+    "discarded": null
+  },
+  {
+    "id": 3125,
+    "session_id": "xingnan_2026-02-26_1f",
+    "product_id": "p015",
+    "on_shelf": 0.61,
+    "stock": 1,
+    "discarded": null
+  },
+  {
+    "id": 3126,
+    "session_id": "xingnan_2026-02-26_1f",
+    "product_id": "p019",
+    "on_shelf": null,
+    "stock": 2,
+    "discarded": 0.1
+  },
+  {
+    "id": 3127,
+    "session_id": "xingnan_2026-02-26_1f",
+    "product_id": "p020",
+    "on_shelf": 0.05,
+    "stock": 2,
+    "discarded": null
+  },
+  {
+    "id": 3128,
+    "session_id": "xingnan_2026-02-26_1f",
+    "product_id": "p023",
+    "on_shelf": 0.71,
+    "stock": null,
+    "discarded": null
+  },
+  {
+    "id": 1674,
+    "session_id": "lehua_2026-02-25_2f",
+    "product_id": "p014",
+    "on_shelf": null,
+    "stock": 1.35,
+    "discarded": null
+  },
+  {
+    "id": 1675,
+    "session_id": "lehua_2026-02-25_2f",
+    "product_id": "p015",
+    "on_shelf": null,
+    "stock": 1.2,
+    "discarded": null
+  },
+  {
+    "id": 1676,
+    "session_id": "lehua_2026-02-25_2f",
+    "product_id": "p024",
+    "on_shelf": null,
+    "stock": 1,
+    "discarded": null
+  },
+  {
+    "id": 1677,
+    "session_id": "lehua_2026-02-25_2f",
+    "product_id": "p025",
+    "on_shelf": null,
+    "stock": 1,
+    "discarded": null
+  },
+  {
+    "id": 1678,
+    "session_id": "lehua_2026-02-25_2f",
+    "product_id": "p026",
+    "on_shelf": null,
+    "stock": 5,
+    "discarded": null
+  },
+  {
+    "id": 1679,
+    "session_id": "lehua_2026-02-25_2f",
+    "product_id": "p027",
+    "on_shelf": null,
+    "stock": 9,
+    "discarded": null
+  },
+  {
+    "id": 1680,
+    "session_id": "lehua_2026-02-25_2f",
+    "product_id": "p028",
+    "on_shelf": null,
+    "stock": 7,
+    "discarded": null
+  },
+  {
+    "id": 1681,
+    "session_id": "lehua_2026-02-25_2f",
+    "product_id": "p016",
+    "on_shelf": null,
+    "stock": 60,
+    "discarded": null
+  },
+  {
+    "id": 1682,
+    "session_id": "lehua_2026-02-25_2f",
+    "product_id": "p1771513523503",
+    "on_shelf": null,
+    "stock": 1.5,
+    "discarded": null
+  },
+  {
+    "id": 1683,
+    "session_id": "lehua_2026-02-25_2f",
+    "product_id": "p1771513573239",
+    "on_shelf": null,
+    "stock": 5,
+    "discarded": null
+  },
+  {
+    "id": 1684,
+    "session_id": "lehua_2026-02-25_2f",
+    "product_id": "p1771513626343",
+    "on_shelf": null,
+    "stock": 2.9,
+    "discarded": null
+  },
+  {
+    "id": 1685,
+    "session_id": "lehua_2026-02-25_2f",
+    "product_id": "p1771513693518",
+    "on_shelf": null,
+    "stock": 6,
+    "discarded": null
+  },
+  {
+    "id": 1686,
+    "session_id": "lehua_2026-02-25_2f",
+    "product_id": "p1771513729598",
+    "on_shelf": null,
+    "stock": 16,
+    "discarded": null
+  },
+  {
+    "id": 3129,
+    "session_id": "xingnan_2026-02-26_1f",
+    "product_id": "p024",
+    "on_shelf": 0.5,
+    "stock": 1,
+    "discarded": null
+  },
+  {
+    "id": 3130,
+    "session_id": "xingnan_2026-02-26_1f",
+    "product_id": "p025",
+    "on_shelf": 0.6,
+    "stock": 1,
+    "discarded": null
+  },
+  {
+    "id": 3131,
+    "session_id": "xingnan_2026-02-26_1f",
+    "product_id": "p026",
+    "on_shelf": null,
+    "stock": 4,
+    "discarded": null
+  },
+  {
+    "id": 3132,
+    "session_id": "xingnan_2026-02-26_1f",
+    "product_id": "p027",
+    "on_shelf": null,
+    "stock": 4,
+    "discarded": null
+  },
+  {
+    "id": 3133,
+    "session_id": "xingnan_2026-02-26_1f",
+    "product_id": "p028",
+    "on_shelf": null,
+    "stock": 5,
+    "discarded": null
+  },
+  {
+    "id": 3134,
+    "session_id": "xingnan_2026-02-26_1f",
+    "product_id": "p029",
+    "on_shelf": null,
+    "stock": 10,
+    "discarded": null
+  },
+  {
+    "id": 3135,
+    "session_id": "xingnan_2026-02-26_1f",
+    "product_id": "p017",
+    "on_shelf": 0.3,
+    "stock": 2,
+    "discarded": null
+  },
+  {
+    "id": 3136,
+    "session_id": "xingnan_2026-02-26_1f",
+    "product_id": "p016",
+    "on_shelf": null,
+    "stock": 56,
+    "discarded": null
+  },
+  {
+    "id": 3137,
+    "session_id": "xingnan_2026-02-26_1f",
+    "product_id": "p032",
+    "on_shelf": null,
+    "stock": 1.5,
+    "discarded": null
+  },
+  {
+    "id": 3138,
+    "session_id": "xingnan_2026-02-26_1f",
+    "product_id": "p1771513573239",
+    "on_shelf": null,
+    "stock": 6,
+    "discarded": null
+  },
+  {
+    "id": 3139,
+    "session_id": "xingnan_2026-02-26_1f",
+    "product_id": "p1771513626343",
+    "on_shelf": 0.1,
+    "stock": 3,
+    "discarded": null
+  },
+  {
+    "id": 3140,
+    "session_id": "xingnan_2026-02-26_1f",
+    "product_id": "p1772032716535",
+    "on_shelf": 4.75,
+    "stock": null,
+    "discarded": 0.1
+  },
+  {
+    "id": 1687,
+    "session_id": "lehua_2026-02-25_2f",
+    "product_id": "p1771513755567",
+    "on_shelf": null,
+    "stock": 12,
+    "discarded": null
+  },
+  {
+    "id": 1709,
+    "session_id": "xingnan_2026-02-25_1f",
+    "product_id": "p003",
+    "on_shelf": 0,
+    "stock": 2,
+    "discarded": 0
+  },
+  {
+    "id": 1710,
+    "session_id": "xingnan_2026-02-25_1f",
+    "product_id": "p001",
+    "on_shelf": 0.6,
+    "stock": 1,
+    "discarded": 0
+  },
+  {
+    "id": 1711,
+    "session_id": "xingnan_2026-02-25_1f",
+    "product_id": "p002",
+    "on_shelf": 0.7,
+    "stock": 1,
+    "discarded": 0
+  },
+  {
+    "id": 1712,
+    "session_id": "xingnan_2026-02-25_1f",
+    "product_id": "p004",
+    "on_shelf": 0.5,
+    "stock": 4,
+    "discarded": 0
+  },
+  {
+    "id": 1713,
+    "session_id": "xingnan_2026-02-25_1f",
+    "product_id": "p005",
+    "on_shelf": 0,
+    "stock": 1,
+    "discarded": 0
+  },
+  {
+    "id": 1714,
+    "session_id": "xingnan_2026-02-25_1f",
+    "product_id": "p006",
+    "on_shelf": 0.1,
+    "stock": 2,
+    "discarded": 0
+  },
+  {
+    "id": 1715,
+    "session_id": "xingnan_2026-02-25_1f",
+    "product_id": "p010",
+    "on_shelf": 0.4,
+    "stock": 0.5,
+    "discarded": 0
+  },
+  {
+    "id": 1716,
+    "session_id": "xingnan_2026-02-25_1f",
+    "product_id": "p007",
+    "on_shelf": 0,
+    "stock": 0.5,
+    "discarded": 0.1
+  },
+  {
+    "id": 1717,
+    "session_id": "xingnan_2026-02-25_1f",
+    "product_id": "p021",
+    "on_shelf": 0.1,
+    "stock": 2,
+    "discarded": 0
+  },
+  {
+    "id": 1718,
+    "session_id": "xingnan_2026-02-25_1f",
+    "product_id": "p022",
+    "on_shelf": 0,
+    "stock": 0,
+    "discarded": 0
+  },
+  {
+    "id": 1719,
+    "session_id": "xingnan_2026-02-25_1f",
+    "product_id": "p030",
+    "on_shelf": 0,
+    "stock": 7,
+    "discarded": 0
+  },
+  {
+    "id": 1720,
+    "session_id": "xingnan_2026-02-25_1f",
+    "product_id": "p031",
+    "on_shelf": 0,
+    "stock": 3,
+    "discarded": 0
+  },
+  {
+    "id": 1721,
+    "session_id": "xingnan_2026-02-25_1f",
+    "product_id": "p008",
+    "on_shelf": 1,
+    "stock": 0,
+    "discarded": 0.4
+  },
+  {
+    "id": 1722,
+    "session_id": "xingnan_2026-02-25_1f",
+    "product_id": "p033",
+    "on_shelf": 0,
+    "stock": 0,
+    "discarded": 0
+  },
+  {
+    "id": 1723,
+    "session_id": "xingnan_2026-02-25_1f",
+    "product_id": "p034",
+    "on_shelf": 0,
+    "stock": 0,
+    "discarded": 0
+  },
+  {
+    "id": 1724,
+    "session_id": "xingnan_2026-02-25_1f",
+    "product_id": "p009",
+    "on_shelf": 0,
+    "stock": 0.5,
+    "discarded": 0.05
+  },
+  {
+    "id": 1725,
+    "session_id": "xingnan_2026-02-25_1f",
+    "product_id": "p035",
+    "on_shelf": 0,
+    "stock": 0,
+    "discarded": 0
+  },
+  {
+    "id": 1726,
+    "session_id": "xingnan_2026-02-25_1f",
+    "product_id": "p036",
+    "on_shelf": 0,
+    "stock": 0,
+    "discarded": 0
+  },
+  {
+    "id": 1727,
+    "session_id": "xingnan_2026-02-25_1f",
+    "product_id": "p037",
+    "on_shelf": 0,
+    "stock": 0,
+    "discarded": 0
+  },
+  {
+    "id": 1728,
+    "session_id": "xingnan_2026-02-25_1f",
+    "product_id": "p011",
+    "on_shelf": 12.8,
+    "stock": 14,
+    "discarded": 0
+  },
+  {
+    "id": 1729,
+    "session_id": "xingnan_2026-02-25_1f",
+    "product_id": "p012",
+    "on_shelf": 8.5,
+    "stock": 4,
+    "discarded": 0
+  },
+  {
+    "id": 1730,
+    "session_id": "xingnan_2026-02-25_1f",
+    "product_id": "p014",
+    "on_shelf": 0.55,
+    "stock": 0,
+    "discarded": 0
+  },
+  {
+    "id": 1731,
+    "session_id": "xingnan_2026-02-25_1f",
+    "product_id": "p015",
+    "on_shelf": 0.7,
+    "stock": 1,
+    "discarded": 0
+  },
+  {
+    "id": 1732,
+    "session_id": "xingnan_2026-02-25_1f",
+    "product_id": "p019",
+    "on_shelf": 0.4,
+    "stock": 2,
+    "discarded": 0
+  },
+  {
+    "id": 1733,
+    "session_id": "xingnan_2026-02-25_1f",
+    "product_id": "p020",
+    "on_shelf": 0.2,
+    "stock": 1,
+    "discarded": 0
+  },
+  {
+    "id": 1734,
+    "session_id": "xingnan_2026-02-25_1f",
+    "product_id": "p023",
+    "on_shelf": 0,
+    "stock": 0,
+    "discarded": 0
+  },
+  {
+    "id": 1735,
+    "session_id": "xingnan_2026-02-25_1f",
+    "product_id": "p024",
+    "on_shelf": 0.5,
+    "stock": 1,
+    "discarded": 0
+  },
+  {
+    "id": 1736,
+    "session_id": "xingnan_2026-02-25_1f",
+    "product_id": "p025",
+    "on_shelf": 1.5,
+    "stock": 0,
+    "discarded": 0
+  },
+  {
+    "id": 1737,
+    "session_id": "xingnan_2026-02-25_1f",
+    "product_id": "p026",
+    "on_shelf": 0,
+    "stock": 4,
+    "discarded": 0
+  },
+  {
+    "id": 1738,
+    "session_id": "xingnan_2026-02-25_1f",
+    "product_id": "p027",
+    "on_shelf": 0,
+    "stock": 5,
+    "discarded": 0
+  },
+  {
+    "id": 1739,
+    "session_id": "xingnan_2026-02-25_1f",
+    "product_id": "p028",
+    "on_shelf": 0,
+    "stock": 5,
+    "discarded": 0
+  },
+  {
+    "id": 1740,
+    "session_id": "xingnan_2026-02-25_1f",
+    "product_id": "p029",
+    "on_shelf": 0.05,
+    "stock": 14,
+    "discarded": 0
+  },
+  {
+    "id": 1741,
+    "session_id": "xingnan_2026-02-25_1f",
+    "product_id": "p016",
+    "on_shelf": 0.8,
+    "stock": 56,
+    "discarded": 0.1
+  },
+  {
+    "id": 1742,
+    "session_id": "xingnan_2026-02-25_1f",
+    "product_id": "p017",
+    "on_shelf": 0.4,
+    "stock": 0,
+    "discarded": 0
+  },
+  {
+    "id": 1743,
+    "session_id": "xingnan_2026-02-25_1f",
+    "product_id": "p032",
+    "on_shelf": 0,
+    "stock": 2,
+    "discarded": 0
+  },
+  {
+    "id": 1744,
+    "session_id": "xingnan_2026-02-25_1f",
+    "product_id": "p1771513573239",
+    "on_shelf": 0,
+    "stock": 1,
+    "discarded": 0
+  },
+  {
+    "id": 1745,
+    "session_id": "xingnan_2026-02-25_1f",
+    "product_id": "p1771513626343",
+    "on_shelf": 0,
+    "stock": 3,
+    "discarded": 0
+  },
+  {
+    "id": 1746,
+    "session_id": "xingnan_2026-02-25_1f",
+    "product_id": "p1772032716535",
+    "on_shelf": 3.25,
+    "stock": null,
+    "discarded": 0.4
+  },
+  {
+    "id": 3141,
+    "session_id": "xingnan_2026-02-26_1f",
+    "product_id": "p1772032863551",
+    "on_shelf": 0.22,
+    "stock": null,
+    "discarded": 0.4
+  },
+  {
+    "id": 3169,
+    "session_id": "lehua_2026-02-27_1f",
+    "product_id": "p019",
+    "on_shelf": null,
+    "stock": 0.1,
+    "discarded": null
+  },
+  {
+    "id": 1688,
+    "session_id": "lehua_2026-02-25_1f",
+    "product_id": "p003",
+    "on_shelf": null,
+    "stock": 1.8,
+    "discarded": 0
+  },
+  {
+    "id": 1689,
+    "session_id": "lehua_2026-02-25_1f",
+    "product_id": "p001",
+    "on_shelf": null,
+    "stock": 1.3,
+    "discarded": null
+  },
+  {
+    "id": 1690,
+    "session_id": "lehua_2026-02-25_1f",
+    "product_id": "p002",
+    "on_shelf": null,
+    "stock": 2.5,
+    "discarded": null
+  },
+  {
+    "id": 1692,
+    "session_id": "lehua_2026-02-25_1f",
+    "product_id": "p005",
+    "on_shelf": null,
+    "stock": 0,
+    "discarded": null
+  },
+  {
+    "id": 3197,
+    "session_id": "lehua_2026-02-26_2f",
+    "product_id": "p007",
+    "on_shelf": null,
+    "stock": 0,
+    "discarded": null
+  },
+  {
+    "id": 3198,
+    "session_id": "lehua_2026-02-26_2f",
+    "product_id": "p021",
+    "on_shelf": null,
+    "stock": 0,
+    "discarded": null
+  },
+  {
+    "id": 3199,
+    "session_id": "lehua_2026-02-26_2f",
+    "product_id": "p030",
+    "on_shelf": null,
+    "stock": 4,
+    "discarded": null
+  },
+  {
+    "id": 3200,
+    "session_id": "lehua_2026-02-26_2f",
+    "product_id": "p031",
+    "on_shelf": null,
+    "stock": 10,
+    "discarded": null
+  },
+  {
+    "id": 3201,
+    "session_id": "lehua_2026-02-26_2f",
+    "product_id": "p033",
+    "on_shelf": null,
+    "stock": 0,
+    "discarded": null
+  },
+  {
+    "id": 3202,
+    "session_id": "lehua_2026-02-26_2f",
+    "product_id": "p034",
+    "on_shelf": null,
+    "stock": 0,
+    "discarded": null
+  },
+  {
+    "id": 3203,
+    "session_id": "lehua_2026-02-26_2f",
+    "product_id": "p009",
+    "on_shelf": null,
+    "stock": 0,
+    "discarded": null
+  },
+  {
+    "id": 3204,
+    "session_id": "lehua_2026-02-26_2f",
+    "product_id": "p035",
+    "on_shelf": null,
+    "stock": 0,
+    "discarded": null
+  },
+  {
+    "id": 3205,
+    "session_id": "lehua_2026-02-26_2f",
+    "product_id": "p011",
+    "on_shelf": null,
+    "stock": 29.6,
+    "discarded": null
+  },
+  {
+    "id": 3206,
+    "session_id": "lehua_2026-02-26_2f",
+    "product_id": "p012",
+    "on_shelf": null,
+    "stock": 24.5,
+    "discarded": null
+  },
+  {
+    "id": 3207,
+    "session_id": "lehua_2026-02-26_2f",
+    "product_id": "p014",
+    "on_shelf": null,
+    "stock": 1.8,
+    "discarded": null
+  },
+  {
+    "id": 3208,
+    "session_id": "lehua_2026-02-26_2f",
+    "product_id": "p015",
+    "on_shelf": null,
+    "stock": 2.2,
+    "discarded": null
+  },
+  {
+    "id": 3209,
+    "session_id": "lehua_2026-02-26_2f",
+    "product_id": "p023",
+    "on_shelf": null,
+    "stock": 0,
+    "discarded": null
+  },
+  {
+    "id": 3210,
+    "session_id": "lehua_2026-02-26_2f",
+    "product_id": "p024",
+    "on_shelf": null,
+    "stock": 1,
+    "discarded": null
+  },
+  {
+    "id": 3211,
+    "session_id": "lehua_2026-02-26_2f",
+    "product_id": "p025",
+    "on_shelf": null,
+    "stock": 1,
+    "discarded": null
+  },
+  {
+    "id": 3212,
+    "session_id": "lehua_2026-02-26_2f",
+    "product_id": "p026",
+    "on_shelf": null,
+    "stock": 5,
+    "discarded": null
+  },
+  {
+    "id": 3213,
+    "session_id": "lehua_2026-02-26_2f",
+    "product_id": "p027",
+    "on_shelf": null,
+    "stock": 9,
+    "discarded": null
+  },
+  {
+    "id": 3214,
+    "session_id": "lehua_2026-02-26_2f",
+    "product_id": "p028",
+    "on_shelf": null,
+    "stock": 7,
+    "discarded": null
+  },
+  {
+    "id": 3215,
+    "session_id": "lehua_2026-02-26_2f",
+    "product_id": "p016",
+    "on_shelf": null,
+    "stock": 57,
+    "discarded": null
+  },
+  {
+    "id": 3216,
+    "session_id": "lehua_2026-02-26_2f",
+    "product_id": "p032",
+    "on_shelf": null,
+    "stock": 0,
+    "discarded": null
+  },
+  {
+    "id": 3217,
+    "session_id": "lehua_2026-02-26_2f",
+    "product_id": "p1771513523503",
+    "on_shelf": null,
+    "stock": 1.2,
+    "discarded": null
+  },
+  {
+    "id": 3218,
+    "session_id": "lehua_2026-02-26_2f",
+    "product_id": "p1771513573239",
+    "on_shelf": null,
+    "stock": 2,
+    "discarded": null
+  },
+  {
+    "id": 3219,
+    "session_id": "lehua_2026-02-26_2f",
+    "product_id": "p1771513626343",
+    "on_shelf": null,
+    "stock": 3.8,
+    "discarded": null
+  },
+  {
+    "id": 3220,
+    "session_id": "lehua_2026-02-26_2f",
+    "product_id": "p1771513693518",
+    "on_shelf": null,
+    "stock": 0,
+    "discarded": null
+  },
+  {
+    "id": 3221,
+    "session_id": "lehua_2026-02-26_2f",
+    "product_id": "p1771513729598",
+    "on_shelf": null,
+    "stock": 12,
+    "discarded": null
+  },
+  {
+    "id": 3222,
+    "session_id": "lehua_2026-02-26_2f",
+    "product_id": "p1771513755567",
+    "on_shelf": null,
+    "stock": 16,
+    "discarded": null
+  },
+  {
+    "id": 3223,
+    "session_id": "lehua_2026-02-26_2f",
+    "product_id": "p1771513777998",
+    "on_shelf": null,
+    "stock": 16,
+    "discarded": null
+  },
+  {
+    "id": 3224,
+    "session_id": "lehua_2026-02-26_2f",
+    "product_id": "p1772183715093",
+    "on_shelf": null,
+    "stock": 0,
+    "discarded": null
+  },
+  {
+    "id": 3225,
+    "session_id": "lehua_2026-02-26_2f",
+    "product_id": "p1772183764053",
+    "on_shelf": null,
+    "stock": 0,
+    "discarded": null
+  },
+  {
+    "id": 3327,
+    "session_id": "lehua_2026-02-27_2f",
+    "product_id": "p021",
+    "on_shelf": null,
+    "stock": 0,
+    "discarded": null
+  },
+  {
+    "id": 3170,
+    "session_id": "lehua_2026-02-27_1f",
+    "product_id": "p020",
+    "on_shelf": null,
+    "stock": 0,
+    "discarded": null
+  },
+  {
+    "id": 3171,
+    "session_id": "lehua_2026-02-27_1f",
+    "product_id": "p023",
+    "on_shelf": null,
+    "stock": 1050,
+    "discarded": null
+  },
+  {
+    "id": 3320,
+    "session_id": "lehua_2026-02-27_1f",
+    "product_id": "p024",
+    "on_shelf": null,
+    "stock": 0.8,
+    "discarded": null
+  },
+  {
+    "id": 1701,
+    "session_id": "lehua_2026-02-25_1f",
+    "product_id": "p020",
+    "on_shelf": null,
+    "stock": 1,
+    "discarded": null
+  },
+  {
+    "id": 1702,
+    "session_id": "lehua_2026-02-25_1f",
+    "product_id": "p023",
+    "on_shelf": null,
+    "stock": 0,
+    "discarded": null
+  },
+  {
+    "id": 1703,
+    "session_id": "lehua_2026-02-25_1f",
+    "product_id": "p024",
+    "on_shelf": null,
+    "stock": 0.6,
+    "discarded": null
+  },
+  {
+    "id": 1704,
+    "session_id": "lehua_2026-02-25_1f",
+    "product_id": "p025",
+    "on_shelf": null,
+    "stock": 0.9,
+    "discarded": null
+  },
+  {
+    "id": 1705,
+    "session_id": "lehua_2026-02-25_1f",
+    "product_id": "p029",
+    "on_shelf": null,
+    "stock": 1.1,
+    "discarded": null
+  },
+  {
+    "id": 1706,
+    "session_id": "lehua_2026-02-25_1f",
+    "product_id": "p017",
+    "on_shelf": null,
+    "stock": 0.7,
+    "discarded": null
+  },
+  {
+    "id": 1707,
+    "session_id": "lehua_2026-02-25_1f",
+    "product_id": "p032",
+    "on_shelf": null,
+    "stock": 0,
+    "discarded": null
+  },
+  {
+    "id": 1708,
+    "session_id": "lehua_2026-02-25_1f",
+    "product_id": "p1772032716535",
+    "on_shelf": 6.5,
+    "stock": 0,
+    "discarded": 0.8
+  },
+  {
+    "id": 3160,
+    "session_id": "lehua_2026-02-27_1f",
+    "product_id": "p003",
+    "on_shelf": null,
+    "stock": 1.1,
+    "discarded": null
+  },
+  {
+    "id": 3161,
+    "session_id": "lehua_2026-02-27_1f",
+    "product_id": "p001",
+    "on_shelf": null,
+    "stock": 1.3,
+    "discarded": null
+  },
+  {
+    "id": 3306,
+    "session_id": "lehua_2026-02-27_1f",
+    "product_id": "p002",
+    "on_shelf": null,
+    "stock": 1.5,
+    "discarded": null
+  },
+  {
+    "id": 3162,
+    "session_id": "lehua_2026-02-27_1f",
+    "product_id": "p004",
+    "on_shelf": null,
+    "stock": 6.3,
+    "discarded": null
+  },
+  {
+    "id": 3163,
+    "session_id": "lehua_2026-02-27_1f",
+    "product_id": "p005",
+    "on_shelf": null,
+    "stock": 0.4,
+    "discarded": null
+  },
+  {
+    "id": 3164,
+    "session_id": "lehua_2026-02-27_1f",
+    "product_id": "p006",
+    "on_shelf": null,
+    "stock": 3.7,
+    "discarded": null
+  },
+  {
+    "id": 3165,
+    "session_id": "lehua_2026-02-27_1f",
+    "product_id": "p010",
+    "on_shelf": null,
+    "stock": 0.7,
+    "discarded": null
+  },
+  {
+    "id": 3166,
+    "session_id": "lehua_2026-02-27_1f",
+    "product_id": "p007",
+    "on_shelf": null,
+    "stock": 0.5,
+    "discarded": null
+  },
+  {
+    "id": 3167,
+    "session_id": "lehua_2026-02-27_1f",
+    "product_id": "p021",
+    "on_shelf": null,
+    "stock": 0.3,
+    "discarded": null
+  },
+  {
+    "id": 3313,
+    "session_id": "lehua_2026-02-27_1f",
+    "product_id": "p022",
+    "on_shelf": null,
+    "stock": 0,
+    "discarded": 0.1
+  },
+  {
+    "id": 3168,
+    "session_id": "lehua_2026-02-27_1f",
+    "product_id": "p009",
+    "on_shelf": null,
+    "stock": 0.3,
+    "discarded": null
+  },
+  {
+    "id": 3315,
+    "session_id": "lehua_2026-02-27_1f",
+    "product_id": "p035",
+    "on_shelf": null,
+    "stock": 0,
+    "discarded": null
+  },
+  {
+    "id": 3316,
+    "session_id": "lehua_2026-02-27_1f",
+    "product_id": "p036",
+    "on_shelf": null,
+    "stock": 0,
+    "discarded": null
+  },
+  {
+    "id": 3172,
+    "session_id": "lehua_2026-02-27_1f",
+    "product_id": "p025",
+    "on_shelf": null,
+    "stock": 0.4,
+    "discarded": null
+  },
+  {
+    "id": 3322,
+    "session_id": "lehua_2026-02-27_1f",
+    "product_id": "p029",
+    "on_shelf": null,
+    "stock": 1,
+    "discarded": null
+  },
+  {
+    "id": 3173,
+    "session_id": "lehua_2026-02-27_1f",
+    "product_id": "p017",
+    "on_shelf": null,
+    "stock": 1,
+    "discarded": null
+  },
+  {
+    "id": 3324,
+    "session_id": "lehua_2026-02-27_1f",
+    "product_id": "p032",
+    "on_shelf": null,
+    "stock": 0.7,
+    "discarded": null
+  },
+  {
+    "id": 3174,
+    "session_id": "lehua_2026-02-27_1f",
+    "product_id": "p1772032716535",
+    "on_shelf": 16,
+    "stock": 0,
+    "discarded": 0.6
+  },
+  {
+    "id": 3192,
+    "session_id": "lehua_2026-02-26_1f",
+    "product_id": "p025",
+    "on_shelf": null,
+    "stock": 0.7,
+    "discarded": null
+  },
+  {
+    "id": 3193,
+    "session_id": "lehua_2026-02-26_1f",
+    "product_id": "p029",
+    "on_shelf": null,
+    "stock": 0,
+    "discarded": null
+  },
+  {
+    "id": 3194,
+    "session_id": "lehua_2026-02-26_1f",
+    "product_id": "p017",
+    "on_shelf": null,
+    "stock": 2.1,
+    "discarded": null
+  },
+  {
+    "id": 3195,
+    "session_id": "lehua_2026-02-26_1f",
+    "product_id": "p032",
+    "on_shelf": null,
+    "stock": 0,
+    "discarded": null
+  },
+  {
+    "id": 3196,
+    "session_id": "lehua_2026-02-26_1f",
+    "product_id": "p1772032716535",
+    "on_shelf": 10,
+    "stock": 0,
+    "discarded": 0.5
+  },
+  {
+    "id": 3265,
+    "session_id": "xingnan_2026-02-27_1f",
+    "product_id": "p003",
+    "on_shelf": 0.2,
+    "stock": 3,
+    "discarded": 0
+  },
+  {
+    "id": 3266,
+    "session_id": "xingnan_2026-02-27_1f",
+    "product_id": "p001",
+    "on_shelf": 0.1,
+    "stock": 2,
+    "discarded": 0
+  },
+  {
+    "id": 3267,
+    "session_id": "xingnan_2026-02-27_1f",
+    "product_id": "p002",
+    "on_shelf": 0.3,
+    "stock": 2,
+    "discarded": 0
+  },
+  {
+    "id": 3268,
+    "session_id": "xingnan_2026-02-27_1f",
+    "product_id": "p004",
+    "on_shelf": 0.8,
+    "stock": 7,
+    "discarded": 0
+  },
+  {
+    "id": 3269,
+    "session_id": "xingnan_2026-02-27_1f",
+    "product_id": "p005",
+    "on_shelf": 0.3,
+    "stock": 1,
+    "discarded": 0
+  },
+  {
+    "id": 3270,
+    "session_id": "xingnan_2026-02-27_1f",
+    "product_id": "p006",
+    "on_shelf": 0.9,
+    "stock": 2,
+    "discarded": 0
+  },
+  {
+    "id": 3271,
+    "session_id": "xingnan_2026-02-27_1f",
+    "product_id": "p010",
+    "on_shelf": 0.05,
+    "stock": 1,
+    "discarded": 0
+  },
+  {
+    "id": 3272,
+    "session_id": "xingnan_2026-02-27_1f",
+    "product_id": "p007",
+    "on_shelf": 0.3,
+    "stock": 0,
+    "discarded": 0
+  },
+  {
+    "id": 3273,
+    "session_id": "xingnan_2026-02-27_1f",
+    "product_id": "p021",
+    "on_shelf": 0.6,
+    "stock": 2,
+    "discarded": 0
+  },
+  {
+    "id": 3274,
+    "session_id": "xingnan_2026-02-27_1f",
+    "product_id": "p022",
+    "on_shelf": 0,
+    "stock": 0,
+    "discarded": 0.5
+  },
+  {
+    "id": 3275,
+    "session_id": "xingnan_2026-02-27_1f",
+    "product_id": "p030",
+    "on_shelf": 0,
+    "stock": 7,
+    "discarded": 0
+  },
+  {
+    "id": 3276,
+    "session_id": "xingnan_2026-02-27_1f",
+    "product_id": "p031",
+    "on_shelf": 0,
+    "stock": 6,
+    "discarded": 0
+  },
+  {
+    "id": 3277,
+    "session_id": "xingnan_2026-02-27_1f",
+    "product_id": "p033",
+    "on_shelf": 0,
+    "stock": 0,
+    "discarded": 0
+  },
+  {
+    "id": 3278,
+    "session_id": "xingnan_2026-02-27_1f",
+    "product_id": "p034",
+    "on_shelf": 0,
+    "stock": 0,
+    "discarded": 0
+  },
+  {
+    "id": 3279,
+    "session_id": "xingnan_2026-02-27_1f",
+    "product_id": "p009",
+    "on_shelf": 1,
+    "stock": 0,
+    "discarded": 0
+  },
+  {
+    "id": 3280,
+    "session_id": "xingnan_2026-02-27_1f",
+    "product_id": "p035",
+    "on_shelf": 0,
+    "stock": 0,
+    "discarded": 0
+  },
+  {
+    "id": 3281,
+    "session_id": "xingnan_2026-02-27_1f",
+    "product_id": "p036",
+    "on_shelf": 0,
+    "stock": 0,
+    "discarded": 0
+  },
+  {
+    "id": 3282,
+    "session_id": "xingnan_2026-02-27_1f",
+    "product_id": "p037",
+    "on_shelf": 0,
+    "stock": 0,
+    "discarded": 0
+  },
+  {
+    "id": 3283,
+    "session_id": "xingnan_2026-02-27_1f",
+    "product_id": "p008",
+    "on_shelf": 1,
+    "stock": 0,
+    "discarded": 0
+  },
+  {
+    "id": 3284,
+    "session_id": "xingnan_2026-02-27_1f",
+    "product_id": "p011",
+    "on_shelf": 12.8,
+    "stock": 16,
+    "discarded": 0
+  },
+  {
+    "id": 3285,
+    "session_id": "xingnan_2026-02-27_1f",
+    "product_id": "p012",
+    "on_shelf": 8.1,
+    "stock": 6,
+    "discarded": 0
+  },
+  {
+    "id": 3286,
+    "session_id": "xingnan_2026-02-27_1f",
+    "product_id": "p014",
+    "on_shelf": 0.22,
+    "stock": 1,
+    "discarded": 0
+  },
+  {
+    "id": 3287,
+    "session_id": "xingnan_2026-02-27_1f",
+    "product_id": "p015",
+    "on_shelf": 0.83,
+    "stock": 2,
+    "discarded": 0
+  },
+  {
+    "id": 3326,
+    "session_id": "lehua_2026-02-27_2f",
+    "product_id": "p007",
+    "on_shelf": null,
+    "stock": 0,
+    "discarded": null
+  },
+  {
+    "id": 3330,
+    "session_id": "lehua_2026-02-27_2f",
+    "product_id": "p033",
+    "on_shelf": null,
+    "stock": 0,
+    "discarded": null
+  },
+  {
+    "id": 3331,
+    "session_id": "lehua_2026-02-27_2f",
+    "product_id": "p034",
+    "on_shelf": null,
+    "stock": 0,
+    "discarded": null
+  },
+  {
+    "id": 3332,
+    "session_id": "lehua_2026-02-27_2f",
+    "product_id": "p009",
+    "on_shelf": null,
+    "stock": 0,
+    "discarded": null
+  },
+  {
+    "id": 3333,
+    "session_id": "lehua_2026-02-27_2f",
+    "product_id": "p035",
+    "on_shelf": null,
+    "stock": 0,
+    "discarded": null
+  },
+  {
+    "id": 3145,
+    "session_id": "lehua_2026-02-27_2f",
+    "product_id": "p012",
+    "on_shelf": null,
+    "stock": 17,
+    "discarded": null
+  },
+  {
+    "id": 3146,
+    "session_id": "lehua_2026-02-27_2f",
+    "product_id": "p014",
+    "on_shelf": null,
+    "stock": 0,
+    "discarded": null
+  },
+  {
+    "id": 3147,
+    "session_id": "lehua_2026-02-27_2f",
+    "product_id": "p015",
+    "on_shelf": null,
+    "stock": 0,
+    "discarded": null
+  },
+  {
+    "id": 3338,
+    "session_id": "lehua_2026-02-27_2f",
+    "product_id": "p023",
+    "on_shelf": null,
+    "stock": 0,
+    "discarded": null
+  },
+  {
+    "id": 3148,
+    "session_id": "lehua_2026-02-27_2f",
+    "product_id": "p024",
+    "on_shelf": null,
+    "stock": 0,
+    "discarded": null
+  },
+  {
+    "id": 3149,
+    "session_id": "lehua_2026-02-27_2f",
+    "product_id": "p025",
+    "on_shelf": null,
+    "stock": 1,
+    "discarded": null
+  },
+  {
+    "id": 3150,
+    "session_id": "lehua_2026-02-27_2f",
+    "product_id": "p026",
+    "on_shelf": null,
+    "stock": 4,
+    "discarded": null
+  },
+  {
+    "id": 3151,
+    "session_id": "lehua_2026-02-27_2f",
+    "product_id": "p027",
+    "on_shelf": null,
+    "stock": 8,
+    "discarded": null
+  },
+  {
+    "id": 3152,
+    "session_id": "lehua_2026-02-27_2f",
+    "product_id": "p028",
+    "on_shelf": null,
+    "stock": 5,
+    "discarded": null
+  },
+  {
+    "id": 3153,
+    "session_id": "lehua_2026-02-27_2f",
+    "product_id": "p016",
+    "on_shelf": null,
+    "stock": 51,
+    "discarded": null
+  },
+  {
+    "id": 3345,
+    "session_id": "lehua_2026-02-27_2f",
+    "product_id": "p032",
+    "on_shelf": null,
+    "stock": 1,
+    "discarded": null
+  },
+  {
+    "id": 3154,
+    "session_id": "lehua_2026-02-27_2f",
+    "product_id": "p1771513523503",
+    "on_shelf": null,
+    "stock": 1,
+    "discarded": null
+  },
+  {
+    "id": 3155,
+    "session_id": "lehua_2026-02-27_2f",
+    "product_id": "p1771513573239",
+    "on_shelf": null,
+    "stock": 0,
+    "discarded": null
+  },
+  {
+    "id": 3156,
+    "session_id": "lehua_2026-02-27_2f",
+    "product_id": "p1771513626343",
+    "on_shelf": null,
+    "stock": 2,
+    "discarded": null
+  },
+  {
+    "id": 3349,
+    "session_id": "lehua_2026-02-27_2f",
+    "product_id": "p1771513693518",
+    "on_shelf": null,
+    "stock": 8,
+    "discarded": null
+  },
+  {
+    "id": 3157,
+    "session_id": "lehua_2026-02-27_2f",
+    "product_id": "p1771513729598",
+    "on_shelf": null,
+    "stock": 4,
+    "discarded": null
+  },
+  {
+    "id": 3158,
+    "session_id": "lehua_2026-02-27_2f",
+    "product_id": "p1771513755567",
+    "on_shelf": null,
+    "stock": 13,
+    "discarded": null
+  },
+  {
+    "id": 3159,
+    "session_id": "lehua_2026-02-27_2f",
+    "product_id": "p1771513777998",
+    "on_shelf": null,
+    "stock": 16,
+    "discarded": null
+  },
+  {
+    "id": 3353,
+    "session_id": "lehua_2026-02-27_2f",
+    "product_id": "p1772183715093",
+    "on_shelf": null,
+    "stock": 0,
+    "discarded": null
+  },
+  {
+    "id": 3354,
+    "session_id": "lehua_2026-02-27_2f",
+    "product_id": "p1772183764053",
+    "on_shelf": null,
+    "stock": 0,
+    "discarded": null
+  },
+  {
+    "id": 3178,
+    "session_id": "lehua_2026-02-26_1f",
+    "product_id": "p004",
+    "on_shelf": null,
+    "stock": 4,
+    "discarded": null
+  },
+  {
+    "id": 3179,
+    "session_id": "lehua_2026-02-26_1f",
+    "product_id": "p005",
+    "on_shelf": null,
+    "stock": 1.2,
+    "discarded": null
+  },
+  {
+    "id": 3180,
+    "session_id": "lehua_2026-02-26_1f",
+    "product_id": "p006",
+    "on_shelf": null,
+    "stock": 3,
+    "discarded": null
+  },
+  {
+    "id": 3181,
+    "session_id": "lehua_2026-02-26_1f",
+    "product_id": "p010",
+    "on_shelf": null,
+    "stock": 1.8,
+    "discarded": null
+  },
+  {
+    "id": 3182,
+    "session_id": "lehua_2026-02-26_1f",
+    "product_id": "p007",
+    "on_shelf": null,
+    "stock": 0,
+    "discarded": 0.1
+  },
+  {
+    "id": 3183,
+    "session_id": "lehua_2026-02-26_1f",
+    "product_id": "p021",
+    "on_shelf": null,
+    "stock": 1.8,
+    "discarded": null
+  },
+  {
+    "id": 3185,
+    "session_id": "lehua_2026-02-26_1f",
+    "product_id": "p009",
+    "on_shelf": null,
+    "stock": 1,
+    "discarded": 0.1
+  },
+  {
+    "id": 3186,
+    "session_id": "lehua_2026-02-26_1f",
+    "product_id": "p035",
+    "on_shelf": null,
+    "stock": 0,
+    "discarded": null
+  },
+  {
+    "id": 3187,
+    "session_id": "lehua_2026-02-26_1f",
+    "product_id": "p036",
+    "on_shelf": null,
+    "stock": 0,
+    "discarded": null
+  },
+  {
+    "id": 3188,
+    "session_id": "lehua_2026-02-26_1f",
+    "product_id": "p019",
+    "on_shelf": null,
+    "stock": 1.9,
+    "discarded": null
+  },
+  {
+    "id": 3189,
+    "session_id": "lehua_2026-02-26_1f",
+    "product_id": "p020",
+    "on_shelf": null,
+    "stock": 0.3,
+    "discarded": null
+  },
+  {
+    "id": 3190,
+    "session_id": "lehua_2026-02-26_1f",
+    "product_id": "p023",
+    "on_shelf": null,
+    "stock": 0.3,
+    "discarded": null
+  },
+  {
+    "id": 3191,
+    "session_id": "lehua_2026-02-26_1f",
+    "product_id": "p024",
+    "on_shelf": null,
+    "stock": 0,
+    "discarded": null
+  }
+]

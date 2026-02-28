@@ -31,12 +31,20 @@ const TABLES = [
   // 費用 (3)
   'daily_expenses', 'frozen_sales',
   // 排班 (2+)
-  'shift_types', 'schedule_entries', 'schedule_tags', 'tag_presets',
+  'shift_types', 'schedules', 'tag_presets', 'positions',
   // 庫存批次 (1)
   'inventory_stock_entries',
   // 其他可能的表
   'product_stock_sessions', 'product_stock_items',
   'material_order_sessions', 'material_order_items',
+  // 系統設定 (1)
+  'app_settings',
+  // 品項排序 (1)
+  'store_item_sort',
+  // 消耗品追蹤 (1)
+  'supply_tracker',
+  // 請假 (2)
+  'leave_requests', 'leave_balances',
 ]
 
 async function backup() {

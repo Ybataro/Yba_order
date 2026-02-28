@@ -1,0 +1,44 @@
+[
+  {
+    "id": 1,
+    "session_id": "kitchen_2026-02-23",
+    "material_id": "m003",
+    "quantity": 2
+  },
+  {
+    "id": 2,
+    "session_id": "kitchen_2026-02-23",
+    "material_id": "m004",
+    "quantity": 5
+  },
+  {
+    "id": 3,
+    "session_id": "kitchen_2026-02-23",
+    "material_id": "m005",
+    "quantity": 1
+  },
+  {
+    "id": 4,
+    "session_id": "kitchen_2026-02-23",
+    "material_id": "m006",
+    "quantity": 2
+  },
+  {
+    "id": 5,
+    "session_id": "kitchen_2026-02-23",
+    "material_id": "m007",
+    "quantity": 2
+  },
+  {
+    "id": 6,
+    "session_id": "kitchen_2026-02-23",
+    "material_id": "m015",
+    "quantity": 2
+  },
+  {
+    "id": 7,
+    "session_id": "kitchen_2026-02-23",
+    "material_id": "m016",
+    "quantity": 5
+  }
+]

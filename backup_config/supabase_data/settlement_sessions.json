@@ -1,0 +1,130 @@
+[
+  {
+    "id": "lehua_2026-02-20",
+    "store_id": "lehua",
+    "date": "2026-02-20",
+    "submitted_by": "s1",
+    "submitted_at": "2026-02-21T08:04:44.484487+00:00",
+    "updated_at": "2026-02-21T08:04:48.625+00:00"
+  },
+  {
+    "id": "xingnan_2026-02-21",
+    "store_id": "xingnan",
+    "date": "2026-02-21",
+    "submitted_by": "s3",
+    "submitted_at": "2026-02-21T15:25:09.212778+00:00",
+    "updated_at": "2026-02-21T15:25:09.758+00:00"
+  },
+  {
+    "id": "xingnan_2026-02-20",
+    "store_id": "xingnan",
+    "date": "2026-02-20",
+    "submitted_by": "s3",
+    "submitted_at": "2026-02-21T00:20:59.723666+00:00",
+    "updated_at": "2026-02-21T15:46:13.605+00:00"
+  },
+  {
+    "id": "lehua_2026-02-21",
+    "store_id": "lehua",
+    "date": "2026-02-21",
+    "submitted_by": "s1",
+    "submitted_at": "2026-02-20T17:42:27.015167+00:00",
+    "updated_at": "2026-02-21T16:01:26.425+00:00"
+  },
+  {
+    "id": "xingnan_2026-02-22",
+    "store_id": "xingnan",
+    "date": "2026-02-22",
+    "submitted_by": "s3",
+    "submitted_at": "2026-02-22T14:28:58.55513+00:00",
+    "updated_at": "2026-02-22T14:28:58.66+00:00"
+  },
+  {
+    "id": "lehua_2026-02-22",
+    "store_id": "lehua",
+    "date": "2026-02-22",
+    "submitted_by": "s1",
+    "submitted_at": "2026-02-22T16:04:14.440783+00:00",
+    "updated_at": "2026-02-22T16:48:39.95+00:00"
+  },
+  {
+    "id": "xingnan_2026-02-23",
+    "store_id": "xingnan",
+    "date": "2026-02-23",
+    "submitted_by": "s3",
+    "submitted_at": "2026-02-23T14:06:40.701279+00:00",
+    "updated_at": "2026-02-23T14:07:06.171+00:00"
+  },
+  {
+    "id": "lehua_2026-02-23",
+    "store_id": "lehua",
+    "date": "2026-02-23",
+    "submitted_by": "s1",
+    "submitted_at": "2026-02-23T15:21:04.194346+00:00",
+    "updated_at": "2026-02-23T15:21:41.093+00:00"
+  },
+  {
+    "id": "xingnan_2026-02-24",
+    "store_id": "xingnan",
+    "date": "2026-02-24",
+    "submitted_by": "s4",
+    "submitted_at": "2026-02-24T14:37:26.703252+00:00",
+    "updated_at": "2026-02-24T14:37:26.275+00:00"
+  },
+  {
+    "id": "lehua_2026-02-24",
+    "store_id": "lehua",
+    "date": "2026-02-24",
+    "submitted_by": "s1",
+    "submitted_at": "2026-02-24T15:06:22.246456+00:00",
+    "updated_at": "2026-02-24T15:06:25.626+00:00"
+  },
+  {
+    "id": "xingnan_2026-02-25",
+    "store_id": "xingnan",
+    "date": "2026-02-25",
+    "submitted_by": "s3",
+    "submitted_at": "2026-02-25T14:06:10.069622+00:00",
+    "updated_at": "2026-02-25T14:06:08.931+00:00"
+  },
+  {
+    "id": "lehua_2026-02-25",
+    "store_id": "lehua",
+    "date": "2026-02-25",
+    "submitted_by": "staff_1771511773152",
+    "submitted_at": "2026-02-25T15:35:08.471121+00:00",
+    "updated_at": "2026-02-25T15:46:44.892+00:00"
+  },
+  {
+    "id": "xingnan_2026-02-26",
+    "store_id": "xingnan",
+    "date": "2026-02-26",
+    "submitted_by": "staff_1771511813600",
+    "submitted_at": "2026-02-26T14:32:36.427744+00:00",
+    "updated_at": "2026-02-26T14:32:35.917+00:00"
+  },
+  {
+    "id": "lehua_2026-02-26",
+    "store_id": "lehua",
+    "date": "2026-02-26",
+    "submitted_by": "s1",
+    "submitted_at": "2026-02-26T15:25:50.506238+00:00",
+    "updated_at": "2026-02-26T15:25:49.729+00:00"
+  },
+  {
+    "id": "xingnan_2026-02-27",
+    "store_id": "xingnan",
+    "date": "2026-02-27",
+    "submitted_by": "s3",
+    "submitted_at": "2026-02-27T14:18:55.640575+00:00",
+    "updated_at": "2026-02-27T14:18:55.316+00:00"
+  },
+  {
+    "id": "lehua_2026-02-27",
+    "store_id": "lehua",
+    "date": "2026-02-27",
+    "submitted_by": "s1",
+    "submitted_at": "2026-02-27T15:13:35.580277+00:00",
+    "updated_at": "2026-02-27T15:13:35.154+00:00"
+  }
+]

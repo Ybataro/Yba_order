@@ -1,0 +1,193 @@
+{
+  "backupDate": "2026-02-28",
+  "timestamp": "2026-02-28T09:09:11.647Z",
+  "tables": [
+    {
+      "table": "stores",
+      "rows": 2,
+      "status": "ok"
+    },
+    {
+      "table": "store_products",
+      "rows": 50,
+      "status": "ok"
+    },
+    {
+      "table": "staff",
+      "rows": 28,
+      "status": "ok"
+    },
+    {
+      "table": "product_categories",
+      "rows": 0,
+      "status": "error"
+    },
+    {
+      "table": "category_sort_orders",
+      "rows": 0,
+      "status": "error"
+    },
+    {
+      "table": "frozen_product_defs",
+      "rows": 7,
+      "status": "ok"
+    },
+    {
+      "table": "store_zones",
+      "rows": 4,
+      "status": "ok"
+    },
+    {
+      "table": "zone_products",
+      "rows": 176,
+      "status": "ok"
+    },
+    {
+      "table": "inventory_sessions",
+      "rows": 26,
+      "status": "ok"
+    },
+    {
+      "table": "inventory_items",
+      "rows": 617,
+      "status": "ok"
+    },
+    {
+      "table": "order_sessions",
+      "rows": 18,
+      "status": "ok"
+    },
+    {
+      "table": "order_items",
+      "rows": 372,
+      "status": "ok"
+    },
+    {
+      "table": "settlement_sessions",
+      "rows": 16,
+      "status": "ok"
+    },
+    {
+      "table": "settlement_values",
+      "rows": 299,
+      "status": "ok"
+    },
+    {
+      "table": "shipment_sessions",
+      "rows": 15,
+      "status": "ok"
+    },
+    {
+      "table": "shipment_items",
+      "rows": 262,
+      "status": "ok"
+    },
+    {
+      "table": "material_stock_sessions",
+      "rows": 1,
+      "status": "ok"
+    },
+    {
+      "table": "material_stock_items",
+      "rows": 28,
+      "status": "ok"
+    },
+    {
+      "table": "weather_records",
+      "rows": 10,
+      "status": "ok"
+    },
+    {
+      "table": "user_pins",
+      "rows": 28,
+      "status": "ok"
+    },
+    {
+      "table": "audit_logs",
+      "rows": 276,
+      "status": "ok"
+    },
+    {
+      "table": "daily_expenses",
+      "rows": 17,
+      "status": "ok"
+    },
+    {
+      "table": "frozen_sales",
+      "rows": 45,
+      "status": "ok"
+    },
+    {
+      "table": "shift_types",
+      "rows": 14,
+      "status": "ok"
+    },
+    {
+      "table": "schedules",
+      "rows": 543,
+      "status": "ok"
+    },
+    {
+      "table": "tag_presets",
+      "rows": 7,
+      "status": "ok"
+    },
+    {
+      "table": "positions",
+      "rows": 5,
+      "status": "ok"
+    },
+    {
+      "table": "inventory_stock_entries",
+      "rows": 68,
+      "status": "ok"
+    },
+    {
+      "table": "product_stock_sessions",
+      "rows": 6,
+      "status": "ok"
+    },
+    {
+      "table": "product_stock_items",
+      "rows": 117,
+      "status": "ok"
+    },
+    {
+      "table": "material_order_sessions",
+      "rows": 1,
+      "status": "ok"
+    },
+    {
+      "table": "material_order_items",
+      "rows": 7,
+      "status": "ok"
+    },
+    {
+      "table": "app_settings",
+      "rows": 3,
+      "status": "ok"
+    },
+    {
+      "table": "store_item_sort",
+      "rows": 22,
+      "status": "ok"
+    },
+    {
+      "table": "supply_tracker",
+      "rows": 15,
+      "status": "ok"
+    },
+    {
+      "table": "leave_requests",
+      "rows": 0,
+      "status": "ok"
+    },
+    {
+      "table": "leave_balances",
+      "rows": 6,
+      "status": "ok"
+    }
+  ],
+  "totalSuccess": 35,
+  "totalSkipped": 2
+}

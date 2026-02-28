@@ -1,0 +1,51 @@
+[
+  {
+    "id": "taro_ball",
+    "name": "芋圓",
+    "spec": "包 300g",
+    "price": 135,
+    "sort_order": 0
+  },
+  {
+    "id": "white_ball",
+    "name": "白玉",
+    "spec": "包 300g",
+    "price": 135,
+    "sort_order": 1
+  },
+  {
+    "id": "peanut_ice",
+    "name": "花生冰淇淋",
+    "spec": "杯",
+    "price": 235,
+    "sort_order": 2
+  },
+  {
+    "id": "sesame_ice",
+    "name": "芝麻冰淇淋",
+    "spec": "杯",
+    "price": 235,
+    "sort_order": 3
+  },
+  {
+    "id": "strawberry_ice",
+    "name": "草莓冰淇淋",
+    "spec": "杯",
+    "price": 280,
+    "sort_order": 4
+  },
+  {
+    "id": "almond_tea_300",
+    "name": "杏仁茶",
+    "spec": "瓶 300ml",
+    "price": 65,
+    "sort_order": 5
+  },
+  {
+    "id": "almond_tea_1000",
+    "name": "杏仁茶",
+    "spec": "瓶 1000ml",
+    "price": 180,
+    "sort_order": 6
+  }
+]

@@ -1,0 +1,513 @@
+[
+  {
+    "id": "pin_staff_1771597199485",
+    "staff_id": "staff_1771597199485",
+    "pin_hash": "def2f2195183e1938537e9bcd0b725a5b92e57d2e7e02df933bc863be682fe91",
+    "role": "admin",
+    "allowed_stores": [],
+    "is_active": true,
+    "created_at": "2026-02-20T14:20:57.981+00:00",
+    "updated_at": "2026-02-22T17:25:56.416+00:00",
+    "can_schedule": true,
+    "allowed_pages": null,
+    "can_popup": false
+  },
+  {
+    "id": "pin_staff_1771909398113",
+    "staff_id": "staff_1771909398113",
+    "pin_hash": "9af15b336e6a9619928537df30b2e6a2376569fcf9d7e773eccede65606529a0",
+    "role": "store",
+    "allowed_stores": [
+      "lehua"
+    ],
+    "is_active": true,
+    "created_at": "2026-02-24T05:19:15.255+00:00",
+    "updated_at": "2026-02-26T07:31:09.408+00:00",
+    "can_schedule": false,
+    "allowed_pages": [
+      "expense",
+      "schedule"
+    ],
+    "can_popup": true
+  },
+  {
+    "id": "pin_s3",
+    "staff_id": "s3",
+    "pin_hash": "9af15b336e6a9619928537df30b2e6a2376569fcf9d7e773eccede65606529a0",
+    "role": "store",
+    "allowed_stores": [
+      "xingnan"
+    ],
+    "is_active": true,
+    "created_at": "2026-02-22T14:58:29.866+00:00",
+    "updated_at": "2026-02-22T17:26:01.272+00:00",
+    "can_schedule": true,
+    "allowed_pages": null,
+    "can_popup": false
+  },
+  {
+    "id": "pin_staff_1772009882783",
+    "staff_id": "staff_1772009882783",
+    "pin_hash": "2c8b871e52d4e5f5db5ff84a82a45327e20df77edef961c4b6fa0e9c3d97ce5b",
+    "role": "store",
+    "allowed_stores": [
+      "xingnan"
+    ],
+    "is_active": true,
+    "created_at": "2026-02-25T08:58:03.395+00:00",
+    "updated_at": "2026-02-26T04:35:37.207+00:00",
+    "can_schedule": true,
+    "allowed_pages": null,
+    "can_popup": false
+  },
+  {
+    "id": "pin_k4",
+    "staff_id": "k4",
+    "pin_hash": "9af15b336e6a9619928537df30b2e6a2376569fcf9d7e773eccede65606529a0",
+    "role": "kitchen",
+    "allowed_stores": [],
+    "is_active": true,
+    "created_at": "2026-02-22T15:38:38.376+00:00",
+    "updated_at": "2026-02-26T00:33:49.666+00:00",
+    "can_schedule": false,
+    "allowed_pages": [
+      "orders",
+      "shipments",
+      "materials",
+      "products",
+      "production-schedule",
+      "expense",
+      "staff-schedule"
+    ],
+    "can_popup": false
+  },
+  {
+    "id": "pin_staff_1771511773152",
+    "staff_id": "staff_1771511773152",
+    "pin_hash": "9af15b336e6a9619928537df30b2e6a2376569fcf9d7e773eccede65606529a0",
+    "role": "store",
+    "allowed_stores": [
+      "lehua"
+    ],
+    "is_active": true,
+    "created_at": "2026-02-21T08:34:44.072+00:00",
+    "updated_at": "2026-02-26T00:30:25.194+00:00",
+    "can_schedule": false,
+    "allowed_pages": [
+      "inventory",
+      "settlement",
+      "receive",
+      "expense",
+      "schedule"
+    ],
+    "can_popup": false
+  },
+  {
+    "id": "pin_staff_1771909701416",
+    "staff_id": "staff_1771909701416",
+    "pin_hash": "9af15b336e6a9619928537df30b2e6a2376569fcf9d7e773eccede65606529a0",
+    "role": "store",
+    "allowed_stores": [
+      "xingnan"
+    ],
+    "is_active": true,
+    "created_at": "2026-02-24T05:18:10.912+00:00",
+    "updated_at": "2026-02-26T07:31:13.264+00:00",
+    "can_schedule": false,
+    "allowed_pages": [
+      "expense",
+      "schedule"
+    ],
+    "can_popup": true
+  },
+  {
+    "id": "pin_staff_1771909641992",
+    "staff_id": "staff_1771909641992",
+    "pin_hash": "9af15b336e6a9619928537df30b2e6a2376569fcf9d7e773eccede65606529a0",
+    "role": "store",
+    "allowed_stores": [
+      "xingnan"
+    ],
+    "is_active": true,
+    "created_at": "2026-02-24T05:18:01.072+00:00",
+    "updated_at": "2026-02-26T07:31:14.024+00:00",
+    "can_schedule": false,
+    "allowed_pages": [
+      "expense",
+      "schedule"
+    ],
+    "can_popup": true
+  },
+  {
+    "id": "pin_staff_1771511723761",
+    "staff_id": "staff_1771511723761",
+    "pin_hash": "207fd47ed6a8671043e9f79626bb8826c1d306f0ca5ac300e10d53094fe206d0",
+    "role": "store",
+    "allowed_stores": [
+      "lehua"
+    ],
+    "is_active": true,
+    "created_at": "2026-02-21T08:34:31.983+00:00",
+    "updated_at": "2026-02-26T00:30:37.546+00:00",
+    "can_schedule": false,
+    "allowed_pages": [
+      "expense",
+      "schedule",
+      "inventory",
+      "receive"
+    ],
+    "can_popup": false
+  },
+  {
+    "id": "pin_s4",
+    "staff_id": "s4",
+    "pin_hash": "9af15b336e6a9619928537df30b2e6a2376569fcf9d7e773eccede65606529a0",
+    "role": "store",
+    "allowed_stores": [
+      "xingnan"
+    ],
+    "is_active": true,
+    "created_at": "2026-02-22T14:58:47.602+00:00",
+    "updated_at": "2026-02-26T00:32:14.851+00:00",
+    "can_schedule": false,
+    "allowed_pages": [
+      "expense",
+      "schedule",
+      "inventory",
+      "settlement",
+      "receive"
+    ],
+    "can_popup": false
+  },
+  {
+    "id": "pin_k1",
+    "staff_id": "k1",
+    "pin_hash": "737c6b9773fa031bee4787ad780d2c9c9ecb3375a7c1f4dbd8047a6cd5c67b4c",
+    "role": "kitchen",
+    "allowed_stores": [],
+    "is_active": true,
+    "created_at": "2026-02-20T14:20:31.317+00:00",
+    "updated_at": "2026-02-25T09:36:43.59+00:00",
+    "can_schedule": true,
+    "allowed_pages": null,
+    "can_popup": false
+  },
+  {
+    "id": "pin_staff_1771597211829",
+    "staff_id": "staff_1771597211829",
+    "pin_hash": "def2f2195183e1938537e9bcd0b725a5b92e57d2e7e02df933bc863be682fe91",
+    "role": "admin",
+    "allowed_stores": [],
+    "is_active": true,
+    "created_at": "2026-02-20T14:21:09.805+00:00",
+    "updated_at": "2026-02-22T17:25:55.113+00:00",
+    "can_schedule": true,
+    "allowed_pages": null,
+    "can_popup": false
+  },
+  {
+    "id": "pin_s2",
+    "staff_id": "s2",
+    "pin_hash": "9af15b336e6a9619928537df30b2e6a2376569fcf9d7e773eccede65606529a0",
+    "role": "store",
+    "allowed_stores": [
+      "lehua"
+    ],
+    "is_active": true,
+    "created_at": "2026-02-21T08:34:12.184+00:00",
+    "updated_at": "2026-02-26T00:31:11.234+00:00",
+    "can_schedule": false,
+    "allowed_pages": [
+      "expense",
+      "schedule",
+      "inventory"
+    ],
+    "can_popup": false
+  },
+  {
+    "id": "pin_staff_1771511855344",
+    "staff_id": "staff_1771511855344",
+    "pin_hash": "36b9a348ff8fdd5fb3ac60af9a10e83e21bd30460ca209530964b0e006aa5ee9",
+    "role": "store",
+    "allowed_stores": [
+      "lehua"
+    ],
+    "is_active": true,
+    "created_at": "2026-02-21T08:34:54.808+00:00",
+    "updated_at": "2026-02-26T00:31:18.794+00:00",
+    "can_schedule": false,
+    "allowed_pages": [
+      "expense",
+      "schedule",
+      "inventory"
+    ],
+    "can_popup": false
+  },
+  {
+    "id": "pin_staff_1771774632231",
+    "staff_id": "staff_1771774632231",
+    "pin_hash": "a67ff832978f7f03192fded680d070ca2bb06b8e0bc33c1b26ee843be42a3e0c",
+    "role": "store",
+    "allowed_stores": [
+      "lehua"
+    ],
+    "is_active": true,
+    "created_at": "2026-02-22T15:45:12.679+00:00",
+    "updated_at": "2026-02-26T00:31:28.994+00:00",
+    "can_schedule": false,
+    "allowed_pages": [
+      "expense",
+      "schedule",
+      "inventory"
+    ],
+    "can_popup": false
+  },
+  {
+    "id": "pin_staff_1771774651271",
+    "staff_id": "staff_1771774651271",
+    "pin_hash": "9af15b336e6a9619928537df30b2e6a2376569fcf9d7e773eccede65606529a0",
+    "role": "store",
+    "allowed_stores": [
+      "lehua"
+    ],
+    "is_active": true,
+    "created_at": "2026-02-22T15:45:25.031+00:00",
+    "updated_at": "2026-02-26T00:31:31.931+00:00",
+    "can_schedule": false,
+    "allowed_pages": [
+      "expense",
+      "schedule",
+      "inventory"
+    ],
+    "can_popup": false
+  },
+  {
+    "id": "pin_staff_1771774484920",
+    "staff_id": "staff_1771774484920",
+    "pin_hash": "9af15b336e6a9619928537df30b2e6a2376569fcf9d7e773eccede65606529a0",
+    "role": "store",
+    "allowed_stores": [
+      "xingnan"
+    ],
+    "is_active": true,
+    "created_at": "2026-02-22T15:45:55.055+00:00",
+    "updated_at": "2026-02-26T00:32:31.018+00:00",
+    "can_schedule": false,
+    "allowed_pages": [
+      "expense",
+      "schedule",
+      "inventory",
+      "receive"
+    ],
+    "can_popup": false
+  },
+  {
+    "id": "pin_staff_1771909736224",
+    "staff_id": "staff_1771909736224",
+    "pin_hash": "9af15b336e6a9619928537df30b2e6a2376569fcf9d7e773eccede65606529a0",
+    "role": "store",
+    "allowed_stores": [
+      "xingnan"
+    ],
+    "is_active": true,
+    "created_at": "2026-02-24T05:16:23.08+00:00",
+    "updated_at": "2026-02-26T04:35:32.903+00:00",
+    "can_schedule": false,
+    "allowed_pages": [
+      "expense",
+      "schedule",
+      "receive",
+      "inventory"
+    ],
+    "can_popup": false
+  },
+  {
+    "id": "pin_staff_1771909321577",
+    "staff_id": "staff_1771909321577",
+    "pin_hash": "9af15b336e6a9619928537df30b2e6a2376569fcf9d7e773eccede65606529a0",
+    "role": "store",
+    "allowed_stores": [
+      "lehua"
+    ],
+    "is_active": true,
+    "created_at": "2026-02-24T05:18:47.664+00:00",
+    "updated_at": "2026-02-26T00:31:44.698+00:00",
+    "can_schedule": false,
+    "allowed_pages": [
+      "expense",
+      "schedule"
+    ],
+    "can_popup": false
+  },
+  {
+    "id": "pin_staff_1772009874879",
+    "staff_id": "staff_1772009874879",
+    "pin_hash": "2c8b871e52d4e5f5db5ff84a82a45327e20df77edef961c4b6fa0e9c3d97ce5b",
+    "role": "store",
+    "allowed_stores": [
+      "lehua"
+    ],
+    "is_active": true,
+    "created_at": "2026-02-25T08:57:55.508+00:00",
+    "updated_at": "2026-02-26T08:06:32.918+00:00",
+    "can_schedule": true,
+    "allowed_pages": [
+      "expense",
+      "schedule",
+      "inventory",
+      "order",
+      "receive",
+      "settlement"
+    ],
+    "can_popup": false
+  },
+  {
+    "id": "pin_k5",
+    "staff_id": "k5",
+    "pin_hash": "9af15b336e6a9619928537df30b2e6a2376569fcf9d7e773eccede65606529a0",
+    "role": "kitchen",
+    "allowed_stores": [],
+    "is_active": true,
+    "created_at": "2026-02-22T15:38:53.631+00:00",
+    "updated_at": "2026-02-26T00:33:53.722+00:00",
+    "can_schedule": false,
+    "allowed_pages": [
+      "orders",
+      "shipments",
+      "materials",
+      "products",
+      "production-schedule",
+      "expense",
+      "staff-schedule"
+    ],
+    "can_popup": false
+  },
+  {
+    "id": "pin_staff_1771511813600",
+    "staff_id": "staff_1771511813600",
+    "pin_hash": "9af15b336e6a9619928537df30b2e6a2376569fcf9d7e773eccede65606529a0",
+    "role": "store",
+    "allowed_stores": [
+      "xingnan"
+    ],
+    "is_active": true,
+    "created_at": "2026-02-22T14:59:03.09+00:00",
+    "updated_at": "2026-02-26T00:32:37.746+00:00",
+    "can_schedule": false,
+    "allowed_pages": [
+      "expense",
+      "schedule",
+      "inventory",
+      "receive",
+      "settlement"
+    ],
+    "can_popup": false
+  },
+  {
+    "id": "pin_s1",
+    "staff_id": "s1",
+    "pin_hash": "740448c2db4e24b63c3090e65bfdfbcfe870cb3bdc3da26981306effdd080616",
+    "role": "store",
+    "allowed_stores": [
+      "lehua"
+    ],
+    "is_active": true,
+    "created_at": "2026-02-22T15:47:41.663+00:00",
+    "updated_at": "2026-02-25T09:27:25.771+00:00",
+    "can_schedule": true,
+    "allowed_pages": null,
+    "can_popup": false
+  },
+  {
+    "id": "pin_k3",
+    "staff_id": "k3",
+    "pin_hash": "ec4136f96f2fa9dd52def83fe3a2097dd0cd657c37aa8096a4033e1a77a57a32",
+    "role": "kitchen",
+    "allowed_stores": [],
+    "is_active": true,
+    "created_at": "2026-02-22T15:38:11.448+00:00",
+    "updated_at": "2026-02-27T11:28:36.18+00:00",
+    "can_schedule": false,
+    "allowed_pages": [
+      "orders",
+      "shipments",
+      "materials",
+      "products",
+      "production-schedule",
+      "expense",
+      "staff-schedule"
+    ],
+    "can_popup": false
+  },
+  {
+    "id": "pin_staff_1772009863775",
+    "staff_id": "staff_1772009863775",
+    "pin_hash": "2c8b871e52d4e5f5db5ff84a82a45327e20df77edef961c4b6fa0e9c3d97ce5b",
+    "role": "kitchen",
+    "allowed_stores": [],
+    "is_active": true,
+    "created_at": "2026-02-25T08:57:44.39+00:00",
+    "updated_at": "2026-02-27T08:02:40.369+00:00",
+    "can_schedule": false,
+    "allowed_pages": [
+      "expense",
+      "staff-schedule",
+      "materials",
+      "products",
+      "shipments",
+      "orders",
+      "material-orders",
+      "production-schedule"
+    ],
+    "can_popup": false
+  },
+  {
+    "id": "pin_staff_1771909347385",
+    "staff_id": "staff_1771909347385",
+    "pin_hash": "9af15b336e6a9619928537df30b2e6a2376569fcf9d7e773eccede65606529a0",
+    "role": "store",
+    "allowed_stores": [
+      "lehua"
+    ],
+    "is_active": true,
+    "created_at": "2026-02-24T05:18:59.744+00:00",
+    "updated_at": "2026-02-26T07:31:07.912+00:00",
+    "can_schedule": false,
+    "allowed_pages": [
+      "expense",
+      "schedule"
+    ],
+    "can_popup": true
+  },
+  {
+    "id": "pin_staff_1771909376008",
+    "staff_id": "staff_1771909376008",
+    "pin_hash": "9af15b336e6a9619928537df30b2e6a2376569fcf9d7e773eccede65606529a0",
+    "role": "store",
+    "allowed_stores": [
+      "lehua"
+    ],
+    "is_active": true,
+    "created_at": "2026-02-24T05:19:07.687+00:00",
+    "updated_at": "2026-02-26T07:31:08.6+00:00",
+    "can_schedule": false,
+    "allowed_pages": [
+      "expense",
+      "schedule"
+    ],
+    "can_popup": true
+  },
+  {
+    "id": "pin_k2",
+    "staff_id": "k2",
+    "pin_hash": "9af15b336e6a9619928537df30b2e6a2376569fcf9d7e773eccede65606529a0",
+    "role": "kitchen",
+    "allowed_stores": [],
+    "is_active": true,
+    "created_at": "2026-02-21T08:35:15.399+00:00",
+    "updated_at": "2026-02-26T07:28:02.608+00:00",
+    "can_schedule": true,
+    "allowed_pages": null,
+    "can_popup": false
+  }
+]

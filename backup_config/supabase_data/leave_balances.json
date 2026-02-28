@@ -1,0 +1,50 @@
+[
+  {
+    "id": "3fdce561-a761-4632-8854-b8e646e0d6bf",
+    "staff_id": "staff_1771597199485",
+    "leave_type": "annual_leave",
+    "year": 2026,
+    "total_days": 7,
+    "used_days": 0
+  },
+  {
+    "id": "f22749fb-ef31-431a-9244-abc9690957c3",
+    "staff_id": "staff_1771597199485",
+    "leave_type": "sick_leave",
+    "year": 2026,
+    "total_days": 30,
+    "used_days": 0
+  },
+  {
+    "id": "bceaea68-dc96-40db-b113-1eb9a6150d27",
+    "staff_id": "staff_1771597199485",
+    "leave_type": "personal_leave",
+    "year": 2026,
+    "total_days": 14,
+    "used_days": 0
+  },
+  {
+    "id": "448c7951-ce54-4888-8e7e-872326f646fc",
+    "staff_id": "staff_1772009874879",
+    "leave_type": "annual_leave",
+    "year": 2026,
+    "total_days": 7,
+    "used_days": 0
+  },
+  {
+    "id": "f76f2e2a-6068-4ed1-ad3f-79e2d1d5295e",
+    "staff_id": "staff_1772009874879",
+    "leave_type": "sick_leave",
+    "year": 2026,
+    "total_days": 30,
+    "used_days": 0
+  },
+  {
+    "id": "c2907851-a851-4ed8-85ae-6f3ab9813dc6",
+    "staff_id": "staff_1772009874879",
+    "leave_type": "personal_leave",
+    "year": 2026,
+    "total_days": 14,
+    "used_days": 0
+  }
+]

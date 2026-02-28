@@ -1,0 +1,2234 @@
+[
+  {
+    "id": 10,
+    "session_id": "xingnan_2026-02-19",
+    "product_id": "p022",
+    "quantity": 0
+  },
+  {
+    "id": 117,
+    "session_id": "lehua_2026-02-21",
+    "product_id": "p030",
+    "quantity": 0
+  },
+  {
+    "id": 118,
+    "session_id": "lehua_2026-02-21",
+    "product_id": "p031",
+    "quantity": 0
+  },
+  {
+    "id": 119,
+    "session_id": "lehua_2026-02-21",
+    "product_id": "p008",
+    "quantity": 0
+  },
+  {
+    "id": 120,
+    "session_id": "lehua_2026-02-21",
+    "product_id": "p033",
+    "quantity": 0
+  },
+  {
+    "id": 121,
+    "session_id": "lehua_2026-02-21",
+    "product_id": "p034",
+    "quantity": 0
+  },
+  {
+    "id": 501,
+    "session_id": "xingnan_2026-02-23",
+    "product_id": "p003",
+    "quantity": 4
+  },
+  {
+    "id": 123,
+    "session_id": "lehua_2026-02-21",
+    "product_id": "p035",
+    "quantity": 0
+  },
+  {
+    "id": 124,
+    "session_id": "lehua_2026-02-21",
+    "product_id": "p036",
+    "quantity": 0
+  },
+  {
+    "id": 125,
+    "session_id": "lehua_2026-02-21",
+    "product_id": "p037",
+    "quantity": 0
+  },
+  {
+    "id": 502,
+    "session_id": "xingnan_2026-02-23",
+    "product_id": "p001",
+    "quantity": 3
+  },
+  {
+    "id": 503,
+    "session_id": "xingnan_2026-02-23",
+    "product_id": "p002",
+    "quantity": 3
+  },
+  {
+    "id": 504,
+    "session_id": "xingnan_2026-02-23",
+    "product_id": "p004",
+    "quantity": 6
+  },
+  {
+    "id": 505,
+    "session_id": "xingnan_2026-02-23",
+    "product_id": "p005",
+    "quantity": 1
+  },
+  {
+    "id": 506,
+    "session_id": "xingnan_2026-02-23",
+    "product_id": "p006",
+    "quantity": 1
+  },
+  {
+    "id": 507,
+    "session_id": "xingnan_2026-02-23",
+    "product_id": "p010",
+    "quantity": 1.5
+  },
+  {
+    "id": 508,
+    "session_id": "xingnan_2026-02-23",
+    "product_id": "p021",
+    "quantity": 2
+  },
+  {
+    "id": 509,
+    "session_id": "xingnan_2026-02-23",
+    "product_id": "p022",
+    "quantity": 0.5
+  },
+  {
+    "id": 134,
+    "session_id": "lehua_2026-02-21",
+    "product_id": "p024",
+    "quantity": 0
+  },
+  {
+    "id": 135,
+    "session_id": "lehua_2026-02-21",
+    "product_id": "p025",
+    "quantity": 0
+  },
+  {
+    "id": 510,
+    "session_id": "xingnan_2026-02-23",
+    "product_id": "p031",
+    "quantity": 4
+  },
+  {
+    "id": 511,
+    "session_id": "xingnan_2026-02-23",
+    "product_id": "p009",
+    "quantity": 0.5
+  },
+  {
+    "id": 512,
+    "session_id": "xingnan_2026-02-23",
+    "product_id": "p011",
+    "quantity": 12
+  },
+  {
+    "id": 513,
+    "session_id": "xingnan_2026-02-23",
+    "product_id": "p012",
+    "quantity": 6
+  },
+  {
+    "id": 514,
+    "session_id": "xingnan_2026-02-23",
+    "product_id": "p015",
+    "quantity": 2
+  },
+  {
+    "id": 515,
+    "session_id": "xingnan_2026-02-23",
+    "product_id": "p019",
+    "quantity": 0
+  },
+  {
+    "id": 516,
+    "session_id": "xingnan_2026-02-23",
+    "product_id": "p020",
+    "quantity": 0
+  },
+  {
+    "id": 517,
+    "session_id": "xingnan_2026-02-23",
+    "product_id": "p023",
+    "quantity": 1
+  },
+  {
+    "id": 11,
+    "session_id": "xingnan_2026-02-19",
+    "product_id": "p030",
+    "quantity": 0
+  },
+  {
+    "id": 12,
+    "session_id": "xingnan_2026-02-19",
+    "product_id": "p031",
+    "quantity": 0
+  },
+  {
+    "id": 14,
+    "session_id": "xingnan_2026-02-19",
+    "product_id": "p011",
+    "quantity": 0
+  },
+  {
+    "id": 15,
+    "session_id": "xingnan_2026-02-19",
+    "product_id": "p012",
+    "quantity": 0
+  },
+  {
+    "id": 16,
+    "session_id": "xingnan_2026-02-19",
+    "product_id": "p013",
+    "quantity": 0
+  },
+  {
+    "id": 19,
+    "session_id": "xingnan_2026-02-19",
+    "product_id": "p019",
+    "quantity": 0
+  },
+  {
+    "id": 22,
+    "session_id": "xingnan_2026-02-19",
+    "product_id": "p024",
+    "quantity": 0
+  },
+  {
+    "id": 23,
+    "session_id": "xingnan_2026-02-19",
+    "product_id": "p025",
+    "quantity": 0
+  },
+  {
+    "id": 24,
+    "session_id": "xingnan_2026-02-19",
+    "product_id": "p026",
+    "quantity": 0
+  },
+  {
+    "id": 25,
+    "session_id": "xingnan_2026-02-19",
+    "product_id": "p027",
+    "quantity": 0
+  },
+  {
+    "id": 26,
+    "session_id": "xingnan_2026-02-19",
+    "product_id": "p028",
+    "quantity": 0
+  },
+  {
+    "id": 27,
+    "session_id": "xingnan_2026-02-19",
+    "product_id": "p029",
+    "quantity": 0
+  },
+  {
+    "id": 28,
+    "session_id": "xingnan_2026-02-19",
+    "product_id": "p016",
+    "quantity": 0
+  },
+  {
+    "id": 29,
+    "session_id": "xingnan_2026-02-19",
+    "product_id": "p017",
+    "quantity": 0
+  },
+  {
+    "id": 30,
+    "session_id": "xingnan_2026-02-19",
+    "product_id": "p032",
+    "quantity": 0
+  },
+  {
+    "id": 136,
+    "session_id": "lehua_2026-02-21",
+    "product_id": "p026",
+    "quantity": 0
+  },
+  {
+    "id": 137,
+    "session_id": "lehua_2026-02-21",
+    "product_id": "p027",
+    "quantity": 0
+  },
+  {
+    "id": 138,
+    "session_id": "lehua_2026-02-21",
+    "product_id": "p028",
+    "quantity": 0
+  },
+  {
+    "id": 140,
+    "session_id": "lehua_2026-02-21",
+    "product_id": "p016",
+    "quantity": 0
+  },
+  {
+    "id": 141,
+    "session_id": "lehua_2026-02-21",
+    "product_id": "p017",
+    "quantity": 0
+  },
+  {
+    "id": 142,
+    "session_id": "lehua_2026-02-21",
+    "product_id": "p032",
+    "quantity": 0
+  },
+  {
+    "id": 143,
+    "session_id": "xingnan_2026-02-21",
+    "product_id": "p003",
+    "quantity": 2
+  },
+  {
+    "id": 144,
+    "session_id": "xingnan_2026-02-21",
+    "product_id": "p001",
+    "quantity": 2
+  },
+  {
+    "id": 145,
+    "session_id": "xingnan_2026-02-21",
+    "product_id": "p002",
+    "quantity": 0
+  },
+  {
+    "id": 146,
+    "session_id": "xingnan_2026-02-21",
+    "product_id": "p004",
+    "quantity": 8
+  },
+  {
+    "id": 147,
+    "session_id": "xingnan_2026-02-21",
+    "product_id": "p005",
+    "quantity": 4
+  },
+  {
+    "id": 148,
+    "session_id": "xingnan_2026-02-21",
+    "product_id": "p006",
+    "quantity": 4
+  },
+  {
+    "id": 149,
+    "session_id": "xingnan_2026-02-21",
+    "product_id": "p010",
+    "quantity": 0
+  },
+  {
+    "id": 150,
+    "session_id": "xingnan_2026-02-21",
+    "product_id": "p007",
+    "quantity": 0
+  },
+  {
+    "id": 151,
+    "session_id": "xingnan_2026-02-21",
+    "product_id": "p021",
+    "quantity": 6
+  },
+  {
+    "id": 152,
+    "session_id": "xingnan_2026-02-21",
+    "product_id": "p022",
+    "quantity": 0.5
+  },
+  {
+    "id": 153,
+    "session_id": "xingnan_2026-02-21",
+    "product_id": "p030",
+    "quantity": 0
+  },
+  {
+    "id": 154,
+    "session_id": "xingnan_2026-02-21",
+    "product_id": "p031",
+    "quantity": 0
+  },
+  {
+    "id": 155,
+    "session_id": "xingnan_2026-02-21",
+    "product_id": "p008",
+    "quantity": 0
+  },
+  {
+    "id": 156,
+    "session_id": "xingnan_2026-02-21",
+    "product_id": "p033",
+    "quantity": 0
+  },
+  {
+    "id": 157,
+    "session_id": "xingnan_2026-02-21",
+    "product_id": "p034",
+    "quantity": 0
+  },
+  {
+    "id": 158,
+    "session_id": "xingnan_2026-02-21",
+    "product_id": "p009",
+    "quantity": 1.5
+  },
+  {
+    "id": 159,
+    "session_id": "xingnan_2026-02-21",
+    "product_id": "p035",
+    "quantity": 0
+  },
+  {
+    "id": 160,
+    "session_id": "xingnan_2026-02-21",
+    "product_id": "p036",
+    "quantity": 0
+  },
+  {
+    "id": 161,
+    "session_id": "xingnan_2026-02-21",
+    "product_id": "p037",
+    "quantity": 0
+  },
+  {
+    "id": 162,
+    "session_id": "xingnan_2026-02-21",
+    "product_id": "p011",
+    "quantity": 12
+  },
+  {
+    "id": 163,
+    "session_id": "xingnan_2026-02-21",
+    "product_id": "p012",
+    "quantity": 0
+  },
+  {
+    "id": 164,
+    "session_id": "xingnan_2026-02-21",
+    "product_id": "p013",
+    "quantity": 0
+  },
+  {
+    "id": 165,
+    "session_id": "xingnan_2026-02-21",
+    "product_id": "p014",
+    "quantity": 1
+  },
+  {
+    "id": 166,
+    "session_id": "xingnan_2026-02-21",
+    "product_id": "p015",
+    "quantity": 2
+  },
+  {
+    "id": 167,
+    "session_id": "xingnan_2026-02-21",
+    "product_id": "p019",
+    "quantity": 2
+  },
+  {
+    "id": 168,
+    "session_id": "xingnan_2026-02-21",
+    "product_id": "p020",
+    "quantity": 2
+  },
+  {
+    "id": 169,
+    "session_id": "xingnan_2026-02-21",
+    "product_id": "p023",
+    "quantity": 0.5
+  },
+  {
+    "id": 170,
+    "session_id": "xingnan_2026-02-21",
+    "product_id": "p024",
+    "quantity": 0
+  },
+  {
+    "id": 171,
+    "session_id": "xingnan_2026-02-21",
+    "product_id": "p025",
+    "quantity": 0
+  },
+  {
+    "id": 172,
+    "session_id": "xingnan_2026-02-21",
+    "product_id": "p026",
+    "quantity": 0
+  },
+  {
+    "id": 173,
+    "session_id": "xingnan_2026-02-21",
+    "product_id": "p027",
+    "quantity": 0
+  },
+  {
+    "id": 174,
+    "session_id": "xingnan_2026-02-21",
+    "product_id": "p028",
+    "quantity": 0
+  },
+  {
+    "id": 175,
+    "session_id": "xingnan_2026-02-21",
+    "product_id": "p029",
+    "quantity": 8
+  },
+  {
+    "id": 176,
+    "session_id": "xingnan_2026-02-21",
+    "product_id": "p016",
+    "quantity": 0
+  },
+  {
+    "id": 177,
+    "session_id": "xingnan_2026-02-21",
+    "product_id": "p017",
+    "quantity": 0
+  },
+  {
+    "id": 178,
+    "session_id": "xingnan_2026-02-21",
+    "product_id": "p032",
+    "quantity": 0
+  },
+  {
+    "id": 107,
+    "session_id": "lehua_2026-02-21",
+    "product_id": "p003",
+    "quantity": 6
+  },
+  {
+    "id": 108,
+    "session_id": "lehua_2026-02-21",
+    "product_id": "p001",
+    "quantity": 6
+  },
+  {
+    "id": 109,
+    "session_id": "lehua_2026-02-21",
+    "product_id": "p002",
+    "quantity": 4
+  },
+  {
+    "id": 110,
+    "session_id": "lehua_2026-02-21",
+    "product_id": "p004",
+    "quantity": 20
+  },
+  {
+    "id": 111,
+    "session_id": "lehua_2026-02-21",
+    "product_id": "p005",
+    "quantity": 10
+  },
+  {
+    "id": 112,
+    "session_id": "lehua_2026-02-21",
+    "product_id": "p006",
+    "quantity": 15
+  },
+  {
+    "id": 113,
+    "session_id": "lehua_2026-02-21",
+    "product_id": "p010",
+    "quantity": 2
+  },
+  {
+    "id": 114,
+    "session_id": "lehua_2026-02-21",
+    "product_id": "p007",
+    "quantity": 2
+  },
+  {
+    "id": 115,
+    "session_id": "lehua_2026-02-21",
+    "product_id": "p021",
+    "quantity": 10
+  },
+  {
+    "id": 116,
+    "session_id": "lehua_2026-02-21",
+    "product_id": "p022",
+    "quantity": 1
+  },
+  {
+    "id": 31,
+    "session_id": "lehua_2026-02-19",
+    "product_id": "p003",
+    "quantity": 0
+  },
+  {
+    "id": 32,
+    "session_id": "lehua_2026-02-19",
+    "product_id": "p001",
+    "quantity": 0
+  },
+  {
+    "id": 33,
+    "session_id": "lehua_2026-02-19",
+    "product_id": "p002",
+    "quantity": 0
+  },
+  {
+    "id": 34,
+    "session_id": "lehua_2026-02-19",
+    "product_id": "p004",
+    "quantity": 0
+  },
+  {
+    "id": 35,
+    "session_id": "lehua_2026-02-19",
+    "product_id": "p005",
+    "quantity": 0
+  },
+  {
+    "id": 36,
+    "session_id": "lehua_2026-02-19",
+    "product_id": "p006",
+    "quantity": 0
+  },
+  {
+    "id": 37,
+    "session_id": "lehua_2026-02-19",
+    "product_id": "p010",
+    "quantity": 0
+  },
+  {
+    "id": 38,
+    "session_id": "lehua_2026-02-19",
+    "product_id": "p007",
+    "quantity": 0
+  },
+  {
+    "id": 39,
+    "session_id": "lehua_2026-02-19",
+    "product_id": "p021",
+    "quantity": 0
+  },
+  {
+    "id": 40,
+    "session_id": "lehua_2026-02-19",
+    "product_id": "p009",
+    "quantity": 0
+  },
+  {
+    "id": 41,
+    "session_id": "lehua_2026-02-19",
+    "product_id": "p014",
+    "quantity": 0
+  },
+  {
+    "id": 42,
+    "session_id": "lehua_2026-02-19",
+    "product_id": "p015",
+    "quantity": 0
+  },
+  {
+    "id": 43,
+    "session_id": "lehua_2026-02-19",
+    "product_id": "p019",
+    "quantity": 0
+  },
+  {
+    "id": 44,
+    "session_id": "lehua_2026-02-19",
+    "product_id": "p020",
+    "quantity": 0
+  },
+  {
+    "id": 45,
+    "session_id": "lehua_2026-02-19",
+    "product_id": "p023",
+    "quantity": 0
+  },
+  {
+    "id": 46,
+    "session_id": "lehua_2026-02-19",
+    "product_id": "p024",
+    "quantity": 0
+  },
+  {
+    "id": 47,
+    "session_id": "lehua_2026-02-19",
+    "product_id": "p025",
+    "quantity": 0
+  },
+  {
+    "id": 48,
+    "session_id": "lehua_2026-02-19",
+    "product_id": "p029",
+    "quantity": 0
+  },
+  {
+    "id": 3,
+    "session_id": "xingnan_2026-02-19",
+    "product_id": "p003",
+    "quantity": 0
+  },
+  {
+    "id": 1,
+    "session_id": "xingnan_2026-02-19",
+    "product_id": "p001",
+    "quantity": 0
+  },
+  {
+    "id": 2,
+    "session_id": "xingnan_2026-02-19",
+    "product_id": "p002",
+    "quantity": 0
+  },
+  {
+    "id": 4,
+    "session_id": "xingnan_2026-02-19",
+    "product_id": "p004",
+    "quantity": 0
+  },
+  {
+    "id": 5,
+    "session_id": "xingnan_2026-02-19",
+    "product_id": "p005",
+    "quantity": 0
+  },
+  {
+    "id": 6,
+    "session_id": "xingnan_2026-02-19",
+    "product_id": "p006",
+    "quantity": 0
+  },
+  {
+    "id": 7,
+    "session_id": "xingnan_2026-02-19",
+    "product_id": "p010",
+    "quantity": 0
+  },
+  {
+    "id": 8,
+    "session_id": "xingnan_2026-02-19",
+    "product_id": "p007",
+    "quantity": 0
+  },
+  {
+    "id": 9,
+    "session_id": "xingnan_2026-02-19",
+    "product_id": "p021",
+    "quantity": 0
+  },
+  {
+    "id": 13,
+    "session_id": "xingnan_2026-02-19",
+    "product_id": "p009",
+    "quantity": 0
+  },
+  {
+    "id": 17,
+    "session_id": "xingnan_2026-02-19",
+    "product_id": "p014",
+    "quantity": 0
+  },
+  {
+    "id": 18,
+    "session_id": "xingnan_2026-02-19",
+    "product_id": "p015",
+    "quantity": 0
+  },
+  {
+    "id": 20,
+    "session_id": "xingnan_2026-02-19",
+    "product_id": "p020",
+    "quantity": 0
+  },
+  {
+    "id": 21,
+    "session_id": "xingnan_2026-02-19",
+    "product_id": "p023",
+    "quantity": 0
+  },
+  {
+    "id": 122,
+    "session_id": "lehua_2026-02-21",
+    "product_id": "p009",
+    "quantity": 2
+  },
+  {
+    "id": 126,
+    "session_id": "lehua_2026-02-21",
+    "product_id": "p011",
+    "quantity": 35
+  },
+  {
+    "id": 127,
+    "session_id": "lehua_2026-02-21",
+    "product_id": "p012",
+    "quantity": 20
+  },
+  {
+    "id": 128,
+    "session_id": "lehua_2026-02-21",
+    "product_id": "p013",
+    "quantity": 9
+  },
+  {
+    "id": 129,
+    "session_id": "lehua_2026-02-21",
+    "product_id": "p014",
+    "quantity": 3
+  },
+  {
+    "id": 130,
+    "session_id": "lehua_2026-02-21",
+    "product_id": "p015",
+    "quantity": 5
+  },
+  {
+    "id": 131,
+    "session_id": "lehua_2026-02-21",
+    "product_id": "p019",
+    "quantity": 2
+  },
+  {
+    "id": 132,
+    "session_id": "lehua_2026-02-21",
+    "product_id": "p020",
+    "quantity": 3
+  },
+  {
+    "id": 133,
+    "session_id": "lehua_2026-02-21",
+    "product_id": "p023",
+    "quantity": 1
+  },
+  {
+    "id": 139,
+    "session_id": "lehua_2026-02-21",
+    "product_id": "p029",
+    "quantity": 24
+  },
+  {
+    "id": 199,
+    "session_id": "lehua_2026-02-20",
+    "product_id": "p003",
+    "quantity": 4
+  },
+  {
+    "id": 200,
+    "session_id": "lehua_2026-02-20",
+    "product_id": "p001",
+    "quantity": 4
+  },
+  {
+    "id": 201,
+    "session_id": "lehua_2026-02-20",
+    "product_id": "p002",
+    "quantity": 4
+  },
+  {
+    "id": 202,
+    "session_id": "lehua_2026-02-20",
+    "product_id": "p004",
+    "quantity": 14
+  },
+  {
+    "id": 203,
+    "session_id": "lehua_2026-02-20",
+    "product_id": "p005",
+    "quantity": 8
+  },
+  {
+    "id": 204,
+    "session_id": "lehua_2026-02-20",
+    "product_id": "p006",
+    "quantity": 12
+  },
+  {
+    "id": 205,
+    "session_id": "lehua_2026-02-20",
+    "product_id": "p010",
+    "quantity": 2
+  },
+  {
+    "id": 206,
+    "session_id": "lehua_2026-02-20",
+    "product_id": "p007",
+    "quantity": 1
+  },
+  {
+    "id": 207,
+    "session_id": "lehua_2026-02-20",
+    "product_id": "p021",
+    "quantity": 5
+  },
+  {
+    "id": 208,
+    "session_id": "lehua_2026-02-20",
+    "product_id": "p009",
+    "quantity": 1
+  },
+  {
+    "id": 209,
+    "session_id": "lehua_2026-02-20",
+    "product_id": "p014",
+    "quantity": 3
+  },
+  {
+    "id": 210,
+    "session_id": "lehua_2026-02-20",
+    "product_id": "p015",
+    "quantity": 3
+  },
+  {
+    "id": 211,
+    "session_id": "lehua_2026-02-20",
+    "product_id": "p019",
+    "quantity": 2
+  },
+  {
+    "id": 212,
+    "session_id": "lehua_2026-02-20",
+    "product_id": "p020",
+    "quantity": 2
+  },
+  {
+    "id": 213,
+    "session_id": "lehua_2026-02-20",
+    "product_id": "p023",
+    "quantity": 2
+  },
+  {
+    "id": 214,
+    "session_id": "lehua_2026-02-20",
+    "product_id": "p024",
+    "quantity": 2
+  },
+  {
+    "id": 215,
+    "session_id": "lehua_2026-02-20",
+    "product_id": "p025",
+    "quantity": 1
+  },
+  {
+    "id": 216,
+    "session_id": "lehua_2026-02-20",
+    "product_id": "p029",
+    "quantity": 16
+  },
+  {
+    "id": 267,
+    "session_id": "xingnan_2026-02-20",
+    "product_id": "p003",
+    "quantity": 4
+  },
+  {
+    "id": 268,
+    "session_id": "xingnan_2026-02-20",
+    "product_id": "p001",
+    "quantity": 2
+  },
+  {
+    "id": 269,
+    "session_id": "xingnan_2026-02-20",
+    "product_id": "p002",
+    "quantity": 2
+  },
+  {
+    "id": 270,
+    "session_id": "xingnan_2026-02-20",
+    "product_id": "p004",
+    "quantity": 6
+  },
+  {
+    "id": 271,
+    "session_id": "xingnan_2026-02-20",
+    "product_id": "p005",
+    "quantity": 3
+  },
+  {
+    "id": 272,
+    "session_id": "xingnan_2026-02-20",
+    "product_id": "p006",
+    "quantity": 3
+  },
+  {
+    "id": 273,
+    "session_id": "xingnan_2026-02-20",
+    "product_id": "p010",
+    "quantity": 1.5
+  },
+  {
+    "id": 274,
+    "session_id": "xingnan_2026-02-20",
+    "product_id": "p007",
+    "quantity": 1
+  },
+  {
+    "id": 275,
+    "session_id": "xingnan_2026-02-20",
+    "product_id": "p021",
+    "quantity": 4
+  },
+  {
+    "id": 276,
+    "session_id": "xingnan_2026-02-20",
+    "product_id": "p009",
+    "quantity": 1
+  },
+  {
+    "id": 277,
+    "session_id": "xingnan_2026-02-20",
+    "product_id": "p014",
+    "quantity": 2
+  },
+  {
+    "id": 278,
+    "session_id": "xingnan_2026-02-20",
+    "product_id": "p015",
+    "quantity": 2
+  },
+  {
+    "id": 279,
+    "session_id": "xingnan_2026-02-20",
+    "product_id": "p020",
+    "quantity": 2
+  },
+  {
+    "id": 280,
+    "session_id": "xingnan_2026-02-20",
+    "product_id": "p023",
+    "quantity": 1
+  },
+  {
+    "id": 518,
+    "session_id": "xingnan_2026-02-23",
+    "product_id": "p024",
+    "quantity": 1
+  },
+  {
+    "id": 519,
+    "session_id": "xingnan_2026-02-23",
+    "product_id": "p028",
+    "quantity": 2
+  },
+  {
+    "id": 520,
+    "session_id": "xingnan_2026-02-23",
+    "product_id": "p029",
+    "quantity": 8
+  },
+  {
+    "id": 302,
+    "session_id": "xingnan_2026-02-22",
+    "product_id": "p007",
+    "quantity": 0
+  },
+  {
+    "id": 521,
+    "session_id": "xingnan_2026-02-23",
+    "product_id": "p017",
+    "quantity": 0
+  },
+  {
+    "id": 709,
+    "session_id": "xingnan_2026-02-26",
+    "product_id": "p003",
+    "quantity": 2
+  },
+  {
+    "id": 305,
+    "session_id": "xingnan_2026-02-22",
+    "product_id": "p030",
+    "quantity": 0
+  },
+  {
+    "id": 710,
+    "session_id": "xingnan_2026-02-26",
+    "product_id": "p004",
+    "quantity": 2
+  },
+  {
+    "id": 307,
+    "session_id": "xingnan_2026-02-22",
+    "product_id": "p008",
+    "quantity": 0
+  },
+  {
+    "id": 308,
+    "session_id": "xingnan_2026-02-22",
+    "product_id": "p033",
+    "quantity": 0
+  },
+  {
+    "id": 711,
+    "session_id": "xingnan_2026-02-26",
+    "product_id": "p005",
+    "quantity": 1
+  },
+  {
+    "id": 310,
+    "session_id": "xingnan_2026-02-22",
+    "product_id": "p035",
+    "quantity": 0
+  },
+  {
+    "id": 311,
+    "session_id": "xingnan_2026-02-22",
+    "product_id": "p036",
+    "quantity": 0
+  },
+  {
+    "id": 312,
+    "session_id": "xingnan_2026-02-22",
+    "product_id": "p037",
+    "quantity": 0
+  },
+  {
+    "id": 712,
+    "session_id": "xingnan_2026-02-26",
+    "product_id": "p006",
+    "quantity": 0.1
+  },
+  {
+    "id": 713,
+    "session_id": "xingnan_2026-02-26",
+    "product_id": "p021",
+    "quantity": 1
+  },
+  {
+    "id": 315,
+    "session_id": "xingnan_2026-02-22",
+    "product_id": "p013",
+    "quantity": 0
+  },
+  {
+    "id": 316,
+    "session_id": "xingnan_2026-02-22",
+    "product_id": "p014",
+    "quantity": 0
+  },
+  {
+    "id": 714,
+    "session_id": "xingnan_2026-02-26",
+    "product_id": "p022",
+    "quantity": 0.5
+  },
+  {
+    "id": 318,
+    "session_id": "xingnan_2026-02-22",
+    "product_id": "p019",
+    "quantity": 0
+  },
+  {
+    "id": 319,
+    "session_id": "xingnan_2026-02-22",
+    "product_id": "p020",
+    "quantity": 0
+  },
+  {
+    "id": 715,
+    "session_id": "xingnan_2026-02-26",
+    "product_id": "p031",
+    "quantity": 4
+  },
+  {
+    "id": 716,
+    "session_id": "xingnan_2026-02-26",
+    "product_id": "p009",
+    "quantity": 0.5
+  },
+  {
+    "id": 322,
+    "session_id": "xingnan_2026-02-22",
+    "product_id": "p025",
+    "quantity": 0
+  },
+  {
+    "id": 323,
+    "session_id": "xingnan_2026-02-22",
+    "product_id": "p026",
+    "quantity": 0
+  },
+  {
+    "id": 324,
+    "session_id": "xingnan_2026-02-22",
+    "product_id": "p027",
+    "quantity": 0
+  },
+  {
+    "id": 717,
+    "session_id": "xingnan_2026-02-26",
+    "product_id": "p013",
+    "quantity": 6
+  },
+  {
+    "id": 718,
+    "session_id": "xingnan_2026-02-26",
+    "product_id": "p014",
+    "quantity": 0.4
+  },
+  {
+    "id": 327,
+    "session_id": "xingnan_2026-02-22",
+    "product_id": "p016",
+    "quantity": 0
+  },
+  {
+    "id": 328,
+    "session_id": "xingnan_2026-02-22",
+    "product_id": "p017",
+    "quantity": 0
+  },
+  {
+    "id": 329,
+    "session_id": "xingnan_2026-02-22",
+    "product_id": "p032",
+    "quantity": 0
+  },
+  {
+    "id": 719,
+    "session_id": "xingnan_2026-02-26",
+    "product_id": "p015",
+    "quantity": 1
+  },
+  {
+    "id": 720,
+    "session_id": "xingnan_2026-02-26",
+    "product_id": "p020",
+    "quantity": 1
+  },
+  {
+    "id": 721,
+    "session_id": "xingnan_2026-02-26",
+    "product_id": "p023",
+    "quantity": 1
+  },
+  {
+    "id": 722,
+    "session_id": "xingnan_2026-02-26",
+    "product_id": "p017",
+    "quantity": 2
+  },
+  {
+    "id": 591,
+    "session_id": "lehua_2026-02-26",
+    "product_id": "p003",
+    "quantity": 2
+  },
+  {
+    "id": 592,
+    "session_id": "lehua_2026-02-26",
+    "product_id": "p001",
+    "quantity": 1
+  },
+  {
+    "id": 593,
+    "session_id": "lehua_2026-02-26",
+    "product_id": "p004",
+    "quantity": 4
+  },
+  {
+    "id": 594,
+    "session_id": "lehua_2026-02-26",
+    "product_id": "p005",
+    "quantity": 4
+  },
+  {
+    "id": 595,
+    "session_id": "lehua_2026-02-26",
+    "product_id": "p006",
+    "quantity": 5
+  },
+  {
+    "id": 596,
+    "session_id": "lehua_2026-02-26",
+    "product_id": "p010",
+    "quantity": 2
+  },
+  {
+    "id": 597,
+    "session_id": "lehua_2026-02-26",
+    "product_id": "p021",
+    "quantity": 4
+  },
+  {
+    "id": 598,
+    "session_id": "lehua_2026-02-26",
+    "product_id": "p022",
+    "quantity": 1
+  },
+  {
+    "id": 599,
+    "session_id": "lehua_2026-02-26",
+    "product_id": "p031",
+    "quantity": 10
+  },
+  {
+    "id": 600,
+    "session_id": "lehua_2026-02-26",
+    "product_id": "p009",
+    "quantity": 1
+  },
+  {
+    "id": 601,
+    "session_id": "lehua_2026-02-26",
+    "product_id": "p011",
+    "quantity": 20
+  },
+  {
+    "id": 602,
+    "session_id": "lehua_2026-02-26",
+    "product_id": "p012",
+    "quantity": 10
+  },
+  {
+    "id": 603,
+    "session_id": "lehua_2026-02-26",
+    "product_id": "p014",
+    "quantity": 1
+  },
+  {
+    "id": 604,
+    "session_id": "lehua_2026-02-26",
+    "product_id": "p015",
+    "quantity": 2
+  },
+  {
+    "id": 605,
+    "session_id": "lehua_2026-02-26",
+    "product_id": "p019",
+    "quantity": 2
+  },
+  {
+    "id": 606,
+    "session_id": "lehua_2026-02-26",
+    "product_id": "p020",
+    "quantity": 1
+  },
+  {
+    "id": 607,
+    "session_id": "lehua_2026-02-26",
+    "product_id": "p023",
+    "quantity": 1
+  },
+  {
+    "id": 608,
+    "session_id": "lehua_2026-02-26",
+    "product_id": "p029",
+    "quantity": 20
+  },
+  {
+    "id": 609,
+    "session_id": "lehua_2026-02-26",
+    "product_id": "p017",
+    "quantity": 3
+  },
+  {
+    "id": 295,
+    "session_id": "xingnan_2026-02-22",
+    "product_id": "p003",
+    "quantity": 0
+  },
+  {
+    "id": 296,
+    "session_id": "xingnan_2026-02-22",
+    "product_id": "p001",
+    "quantity": 0
+  },
+  {
+    "id": 297,
+    "session_id": "xingnan_2026-02-22",
+    "product_id": "p002",
+    "quantity": 0
+  },
+  {
+    "id": 298,
+    "session_id": "xingnan_2026-02-22",
+    "product_id": "p004",
+    "quantity": 0
+  },
+  {
+    "id": 330,
+    "session_id": "lehua_2026-02-22",
+    "product_id": "p003",
+    "quantity": 0
+  },
+  {
+    "id": 331,
+    "session_id": "lehua_2026-02-22",
+    "product_id": "p010",
+    "quantity": 0
+  },
+  {
+    "id": 332,
+    "session_id": "lehua_2026-02-22",
+    "product_id": "p007",
+    "quantity": 0
+  },
+  {
+    "id": 333,
+    "session_id": "lehua_2026-02-22",
+    "product_id": "p021",
+    "quantity": 0
+  },
+  {
+    "id": 334,
+    "session_id": "lehua_2026-02-22",
+    "product_id": "p022",
+    "quantity": 0
+  },
+  {
+    "id": 335,
+    "session_id": "lehua_2026-02-22",
+    "product_id": "p009",
+    "quantity": 0
+  },
+  {
+    "id": 336,
+    "session_id": "lehua_2026-02-22",
+    "product_id": "p015",
+    "quantity": 0
+  },
+  {
+    "id": 337,
+    "session_id": "lehua_2026-02-22",
+    "product_id": "p020",
+    "quantity": 0
+  },
+  {
+    "id": 338,
+    "session_id": "lehua_2026-02-22",
+    "product_id": "p023",
+    "quantity": 0
+  },
+  {
+    "id": 339,
+    "session_id": "lehua_2026-02-22",
+    "product_id": "p024",
+    "quantity": 0
+  },
+  {
+    "id": 340,
+    "session_id": "lehua_2026-02-22",
+    "product_id": "p025",
+    "quantity": 0
+  },
+  {
+    "id": 341,
+    "session_id": "lehua_2026-02-22",
+    "product_id": "p026",
+    "quantity": 0
+  },
+  {
+    "id": 342,
+    "session_id": "lehua_2026-02-22",
+    "product_id": "p028",
+    "quantity": 0
+  },
+  {
+    "id": 343,
+    "session_id": "lehua_2026-02-22",
+    "product_id": "p029",
+    "quantity": 0
+  },
+  {
+    "id": 522,
+    "session_id": "lehua_2026-02-24",
+    "product_id": "p003",
+    "quantity": 2
+  },
+  {
+    "id": 523,
+    "session_id": "lehua_2026-02-24",
+    "product_id": "p001",
+    "quantity": 2
+  },
+  {
+    "id": 524,
+    "session_id": "lehua_2026-02-24",
+    "product_id": "p002",
+    "quantity": 0
+  },
+  {
+    "id": 525,
+    "session_id": "lehua_2026-02-24",
+    "product_id": "p004",
+    "quantity": 6
+  },
+  {
+    "id": 526,
+    "session_id": "lehua_2026-02-24",
+    "product_id": "p005",
+    "quantity": 3
+  },
+  {
+    "id": 527,
+    "session_id": "lehua_2026-02-24",
+    "product_id": "p006",
+    "quantity": 5
+  },
+  {
+    "id": 528,
+    "session_id": "lehua_2026-02-24",
+    "product_id": "p010",
+    "quantity": 0
+  },
+  {
+    "id": 529,
+    "session_id": "lehua_2026-02-24",
+    "product_id": "p021",
+    "quantity": 2
+  },
+  {
+    "id": 530,
+    "session_id": "lehua_2026-02-24",
+    "product_id": "p022",
+    "quantity": 0.5
+  },
+  {
+    "id": 531,
+    "session_id": "lehua_2026-02-24",
+    "product_id": "p009",
+    "quantity": 1
+  },
+  {
+    "id": 532,
+    "session_id": "lehua_2026-02-24",
+    "product_id": "p011",
+    "quantity": 20
+  },
+  {
+    "id": 533,
+    "session_id": "lehua_2026-02-24",
+    "product_id": "p012",
+    "quantity": 10
+  },
+  {
+    "id": 534,
+    "session_id": "lehua_2026-02-24",
+    "product_id": "p013",
+    "quantity": 6
+  },
+  {
+    "id": 535,
+    "session_id": "lehua_2026-02-24",
+    "product_id": "p014",
+    "quantity": 1
+  },
+  {
+    "id": 299,
+    "session_id": "xingnan_2026-02-22",
+    "product_id": "p005",
+    "quantity": 0
+  },
+  {
+    "id": 300,
+    "session_id": "xingnan_2026-02-22",
+    "product_id": "p006",
+    "quantity": 0
+  },
+  {
+    "id": 301,
+    "session_id": "xingnan_2026-02-22",
+    "product_id": "p010",
+    "quantity": 0
+  },
+  {
+    "id": 303,
+    "session_id": "xingnan_2026-02-22",
+    "product_id": "p021",
+    "quantity": 0
+  },
+  {
+    "id": 304,
+    "session_id": "xingnan_2026-02-22",
+    "product_id": "p022",
+    "quantity": 0
+  },
+  {
+    "id": 306,
+    "session_id": "xingnan_2026-02-22",
+    "product_id": "p031",
+    "quantity": 0
+  },
+  {
+    "id": 309,
+    "session_id": "xingnan_2026-02-22",
+    "product_id": "p009",
+    "quantity": 0
+  },
+  {
+    "id": 313,
+    "session_id": "xingnan_2026-02-22",
+    "product_id": "p011",
+    "quantity": 0
+  },
+  {
+    "id": 314,
+    "session_id": "xingnan_2026-02-22",
+    "product_id": "p012",
+    "quantity": 0
+  },
+  {
+    "id": 317,
+    "session_id": "xingnan_2026-02-22",
+    "product_id": "p015",
+    "quantity": 0
+  },
+  {
+    "id": 320,
+    "session_id": "xingnan_2026-02-22",
+    "product_id": "p023",
+    "quantity": 0
+  },
+  {
+    "id": 321,
+    "session_id": "xingnan_2026-02-22",
+    "product_id": "p024",
+    "quantity": 0
+  },
+  {
+    "id": 325,
+    "session_id": "xingnan_2026-02-22",
+    "product_id": "p028",
+    "quantity": 0
+  },
+  {
+    "id": 326,
+    "session_id": "xingnan_2026-02-22",
+    "product_id": "p029",
+    "quantity": 0
+  },
+  {
+    "id": 452,
+    "session_id": "lehua_2026-02-23",
+    "product_id": "p003",
+    "quantity": 2
+  },
+  {
+    "id": 453,
+    "session_id": "lehua_2026-02-23",
+    "product_id": "p010",
+    "quantity": 2
+  },
+  {
+    "id": 454,
+    "session_id": "lehua_2026-02-23",
+    "product_id": "p007",
+    "quantity": 1
+  },
+  {
+    "id": 455,
+    "session_id": "lehua_2026-02-23",
+    "product_id": "p021",
+    "quantity": 1
+  },
+  {
+    "id": 456,
+    "session_id": "lehua_2026-02-23",
+    "product_id": "p022",
+    "quantity": 0.5
+  },
+  {
+    "id": 457,
+    "session_id": "lehua_2026-02-23",
+    "product_id": "p009",
+    "quantity": 1
+  },
+  {
+    "id": 458,
+    "session_id": "lehua_2026-02-23",
+    "product_id": "p011",
+    "quantity": 36
+  },
+  {
+    "id": 459,
+    "session_id": "lehua_2026-02-23",
+    "product_id": "p014",
+    "quantity": 0
+  },
+  {
+    "id": 460,
+    "session_id": "lehua_2026-02-23",
+    "product_id": "p015",
+    "quantity": 1
+  },
+  {
+    "id": 461,
+    "session_id": "lehua_2026-02-23",
+    "product_id": "p020",
+    "quantity": 2
+  },
+  {
+    "id": 462,
+    "session_id": "lehua_2026-02-23",
+    "product_id": "p023",
+    "quantity": 1
+  },
+  {
+    "id": 463,
+    "session_id": "lehua_2026-02-23",
+    "product_id": "p024",
+    "quantity": 2
+  },
+  {
+    "id": 464,
+    "session_id": "lehua_2026-02-23",
+    "product_id": "p025",
+    "quantity": 1
+  },
+  {
+    "id": 465,
+    "session_id": "lehua_2026-02-23",
+    "product_id": "p026",
+    "quantity": 6
+  },
+  {
+    "id": 466,
+    "session_id": "lehua_2026-02-23",
+    "product_id": "p028",
+    "quantity": 6
+  },
+  {
+    "id": 536,
+    "session_id": "lehua_2026-02-24",
+    "product_id": "p015",
+    "quantity": 1
+  },
+  {
+    "id": 537,
+    "session_id": "lehua_2026-02-24",
+    "product_id": "p019",
+    "quantity": 1
+  },
+  {
+    "id": 538,
+    "session_id": "lehua_2026-02-24",
+    "product_id": "p020",
+    "quantity": 2
+  },
+  {
+    "id": 539,
+    "session_id": "lehua_2026-02-24",
+    "product_id": "p017",
+    "quantity": 3
+  },
+  {
+    "id": 555,
+    "session_id": "xingnan_2026-02-24",
+    "product_id": "p004",
+    "quantity": 4
+  },
+  {
+    "id": 556,
+    "session_id": "xingnan_2026-02-24",
+    "product_id": "p005",
+    "quantity": 2
+  },
+  {
+    "id": 557,
+    "session_id": "xingnan_2026-02-24",
+    "product_id": "p006",
+    "quantity": 2
+  },
+  {
+    "id": 558,
+    "session_id": "xingnan_2026-02-24",
+    "product_id": "p007",
+    "quantity": 0.5
+  },
+  {
+    "id": 559,
+    "session_id": "xingnan_2026-02-24",
+    "product_id": "p021",
+    "quantity": 2
+  },
+  {
+    "id": 560,
+    "session_id": "xingnan_2026-02-24",
+    "product_id": "p022",
+    "quantity": 0.5
+  },
+  {
+    "id": 561,
+    "session_id": "xingnan_2026-02-24",
+    "product_id": "p031",
+    "quantity": 4
+  },
+  {
+    "id": 562,
+    "session_id": "xingnan_2026-02-24",
+    "product_id": "p009",
+    "quantity": 0.5
+  },
+  {
+    "id": 563,
+    "session_id": "xingnan_2026-02-24",
+    "product_id": "p011",
+    "quantity": 12
+  },
+  {
+    "id": 564,
+    "session_id": "xingnan_2026-02-24",
+    "product_id": "p012",
+    "quantity": 6
+  },
+  {
+    "id": 565,
+    "session_id": "xingnan_2026-02-24",
+    "product_id": "p015",
+    "quantity": 1
+  },
+  {
+    "id": 566,
+    "session_id": "xingnan_2026-02-24",
+    "product_id": "p019",
+    "quantity": 2
+  },
+  {
+    "id": 567,
+    "session_id": "xingnan_2026-02-24",
+    "product_id": "p020",
+    "quantity": 2
+  },
+  {
+    "id": 736,
+    "session_id": "xingnan_2026-02-27",
+    "product_id": "p003",
+    "quantity": 2
+  },
+  {
+    "id": 737,
+    "session_id": "xingnan_2026-02-27",
+    "product_id": "p001",
+    "quantity": 2
+  },
+  {
+    "id": 738,
+    "session_id": "xingnan_2026-02-27",
+    "product_id": "p002",
+    "quantity": 2
+  },
+  {
+    "id": 739,
+    "session_id": "xingnan_2026-02-27",
+    "product_id": "p004",
+    "quantity": 6
+  },
+  {
+    "id": 568,
+    "session_id": "xingnan_2026-02-24",
+    "product_id": "p029",
+    "quantity": 8
+  },
+  {
+    "id": 569,
+    "session_id": "xingnan_2026-02-24",
+    "product_id": "p017",
+    "quantity": 1
+  },
+  {
+    "id": 740,
+    "session_id": "xingnan_2026-02-27",
+    "product_id": "p005",
+    "quantity": 2
+  },
+  {
+    "id": 741,
+    "session_id": "xingnan_2026-02-27",
+    "product_id": "p006",
+    "quantity": 3
+  },
+  {
+    "id": 742,
+    "session_id": "xingnan_2026-02-27",
+    "product_id": "p010",
+    "quantity": 1.5
+  },
+  {
+    "id": 743,
+    "session_id": "xingnan_2026-02-27",
+    "product_id": "p007",
+    "quantity": 0.5
+  },
+  {
+    "id": 744,
+    "session_id": "xingnan_2026-02-27",
+    "product_id": "p021",
+    "quantity": 3
+  },
+  {
+    "id": 745,
+    "session_id": "xingnan_2026-02-27",
+    "product_id": "p022",
+    "quantity": 1
+  },
+  {
+    "id": 746,
+    "session_id": "xingnan_2026-02-27",
+    "product_id": "p009",
+    "quantity": 1
+  },
+  {
+    "id": 747,
+    "session_id": "xingnan_2026-02-27",
+    "product_id": "p011",
+    "quantity": 12
+  },
+  {
+    "id": 748,
+    "session_id": "xingnan_2026-02-27",
+    "product_id": "p012",
+    "quantity": 6
+  },
+  {
+    "id": 749,
+    "session_id": "xingnan_2026-02-27",
+    "product_id": "p014",
+    "quantity": 1
+  },
+  {
+    "id": 750,
+    "session_id": "xingnan_2026-02-27",
+    "product_id": "p015",
+    "quantity": 2
+  },
+  {
+    "id": 751,
+    "session_id": "xingnan_2026-02-27",
+    "product_id": "p029",
+    "quantity": 8
+  },
+  {
+    "id": 752,
+    "session_id": "lehua_2026-02-27",
+    "product_id": "p003",
+    "quantity": 2
+  },
+  {
+    "id": 753,
+    "session_id": "lehua_2026-02-27",
+    "product_id": "p001",
+    "quantity": 2
+  },
+  {
+    "id": 754,
+    "session_id": "lehua_2026-02-27",
+    "product_id": "p002",
+    "quantity": 2
+  },
+  {
+    "id": 755,
+    "session_id": "lehua_2026-02-27",
+    "product_id": "p004",
+    "quantity": 10
+  },
+  {
+    "id": 756,
+    "session_id": "lehua_2026-02-27",
+    "product_id": "p005",
+    "quantity": 4
+  },
+  {
+    "id": 757,
+    "session_id": "lehua_2026-02-27",
+    "product_id": "p006",
+    "quantity": 7
+  },
+  {
+    "id": 758,
+    "session_id": "lehua_2026-02-27",
+    "product_id": "p007",
+    "quantity": 1
+  },
+  {
+    "id": 759,
+    "session_id": "lehua_2026-02-27",
+    "product_id": "p021",
+    "quantity": 2
+  },
+  {
+    "id": 760,
+    "session_id": "lehua_2026-02-27",
+    "product_id": "p022",
+    "quantity": 1
+  },
+  {
+    "id": 761,
+    "session_id": "lehua_2026-02-27",
+    "product_id": "p014",
+    "quantity": 1
+  },
+  {
+    "id": 762,
+    "session_id": "lehua_2026-02-27",
+    "product_id": "p015",
+    "quantity": 1
+  },
+  {
+    "id": 763,
+    "session_id": "lehua_2026-02-27",
+    "product_id": "p020",
+    "quantity": 2
+  },
+  {
+    "id": 764,
+    "session_id": "lehua_2026-02-27",
+    "product_id": "p029",
+    "quantity": 12
+  },
+  {
+    "id": 765,
+    "session_id": "xingnan_2026-02-28",
+    "product_id": "p003",
+    "quantity": 2
+  },
+  {
+    "id": 766,
+    "session_id": "xingnan_2026-02-28",
+    "product_id": "p001",
+    "quantity": 1
+  },
+  {
+    "id": 797,
+    "session_id": "xingnan_2026-02-28",
+    "product_id": "p004",
+    "quantity": 2
+  },
+  {
+    "id": 769,
+    "session_id": "xingnan_2026-02-28",
+    "product_id": "p005",
+    "quantity": 2.5
+  },
+  {
+    "id": 799,
+    "session_id": "xingnan_2026-02-28",
+    "product_id": "p006",
+    "quantity": 1
+  },
+  {
+    "id": 771,
+    "session_id": "xingnan_2026-02-28",
+    "product_id": "p010",
+    "quantity": 1.5
+  },
+  {
+    "id": 772,
+    "session_id": "xingnan_2026-02-28",
+    "product_id": "p007",
+    "quantity": 1
+  },
+  {
+    "id": 773,
+    "session_id": "xingnan_2026-02-28",
+    "product_id": "p021",
+    "quantity": 3
+  },
+  {
+    "id": 774,
+    "session_id": "xingnan_2026-02-28",
+    "product_id": "p022",
+    "quantity": 1
+  },
+  {
+    "id": 775,
+    "session_id": "xingnan_2026-02-28",
+    "product_id": "p009",
+    "quantity": 0.5
+  },
+  {
+    "id": 789,
+    "session_id": "xingnan_2026-02-28",
+    "product_id": "p019",
+    "quantity": 2
+  },
+  {
+    "id": 790,
+    "session_id": "xingnan_2026-02-28",
+    "product_id": "p020",
+    "quantity": 2
+  },
+  {
+    "id": 791,
+    "session_id": "xingnan_2026-02-28",
+    "product_id": "p023",
+    "quantity": 4500
+  },
+  {
+    "id": 792,
+    "session_id": "xingnan_2026-02-28",
+    "product_id": "p029",
+    "quantity": 8
+  },
+  {
+    "id": 793,
+    "session_id": "xingnan_2026-02-28",
+    "product_id": "p017",
+    "quantity": 1
+  },
+  {
+    "id": 794,
+    "session_id": "xingnan_2026-02-28",
+    "product_id": "p032",
+    "quantity": 1
+  },
+  {
+    "id": 827,
+    "session_id": "lehua_2026-02-28",
+    "product_id": "p003",
+    "quantity": 6
+  },
+  {
+    "id": 828,
+    "session_id": "lehua_2026-02-28",
+    "product_id": "p001",
+    "quantity": 3
+  },
+  {
+    "id": 829,
+    "session_id": "lehua_2026-02-28",
+    "product_id": "p002",
+    "quantity": 2
+  },
+  {
+    "id": 830,
+    "session_id": "lehua_2026-02-28",
+    "product_id": "p004",
+    "quantity": 14
+  },
+  {
+    "id": 831,
+    "session_id": "lehua_2026-02-28",
+    "product_id": "p005",
+    "quantity": 12
+  },
+  {
+    "id": 832,
+    "session_id": "lehua_2026-02-28",
+    "product_id": "p006",
+    "quantity": 14
+  },
+  {
+    "id": 833,
+    "session_id": "lehua_2026-02-28",
+    "product_id": "p010",
+    "quantity": 2
+  },
+  {
+    "id": 834,
+    "session_id": "lehua_2026-02-28",
+    "product_id": "p007",
+    "quantity": 1
+  },
+  {
+    "id": 835,
+    "session_id": "lehua_2026-02-28",
+    "product_id": "p021",
+    "quantity": 8
+  },
+  {
+    "id": 836,
+    "session_id": "lehua_2026-02-28",
+    "product_id": "p022",
+    "quantity": 1
+  },
+  {
+    "id": 841,
+    "session_id": "lehua_2026-02-28",
+    "product_id": "p009",
+    "quantity": 1.5
+  },
+  {
+    "id": 870,
+    "session_id": "lehua_2026-02-28",
+    "product_id": "p011",
+    "quantity": 25
+  },
+  {
+    "id": 871,
+    "session_id": "lehua_2026-02-28",
+    "product_id": "p012",
+    "quantity": 13
+  },
+  {
+    "id": 846,
+    "session_id": "lehua_2026-02-28",
+    "product_id": "p013",
+    "quantity": 12
+  },
+  {
+    "id": 847,
+    "session_id": "lehua_2026-02-28",
+    "product_id": "p014",
+    "quantity": 2
+  },
+  {
+    "id": 848,
+    "session_id": "lehua_2026-02-28",
+    "product_id": "p015",
+    "quantity": 2
+  },
+  {
+    "id": 849,
+    "session_id": "lehua_2026-02-28",
+    "product_id": "p019",
+    "quantity": 4
+  },
+  {
+    "id": 850,
+    "session_id": "lehua_2026-02-28",
+    "product_id": "p020",
+    "quantity": 4
+  },
+  {
+    "id": 851,
+    "session_id": "lehua_2026-02-28",
+    "product_id": "p023",
+    "quantity": 9000
+  },
+  {
+    "id": 852,
+    "session_id": "lehua_2026-02-28",
+    "product_id": "p024",
+    "quantity": 2
+  },
+  {
+    "id": 853,
+    "session_id": "lehua_2026-02-28",
+    "product_id": "p025",
+    "quantity": 1
+  },
+  {
+    "id": 854,
+    "session_id": "lehua_2026-02-28",
+    "product_id": "p029",
+    "quantity": 12
+  },
+  {
+    "id": 855,
+    "session_id": "lehua_2026-02-28",
+    "product_id": "p017",
+    "quantity": 3
+  },
+  {
+    "id": 856,
+    "session_id": "lehua_2026-02-28",
+    "product_id": "p032",
+    "quantity": 2
+  }
+]

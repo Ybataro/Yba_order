@@ -1,0 +1,1796 @@
+[
+  {
+    "id": 27,
+    "session_id": "xingnan_2026-02-20",
+    "field_id": "orderCount",
+    "value": "226"
+  },
+  {
+    "id": 28,
+    "session_id": "xingnan_2026-02-20",
+    "field_id": "staffCount",
+    "value": "4"
+  },
+  {
+    "id": 29,
+    "session_id": "xingnan_2026-02-20",
+    "field_id": "posTotal",
+    "value": "37735"
+  },
+  {
+    "id": 30,
+    "session_id": "xingnan_2026-02-20",
+    "field_id": "invoiceRefund",
+    "value": "0"
+  },
+  {
+    "id": 31,
+    "session_id": "xingnan_2026-02-20",
+    "field_id": "openCashBills",
+    "value": "0"
+  },
+  {
+    "id": 32,
+    "session_id": "xingnan_2026-02-20",
+    "field_id": "openCashCoins",
+    "value": "0"
+  },
+  {
+    "id": 33,
+    "session_id": "xingnan_2026-02-20",
+    "field_id": "easyPay",
+    "value": "2531"
+  },
+  {
+    "id": 34,
+    "session_id": "xingnan_2026-02-20",
+    "field_id": "taiwanPay",
+    "value": "0"
+  },
+  {
+    "id": 35,
+    "session_id": "xingnan_2026-02-20",
+    "field_id": "allPay",
+    "value": "0"
+  },
+  {
+    "id": 36,
+    "session_id": "xingnan_2026-02-20",
+    "field_id": "linePay",
+    "value": "8177"
+  },
+  {
+    "id": 37,
+    "session_id": "xingnan_2026-02-20",
+    "field_id": "pettyCash",
+    "value": "0"
+  },
+  {
+    "id": 38,
+    "session_id": "xingnan_2026-02-20",
+    "field_id": "invoiceRefund2",
+    "value": "0"
+  },
+  {
+    "id": 39,
+    "session_id": "xingnan_2026-02-20",
+    "field_id": "prevDayUndeposited",
+    "value": "0"
+  },
+  {
+    "id": 40,
+    "session_id": "xingnan_2026-02-20",
+    "field_id": "changeExchange",
+    "value": "0"
+  },
+  {
+    "id": 41,
+    "session_id": "xingnan_2026-02-20",
+    "field_id": "nextDayPettyCash",
+    "value": "0"
+  },
+  {
+    "id": 42,
+    "session_id": "xingnan_2026-02-20",
+    "field_id": "uberFee",
+    "value": "4979"
+  },
+  {
+    "id": 43,
+    "session_id": "xingnan_2026-02-20",
+    "field_id": "pandaFee",
+    "value": "417"
+  },
+  {
+    "id": 44,
+    "session_id": "xingnan_2026-02-20",
+    "field_id": "otherExpense",
+    "value": "0"
+  },
+  {
+    "id": 45,
+    "session_id": "xingnan_2026-02-20",
+    "field_id": "otherIncome",
+    "value": "0"
+  },
+  {
+    "id": 46,
+    "session_id": "xingnan_2026-02-20",
+    "field_id": "cash1000",
+    "value": "21"
+  },
+  {
+    "id": 47,
+    "session_id": "xingnan_2026-02-20",
+    "field_id": "cash500",
+    "value": "1"
+  },
+  {
+    "id": 48,
+    "session_id": "xingnan_2026-02-20",
+    "field_id": "cash100",
+    "value": "1"
+  },
+  {
+    "id": 49,
+    "session_id": "xingnan_2026-02-20",
+    "field_id": "coin10",
+    "value": "3"
+  },
+  {
+    "id": 50,
+    "session_id": "xingnan_2026-02-20",
+    "field_id": "coin5",
+    "value": "0"
+  },
+  {
+    "id": 51,
+    "session_id": "xingnan_2026-02-20",
+    "field_id": "coin1",
+    "value": "1"
+  },
+  {
+    "id": 77,
+    "session_id": "lehua_2026-02-20",
+    "field_id": "orderCount",
+    "value": "459"
+  },
+  {
+    "id": 78,
+    "session_id": "lehua_2026-02-20",
+    "field_id": "staffCount",
+    "value": "5"
+  },
+  {
+    "id": 79,
+    "session_id": "lehua_2026-02-20",
+    "field_id": "posTotal",
+    "value": "91221"
+  },
+  {
+    "id": 80,
+    "session_id": "lehua_2026-02-20",
+    "field_id": "invoiceRefund",
+    "value": "490"
+  },
+  {
+    "id": 81,
+    "session_id": "lehua_2026-02-20",
+    "field_id": "openCashBills",
+    "value": "10000"
+  },
+  {
+    "id": 82,
+    "session_id": "lehua_2026-02-20",
+    "field_id": "openCashCoins",
+    "value": "3000"
+  },
+  {
+    "id": 83,
+    "session_id": "lehua_2026-02-20",
+    "field_id": "easyPay",
+    "value": "4055"
+  },
+  {
+    "id": 84,
+    "session_id": "lehua_2026-02-20",
+    "field_id": "taiwanPay",
+    "value": "0"
+  },
+  {
+    "id": 85,
+    "session_id": "lehua_2026-02-20",
+    "field_id": "allPay",
+    "value": "0"
+  },
+  {
+    "id": 86,
+    "session_id": "lehua_2026-02-20",
+    "field_id": "linePay",
+    "value": "21342"
+  },
+  {
+    "id": 87,
+    "session_id": "lehua_2026-02-20",
+    "field_id": "pettyCash",
+    "value": "0"
+  },
+  {
+    "id": 88,
+    "session_id": "lehua_2026-02-20",
+    "field_id": "invoiceRefund2",
+    "value": "0"
+  },
+  {
+    "id": 89,
+    "session_id": "lehua_2026-02-20",
+    "field_id": "prevDayUndeposited",
+    "value": "0"
+  },
+  {
+    "id": 90,
+    "session_id": "lehua_2026-02-20",
+    "field_id": "changeExchange",
+    "value": "0"
+  },
+  {
+    "id": 91,
+    "session_id": "lehua_2026-02-20",
+    "field_id": "nextDayPettyCash",
+    "value": "0"
+  },
+  {
+    "id": 92,
+    "session_id": "lehua_2026-02-20",
+    "field_id": "uberFee",
+    "value": "22640"
+  },
+  {
+    "id": 93,
+    "session_id": "lehua_2026-02-20",
+    "field_id": "pandaFee",
+    "value": "0"
+  },
+  {
+    "id": 94,
+    "session_id": "lehua_2026-02-20",
+    "field_id": "otherExpense",
+    "value": "0"
+  },
+  {
+    "id": 95,
+    "session_id": "lehua_2026-02-20",
+    "field_id": "otherIncome",
+    "value": "0"
+  },
+  {
+    "id": 96,
+    "session_id": "lehua_2026-02-20",
+    "field_id": "cash1000",
+    "value": "41"
+  },
+  {
+    "id": 97,
+    "session_id": "lehua_2026-02-20",
+    "field_id": "cash500",
+    "value": "4"
+  },
+  {
+    "id": 98,
+    "session_id": "lehua_2026-02-20",
+    "field_id": "cash100",
+    "value": "107"
+  },
+  {
+    "id": 99,
+    "session_id": "lehua_2026-02-20",
+    "field_id": "coin50",
+    "value": "28"
+  },
+  {
+    "id": 100,
+    "session_id": "lehua_2026-02-20",
+    "field_id": "coin10",
+    "value": "50"
+  },
+  {
+    "id": 101,
+    "session_id": "lehua_2026-02-20",
+    "field_id": "coin5",
+    "value": "66"
+  },
+  {
+    "id": 102,
+    "session_id": "lehua_2026-02-20",
+    "field_id": "coin1",
+    "value": "13"
+  },
+  {
+    "id": 1,
+    "session_id": "lehua_2026-02-21",
+    "field_id": "orderCount",
+    "value": "555"
+  },
+  {
+    "id": 2,
+    "session_id": "lehua_2026-02-21",
+    "field_id": "staffCount",
+    "value": "7"
+  },
+  {
+    "id": 3,
+    "session_id": "lehua_2026-02-21",
+    "field_id": "posTotal",
+    "value": "102697"
+  },
+  {
+    "id": 4,
+    "session_id": "lehua_2026-02-21",
+    "field_id": "invoiceRefund",
+    "value": "0"
+  },
+  {
+    "id": 5,
+    "session_id": "lehua_2026-02-21",
+    "field_id": "openCashBills",
+    "value": "10000"
+  },
+  {
+    "id": 6,
+    "session_id": "lehua_2026-02-21",
+    "field_id": "openCashCoins",
+    "value": "4600"
+  },
+  {
+    "id": 7,
+    "session_id": "lehua_2026-02-21",
+    "field_id": "easyPay",
+    "value": "5394"
+  },
+  {
+    "id": 8,
+    "session_id": "lehua_2026-02-21",
+    "field_id": "taiwanPay",
+    "value": "0"
+  },
+  {
+    "id": 9,
+    "session_id": "lehua_2026-02-21",
+    "field_id": "allPay",
+    "value": "0"
+  },
+  {
+    "id": 10,
+    "session_id": "lehua_2026-02-21",
+    "field_id": "linePay",
+    "value": "23801"
+  },
+  {
+    "id": 11,
+    "session_id": "lehua_2026-02-21",
+    "field_id": "pettyCash",
+    "value": "0"
+  },
+  {
+    "id": 12,
+    "session_id": "lehua_2026-02-21",
+    "field_id": "invoiceRefund2",
+    "value": "0"
+  },
+  {
+    "id": 13,
+    "session_id": "lehua_2026-02-21",
+    "field_id": "prevDayUndeposited",
+    "value": "0"
+  },
+  {
+    "id": 14,
+    "session_id": "lehua_2026-02-21",
+    "field_id": "changeExchange",
+    "value": "0"
+  },
+  {
+    "id": 15,
+    "session_id": "lehua_2026-02-21",
+    "field_id": "nextDayPettyCash",
+    "value": "10000"
+  },
+  {
+    "id": 16,
+    "session_id": "lehua_2026-02-21",
+    "field_id": "uberFee",
+    "value": "20778"
+  },
+  {
+    "id": 17,
+    "session_id": "lehua_2026-02-21",
+    "field_id": "pandaFee",
+    "value": "480"
+  },
+  {
+    "id": 18,
+    "session_id": "lehua_2026-02-21",
+    "field_id": "otherExpense",
+    "value": "1369"
+  },
+  {
+    "id": 19,
+    "session_id": "lehua_2026-02-21",
+    "field_id": "otherIncome",
+    "value": "0"
+  },
+  {
+    "id": 20,
+    "session_id": "lehua_2026-02-21",
+    "field_id": "cash1000",
+    "value": "36"
+  },
+  {
+    "id": 631,
+    "session_id": "xingnan_2026-02-26",
+    "field_id": "orderCount",
+    "value": "142"
+  },
+  {
+    "id": 632,
+    "session_id": "xingnan_2026-02-26",
+    "field_id": "staffCount",
+    "value": "4"
+  },
+  {
+    "id": 633,
+    "session_id": "xingnan_2026-02-26",
+    "field_id": "posTotal",
+    "value": "23789"
+  },
+  {
+    "id": 634,
+    "session_id": "xingnan_2026-02-26",
+    "field_id": "easyPay",
+    "value": "1008"
+  },
+  {
+    "id": 635,
+    "session_id": "xingnan_2026-02-26",
+    "field_id": "linePay",
+    "value": "6787"
+  },
+  {
+    "id": 636,
+    "session_id": "xingnan_2026-02-26",
+    "field_id": "uberFee",
+    "value": "5275"
+  },
+  {
+    "id": 637,
+    "session_id": "xingnan_2026-02-26",
+    "field_id": "pandaFee",
+    "value": "485"
+  },
+  {
+    "id": 638,
+    "session_id": "xingnan_2026-02-26",
+    "field_id": "cash1000",
+    "value": "10"
+  },
+  {
+    "id": 639,
+    "session_id": "xingnan_2026-02-26",
+    "field_id": "cash100",
+    "value": "2"
+  },
+  {
+    "id": 640,
+    "session_id": "xingnan_2026-02-26",
+    "field_id": "coin10",
+    "value": "3"
+  },
+  {
+    "id": 641,
+    "session_id": "xingnan_2026-02-26",
+    "field_id": "coin1",
+    "value": "4"
+  },
+  {
+    "id": 660,
+    "session_id": "xingnan_2026-02-27",
+    "field_id": "orderCount",
+    "value": "165"
+  },
+  {
+    "id": 661,
+    "session_id": "xingnan_2026-02-27",
+    "field_id": "staffCount",
+    "value": "4"
+  },
+  {
+    "id": 662,
+    "session_id": "xingnan_2026-02-27",
+    "field_id": "posTotal",
+    "value": "28399"
+  },
+  {
+    "id": 663,
+    "session_id": "xingnan_2026-02-27",
+    "field_id": "easyPay",
+    "value": "592"
+  },
+  {
+    "id": 664,
+    "session_id": "xingnan_2026-02-27",
+    "field_id": "linePay",
+    "value": "6854"
+  },
+  {
+    "id": 665,
+    "session_id": "xingnan_2026-02-27",
+    "field_id": "uberFee",
+    "value": "5102"
+  },
+  {
+    "id": 666,
+    "session_id": "xingnan_2026-02-27",
+    "field_id": "pandaFee",
+    "value": "1400"
+  },
+  {
+    "id": 667,
+    "session_id": "xingnan_2026-02-27",
+    "field_id": "cash1000",
+    "value": "14"
+  },
+  {
+    "id": 668,
+    "session_id": "xingnan_2026-02-27",
+    "field_id": "cash100",
+    "value": "4"
+  },
+  {
+    "id": 669,
+    "session_id": "xingnan_2026-02-27",
+    "field_id": "coin50",
+    "value": "1"
+  },
+  {
+    "id": 670,
+    "session_id": "xingnan_2026-02-27",
+    "field_id": "coin1",
+    "value": "1"
+  },
+  {
+    "id": 129,
+    "session_id": "xingnan_2026-02-21",
+    "field_id": "orderCount",
+    "value": "240"
+  },
+  {
+    "id": 130,
+    "session_id": "xingnan_2026-02-21",
+    "field_id": "staffCount",
+    "value": "4"
+  },
+  {
+    "id": 131,
+    "session_id": "xingnan_2026-02-21",
+    "field_id": "posTotal",
+    "value": "39369"
+  },
+  {
+    "id": 132,
+    "session_id": "xingnan_2026-02-21",
+    "field_id": "easyPay",
+    "value": "1633"
+  },
+  {
+    "id": 133,
+    "session_id": "xingnan_2026-02-21",
+    "field_id": "linePay",
+    "value": "13084"
+  },
+  {
+    "id": 134,
+    "session_id": "xingnan_2026-02-21",
+    "field_id": "uberFee",
+    "value": "4550"
+  },
+  {
+    "id": 135,
+    "session_id": "xingnan_2026-02-21",
+    "field_id": "pandaFee",
+    "value": "113"
+  },
+  {
+    "id": 136,
+    "session_id": "xingnan_2026-02-21",
+    "field_id": "otherExpense",
+    "value": "125"
+  },
+  {
+    "id": 137,
+    "session_id": "xingnan_2026-02-21",
+    "field_id": "cash1000",
+    "value": "19"
+  },
+  {
+    "id": 138,
+    "session_id": "xingnan_2026-02-21",
+    "field_id": "cash500",
+    "value": "1"
+  },
+  {
+    "id": 139,
+    "session_id": "xingnan_2026-02-21",
+    "field_id": "cash100",
+    "value": "2"
+  },
+  {
+    "id": 140,
+    "session_id": "xingnan_2026-02-21",
+    "field_id": "coin50",
+    "value": "1"
+  },
+  {
+    "id": 141,
+    "session_id": "xingnan_2026-02-21",
+    "field_id": "coin10",
+    "value": "4"
+  },
+  {
+    "id": 142,
+    "session_id": "xingnan_2026-02-21",
+    "field_id": "coin1",
+    "value": "3"
+  },
+  {
+    "id": 603,
+    "session_id": "lehua_2026-02-25",
+    "field_id": "orderCount",
+    "value": "223"
+  },
+  {
+    "id": 604,
+    "session_id": "lehua_2026-02-25",
+    "field_id": "staffCount",
+    "value": "5"
+  },
+  {
+    "id": 605,
+    "session_id": "lehua_2026-02-25",
+    "field_id": "posTotal",
+    "value": "31185"
+  },
+  {
+    "id": 606,
+    "session_id": "lehua_2026-02-25",
+    "field_id": "invoiceRefund",
+    "value": "0"
+  },
+  {
+    "id": 607,
+    "session_id": "lehua_2026-02-25",
+    "field_id": "openCashBills",
+    "value": "10000"
+  },
+  {
+    "id": 608,
+    "session_id": "lehua_2026-02-25",
+    "field_id": "openCashCoins",
+    "value": "3000"
+  },
+  {
+    "id": 609,
+    "session_id": "lehua_2026-02-25",
+    "field_id": "easyPay",
+    "value": "0"
+  },
+  {
+    "id": 610,
+    "session_id": "lehua_2026-02-25",
+    "field_id": "taiwanPay",
+    "value": "0"
+  },
+  {
+    "id": 611,
+    "session_id": "lehua_2026-02-25",
+    "field_id": "allPay",
+    "value": "1497"
+  },
+  {
+    "id": 612,
+    "session_id": "lehua_2026-02-25",
+    "field_id": "linePay",
+    "value": "5778"
+  },
+  {
+    "id": 613,
+    "session_id": "lehua_2026-02-25",
+    "field_id": "pettyCash",
+    "value": "0"
+  },
+  {
+    "id": 614,
+    "session_id": "lehua_2026-02-25",
+    "field_id": "invoiceRefund2",
+    "value": "0"
+  },
+  {
+    "id": 615,
+    "session_id": "lehua_2026-02-25",
+    "field_id": "prevDayUndeposited",
+    "value": "0"
+  },
+  {
+    "id": 186,
+    "session_id": "lehua_2026-02-21",
+    "field_id": "otherExpenseNote",
+    "value": "基金買飲料，晚餐"
+  },
+  {
+    "id": 21,
+    "session_id": "lehua_2026-02-21",
+    "field_id": "cash500",
+    "value": "34"
+  },
+  {
+    "id": 22,
+    "session_id": "lehua_2026-02-21",
+    "field_id": "cash100",
+    "value": "7"
+  },
+  {
+    "id": 23,
+    "session_id": "lehua_2026-02-21",
+    "field_id": "coin50",
+    "value": "13"
+  },
+  {
+    "id": 24,
+    "session_id": "lehua_2026-02-21",
+    "field_id": "coin10",
+    "value": "79"
+  },
+  {
+    "id": 25,
+    "session_id": "lehua_2026-02-21",
+    "field_id": "coin5",
+    "value": "57"
+  },
+  {
+    "id": 26,
+    "session_id": "lehua_2026-02-21",
+    "field_id": "coin1",
+    "value": "13"
+  },
+  {
+    "id": 274,
+    "session_id": "xingnan_2026-02-22",
+    "field_id": "orderCount",
+    "value": "226"
+  },
+  {
+    "id": 275,
+    "session_id": "xingnan_2026-02-22",
+    "field_id": "staffCount",
+    "value": "5"
+  },
+  {
+    "id": 276,
+    "session_id": "xingnan_2026-02-22",
+    "field_id": "posTotal",
+    "value": "39418"
+  },
+  {
+    "id": 277,
+    "session_id": "xingnan_2026-02-22",
+    "field_id": "easyPay",
+    "value": "1487"
+  },
+  {
+    "id": 278,
+    "session_id": "xingnan_2026-02-22",
+    "field_id": "linePay",
+    "value": "10154"
+  },
+  {
+    "id": 279,
+    "session_id": "xingnan_2026-02-22",
+    "field_id": "uberFee",
+    "value": "7787"
+  },
+  {
+    "id": 280,
+    "session_id": "xingnan_2026-02-22",
+    "field_id": "pandaFee",
+    "value": "1425"
+  },
+  {
+    "id": 281,
+    "session_id": "xingnan_2026-02-22",
+    "field_id": "cash1000",
+    "value": "18"
+  },
+  {
+    "id": 282,
+    "session_id": "xingnan_2026-02-22",
+    "field_id": "cash500",
+    "value": "1"
+  },
+  {
+    "id": 283,
+    "session_id": "xingnan_2026-02-22",
+    "field_id": "coin50",
+    "value": "1"
+  },
+  {
+    "id": 284,
+    "session_id": "xingnan_2026-02-22",
+    "field_id": "coin10",
+    "value": "2"
+  },
+  {
+    "id": 616,
+    "session_id": "lehua_2026-02-25",
+    "field_id": "changeExchange",
+    "value": "0"
+  },
+  {
+    "id": 617,
+    "session_id": "lehua_2026-02-25",
+    "field_id": "nextDayPettyCash",
+    "value": "10000"
+  },
+  {
+    "id": 369,
+    "session_id": "xingnan_2026-02-23",
+    "field_id": "orderCount",
+    "value": "132"
+  },
+  {
+    "id": 370,
+    "session_id": "xingnan_2026-02-23",
+    "field_id": "staffCount",
+    "value": "4"
+  },
+  {
+    "id": 371,
+    "session_id": "xingnan_2026-02-23",
+    "field_id": "posTotal",
+    "value": "17978"
+  },
+  {
+    "id": 372,
+    "session_id": "xingnan_2026-02-23",
+    "field_id": "easyPay",
+    "value": "416"
+  },
+  {
+    "id": 373,
+    "session_id": "xingnan_2026-02-23",
+    "field_id": "linePay",
+    "value": "5254"
+  },
+  {
+    "id": 374,
+    "session_id": "xingnan_2026-02-23",
+    "field_id": "invoiceRefund2",
+    "value": "85"
+  },
+  {
+    "id": 375,
+    "session_id": "xingnan_2026-02-23",
+    "field_id": "uberFee",
+    "value": "225"
+  },
+  {
+    "id": 376,
+    "session_id": "xingnan_2026-02-23",
+    "field_id": "pandaFee",
+    "value": "1814"
+  },
+  {
+    "id": 377,
+    "session_id": "xingnan_2026-02-23",
+    "field_id": "otherExpenseNote",
+    "value": " 0"
+  },
+  {
+    "id": 378,
+    "session_id": "xingnan_2026-02-23",
+    "field_id": "cash1000",
+    "value": "7"
+  },
+  {
+    "id": 379,
+    "session_id": "xingnan_2026-02-23",
+    "field_id": "cash500",
+    "value": "0"
+  },
+  {
+    "id": 380,
+    "session_id": "xingnan_2026-02-23",
+    "field_id": "cash100",
+    "value": "32"
+  },
+  {
+    "id": 381,
+    "session_id": "xingnan_2026-02-23",
+    "field_id": "coin10",
+    "value": "4"
+  },
+  {
+    "id": 382,
+    "session_id": "xingnan_2026-02-23",
+    "field_id": "coin5",
+    "value": "5"
+  },
+  {
+    "id": 383,
+    "session_id": "xingnan_2026-02-23",
+    "field_id": "coin1",
+    "value": "4"
+  },
+  {
+    "id": 285,
+    "session_id": "lehua_2026-02-22",
+    "field_id": "orderCount",
+    "value": "451"
+  },
+  {
+    "id": 286,
+    "session_id": "lehua_2026-02-22",
+    "field_id": "staffCount",
+    "value": "8"
+  },
+  {
+    "id": 287,
+    "session_id": "lehua_2026-02-22",
+    "field_id": "posTotal",
+    "value": "78451"
+  },
+  {
+    "id": 288,
+    "session_id": "lehua_2026-02-22",
+    "field_id": "openCashBills",
+    "value": "10000"
+  },
+  {
+    "id": 289,
+    "session_id": "lehua_2026-02-22",
+    "field_id": "openCashCoins",
+    "value": "3000"
+  },
+  {
+    "id": 290,
+    "session_id": "lehua_2026-02-22",
+    "field_id": "easyPay",
+    "value": "3407"
+  },
+  {
+    "id": 291,
+    "session_id": "lehua_2026-02-22",
+    "field_id": "taiwanPay",
+    "value": "0"
+  },
+  {
+    "id": 292,
+    "session_id": "lehua_2026-02-22",
+    "field_id": "allPay",
+    "value": "0"
+  },
+  {
+    "id": 293,
+    "session_id": "lehua_2026-02-22",
+    "field_id": "linePay",
+    "value": "18171"
+  },
+  {
+    "id": 294,
+    "session_id": "lehua_2026-02-22",
+    "field_id": "pettyCash",
+    "value": "0"
+  },
+  {
+    "id": 295,
+    "session_id": "lehua_2026-02-22",
+    "field_id": "invoiceRefund2",
+    "value": "0"
+  },
+  {
+    "id": 296,
+    "session_id": "lehua_2026-02-22",
+    "field_id": "prevDayUndeposited",
+    "value": "0"
+  },
+  {
+    "id": 297,
+    "session_id": "lehua_2026-02-22",
+    "field_id": "changeExchange",
+    "value": "0"
+  },
+  {
+    "id": 298,
+    "session_id": "lehua_2026-02-22",
+    "field_id": "nextDayPettyCash",
+    "value": "10000"
+  },
+  {
+    "id": 299,
+    "session_id": "lehua_2026-02-22",
+    "field_id": "uberFee",
+    "value": "17107"
+  },
+  {
+    "id": 300,
+    "session_id": "lehua_2026-02-22",
+    "field_id": "pandaFee",
+    "value": "0"
+  },
+  {
+    "id": 301,
+    "session_id": "lehua_2026-02-22",
+    "field_id": "cash1000",
+    "value": "27"
+  },
+  {
+    "id": 302,
+    "session_id": "lehua_2026-02-22",
+    "field_id": "cash500",
+    "value": "3"
+  },
+  {
+    "id": 303,
+    "session_id": "lehua_2026-02-22",
+    "field_id": "cash100",
+    "value": "120"
+  },
+  {
+    "id": 304,
+    "session_id": "lehua_2026-02-22",
+    "field_id": "coin50",
+    "value": "7"
+  },
+  {
+    "id": 305,
+    "session_id": "lehua_2026-02-22",
+    "field_id": "coin10",
+    "value": "143"
+  },
+  {
+    "id": 306,
+    "session_id": "lehua_2026-02-22",
+    "field_id": "coin5",
+    "value": "70"
+  },
+  {
+    "id": 307,
+    "session_id": "lehua_2026-02-22",
+    "field_id": "coin1",
+    "value": "31"
+  },
+  {
+    "id": 405,
+    "session_id": "lehua_2026-02-23",
+    "field_id": "orderCount",
+    "value": "300"
+  },
+  {
+    "id": 406,
+    "session_id": "lehua_2026-02-23",
+    "field_id": "staffCount",
+    "value": "5"
+  },
+  {
+    "id": 407,
+    "session_id": "lehua_2026-02-23",
+    "field_id": "posTotal",
+    "value": "45777"
+  },
+  {
+    "id": 408,
+    "session_id": "lehua_2026-02-23",
+    "field_id": "invoiceRefund",
+    "value": "0"
+  },
+  {
+    "id": 409,
+    "session_id": "lehua_2026-02-23",
+    "field_id": "openCashBills",
+    "value": "10000"
+  },
+  {
+    "id": 410,
+    "session_id": "lehua_2026-02-23",
+    "field_id": "openCashCoins",
+    "value": "3000"
+  },
+  {
+    "id": 411,
+    "session_id": "lehua_2026-02-23",
+    "field_id": "easyPay",
+    "value": "1207"
+  },
+  {
+    "id": 412,
+    "session_id": "lehua_2026-02-23",
+    "field_id": "linePay",
+    "value": "10831"
+  },
+  {
+    "id": 413,
+    "session_id": "lehua_2026-02-23",
+    "field_id": "changeExchange",
+    "value": "7000"
+  },
+  {
+    "id": 414,
+    "session_id": "lehua_2026-02-23",
+    "field_id": "nextDayPettyCash",
+    "value": "10000"
+  },
+  {
+    "id": 415,
+    "session_id": "lehua_2026-02-23",
+    "field_id": "uberFee",
+    "value": "4959"
+  },
+  {
+    "id": 416,
+    "session_id": "lehua_2026-02-23",
+    "field_id": "pandaFee",
+    "value": "1342"
+  },
+  {
+    "id": 417,
+    "session_id": "lehua_2026-02-23",
+    "field_id": "otherExpense",
+    "value": "0"
+  },
+  {
+    "id": 418,
+    "session_id": "lehua_2026-02-23",
+    "field_id": "otherIncome",
+    "value": "0"
+  },
+  {
+    "id": 419,
+    "session_id": "lehua_2026-02-23",
+    "field_id": "cash1000",
+    "value": "11"
+  },
+  {
+    "id": 420,
+    "session_id": "lehua_2026-02-23",
+    "field_id": "cash500",
+    "value": "8"
+  },
+  {
+    "id": 421,
+    "session_id": "lehua_2026-02-23",
+    "field_id": "cash100",
+    "value": "60"
+  },
+  {
+    "id": 422,
+    "session_id": "lehua_2026-02-23",
+    "field_id": "coin50",
+    "value": "18"
+  },
+  {
+    "id": 423,
+    "session_id": "lehua_2026-02-23",
+    "field_id": "coin10",
+    "value": "107"
+  },
+  {
+    "id": 424,
+    "session_id": "lehua_2026-02-23",
+    "field_id": "coin5",
+    "value": "85"
+  },
+  {
+    "id": 425,
+    "session_id": "lehua_2026-02-23",
+    "field_id": "coin1",
+    "value": "16"
+  },
+  {
+    "id": 426,
+    "session_id": "xingnan_2026-02-24",
+    "field_id": "orderCount",
+    "value": "89"
+  },
+  {
+    "id": 427,
+    "session_id": "xingnan_2026-02-24",
+    "field_id": "staffCount",
+    "value": "4"
+  },
+  {
+    "id": 428,
+    "session_id": "xingnan_2026-02-24",
+    "field_id": "posTotal",
+    "value": "13829"
+  },
+  {
+    "id": 429,
+    "session_id": "xingnan_2026-02-24",
+    "field_id": "easyPay",
+    "value": "716"
+  },
+  {
+    "id": 430,
+    "session_id": "xingnan_2026-02-24",
+    "field_id": "linePay",
+    "value": "2416"
+  },
+  {
+    "id": 431,
+    "session_id": "xingnan_2026-02-24",
+    "field_id": "uberFee",
+    "value": "1575"
+  },
+  {
+    "id": 432,
+    "session_id": "xingnan_2026-02-24",
+    "field_id": "pandaFee",
+    "value": "1160"
+  },
+  {
+    "id": 433,
+    "session_id": "xingnan_2026-02-24",
+    "field_id": "cash1000",
+    "value": "6"
+  },
+  {
+    "id": 434,
+    "session_id": "xingnan_2026-02-24",
+    "field_id": "cash500",
+    "value": "1"
+  },
+  {
+    "id": 435,
+    "session_id": "xingnan_2026-02-24",
+    "field_id": "cash100",
+    "value": "14"
+  },
+  {
+    "id": 436,
+    "session_id": "xingnan_2026-02-24",
+    "field_id": "coin50",
+    "value": "1"
+  },
+  {
+    "id": 437,
+    "session_id": "xingnan_2026-02-24",
+    "field_id": "coin10",
+    "value": "1"
+  },
+  {
+    "id": 438,
+    "session_id": "xingnan_2026-02-24",
+    "field_id": "coin1",
+    "value": "2"
+  },
+  {
+    "id": 618,
+    "session_id": "lehua_2026-02-25",
+    "field_id": "uberFee",
+    "value": "4822"
+  },
+  {
+    "id": 619,
+    "session_id": "lehua_2026-02-25",
+    "field_id": "pandaFee",
+    "value": "942"
+  },
+  {
+    "id": 620,
+    "session_id": "lehua_2026-02-25",
+    "field_id": "otherExpense",
+    "value": "0"
+  },
+  {
+    "id": 621,
+    "session_id": "lehua_2026-02-25",
+    "field_id": "otherExpenseNote",
+    "value": "無"
+  },
+  {
+    "id": 622,
+    "session_id": "lehua_2026-02-25",
+    "field_id": "otherIncome",
+    "value": "0"
+  },
+  {
+    "id": 458,
+    "session_id": "lehua_2026-02-24",
+    "field_id": "orderCount",
+    "value": "245"
+  },
+  {
+    "id": 459,
+    "session_id": "lehua_2026-02-24",
+    "field_id": "staffCount",
+    "value": "5"
+  },
+  {
+    "id": 460,
+    "session_id": "lehua_2026-02-24",
+    "field_id": "posTotal",
+    "value": "36380"
+  },
+  {
+    "id": 461,
+    "session_id": "lehua_2026-02-24",
+    "field_id": "openCashBills",
+    "value": "10000"
+  },
+  {
+    "id": 462,
+    "session_id": "lehua_2026-02-24",
+    "field_id": "openCashCoins",
+    "value": "3000"
+  },
+  {
+    "id": 463,
+    "session_id": "lehua_2026-02-24",
+    "field_id": "easyPay",
+    "value": "1030"
+  },
+  {
+    "id": 464,
+    "session_id": "lehua_2026-02-24",
+    "field_id": "linePay",
+    "value": "6225"
+  },
+  {
+    "id": 465,
+    "session_id": "lehua_2026-02-24",
+    "field_id": "nextDayPettyCash",
+    "value": "10000"
+  },
+  {
+    "id": 466,
+    "session_id": "lehua_2026-02-24",
+    "field_id": "uberFee",
+    "value": "4940"
+  },
+  {
+    "id": 467,
+    "session_id": "lehua_2026-02-24",
+    "field_id": "pandaFee",
+    "value": "1577"
+  },
+  {
+    "id": 468,
+    "session_id": "lehua_2026-02-24",
+    "field_id": "otherExpense",
+    "value": "130"
+  },
+  {
+    "id": 469,
+    "session_id": "lehua_2026-02-24",
+    "field_id": "otherExpenseNote",
+    "value": "退客人"
+  },
+  {
+    "id": 470,
+    "session_id": "lehua_2026-02-24",
+    "field_id": "cash1000",
+    "value": "17"
+  },
+  {
+    "id": 471,
+    "session_id": "lehua_2026-02-24",
+    "field_id": "cash500",
+    "value": "9"
+  },
+  {
+    "id": 472,
+    "session_id": "lehua_2026-02-24",
+    "field_id": "cash100",
+    "value": "13"
+  },
+  {
+    "id": 473,
+    "session_id": "lehua_2026-02-24",
+    "field_id": "coin50",
+    "value": "14"
+  },
+  {
+    "id": 474,
+    "session_id": "lehua_2026-02-24",
+    "field_id": "coin10",
+    "value": "155"
+  },
+  {
+    "id": 475,
+    "session_id": "lehua_2026-02-24",
+    "field_id": "coin5",
+    "value": "78"
+  },
+  {
+    "id": 476,
+    "session_id": "lehua_2026-02-24",
+    "field_id": "coin1",
+    "value": "23"
+  },
+  {
+    "id": 477,
+    "session_id": "xingnan_2026-02-25",
+    "field_id": "orderCount",
+    "value": "84"
+  },
+  {
+    "id": 478,
+    "session_id": "xingnan_2026-02-25",
+    "field_id": "staffCount",
+    "value": "4"
+  },
+  {
+    "id": 479,
+    "session_id": "xingnan_2026-02-25",
+    "field_id": "posTotal",
+    "value": "12427"
+  },
+  {
+    "id": 480,
+    "session_id": "xingnan_2026-02-25",
+    "field_id": "easyPay",
+    "value": "480"
+  },
+  {
+    "id": 481,
+    "session_id": "xingnan_2026-02-25",
+    "field_id": "linePay",
+    "value": "3254"
+  },
+  {
+    "id": 482,
+    "session_id": "xingnan_2026-02-25",
+    "field_id": "uberFee",
+    "value": "2099"
+  },
+  {
+    "id": 483,
+    "session_id": "xingnan_2026-02-25",
+    "field_id": "pandaFee",
+    "value": "1030"
+  },
+  {
+    "id": 484,
+    "session_id": "xingnan_2026-02-25",
+    "field_id": "cash1000",
+    "value": "5"
+  },
+  {
+    "id": 485,
+    "session_id": "xingnan_2026-02-25",
+    "field_id": "cash500",
+    "value": "0"
+  },
+  {
+    "id": 486,
+    "session_id": "xingnan_2026-02-25",
+    "field_id": "cash100",
+    "value": "0"
+  },
+  {
+    "id": 487,
+    "session_id": "xingnan_2026-02-25",
+    "field_id": "coin50",
+    "value": "11"
+  },
+  {
+    "id": 488,
+    "session_id": "xingnan_2026-02-25",
+    "field_id": "coin10",
+    "value": "1"
+  },
+  {
+    "id": 489,
+    "session_id": "xingnan_2026-02-25",
+    "field_id": "coin5",
+    "value": "0"
+  },
+  {
+    "id": 490,
+    "session_id": "xingnan_2026-02-25",
+    "field_id": "coin1",
+    "value": "4"
+  },
+  {
+    "id": 623,
+    "session_id": "lehua_2026-02-25",
+    "field_id": "otherIncomeNote",
+    "value": "無"
+  },
+  {
+    "id": 624,
+    "session_id": "lehua_2026-02-25",
+    "field_id": "cash1000",
+    "value": "12"
+  },
+  {
+    "id": 625,
+    "session_id": "lehua_2026-02-25",
+    "field_id": "cash500",
+    "value": "12"
+  },
+  {
+    "id": 626,
+    "session_id": "lehua_2026-02-25",
+    "field_id": "cash100",
+    "value": "4"
+  },
+  {
+    "id": 627,
+    "session_id": "lehua_2026-02-25",
+    "field_id": "coin50",
+    "value": "24"
+  },
+  {
+    "id": 628,
+    "session_id": "lehua_2026-02-25",
+    "field_id": "coin10",
+    "value": "119"
+  },
+  {
+    "id": 629,
+    "session_id": "lehua_2026-02-25",
+    "field_id": "coin5",
+    "value": "93"
+  },
+  {
+    "id": 630,
+    "session_id": "lehua_2026-02-25",
+    "field_id": "coin1",
+    "value": "2"
+  },
+  {
+    "id": 642,
+    "session_id": "lehua_2026-02-26",
+    "field_id": "orderCount",
+    "value": "346"
+  },
+  {
+    "id": 643,
+    "session_id": "lehua_2026-02-26",
+    "field_id": "staffCount",
+    "value": "5"
+  },
+  {
+    "id": 644,
+    "session_id": "lehua_2026-02-26",
+    "field_id": "posTotal",
+    "value": "53925"
+  },
+  {
+    "id": 645,
+    "session_id": "lehua_2026-02-26",
+    "field_id": "openCashBills",
+    "value": "10000"
+  },
+  {
+    "id": 646,
+    "session_id": "lehua_2026-02-26",
+    "field_id": "openCashCoins",
+    "value": "3000"
+  },
+  {
+    "id": 647,
+    "session_id": "lehua_2026-02-26",
+    "field_id": "easyPay",
+    "value": "2555"
+  },
+  {
+    "id": 648,
+    "session_id": "lehua_2026-02-26",
+    "field_id": "linePay",
+    "value": "14774"
+  },
+  {
+    "id": 649,
+    "session_id": "lehua_2026-02-26",
+    "field_id": "prevDayUndeposited",
+    "value": "18400"
+  },
+  {
+    "id": 650,
+    "session_id": "lehua_2026-02-26",
+    "field_id": "nextDayPettyCash",
+    "value": "10000"
+  },
+  {
+    "id": 651,
+    "session_id": "lehua_2026-02-26",
+    "field_id": "uberFee",
+    "value": "6924"
+  },
+  {
+    "id": 652,
+    "session_id": "lehua_2026-02-26",
+    "field_id": "pandaFee",
+    "value": "1238"
+  },
+  {
+    "id": 653,
+    "session_id": "lehua_2026-02-26",
+    "field_id": "cash1000",
+    "value": "38"
+  },
+  {
+    "id": 654,
+    "session_id": "lehua_2026-02-26",
+    "field_id": "cash500",
+    "value": "13"
+  },
+  {
+    "id": 655,
+    "session_id": "lehua_2026-02-26",
+    "field_id": "cash100",
+    "value": "30"
+  },
+  {
+    "id": 656,
+    "session_id": "lehua_2026-02-26",
+    "field_id": "coin50",
+    "value": "11"
+  },
+  {
+    "id": 657,
+    "session_id": "lehua_2026-02-26",
+    "field_id": "coin10",
+    "value": "129"
+  },
+  {
+    "id": 658,
+    "session_id": "lehua_2026-02-26",
+    "field_id": "coin5",
+    "value": "93"
+  },
+  {
+    "id": 659,
+    "session_id": "lehua_2026-02-26",
+    "field_id": "coin1",
+    "value": "16"
+  },
+  {
+    "id": 671,
+    "session_id": "lehua_2026-02-27",
+    "field_id": "orderCount",
+    "value": "475"
+  },
+  {
+    "id": 672,
+    "session_id": "lehua_2026-02-27",
+    "field_id": "staffCount",
+    "value": "6"
+  },
+  {
+    "id": 673,
+    "session_id": "lehua_2026-02-27",
+    "field_id": "posTotal",
+    "value": "80313"
+  },
+  {
+    "id": 674,
+    "session_id": "lehua_2026-02-27",
+    "field_id": "openCashBills",
+    "value": "10000"
+  },
+  {
+    "id": 675,
+    "session_id": "lehua_2026-02-27",
+    "field_id": "openCashCoins",
+    "value": "3000"
+  },
+  {
+    "id": 676,
+    "session_id": "lehua_2026-02-27",
+    "field_id": "easyPay",
+    "value": "3908"
+  },
+  {
+    "id": 677,
+    "session_id": "lehua_2026-02-27",
+    "field_id": "linePay",
+    "value": "18051"
+  },
+  {
+    "id": 678,
+    "session_id": "lehua_2026-02-27",
+    "field_id": "pettyCash",
+    "value": "0"
+  },
+  {
+    "id": 679,
+    "session_id": "lehua_2026-02-27",
+    "field_id": "invoiceRefund2",
+    "value": "0"
+  },
+  {
+    "id": 680,
+    "session_id": "lehua_2026-02-27",
+    "field_id": "prevDayUndeposited",
+    "value": "0"
+  },
+  {
+    "id": 681,
+    "session_id": "lehua_2026-02-27",
+    "field_id": "changeExchange",
+    "value": "0"
+  },
+  {
+    "id": 682,
+    "session_id": "lehua_2026-02-27",
+    "field_id": "nextDayPettyCash",
+    "value": "10000"
+  },
+  {
+    "id": 683,
+    "session_id": "lehua_2026-02-27",
+    "field_id": "uberFee",
+    "value": "13963"
+  },
+  {
+    "id": 684,
+    "session_id": "lehua_2026-02-27",
+    "field_id": "pandaFee",
+    "value": "2661"
+  },
+  {
+    "id": 685,
+    "session_id": "lehua_2026-02-27",
+    "field_id": "otherExpense",
+    "value": "0"
+  },
+  {
+    "id": 686,
+    "session_id": "lehua_2026-02-27",
+    "field_id": "otherIncome",
+    "value": "0"
+  },
+  {
+    "id": 687,
+    "session_id": "lehua_2026-02-27",
+    "field_id": "cash1000",
+    "value": "29"
+  },
+  {
+    "id": 688,
+    "session_id": "lehua_2026-02-27",
+    "field_id": "cash500",
+    "value": "16"
+  },
+  {
+    "id": 689,
+    "session_id": "lehua_2026-02-27",
+    "field_id": "cash100",
+    "value": "51"
+  },
+  {
+    "id": 690,
+    "session_id": "lehua_2026-02-27",
+    "field_id": "coin50",
+    "value": "23"
+  },
+  {
+    "id": 691,
+    "session_id": "lehua_2026-02-27",
+    "field_id": "coin10",
+    "value": "109"
+  },
+  {
+    "id": 692,
+    "session_id": "lehua_2026-02-27",
+    "field_id": "coin5",
+    "value": "67"
+  },
+  {
+    "id": 693,
+    "session_id": "lehua_2026-02-27",
+    "field_id": "coin1",
+    "value": "4"
+  }
+]

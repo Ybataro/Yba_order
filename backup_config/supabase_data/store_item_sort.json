@@ -1,0 +1,156 @@
+[
+  {
+    "store_id": "lehua",
+    "scope": "product",
+    "item_type": "item",
+    "item_key": "p005",
+    "sort_order": 0
+  },
+  {
+    "store_id": "lehua",
+    "scope": "product",
+    "item_type": "item",
+    "item_key": "p006",
+    "sort_order": 1
+  },
+  {
+    "store_id": "lehua",
+    "scope": "product",
+    "item_type": "item",
+    "item_key": "p021",
+    "sort_order": 2
+  },
+  {
+    "store_id": "lehua",
+    "scope": "product",
+    "item_type": "item",
+    "item_key": "p007",
+    "sort_order": 3
+  },
+  {
+    "store_id": "lehua",
+    "scope": "product",
+    "item_type": "item",
+    "item_key": "p022",
+    "sort_order": 4
+  },
+  {
+    "store_id": "lehua",
+    "scope": "product",
+    "item_type": "item",
+    "item_key": "p009",
+    "sort_order": 5
+  },
+  {
+    "store_id": "lehua",
+    "scope": "product",
+    "item_type": "item",
+    "item_key": "p035",
+    "sort_order": 6
+  },
+  {
+    "store_id": "lehua",
+    "scope": "product",
+    "item_type": "item",
+    "item_key": "p036",
+    "sort_order": 7
+  },
+  {
+    "store_id": "lehua",
+    "scope": "product",
+    "item_type": "item",
+    "item_key": "p037",
+    "sort_order": 8
+  },
+  {
+    "store_id": "lehua",
+    "scope": "product",
+    "item_type": "item",
+    "item_key": "p008",
+    "sort_order": 9
+  },
+  {
+    "store_id": "lehua",
+    "scope": "product",
+    "item_type": "item",
+    "item_key": "p023",
+    "sort_order": 0
+  },
+  {
+    "store_id": "lehua",
+    "scope": "product",
+    "item_type": "item",
+    "item_key": "p014",
+    "sort_order": 1
+  },
+  {
+    "store_id": "lehua",
+    "scope": "product",
+    "item_type": "item",
+    "item_key": "p015",
+    "sort_order": 2
+  },
+  {
+    "store_id": "lehua",
+    "scope": "product",
+    "item_type": "item",
+    "item_key": "p019",
+    "sort_order": 3
+  },
+  {
+    "store_id": "lehua",
+    "scope": "product",
+    "item_type": "item",
+    "item_key": "p020",
+    "sort_order": 4
+  },
+  {
+    "store_id": "lehua",
+    "scope": "product",
+    "item_type": "item",
+    "item_key": "p1772032863551",
+    "sort_order": 5
+  },
+  {
+    "store_id": "lehua",
+    "scope": "product",
+    "item_type": "category",
+    "item_key": "配料類（盒裝）",
+    "sort_order": 0
+  },
+  {
+    "store_id": "lehua",
+    "scope": "product",
+    "item_type": "category",
+    "item_key": "加工品類",
+    "sort_order": 1
+  },
+  {
+    "store_id": "lehua",
+    "scope": "product",
+    "item_type": "category",
+    "item_key": "主食類（袋裝）",
+    "sort_order": 2
+  },
+  {
+    "store_id": "lehua",
+    "scope": "product",
+    "item_type": "category",
+    "item_key": "液體類",
+    "sort_order": 3
+  },
+  {
+    "store_id": "lehua",
+    "scope": "product",
+    "item_type": "category",
+    "item_key": "冰品類",
+    "sort_order": 4
+  },
+  {
+    "store_id": "lehua",
+    "scope": "product",
+    "item_type": "category",
+    "item_key": "其他",
+    "sort_order": 5
+  }
+]

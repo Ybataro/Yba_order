@@ -1,0 +1,112 @@
+[
+  {
+    "id": "weather_2026-03-01",
+    "date": "2026-03-01",
+    "condition": "rainy",
+    "condition_text": "陰短暫陣雨",
+    "temp_high": 21,
+    "temp_low": 20,
+    "rain_prob": 50,
+    "humidity": 70,
+    "created_at": "2026-02-27T16:08:50.476971+00:00"
+  },
+  {
+    "id": "weather_2026-02-20",
+    "date": "2026-02-20",
+    "condition": "cloudy",
+    "condition_text": "陰時多雲",
+    "temp_high": 21,
+    "temp_low": 15,
+    "rain_prob": 20,
+    "humidity": 60,
+    "created_at": "2026-02-19T12:37:48.225033+00:00"
+  },
+  {
+    "id": "weather_2026-02-21",
+    "date": "2026-02-21",
+    "condition": "partly_cloudy",
+    "condition_text": "晴時多雲",
+    "temp_high": 25,
+    "temp_low": 15,
+    "rain_prob": 0,
+    "humidity": 60,
+    "created_at": "2026-02-19T17:12:09.138048+00:00"
+  },
+  {
+    "id": "weather_2026-02-24",
+    "date": "2026-02-24",
+    "condition": "cloudy",
+    "condition_text": "陰時多雲",
+    "temp_high": 26,
+    "temp_low": 18,
+    "rain_prob": 10,
+    "humidity": 60,
+    "created_at": "2026-02-22T16:05:59.062426+00:00"
+  },
+  {
+    "id": "weather_2026-02-26",
+    "date": "2026-02-26",
+    "condition": "cloudy",
+    "condition_text": "陰天",
+    "temp_high": 26,
+    "temp_low": 19,
+    "rain_prob": 20,
+    "humidity": 60,
+    "created_at": "2026-02-24T16:16:30.647947+00:00"
+  },
+  {
+    "id": "weather_2026-02-23",
+    "date": "2026-02-23",
+    "condition": "partly_cloudy",
+    "condition_text": "晴時多雲",
+    "temp_high": 28,
+    "temp_low": 18,
+    "rain_prob": 10,
+    "humidity": 60,
+    "created_at": "2026-02-21T16:03:28.693058+00:00"
+  },
+  {
+    "id": "weather_2026-02-22",
+    "date": "2026-02-22",
+    "condition": "partly_cloudy",
+    "condition_text": "晴時多雲",
+    "temp_high": 26,
+    "temp_low": 16,
+    "rain_prob": 0,
+    "humidity": 60,
+    "created_at": "2026-02-20T16:18:29.250052+00:00"
+  },
+  {
+    "id": "weather_2026-02-28",
+    "date": "2026-02-28",
+    "condition": "rainy",
+    "condition_text": "陰短暫陣雨",
+    "temp_high": 22,
+    "temp_low": 18,
+    "rain_prob": 30,
+    "humidity": 70,
+    "created_at": "2026-02-26T16:05:00.34411+00:00"
+  },
+  {
+    "id": "weather_2026-02-27",
+    "date": "2026-02-27",
+    "condition": "rainy",
+    "condition_text": "陰短暫陣雨或雷雨",
+    "temp_high": 20,
+    "temp_low": 18,
+    "rain_prob": 60,
+    "humidity": 80,
+    "created_at": "2026-02-25T16:02:32.27963+00:00"
+  },
+  {
+    "id": "weather_2026-02-25",
+    "date": "2026-02-25",
+    "condition": "rainy",
+    "condition_text": "陰短暫陣雨",
+    "temp_high": 21,
+    "temp_low": 19,
+    "rain_prob": 30,
+    "humidity": 70,
+    "created_at": "2026-02-23T16:03:11.564881+00:00"
+  }
+]
