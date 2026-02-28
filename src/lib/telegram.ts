@@ -49,13 +49,77 @@ export async function sendTelegramNotification(message: string, privateOnly = fa
             text: message,
             parse_mode: 'HTML',
           }),
-        }).then((r) => r.ok).catch(() => false)
+        }).then((r) => {
+          if (!r.ok) console.warn(`[Telegram] chat_id=${chatId} 回應:`, r.status)
+          return r.ok
+        }).catch((err) => { console.error(`[Telegram] chat_id=${chatId} 失敗:`, err); return false })
       )
     )
 
     return results.some((ok) => ok)
   } catch (err) {
     console.warn('[Telegram] 通知發送失敗:', err)
+    return false
+  }
+}
+
+export async function sendTelegramPhotos(
+  photos: File[],
+  caption: string,
+  privateOnly = false,
+  extraChatIds?: string[]
+): Promise<boolean> {
+  try {
+    const config = await loadConfig()
+    if (!config) return false
+    if (photos.length === 0) return true
+
+    const baseUrl = `https://api.telegram.org/bot${config.token}`
+    const targetIds = privateOnly ? [config.chatId] : [config.chatId, GROUP_CHAT_ID]
+    if (extraChatIds) targetIds.push(...extraChatIds)
+
+    const results = await Promise.all(
+      targetIds.map(async (chatId) => {
+        try {
+          if (photos.length === 1) {
+            const form = new FormData()
+            form.append('chat_id', chatId)
+            form.append('photo', photos[0])
+            form.append('caption', caption)
+            form.append('parse_mode', 'HTML')
+
+            const r = await fetch(`${baseUrl}/sendPhoto`, { method: 'POST', body: form })
+            if (!r.ok) console.warn(`[Telegram Photo] chat_id=${chatId} 回應:`, r.status)
+            return r.ok
+          } else {
+            const form = new FormData()
+            form.append('chat_id', chatId)
+
+            const media = photos.map((_, i) => ({
+              type: 'photo' as const,
+              media: `attach://photo${i}`,
+              ...(i === 0 ? { caption, parse_mode: 'HTML' } : {}),
+            }))
+            form.append('media', JSON.stringify(media))
+
+            photos.forEach((photo, i) => {
+              form.append(`photo${i}`, photo)
+            })
+
+            const r = await fetch(`${baseUrl}/sendMediaGroup`, { method: 'POST', body: form })
+            if (!r.ok) console.warn(`[Telegram Photo] chat_id=${chatId} 回應:`, r.status)
+            return r.ok
+          }
+        } catch (err) {
+          console.error(`[Telegram Photo] chat_id=${chatId} 失敗:`, err)
+          return false
+        }
+      })
+    )
+
+    return results.some((ok) => ok)
+  } catch (err) {
+    console.warn('[Telegram Photo] 發送失敗:', err)
     return false
   }
 }

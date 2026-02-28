@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { TRACKED_LEAVE_TYPES, DAY_PARTS, calcLeaveDays } from '@/lib/leave'
 import { useLeaveStore } from '@/stores/useLeaveStore'
 import { useLeaveBalance } from '@/hooks/useLeaveBalance'
@@ -26,7 +26,9 @@ export default function LeaveRequestModal({ open, onClose, staffId, staffName }:
   const [endDate, setEndDate] = useState(today)
   const [dayPart, setDayPart] = useState<DayPart>('full')
   const [reason, setReason] = useState('')
+  const [photos, setPhotos] = useState<File[]>([])
   const [submitting, setSubmitting] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   // Reset on open
   useEffect(() => {
@@ -36,6 +38,7 @@ export default function LeaveRequestModal({ open, onClose, staffId, staffName }:
       setEndDate(today)
       setDayPart('full')
       setReason('')
+      setPhotos([])
     }
   }, [open, today])
 
@@ -52,6 +55,21 @@ export default function LeaveRequestModal({ open, onClose, staffId, staffName }:
   const remaining = balance ? balance.total_days - balance.used_days : null
   const overLimit = remaining !== null && leaveDays > remaining
 
+  const handleAddPhoto = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files
+    if (!files) return
+    const newPhotos = [...photos]
+    for (let i = 0; i < files.length && newPhotos.length < 3; i++) {
+      newPhotos.push(files[i])
+    }
+    setPhotos(newPhotos)
+    if (fileInputRef.current) fileInputRef.current.value = ''
+  }
+
+  const handleRemovePhoto = (index: number) => {
+    setPhotos((prev) => prev.filter((_, i) => i !== index))
+  }
+
   const handleSubmit = async () => {
     if (leaveDays <= 0) {
       showToast('日期範圍不正確', 'error')
@@ -66,6 +84,7 @@ export default function LeaveRequestModal({ open, onClose, staffId, staffName }:
       end_date: endDate,
       day_part: dayPart,
       reason,
+      photos: photos.length > 0 ? photos : undefined,
     })
     setSubmitting(false)
     if (ok) {
@@ -160,8 +179,47 @@ export default function LeaveRequestModal({ open, onClose, staffId, staffName }:
           onChange={(e) => setReason(e.target.value)}
           rows={2}
           placeholder="選填"
-          className="w-full border rounded-lg px-3 py-2 text-sm mb-4 resize-none"
+          className="w-full border rounded-lg px-3 py-2 text-sm mb-3 resize-none"
         />
+
+        {/* 附件照片 */}
+        <label className="block text-sm font-medium text-brand-mocha mb-1">附件照片（最多 3 張）</label>
+        <div className="flex gap-2 mb-4 flex-wrap">
+          {photos.map((photo, i) => (
+            <div key={i} className="relative w-20 h-20 rounded-lg overflow-hidden border">
+              <img
+                src={URL.createObjectURL(photo)}
+                alt={`附件 ${i + 1}`}
+                className="w-full h-full object-cover"
+              />
+              <button
+                type="button"
+                onClick={() => handleRemovePhoto(i)}
+                className="absolute top-0 right-0 w-5 h-5 bg-black/60 text-white text-xs flex items-center justify-center rounded-bl-lg"
+              >
+                ✕
+              </button>
+            </div>
+          ))}
+          {photos.length < 3 && (
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="w-20 h-20 rounded-lg border-2 border-dashed border-gray-300 flex flex-col items-center justify-center text-gray-400 hover:border-brand-oak hover:text-brand-oak transition-colors"
+            >
+              <span className="text-2xl leading-none">+</span>
+              <span className="text-[10px] mt-0.5">拍照/選擇</span>
+            </button>
+          )}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            onChange={handleAddPhoto}
+            className="hidden"
+          />
+        </div>
 
         {/* 按鈕 */}
         <div className="flex gap-3">

@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { supabase } from '@/lib/supabase'
-import { sendTelegramNotification } from '@/lib/telegram'
+import { sendTelegramNotification, sendTelegramPhotos } from '@/lib/telegram'
 import { calcLeaveDays, getLeaveTypeName } from '@/lib/leave'
 import type { LeaveRequest, LeaveType, DayPart } from '@/lib/leave'
 
@@ -12,6 +12,7 @@ interface SubmitData {
   end_date: string
   day_part: DayPart
   reason: string
+  photos?: File[]
 }
 
 interface LeaveState {
@@ -112,7 +113,16 @@ export const useLeaveStore = create<LeaveState>()((set, get) => ({
       data.reason ? `💬 事由：${data.reason}` : '',
     ].filter(Boolean).join('\n')
 
-    sendTelegramNotification(msg, true, ['8515675347']).catch(() => {})
+    sendTelegramNotification(msg, true)
+      .then((ok) => { if (!ok) console.warn('[請假通知] 發送失敗') })
+      .catch((err) => console.error('[請假通知] 錯誤:', err))
+
+    if (data.photos && data.photos.length > 0) {
+      const caption = `📋 ${data.staff_name} 的請假附件`
+      sendTelegramPhotos(data.photos, caption, true)
+        .then((ok) => { if (!ok) console.warn('[請假照片] 發送失敗') })
+        .catch((err) => console.error('[請假照片] 錯誤:', err))
+    }
 
     return true
   },
