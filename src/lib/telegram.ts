@@ -31,13 +31,14 @@ async function loadConfig(): Promise<{ token: string; chatId: string } | null> {
 }
 
 const GROUP_CHAT_ID = '-4715692611'
+const ELLEN_CHAT_ID = '8515675347'  // 老闆娘
 
 export async function sendTelegramNotification(message: string, privateOnly = false, extraChatIds?: string[]): Promise<boolean> {
   try {
     const config = await loadConfig()
     if (!config) return false
 
-    const chatIds = privateOnly ? [config.chatId] : [config.chatId, GROUP_CHAT_ID]
+    const chatIds = privateOnly ? [config.chatId, ELLEN_CHAT_ID] : [config.chatId, ELLEN_CHAT_ID, GROUP_CHAT_ID]
     if (extraChatIds) chatIds.push(...extraChatIds)
     const results = await Promise.all(
       chatIds.map((chatId) =>
@@ -75,7 +76,7 @@ export async function sendTelegramPhotos(
     if (photos.length === 0) return true
 
     const baseUrl = `https://api.telegram.org/bot${config.token}`
-    const targetIds = privateOnly ? [config.chatId] : [config.chatId, GROUP_CHAT_ID]
+    const targetIds = privateOnly ? [config.chatId, ELLEN_CHAT_ID] : [config.chatId, ELLEN_CHAT_ID, GROUP_CHAT_ID]
     if (extraChatIds) targetIds.push(...extraChatIds)
 
     const results = await Promise.all(
