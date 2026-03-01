@@ -32,6 +32,8 @@ function loadConfig(): Promise<{ token: string; chatId: string } | null> {
 const GROUP_CHAT_ID = '-4715692611'
 const ELLEN_CHAT_ID = '8515675347'  // 老闆娘
 
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string
+
 const MAX_PHOTO_SIZE = 1600
 const JPEG_QUALITY = 0.7
 
@@ -68,6 +70,19 @@ function compressPhoto(file: File): Promise<Blob> {
     }
     img.onerror = () => { clearTimeout(timer); URL.revokeObjectURL(img.src); reject(new Error('Image load failed')) }
     img.src = URL.createObjectURL(file)
+  })
+}
+
+function blobToBase64(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => {
+      const dataUrl = reader.result as string
+      // Strip "data:image/jpeg;base64," prefix
+      resolve(dataUrl.split(',')[1])
+    }
+    reader.onerror = () => reject(new Error('FileReader failed'))
+    reader.readAsDataURL(blob)
   })
 }
 
@@ -109,90 +124,40 @@ export async function sendTelegramPhotos(
   extraChatIds?: string[]
 ): Promise<boolean> {
   try {
-    console.log('[Telegram Photo] 開始處理', photos.length, '張照片')
     const config = await loadConfig()
     if (!config) { console.warn('[Telegram Photo] config 載入失敗'); return false }
     if (photos.length === 0) return true
 
-    // 壓縮照片（手機原圖太大會觸發 HTTP/2 錯誤）
-    console.log('[Telegram Photo] 開始壓縮...')
+    // 壓縮照片
     const compressed = await Promise.all(photos.map((f) => compressPhoto(f)))
-    console.log('[Telegram Photo] 壓縮完成，大小:', compressed.map(b => `${(b.size / 1024).toFixed(0)}KB`))
 
-    const baseUrl = `https://api.telegram.org/bot${config.token}`
-    const targetIds = privateOnly ? [config.chatId, ELLEN_CHAT_ID] : [config.chatId, ELLEN_CHAT_ID, GROUP_CHAT_ID]
-    if (extraChatIds) targetIds.push(...extraChatIds)
+    // 轉 base64
+    const base64Photos = await Promise.all(compressed.map((b) => blobToBase64(b)))
 
-    // 逐一發送（避免同時多個 fetch 上傳造成 HTTP/2 連線問題）
-    let anyOk = false
-    for (const chatId of targetIds) {
-      try {
-        const sendOne = async (blobs: Blob[]): Promise<boolean> => {
-          if (blobs.length === 1) {
-            const form = new FormData()
-            form.append('chat_id', chatId)
-            form.append('photo', blobs[0], 'photo.jpg')
-            form.append('caption', caption)
-            form.append('parse_mode', 'HTML')
+    const chatIds = privateOnly ? [config.chatId, ELLEN_CHAT_ID] : [config.chatId, ELLEN_CHAT_ID, GROUP_CHAT_ID]
+    if (extraChatIds) chatIds.push(...extraChatIds)
 
-            console.log(`[Telegram Photo] sendPhoto chat_id=${chatId} 發送中...`)
-            const controller = new AbortController()
-            const timer = setTimeout(() => controller.abort(), 12000)
-            const r = await fetch(`${baseUrl}/sendPhoto`, {
-              method: 'POST',
-              body: form,
-              signal: controller.signal,
-            })
-            clearTimeout(timer)
-            if (!r.ok) {
-              const body = await r.text().catch(() => '')
-              console.warn(`[Telegram Photo] sendPhoto chat_id=${chatId} status=${r.status}`, body)
-            } else {
-              console.log(`[Telegram Photo] sendPhoto chat_id=${chatId} 成功`)
-            }
-            return r.ok
-          } else {
-            const form = new FormData()
-            form.append('chat_id', chatId)
+    // POST to Supabase Edge Function
+    const r = await fetch(`${SUPABASE_URL}/functions/v1/send-telegram-photo`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        photos: base64Photos,
+        caption,
+        chat_ids: chatIds,
+      }),
+    })
 
-            const media = blobs.map((_, i) => ({
-              type: 'photo' as const,
-              media: `attach://photo${i}`,
-              ...(i === 0 ? { caption, parse_mode: 'HTML' } : {}),
-            }))
-            form.append('media', JSON.stringify(media))
-            blobs.forEach((blob, i) => {
-              form.append(`photo${i}`, blob, `photo${i}.jpg`)
-            })
-
-            console.log(`[Telegram Photo] sendMediaGroup chat_id=${chatId} 發送中...`)
-            const controller = new AbortController()
-            const timer = setTimeout(() => controller.abort(), 12000)
-            const r = await fetch(`${baseUrl}/sendMediaGroup`, {
-              method: 'POST',
-              body: form,
-              signal: controller.signal,
-            })
-            clearTimeout(timer)
-            if (!r.ok) {
-              const body = await r.text().catch(() => '')
-              console.warn(`[Telegram Photo] sendMediaGroup chat_id=${chatId} status=${r.status}`, body)
-            } else {
-              console.log(`[Telegram Photo] sendMediaGroup chat_id=${chatId} 成功`)
-            }
-            return r.ok
-          }
-        }
-        const ok = await sendOne(compressed)
-        if (ok) anyOk = true
-      } catch (err) {
-        console.error(`[Telegram Photo] chat_id=${chatId} 失敗:`, err)
-      }
+    if (!r.ok) {
+      const body = await r.text().catch(() => '')
+      console.error('[Telegram Photo] Edge Function 錯誤:', r.status, body)
+      return false
     }
 
-    return anyOk
+    const data = await r.json()
+    return data.ok === true
   } catch (err) {
-    console.warn('[Telegram Photo] 發送失敗:', err)
+    console.error('[Telegram Photo] 發送失敗:', err)
     return false
   }
 }

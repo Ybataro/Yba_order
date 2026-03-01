@@ -29,6 +29,7 @@ export default function LeaveRequestModal({ open, onClose, staffId, staffName }:
   const [photos, setPhotos] = useState<File[]>([])
   const [submitting, setSubmitting] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const cameraInputRef = useRef<HTMLInputElement>(null)
 
   // Reset on open
   useEffect(() => {
@@ -64,6 +65,7 @@ export default function LeaveRequestModal({ open, onClose, staffId, staffName }:
     }
     setPhotos(newPhotos)
     if (fileInputRef.current) fileInputRef.current.value = ''
+    if (cameraInputRef.current) cameraInputRef.current.value = ''
   }
 
   const handleRemovePhoto = (index: number) => {
@@ -202,15 +204,33 @@ export default function LeaveRequestModal({ open, onClose, staffId, staffName }:
             </div>
           ))}
           {photos.length < 3 && (
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              className="w-20 h-20 rounded-lg border-2 border-dashed border-gray-300 flex flex-col items-center justify-center text-gray-400 hover:border-brand-oak hover:text-brand-oak transition-colors"
-            >
-              <span className="text-2xl leading-none">+</span>
-              <span className="text-[10px] mt-0.5">拍照/選擇</span>
-            </button>
+            <>
+              <button
+                type="button"
+                onClick={() => cameraInputRef.current?.click()}
+                className="w-20 h-20 rounded-lg border-2 border-dashed border-gray-300 flex flex-col items-center justify-center text-gray-400 hover:border-brand-oak hover:text-brand-oak transition-colors"
+              >
+                <span className="text-2xl leading-none">📷</span>
+                <span className="text-[10px] mt-0.5">拍照</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="w-20 h-20 rounded-lg border-2 border-dashed border-gray-300 flex flex-col items-center justify-center text-gray-400 hover:border-brand-oak hover:text-brand-oak transition-colors"
+              >
+                <span className="text-2xl leading-none">🖼</span>
+                <span className="text-[10px] mt-0.5">相簿</span>
+              </button>
+            </>
           )}
+          <input
+            ref={cameraInputRef}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            onChange={handleAddPhoto}
+            className="hidden"
+          />
           <input
             ref={fileInputRef}
             type="file"
