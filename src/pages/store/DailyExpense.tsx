@@ -5,7 +5,7 @@ import { supabase } from '@/lib/supabase'
 import { getTodayTW } from '@/lib/session'
 import { getSession } from '@/lib/auth'
 import { formatCurrency } from '@/lib/utils'
-import { useCanSchedule } from '@/hooks/useCanSchedule'
+import { useAllowedPages } from '@/hooks/useAllowedPages'
 import { Trash2, Plus, Pencil, Check, X } from 'lucide-react'
 
 interface ExpenseRow {
@@ -29,7 +29,10 @@ export default function DailyExpense() {
   const { storeId } = useParams<{ storeId: string }>()
   const today = getTodayTW()
   const [date, setDate] = useState(today)
-  const canEdit = useCanSchedule()
+  const session = getSession()
+  const allowedPages = useAllowedPages('store')
+  // expense-edit 權限：admin / can_schedule(null=全部) / allowed_pages 含 expense-edit
+  const canEditAll = session?.role === 'admin' || allowedPages === null || (allowedPages?.includes('expense-edit') ?? false)
 
   // Month items (main data)
   const [monthItems, setMonthItems] = useState<ExpenseRow[]>([])
@@ -287,7 +290,7 @@ export default function DailyExpense() {
                             </div>
                             {item.note && <p className="text-xs text-brand-lotus mt-0.5 truncate">{item.note}</p>}
                           </div>
-                          {canEdit && (
+                          {(canEditAll || item.submitted_by === session?.staffId) && (
                             <div className="flex items-center gap-0.5 shrink-0">
                               <button
                                 onClick={() => startEdit(item)}
