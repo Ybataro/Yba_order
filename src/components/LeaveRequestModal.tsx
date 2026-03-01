@@ -77,6 +77,14 @@ export default function LeaveRequestModal({ open, onClose, staffId, staffName }:
       showToast('日期範圍不正確', 'error')
       return
     }
+    if (!reason.trim()) {
+      showToast('請填寫請假事由', 'error')
+      return
+    }
+    if (photos.length === 0) {
+      showToast('請上傳至少一張照片', 'error')
+      return
+    }
     setSubmitting(true)
     const ok = await submit({
       staff_id: staffId,
@@ -175,17 +183,22 @@ export default function LeaveRequestModal({ open, onClose, staffId, staffName }:
         </div>
 
         {/* 事由 */}
-        <label className="block text-sm font-medium text-brand-mocha mb-1">事由</label>
+        <label className="block text-sm font-medium text-brand-mocha mb-1">
+          事由 <span className="text-red-500">*</span>
+        </label>
         <textarea
           value={reason}
           onChange={(e) => setReason(e.target.value)}
           rows={2}
-          placeholder="選填"
+          placeholder="請填寫請假事由（必填）"
           className="w-full border rounded-lg px-3 py-2 text-sm mb-3 resize-none"
         />
 
         {/* 附件照片 */}
-        <label className="block text-sm font-medium text-brand-mocha mb-1">附件照片（最多 3 張）</label>
+        <label className="block text-sm font-medium text-brand-mocha mb-1">
+          附件照片 <span className="text-red-500">*</span>
+          <span className="text-brand-lotus font-normal">（最多 3 張）</span>
+        </label>
         <div className="flex gap-2 mb-4 flex-wrap">
           {photos.map((photo, i) => (
             <div key={i} className="relative w-20 h-20 rounded-lg overflow-hidden border">
@@ -250,7 +263,7 @@ export default function LeaveRequestModal({ open, onClose, staffId, staffName }:
           </button>
           <button
             onClick={handleSubmit}
-            disabled={submitting || leaveDays <= 0}
+            disabled={submitting || leaveDays <= 0 || !reason.trim() || photos.length === 0}
             className="flex-1 py-2 rounded-lg bg-brand-oak text-white text-sm font-medium disabled:opacity-50"
           >
             {submitting ? '提交中...' : '提交申請'}

@@ -55,6 +55,9 @@ const FrozenStats = lazy(() => import('@/pages/admin/FrozenStats'))
 const AdminSchedule = lazy(() => import('@/pages/admin/AdminSchedule'))
 const ItemSortManager = lazy(() => import('@/pages/admin/ItemSortManager'))
 const LeaveManagement = lazy(() => import('@/pages/admin/LeaveManagement'))
+const RecipeManager = lazy(() => import('@/pages/admin/RecipeManager'))
+const MenuItemManager = lazy(() => import('@/pages/admin/MenuItemManager'))
+const CostAnalysis = lazy(() => import('@/pages/admin/CostAnalysis'))
 
 function Loading() {
   return (
@@ -163,6 +166,9 @@ function App() {
                 <Route path="/admin/frozen-stats" element={<FrozenStats />} />
                 <Route path="/admin/item-sort" element={<ItemSortManager />} />
                 <Route path="/admin/leave" element={<LeaveManagement />} />
+                <Route path="/admin/recipes" element={<RecipeManager />} />
+                <Route path="/admin/menu-items" element={<MenuItemManager />} />
+                <Route path="/admin/cost-analysis" element={<CostAnalysis />} />
               </Route>
             </Route>
           </Routes>

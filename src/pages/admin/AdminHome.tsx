@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Package, Warehouse, Users, Store, Receipt, QrCode, Layers, ClipboardList, FileText, DollarSign, CloudSun, ChefHat, LayoutDashboard, LogOut, KeyRound, ScrollText, Wallet, TrendingUp, ChevronDown, CalendarClock, Clock, Snowflake, CalendarDays, ArrowUpDown, CalendarOff } from 'lucide-react'
+import { Package, Warehouse, Users, Store, Receipt, QrCode, Layers, ClipboardList, FileText, DollarSign, CloudSun, ChefHat, LayoutDashboard, LogOut, KeyRound, ScrollText, Wallet, TrendingUp, ChevronDown, CalendarClock, Clock, Snowflake, CalendarDays, ArrowUpDown, CalendarOff, BookOpen, UtensilsCrossed, Calculator } from 'lucide-react'
 import { getTodayString, formatDate } from '@/lib/utils'
 import { useStoreStore } from '@/stores/useStoreStore'
 import { clearSession } from '@/lib/auth'
@@ -44,6 +44,8 @@ const menuGroups: MenuGroup[] = [
       { icon: CalendarDays, label: '排班管理', desc: 'PC 全寬行事曆排班、快速排班模式', path: '/admin/schedule', color: 'bg-brand-lotus' },
       { icon: CalendarClock, label: '班次與職位管理', desc: '設定班次時段、職位與標籤', path: '/admin/shift-types', color: 'bg-brand-oak' },
       { icon: ArrowUpDown, label: '品項排序管理', desc: '設定各門店叫貨/盤點品項的顯示順序', path: '/admin/item-sort', color: 'bg-brand-mocha' },
+      { icon: BookOpen, label: '成品配方管理', desc: '設定央廚成品的原料配方與成本', path: '/admin/recipes', color: 'bg-brand-amber' },
+      { icon: UtensilsCrossed, label: '販售品管理', desc: '設定販售品的配料組成與售價', path: '/admin/menu-items', color: 'bg-brand-blush' },
     ],
   },
   {
@@ -55,6 +57,7 @@ const menuGroups: MenuGroup[] = [
       { icon: CloudSun, label: '天氣用量分析', desc: '天氣與營業額、叫貨量關聯分析', path: '/admin/weather-analysis', color: 'bg-brand-amber' },
       { icon: Clock, label: '工時統計', desc: '依職別統計每月排班工時與薪資', path: '/admin/schedule-stats', color: 'bg-brand-mocha' },
       { icon: Snowflake, label: '冷凍品統計', desc: '冷凍產品銷售數量與金額統計', path: '/admin/frozen-stats', color: 'bg-brand-blush' },
+      { icon: Calculator, label: '成本分析', desc: '原料/成品/販售品成本與毛利率分析', path: '/admin/cost-analysis', color: 'bg-brand-oak' },
     ],
   },
   {

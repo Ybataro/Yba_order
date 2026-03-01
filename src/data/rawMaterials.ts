@@ -7,6 +7,8 @@ export interface RawMaterial {
   notes?: string
   box_unit?: string
   box_ratio?: number
+  purchase_price?: number | null
+  net_weight_g?: number | null
 }
 
 export const materialCategories = [

@@ -9,8 +9,9 @@ import { useToast } from '@/components/Toast'
 import { useMaterialStore } from '@/stores/useMaterialStore'
 import type { RawMaterial } from '@/data/rawMaterials'
 import { Plus, FolderCog } from 'lucide-react'
+import { getMaterialCostPerG } from '@/lib/costAnalysis'
 
-const emptyMaterial: RawMaterial = { id: '', name: '', category: '', spec: '', unit: '', notes: '', box_unit: undefined, box_ratio: undefined }
+const emptyMaterial: RawMaterial = { id: '', name: '', category: '', spec: '', unit: '', notes: '', box_unit: undefined, box_ratio: undefined, purchase_price: null, net_weight_g: null }
 
 export default function MaterialManager() {
   const { items, categories, add, update, remove, reorder, renameCategory, addCategory, removeCategory, reorderCategory } = useMaterialStore()
@@ -134,7 +135,7 @@ export default function MaterialManager() {
               render: (m) => (
                 <div>
                   <p className="text-sm font-medium text-brand-oak">{m.name}</p>
-                  <p className="text-[10px] text-brand-lotus">{m.spec ? m.spec : m.unit}{m.box_unit && m.box_ratio ? ` (1${m.box_unit}=${m.box_ratio}${m.unit})` : ''}{m.notes ? ` · ${m.notes}` : ''}</p>
+                  <p className="text-[10px] text-brand-lotus">{m.spec ? m.spec : m.unit}{m.box_unit && m.box_ratio ? ` (1${m.box_unit}=${m.box_ratio}${m.unit})` : ''}{m.notes ? ` · ${m.notes}` : ''}{(() => { const cpg = getMaterialCostPerG(m); return cpg != null ? ` · $${cpg.toFixed(4)}/g` : '' })()}</p>
                 </div>
               ),
             },
@@ -164,7 +165,7 @@ export default function MaterialManager() {
                     render: (m) => (
                       <div>
                         <p className="text-sm font-medium text-brand-oak">{m.name}</p>
-                        <p className="text-[10px] text-brand-lotus">{m.spec ? m.spec : m.unit}{m.box_unit && m.box_ratio ? ` (1${m.box_unit}=${m.box_ratio}${m.unit})` : ''}{m.notes ? ` · ${m.notes}` : ''}</p>
+                        <p className="text-[10px] text-brand-lotus">{m.spec ? m.spec : m.unit}{m.box_unit && m.box_ratio ? ` (1${m.box_unit}=${m.box_ratio}${m.unit})` : ''}{m.notes ? ` · ${m.notes}` : ''}{(() => { const cpg = getMaterialCostPerG(m); return cpg != null ? ` · $${cpg.toFixed(4)}/g` : '' })()}</p>
                       </div>
                     ),
                   },
@@ -204,6 +205,17 @@ export default function MaterialManager() {
         <ModalField label="箱入數量">
           <ModalInput value={form.box_ratio ? String(form.box_ratio) : ''} onChange={(v) => setForm({ ...form, box_ratio: parseInt(v) || undefined })} placeholder="例：6（1箱=6袋）" />
         </ModalField>
+        <ModalField label="採購價（元）">
+          <ModalInput value={form.purchase_price ? String(form.purchase_price) : ''} onChange={(v) => setForm({ ...form, purchase_price: parseFloat(v) || null })} placeholder="例：750（選填，用於成本計算）" />
+        </ModalField>
+        <ModalField label="淨重（克）">
+          <ModalInput value={form.net_weight_g ? String(form.net_weight_g) : ''} onChange={(v) => setForm({ ...form, net_weight_g: parseFloat(v) || null })} placeholder="例：30000（選填，用於成本計算）" />
+        </ModalField>
+        {form.purchase_price && form.net_weight_g ? (
+          <div className="px-3 py-2 bg-surface-section rounded-card text-xs text-brand-oak">
+            每克成本：<span className="font-semibold">${(form.purchase_price / form.net_weight_g).toFixed(4)}</span> 元/g
+          </div>
+        ) : null}
         <ModalField label="備註">
           <ModalInput value={form.notes ?? ''} onChange={(v) => setForm({ ...form, notes: v })} placeholder="選填" />
         </ModalField>

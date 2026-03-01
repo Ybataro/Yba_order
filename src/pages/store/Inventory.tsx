@@ -88,6 +88,7 @@ export default function Inventory() {
   const [data, setData] = useState<Record<string, InventoryEntry>>({})
   const originalData = useRef<Record<string, InventoryEntry>>({})
   const [submitting, setSubmitting] = useState(false)
+  const submittingRef = useRef(false)
   const [isEdit, setIsEdit] = useState(false)
   const [loading, setLoading] = useState(true)
   const [showSuccessModal, setShowSuccessModal] = useState(false)
@@ -540,6 +541,9 @@ export default function Inventory() {
 
   const handleSubmit = async () => {
     if (!storeId) return
+    // 防止重複提交（useRef 同步鎖，避免 React batch 導致多次觸發）
+    if (submittingRef.current) return
+    submittingRef.current = true
 
     // 防呆：庫存欄必填
     const missingStock = storeProducts.filter(p => {
@@ -548,6 +552,7 @@ export default function Inventory() {
     })
     if (missingStock.length > 0) {
       showToast(`尚有 ${missingStock.length} 項品項未填庫存（無則填 0）`, 'error')
+      submittingRef.current = false
       return
     }
 
@@ -599,6 +604,10 @@ export default function Inventory() {
         }
       })
 
+    // 先快照 stockEntries，避免 async 過程中 state 變動導致 stale closure
+    const stockEntriesSnapshot = JSON.parse(JSON.stringify(stockEntries)) as Record<string, StockEntry[]>
+    console.log('[handleSubmit] submittingRef locked, snapshot:', JSON.stringify(stockEntriesSnapshot))
+
     const success = await submitWithOffline({
       type: 'inventory',
       storeId,
@@ -607,51 +616,8 @@ export default function Inventory() {
       items,
       onConflict: 'session_id,product_id',
       itemIdField: 'product_id',
-      onSuccess: async () => {
-        // Upsert frozen sales after inventory success
-        if (frozenItems.length > 0 && supabase) {
-          await supabase.from('frozen_sales').upsert(frozenItems, {
-            onConflict: 'store_id,date,zone_code,product_key',
-          })
-        }
-        // Save supply tracker (其他區)
-        await saveSupplyData(staffId)
-        // Save stock entries (到期日批次): upsert + 刪除多餘（安全模式）
-        // 只有當 stockEntries state 有資料時才執行（避免用戶未操作到期日面板時誤刪 DB 資料）
-        if (supabase && Object.keys(stockEntries).length > 0) {
-          const seInserts: { session_id: string; product_id: string; expiry_date: string; quantity: number }[] = []
-          Object.entries(stockEntries).forEach(([pid, entries]) => {
-            entries.forEach((e) => {
-              if (e.expiryDate && e.quantity !== '') {
-                seInserts.push({
-                  session_id: sessionId,
-                  product_id: pid,
-                  expiry_date: e.expiryDate,
-                  quantity: parseFloat(e.quantity) || 0,
-                })
-              }
-            })
-          })
-          if (seInserts.length > 0) {
-            await supabase.from('inventory_stock_entries')
-              .upsert(seInserts, { onConflict: 'session_id,product_id,expiry_date' })
-          }
-          // 刪除不在新列表中的舊 entries（只在有明確操作時才刪）
-          const newKeys = new Set(seInserts.map(e => `${e.product_id}_${e.expiry_date}`))
-          const { data: existingSE } = await supabase
-            .from('inventory_stock_entries')
-            .select('id, product_id, expiry_date')
-            .eq('session_id', sessionId)
-          const toDeleteSE = existingSE
-            ?.filter(e => !newKeys.has(`${e.product_id}_${e.expiry_date}`))
-            ?.map(e => e.id) || []
-          if (toDeleteSE.length > 0) {
-            await supabase.from('inventory_stock_entries').delete().in('id', toDeleteSE)
-          }
-        }
-        originalData.current = JSON.parse(JSON.stringify(data))
-        originalFrozenData.current = JSON.parse(JSON.stringify(frozenData))
-        originalStockEntries.current = JSON.parse(JSON.stringify(stockEntries))
+      onSuccess: () => {
+        // 主要的 DB 寫入已移到 submitWithOffline 之後，這裡只做 UI 更新
         setIsEdit(true)
         logAudit('inventory_submit', storeId, sessionId, { itemCount: items.length, frozenCount: frozenItems.length })
         setSuccessInfo({ itemCount: items.length, date: selectedDate })
@@ -663,15 +629,64 @@ export default function Inventory() {
       onError: (msg) => showToast(msg, 'error'),
     })
 
+    if (success && navigator.onLine && supabase) {
+      // 在 submitWithOffline 成功後，await 附加的 DB 寫入
+      // Upsert frozen sales
+      if (frozenItems.length > 0) {
+        await supabase.from('frozen_sales').upsert(frozenItems, {
+          onConflict: 'store_id,date,zone_code,product_key',
+        })
+      }
+      // Save supply tracker (其他區)
+      await saveSupplyData(staffId)
+      // Save stock entries (到期日批次): upsert + 刪除多餘
+      // 用快照避免 stale closure
+      const seInserts: { session_id: string; product_id: string; expiry_date: string; quantity: number }[] = []
+      Object.entries(stockEntriesSnapshot).forEach(([pid, entries]) => {
+        (entries as StockEntry[]).forEach((e) => {
+          if (e.expiryDate && e.quantity !== '') {
+            seInserts.push({
+              session_id: sessionId,
+              product_id: pid,
+              expiry_date: e.expiryDate,
+              quantity: parseFloat(e.quantity) || 0,
+            })
+          }
+        })
+      })
+      // Stock entries: 先刪除該 session 的所有舊資料，再 insert 新資料（避免 race condition）
+      console.log('[SE] snapshot keys:', Object.keys(stockEntriesSnapshot), 'seInserts:', seInserts.length, JSON.stringify(seInserts))
+      const { error: delErr, count: delCount } = await supabase.from('inventory_stock_entries')
+        .delete({ count: 'exact' }).eq('session_id', sessionId)
+      console.log('[SE] delete done, count:', delCount, 'error:', delErr)
+      if (delErr) console.error('[stockEntries] delete error:', delErr)
+      if (seInserts.length > 0) {
+        const { error: seErr, data: seData } = await supabase.from('inventory_stock_entries')
+          .insert(seInserts).select()
+        console.log('[SE] insert done, rows:', seData?.length, 'error:', seErr)
+        if (seErr) console.error('[stockEntries] insert error:', seErr)
+      } else {
+        console.log('[SE] no inserts (seInserts empty)')
+      }
+      // 驗證：插入後立即讀取確認
+      const { data: verifyRows } = await supabase.from('inventory_stock_entries')
+        .select('product_id, expiry_date, quantity').eq('session_id', sessionId)
+      console.log('[SE] verify after save:', verifyRows?.length, 'rows', JSON.stringify(verifyRows))
+      originalData.current = JSON.parse(JSON.stringify(data))
+      originalFrozenData.current = JSON.parse(JSON.stringify(frozenData))
+      originalStockEntries.current = JSON.parse(JSON.stringify(stockEntriesSnapshot))
+    }
+
     if (success && !navigator.onLine) {
       // offline success — still mark as submitted locally
       originalData.current = JSON.parse(JSON.stringify(data))
       originalFrozenData.current = JSON.parse(JSON.stringify(frozenData))
-      originalStockEntries.current = JSON.parse(JSON.stringify(stockEntries))
+      originalStockEntries.current = JSON.parse(JSON.stringify(stockEntriesSnapshot))
       setIsEdit(true)
     }
 
     setSubmitting(false)
+    submittingRef.current = false
   }
 
   return (
