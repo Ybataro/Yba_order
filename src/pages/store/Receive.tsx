@@ -171,13 +171,12 @@ export default function Receive() {
       return
     }
 
-    // Update each item's received status
-    // 沒有數量差異的品項自動視為已收到，只有 hasDiff 且未勾選才算未收到
+    // Update each item's received status — 提交收貨確認 = 全部已收到
+    // 差異品項透過備註和通知提醒，不影響 received 狀態
     for (const item of shipmentItems) {
-      const isReceived = item.hasDiff ? (confirmed[item.productId] || false) : true
       await supabase
         .from('shipment_items')
-        .update({ received: isReceived })
+        .update({ received: true })
         .eq('session_id', sessionId)
         .eq('product_id', item.productId)
     }

@@ -333,16 +333,11 @@ export default function Shipment() {
     // Delete old + Insert new（保留 received 狀態）
     await supabase.from('shipment_items').delete().eq('session_id', sid)
 
-    const shipItemsWithReceived = shipItems.map(item => {
-      const prevReceived = receivedMap[item.product_id] || false
-      const hasDiff = item.order_qty !== item.actual_qty && item.order_qty > 0
-      // 門店已確認收貨 + 數量無差異 → 自動 received=true
-      // 有差異品項 → 保留門店原本的勾選狀態
-      return {
-        ...item,
-        received: (storeHasConfirmed && !hasDiff) ? true : prevReceived,
-      }
-    })
+    const shipItemsWithReceived = shipItems.map(item => ({
+      ...item,
+      // 門店已確認收貨 → 全部 received=true（差異用備註提醒，不影響 received）
+      received: storeHasConfirmed ? true : (receivedMap[item.product_id] || false),
+    }))
 
     if (shipItemsWithReceived.length > 0) {
       const { error: itemErr } = await supabase
