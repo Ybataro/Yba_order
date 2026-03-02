@@ -29,12 +29,12 @@ function parseValue(value: string): Record<string, string> {
 }
 
 function serializeValue(map: Record<string, string>): string {
-  const filtered: Record<string, number> = {}
+  if (Object.keys(map).length === 0) return ''
+  const out: Record<string, number> = {}
   for (const [k, v] of Object.entries(map)) {
-    if (v !== '') filtered[k] = Number(v) || 0
+    out[k] = Number(v) || 0
   }
-  if (Object.keys(filtered).length === 0) return ''
-  return JSON.stringify(filtered)
+  return JSON.stringify(out)
 }
 
 /** Check if value is a legacy plain number (not JSON) */
