@@ -316,11 +316,11 @@ export default function Shipment() {
       }
     })
 
-    // 從 DB 即時讀取現有的 received 狀態（避免 stale state 覆蓋門店確認）
-    const { data: existingItems } = await supabase
-      .from('shipment_items')
-      .select('product_id, received')
-      .eq('session_id', sid)
+    // 從 DB 即時讀取現有的 received 狀態 + 門店是否已收貨確認
+    const [{ data: existingItems }, { data: sessionData }] = await Promise.all([
+      supabase.from('shipment_items').select('product_id, received').eq('session_id', sid),
+      supabase.from('shipment_sessions').select('received_at').eq('id', sid).maybeSingle(),
+    ])
 
     const receivedMap: Record<string, boolean> = {}
     if (existingItems) {
@@ -328,14 +328,21 @@ export default function Shipment() {
         receivedMap[item.product_id] = item.received || false
       })
     }
+    const storeHasConfirmed = !!sessionData?.received_at
 
     // Delete old + Insert new（保留 received 狀態）
     await supabase.from('shipment_items').delete().eq('session_id', sid)
 
-    const shipItemsWithReceived = shipItems.map(item => ({
-      ...item,
-      received: receivedMap[item.product_id] || false,
-    }))
+    const shipItemsWithReceived = shipItems.map(item => {
+      const prevReceived = receivedMap[item.product_id] || false
+      const hasDiff = item.order_qty !== item.actual_qty && item.order_qty > 0
+      // 門店已確認收貨 + 數量無差異 → 自動 received=true
+      // 有差異品項 → 保留門店原本的勾選狀態
+      return {
+        ...item,
+        received: (storeHasConfirmed && !hasDiff) ? true : prevReceived,
+      }
+    })
 
     if (shipItemsWithReceived.length > 0) {
       const { error: itemErr } = await supabase
