@@ -33,6 +33,9 @@ export default function Shipment() {
   // 歷史編輯確認
   const [showHistoryConfirm, setShowHistoryConfirm] = useState(false)
 
+  // 各店叫貨備註（杏仁茶瓶、紙碗等）
+  const [orderNotes, setOrderNotes] = useState<Record<string, { almond1000: number; almond300: number; bowlK520: number; bowl750: number; freeText: string }>>({})
+
   // 各店叫貨量（從 order_sessions/order_items 載入）
   const [orderQty, setOrderQty] = useState<Record<string, Record<string, number>>>({})
   const [actualQty, setActualQty] = useState<Record<string, Record<string, string>>>({})
@@ -71,6 +74,7 @@ export default function Shipment() {
       const rcvData: typeof receiveStatus = {}
       const rplyData: Record<string, string> = {}
       const exData: Record<string, Record<string, string>> = {}
+      const noteData: typeof orderNotes = {}
       const productMap = new Map(storeProducts.map(p => [p.id, p]))
 
       for (const store of stores) {
@@ -95,6 +99,23 @@ export default function Shipment() {
             oqData[store.id][item.product_id] = item.quantity || 0
             aqData[store.id][item.product_id] = item.quantity > 0 ? String(item.quantity) : ''
           })
+        }
+
+        // Load order note fields（杏仁茶瓶、紙碗等）
+        const { data: orderSession } = await supabase!
+          .from('order_sessions')
+          .select('almond_1000, almond_300, bowl_k520, bowl_750, note')
+          .eq('id', orderSid)
+          .maybeSingle()
+
+        if (orderSession) {
+          noteData[store.id] = {
+            almond1000: parseInt(orderSession.almond_1000) || 0,
+            almond300: parseInt(orderSession.almond_300) || 0,
+            bowlK520: parseInt(orderSession.bowl_k520) || 0,
+            bowl750: parseInt(orderSession.bowl_750) || 0,
+            freeText: orderSession.note || '',
+          }
         }
 
         // Load existing shipment (含收貨回饋欄位)
@@ -164,6 +185,7 @@ export default function Shipment() {
       setReceiveStatus(rcvData)
       setReplyText(rplyData)
       setExtraItems(exData)
+      setOrderNotes(noteData)
       setLoading(false)
     }
 
@@ -645,6 +667,32 @@ export default function Shipment() {
               </div>
             )}
           </div>
+
+          {/* 叫貨備註 */}
+          {(() => {
+            const notes = orderNotes[activeStore]
+            if (!notes) return null
+            const noteLines: { label: string; qty: number; unit: string }[] = []
+            if (notes.almond1000 > 0) noteLines.push({ label: '杏仁茶瓶 1000ml', qty: notes.almond1000, unit: '個' })
+            if (notes.almond300 > 0) noteLines.push({ label: '杏仁茶瓶 300ml', qty: notes.almond300, unit: '個' })
+            if (notes.bowlK520 > 0) noteLines.push({ label: 'K520 紙碗', qty: notes.bowlK520, unit: '箱' })
+            if (notes.bowl750 > 0) noteLines.push({ label: '750 紙碗', qty: notes.bowl750, unit: '箱' })
+            if (noteLines.length === 0 && !notes.freeText) return null
+            return (
+              <div className="mx-4 mt-3 mb-1 card">
+                <p className="text-xs font-semibold text-brand-oak mb-1.5">📋 叫貨備註</p>
+                {noteLines.map((n) => (
+                  <div key={n.label} className="flex items-center justify-between text-sm py-0.5">
+                    <span className="text-brand-oak">{n.label}</span>
+                    <span className="font-semibold text-brand-oak">{n.qty} {n.unit}</span>
+                  </div>
+                ))}
+                {notes.freeText && (
+                  <p className="text-sm text-brand-lotus mt-1 pt-1 border-t border-gray-100">{notes.freeText}</p>
+                )}
+              </div>
+            )
+          })()}
 
           {/* 收貨回饋區 */}
           {isEdit[activeStore] && (
