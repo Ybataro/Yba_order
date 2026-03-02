@@ -172,10 +172,12 @@ export default function Receive() {
     }
 
     // Update each item's received status
+    // 沒有數量差異的品項自動視為已收到，只有 hasDiff 且未勾選才算未收到
     for (const item of shipmentItems) {
+      const isReceived = item.hasDiff ? (confirmed[item.productId] || false) : true
       await supabase
         .from('shipment_items')
-        .update({ received: confirmed[item.productId] || false })
+        .update({ received: isReceived })
         .eq('session_id', sessionId)
         .eq('product_id', item.productId)
     }
@@ -242,7 +244,7 @@ export default function Receive() {
           {diffCount > 0 && (
             <div className="mx-4 mt-3 mb-1 flex items-start gap-2 bg-status-warning/10 text-status-warning px-3 py-2.5 rounded-btn text-xs">
               <AlertTriangle size={14} className="shrink-0 mt-0.5" />
-              <span>央廚有 <strong>{diffCount}</strong> 項出貨數量與叫貨不同，橘色標示項目請留意核對</span>
+              <span>央廚有 <strong>{diffCount}</strong> 項出貨數量與叫貨不同，橘色標示項目請勾選確認收到</span>
             </div>
           )}
 
@@ -377,17 +379,12 @@ export default function Receive() {
               style={{ backgroundColor: 'var(--color-input-bg)' }} />
           </div>
 
-          {!isEdit && confirmedCount === 0 && (
-            <div className="mx-4 mb-2 text-center text-xs text-status-warning">
-              請先逐項勾選已收到的品項，才能確認收貨
-            </div>
-          )}
           <BottomAction
             label={submitting ? '提交中...' : isEdit ? '更新收貨確認' : '確認收貨完成'}
             onClick={handleSubmit}
             variant="success"
             icon={<CheckCircle size={18} />}
-            disabled={submitting || (!isEdit && confirmedCount === 0)}
+            disabled={submitting}
           />
         </>
       )}
