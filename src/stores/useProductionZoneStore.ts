@@ -37,6 +37,7 @@ export interface ZoneDef {
 export interface SugarTypeDef {
   id: string
   name: string
+  unit: string
   sort_order: number
   is_active: boolean
 }
@@ -69,7 +70,7 @@ interface ProductionZoneState {
 
   // Sugar CRUD
   addSugarType: (sugar: SugarTypeDef) => void
-  updateSugarType: (id: string, partial: Partial<Pick<SugarTypeDef, 'name' | 'is_active'>>) => void
+  updateSugarType: (id: string, partial: Partial<Pick<SugarTypeDef, 'name' | 'unit' | 'is_active'>>) => void
   removeSugarType: (id: string) => void
   swapSugarTypeOrder: (idA: string, idB: string) => void
 }
@@ -109,6 +110,7 @@ export const useProductionZoneStore = create<ProductionZoneState>()((set, get) =
     const sugarTypes: SugarTypeDef[] = (sugarRes.data ?? []).map((s) => ({
       id: s.id,
       name: s.name,
+      unit: s.unit ?? 'g',
       sort_order: s.sort_order ?? 0,
       is_active: s.is_active ?? true,
     }))
@@ -312,7 +314,7 @@ export const useProductionZoneStore = create<ProductionZoneState>()((set, get) =
   addSugarType: (sugar) => {
     set((s) => ({ sugarTypes: [...s.sugarTypes, sugar] }))
     supabase?.from('sugar_types').insert({
-      id: sugar.id, name: sugar.name, sort_order: sugar.sort_order, is_active: sugar.is_active,
+      id: sugar.id, name: sugar.name, unit: sugar.unit, sort_order: sugar.sort_order, is_active: sugar.is_active,
     }).then()
   },
 

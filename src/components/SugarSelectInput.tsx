@@ -105,7 +105,7 @@ export function SugarSelectInput({ value, onChange, sugarTypes }: SugarSelectInp
               <NumericInput
                 value={sugarMap[st.name] ?? ''}
                 onChange={(v) => updateAmount(st.name, v)}
-                unit="g"
+                unit={st.unit || 'g'}
                 isFilled
                 className="input-prod"
               />

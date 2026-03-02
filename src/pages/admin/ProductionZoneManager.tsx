@@ -436,16 +436,16 @@ function SugarTab() {
 
   const [editSugar, setEditSugar] = useState<SugarTypeDef | null>(null)
   const [isNew, setIsNew] = useState(false)
-  const [form, setForm] = useState({ name: '' })
+  const [form, setForm] = useState({ name: '', unit: 'g' })
 
   const openNew = () => {
-    setForm({ name: '' })
+    setForm({ name: '', unit: 'g' })
     setIsNew(true)
     setEditSugar({} as SugarTypeDef)
   }
 
   const openEdit = (s: SugarTypeDef) => {
-    setForm({ name: s.name })
+    setForm({ name: s.name, unit: s.unit || 'g' })
     setIsNew(false)
     setEditSugar(s)
   }
@@ -458,12 +458,13 @@ function SugarTab() {
       addSugarType({
         id,
         name: form.name.trim(),
+        unit: form.unit.trim() || 'g',
         sort_order: sugarTypes.length,
         is_active: true,
       })
       showToast('已新增糖種')
     } else {
-      updateSugarType(editSugar!.id, { name: form.name.trim() })
+      updateSugarType(editSugar!.id, { name: form.name.trim(), unit: form.unit.trim() || 'g' })
       showToast('已更新糖種')
     }
     setEditSugar(null)
@@ -494,6 +495,7 @@ function SugarTab() {
             </div>
             <div className="flex-1 min-w-0">
               <div className="text-sm font-semibold text-brand-oak">{s.name}</div>
+              <div className="text-xs text-brand-lotus/60">單位: {s.unit || 'g'}</div>
             </div>
             <button onClick={() => openEdit(s)} className="p-2 text-brand-lotus"><Pencil size={16} /></button>
             <button onClick={() => handleDelete(s)} className="p-2 text-red-400"><Trash2 size={16} /></button>
@@ -508,6 +510,9 @@ function SugarTab() {
       <AdminModal open={!!editSugar} onClose={() => setEditSugar(null)} title={isNew ? '新增糖種' : '編輯糖種'} onSubmit={handleSave}>
         <ModalField label="糖種名稱">
           <ModalInput value={form.name} onChange={(v) => setForm((f) => ({ ...f, name: v }))} placeholder="如 二砂、冰糖" />
+        </ModalField>
+        <ModalField label="單位">
+          <ModalInput value={form.unit} onChange={(v) => setForm((f) => ({ ...f, unit: v }))} placeholder="g" />
         </ModalField>
       </AdminModal>
     </>
