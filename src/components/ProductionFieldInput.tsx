@@ -1,5 +1,7 @@
 import type { FieldDef } from '@/data/productionZones'
 import { NumericInput } from '@/components/NumericInput'
+import { SugarSelectInput } from '@/components/SugarSelectInput'
+import type { SugarTypeDef } from '@/stores/useProductionZoneStore'
 
 interface ProductionFieldInputProps {
   field: FieldDef
@@ -7,9 +9,20 @@ interface ProductionFieldInputProps {
   onChange: (value: string) => void
   onNext?: () => void
   dataAttr?: string
+  sugarTypes?: SugarTypeDef[]
 }
 
-export function ProductionFieldInput({ field, value, onChange, onNext, dataAttr }: ProductionFieldInputProps) {
+export function ProductionFieldInput({ field, value, onChange, onNext, dataAttr, sugarTypes }: ProductionFieldInputProps) {
+  if (field.type === 'sugar_select' && sugarTypes && sugarTypes.length > 0) {
+    return (
+      <SugarSelectInput
+        value={value}
+        onChange={onChange}
+        sugarTypes={sugarTypes}
+      />
+    )
+  }
+
   if (field.type === 'select') {
     return (
       <div>
@@ -36,14 +49,14 @@ export function ProductionFieldInput({ field, value, onChange, onNext, dataAttr 
           type="text"
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="input-field"
+          className="input-field input-prod"
           placeholder={field.label}
         />
       </div>
     )
   }
 
-  // numeric (default)
+  // numeric (default) — also handles sugar_select fallback when sugarTypes not available
   return (
     <div>
       <label className="text-xs text-brand-lotus mb-1 block">{field.label}</label>
@@ -54,6 +67,7 @@ export function ProductionFieldInput({ field, value, onChange, onNext, dataAttr 
         isFilled
         onNext={onNext}
         data-prodlog={dataAttr}
+        className="input-prod"
       />
     </div>
   )

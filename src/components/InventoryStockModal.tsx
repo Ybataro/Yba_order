@@ -26,6 +26,8 @@ interface InventoryStockModalProps {
   productCategories: string[]
   sortCategories: (cats: string[]) => string[]
   sortItems: <U extends { id: string }>(items: U[]) => U[]
+  title?: string
+  loading?: boolean
 }
 
 export function InventoryStockModal({
@@ -38,6 +40,8 @@ export function InventoryStockModal({
   productCategories,
   sortCategories,
   sortItems,
+  title,
+  loading,
 }: InventoryStockModalProps) {
   const overlayRef = useRef<HTMLDivElement>(null)
 
@@ -82,7 +86,7 @@ export function InventoryStockModal({
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
           <div>
-            <h2 className="text-base font-semibold text-brand-oak">最新盤點庫存</h2>
+            <h2 className="text-base font-semibold text-brand-oak">{title || '最新盤點庫存'}</h2>
             <p className="text-xs text-brand-lotus mt-0.5">盤點日期：{formattedDate}</p>
           </div>
           <button onClick={onClose} className="p-1 rounded-full hover:bg-gray-100 active:bg-gray-200">
@@ -92,7 +96,9 @@ export function InventoryStockModal({
 
         {/* Body */}
         <div className="flex-1 overflow-y-auto">
-          {productsByCategory.size === 0 ? (
+          {loading ? (
+            <div className="flex items-center justify-center py-20 text-sm text-brand-lotus">載入中...</div>
+          ) : productsByCategory.size === 0 ? (
             <div className="flex items-center justify-center py-20 text-sm text-brand-lotus">
               尚無盤點資料
             </div>

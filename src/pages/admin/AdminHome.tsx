@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Package, Warehouse, Users, Store, Receipt, QrCode, Layers, ClipboardList, FileText, DollarSign, CloudSun, ChefHat, LayoutDashboard, LogOut, KeyRound, ScrollText, Wallet, TrendingUp, ChevronDown, CalendarClock, Clock, Snowflake, CalendarDays, ArrowUpDown, CalendarOff, BookOpen, UtensilsCrossed, Calculator } from 'lucide-react'
+import { Package, Warehouse, Users, Store, Receipt, QrCode, Layers, ClipboardList, FileText, DollarSign, CloudSun, ChefHat, LayoutDashboard, LogOut, KeyRound, ScrollText, Wallet, TrendingUp, ChevronDown, CalendarClock, Clock, Snowflake, CalendarDays, ArrowUpDown, CalendarOff, BookOpen, UtensilsCrossed, Calculator, Factory } from 'lucide-react'
 import { getTodayString, formatDate } from '@/lib/utils'
 import { useStoreStore } from '@/stores/useStoreStore'
 import { clearSession } from '@/lib/auth'
@@ -46,6 +46,7 @@ const menuGroups: MenuGroup[] = [
       { icon: ArrowUpDown, label: '品項排序管理', desc: '設定各門店叫貨/盤點品項的顯示順序', path: '/admin/item-sort', color: 'bg-brand-mocha' },
       { icon: BookOpen, label: '成品配方管理', desc: '設定央廚成品的原料配方與成本', path: '/admin/recipes', color: 'bg-brand-amber' },
       { icon: UtensilsCrossed, label: '販售品管理', desc: '設定販售品的配料組成與售價', path: '/admin/menu-items', color: 'bg-brand-blush' },
+      { icon: Factory, label: '生產區域管理', desc: '管理生產紀錄的區域、品項、欄位與糖種', path: '/admin/production-zones', color: 'bg-brand-silver' },
     ],
   },
   {

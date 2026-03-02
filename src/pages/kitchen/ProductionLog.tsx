@@ -1,16 +1,39 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { TopNav } from '@/components/TopNav'
 import { DateNav } from '@/components/DateNav'
 import { BottomAction } from '@/components/BottomAction'
 import { ProductionZoneForm } from '@/components/ProductionZoneForm'
 import { useToast } from '@/components/Toast'
 import { useStaffStore } from '@/stores/useStaffStore'
+import { useProductionZoneStore } from '@/stores/useProductionZoneStore'
 import { supabase } from '@/lib/supabase'
 import { productionLogSessionId, getTodayTW } from '@/lib/session'
 import { formatDate } from '@/lib/utils'
 import { PRODUCTION_ZONES } from '@/data/productionZones'
+import type { ZoneDef as StaticZoneDef } from '@/data/productionZones'
 import { Save, RefreshCw } from 'lucide-react'
 import { sendTelegramNotification } from '@/lib/telegram'
+
+// Convert DB zone def to the static ZoneDef shape used by ProductionZoneForm
+function toFormZone(dbZone: ReturnType<typeof useProductionZoneStore.getState>['zones'][number]): StaticZoneDef {
+  return {
+    key: dbZone.id,
+    name: dbZone.name,
+    icon: dbZone.icon,
+    notice: dbZone.notice,
+    items: dbZone.items.map((item) => ({
+      key: item.id,
+      name: item.name,
+      fields: item.fields.map((f) => ({
+        key: f.field_key,
+        label: f.label,
+        type: f.field_type,
+        unit: f.unit || undefined,
+        options: f.options.length > 0 ? f.options : undefined,
+      })),
+    })),
+  }
+}
 
 // Per-zone form state
 interface ZoneFormState {
@@ -29,19 +52,39 @@ export default function ProductionLog() {
   const { showToast } = useToast()
   const kitchenStaff = useStaffStore((s) => s.kitchenStaff)
 
+  // DB-driven zones (from store)
+  const dbZones = useProductionZoneStore((s) => s.zones)
+  const sugarTypes = useProductionZoneStore((s) => s.sugarTypes)
+  const storeInitialized = useProductionZoneStore((s) => s.initialized)
+
+  // Use DB zones if available, else fallback to static
+  const formZones: StaticZoneDef[] = useMemo(() => {
+    if (storeInitialized && dbZones.length > 0) {
+      return dbZones.map(toFormZone)
+    }
+    return PRODUCTION_ZONES
+  }, [storeInitialized, dbZones])
+
   const today = getTodayTW()
   const [selectedDate, setSelectedDate] = useState(today)
   const isToday = selectedDate === today
-  const [activeZone, setActiveZone] = useState(PRODUCTION_ZONES[0].key)
+  const [activeZone, setActiveZone] = useState(formZones[0]?.key || 'paste')
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const submittingRef = useRef(false)
   const [showHistoryConfirm, setShowHistoryConfirm] = useState(false)
 
+  // Reset activeZone when formZones change
+  useEffect(() => {
+    if (formZones.length > 0 && !formZones.find((z) => z.key === activeZone)) {
+      setActiveZone(formZones[0].key)
+    }
+  }, [formZones, activeZone])
+
   // All zones' form state
   const [zoneStates, setZoneStates] = useState<Record<string, ZoneFormState>>(() => {
     const init: Record<string, ZoneFormState> = {}
-    PRODUCTION_ZONES.forEach((z) => { init[z.key] = emptyZoneState() })
+    formZones.forEach((z) => { init[z.key] = emptyZoneState() })
     return init
   })
 
@@ -55,7 +98,7 @@ export default function ProductionLog() {
 
     // Reset
     const init: Record<string, ZoneFormState> = {}
-    PRODUCTION_ZONES.forEach((z) => { init[z.key] = emptyZoneState() })
+    formZones.forEach((z) => { init[z.key] = emptyZoneState() })
     setZoneStates(init)
     setFilledZones(new Set())
 
@@ -111,7 +154,7 @@ export default function ProductionLog() {
     }
 
     load()
-  }, [selectedDate])
+  }, [selectedDate, formZones])
 
   // Update a single field value
   const handleFieldChange = useCallback((zoneKey: string, itemKey: string, fieldKey: string, value: string) => {
@@ -223,7 +266,7 @@ export default function ProductionLog() {
         [activeZone]: { ...prev[activeZone], isEdit: true },
       }))
 
-      const zoneDef = PRODUCTION_ZONES.find((z) => z.key === activeZone)
+      const zoneDef = formZones.find((z) => z.key === activeZone)
       const staffName = kitchenStaff.find((s) => s.id === zoneState.submittedBy)?.name
       showToast(`${zoneDef?.name || activeZone} 生產紀錄已儲存！`)
 
@@ -247,8 +290,17 @@ export default function ProductionLog() {
     }
   }
 
-  const currentZoneDef = PRODUCTION_ZONES.find((z) => z.key === activeZone)!
+  const currentZoneDef = formZones.find((z) => z.key === activeZone) ?? formZones[0]
   const currentState = zoneStates[activeZone] || emptyZoneState()
+
+  if (!currentZoneDef) {
+    return (
+      <div className="page-container">
+        <TopNav title="每日生產紀錄" />
+        <div className="flex items-center justify-center py-20 text-sm text-brand-lotus">載入中...</div>
+      </div>
+    )
+  }
 
   return (
     <div className="page-container">
@@ -265,7 +317,7 @@ export default function ProductionLog() {
       {/* Zone Tab Bar */}
       <div className="overflow-x-auto scrollbar-hide border-b border-gray-100 bg-white">
         <div className="flex min-w-max px-2">
-          {PRODUCTION_ZONES.map((zone) => {
+          {formZones.map((zone) => {
             const isActive = activeZone === zone.key
             const isFilled = filledZones.has(zone.key)
             return (
@@ -302,6 +354,7 @@ export default function ProductionLog() {
             supervisorBy={currentState.supervisorBy}
             onSupervisorByChange={(v) => handleZoneMetaChange(activeZone, 'supervisorBy', v)}
             staff={kitchenStaff}
+            sugarTypes={sugarTypes}
           />
 
           <BottomAction

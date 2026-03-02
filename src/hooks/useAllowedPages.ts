@@ -11,8 +11,8 @@ const STORE_DEFAULTS: Record<string, string[]> = {
 }
 
 const KITCHEN_DEFAULTS: Record<string, string[]> = {
-  full_time: ['expense', 'staff-schedule', 'materials', 'products'],
-  part_time: ['expense', 'staff-schedule'],
+  full_time: ['expense', 'staff-schedule', 'materials', 'products', 'production-log'],
+  part_time: ['expense', 'staff-schedule', 'production-log'],
 }
 
 /**

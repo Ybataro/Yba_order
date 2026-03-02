@@ -1,6 +1,6 @@
 // 每日生產紀錄 — 7 區 18 品項靜態定義
 
-export type FieldType = 'numeric' | 'select' | 'text'
+export type FieldType = 'numeric' | 'select' | 'text' | 'sugar_select'
 
 export interface FieldDef {
   key: string

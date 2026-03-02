@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { TopNav } from '@/components/TopNav'
 import { DateNav } from '@/components/DateNav'
@@ -11,6 +11,8 @@ import { getTodayTW } from '@/lib/session'
 import { formatDualUnit } from '@/lib/utils'
 import { FileText, MessageSquareText, Package } from 'lucide-react'
 import { exportOrderSummaryToPdf } from '@/lib/exportOrderSummaryPdf'
+import { InventoryStockModal } from '@/components/InventoryStockModal'
+import { useStoreSortOrder } from '@/hooks/useStoreSortOrder'
 
 const fixedNoteItems = [
   { id: 'almond1000', label: '杏仁茶瓶 1000ml', unit: '個' },
@@ -37,6 +39,103 @@ export default function OrderSummary() {
   const [productStock, setProductStock] = useState<Record<string, number>>({})
   const [loading, setLoading] = useState(true)
   const [pdfLoading, setPdfLoading] = useState(false)
+
+  // 門店盤點庫存查看
+  const [selectedStoreId, setSelectedStoreId] = useState('')
+  const [storeStock, setStoreStock] = useState<Record<string, number>>({})
+  const [storeStockDate, setStoreStockDate] = useState('')
+  const [storeStockEntries, setStoreStockEntries] = useState<Record<string, { expiryDate: string; quantity: number }[]>>({})
+  const [showStoreStockModal, setShowStoreStockModal] = useState(false)
+  const [storeStockLoading, setStoreStockLoading] = useState(false)
+
+  const bagWeightMap = useMemo(() => {
+    const m: Record<string, number> = {}
+    allProducts.forEach(p => { if (p.bag_weight) m[p.id] = p.bag_weight })
+    return m
+  }, [allProducts])
+
+  const { sortCategories: storeSortCats, sortItems: storeSortItems } = useStoreSortOrder(selectedStoreId || stores[0]?.id || '', 'product')
+
+  const loadStoreInventory = useCallback(async (storeId: string) => {
+    if (!supabase || !storeId) return
+    setStoreStockLoading(true)
+    setStoreStock({})
+    setStoreStockDate('')
+    setStoreStockEntries({})
+
+    try {
+      const { data: sessions } = await supabase
+        .from('inventory_sessions')
+        .select('id, date')
+        .eq('store_id', storeId)
+        .order('date', { ascending: false })
+        .limit(10)
+
+      if (!sessions || sessions.length === 0) {
+        setStoreStockLoading(false)
+        return
+      }
+
+      const uniqueDates = [...new Set(sessions.map(s => s.date))]
+      let items: { product_id: string; on_shelf: number | null; stock: number | null }[] | null = null
+      let foundDate = ''
+      let foundSids: string[] = []
+
+      for (const date of uniqueDates) {
+        const sids = sessions.filter(s => s.date === date).map(s => s.id)
+        const { data } = await supabase
+          .from('inventory_items')
+          .select('product_id, on_shelf, stock')
+          .in('session_id', sids)
+        if (data && data.length > 0) {
+          items = data
+          foundDate = date
+          foundSids = sids
+          break
+        }
+      }
+
+      if (!items || items.length === 0) {
+        setStoreStockLoading(false)
+        return
+      }
+
+      const totals: Record<string, number> = {}
+      items.forEach(item => {
+        const bw = bagWeightMap[item.product_id]
+        const onShelfBags = bw ? (item.on_shelf || 0) / bw : (item.on_shelf || 0)
+        const val = onShelfBags + (item.stock || 0)
+        totals[item.product_id] = Math.round(((totals[item.product_id] || 0) + val) * 100) / 100
+      })
+
+      const { data: seRows } = await supabase
+        .from('inventory_stock_entries')
+        .select('product_id, expiry_date, quantity')
+        .in('session_id', foundSids)
+        .order('expiry_date', { ascending: true })
+
+      const entries: Record<string, { expiryDate: string; quantity: number }[]> = {}
+      seRows?.forEach(r => {
+        if (!entries[r.product_id]) entries[r.product_id] = []
+        entries[r.product_id].push({ expiryDate: r.expiry_date, quantity: r.quantity || 0 })
+      })
+
+      setStoreStock(totals)
+      setStoreStockDate(foundDate)
+      setStoreStockEntries(entries)
+    } catch (err) {
+      console.error('[OrderSummary] Store inventory load failed:', err)
+    }
+    setStoreStockLoading(false)
+  }, [bagWeightMap])
+
+  const handleStoreSelect = (storeId: string) => {
+    setSelectedStoreId(storeId)
+    if (storeId) {
+      loadStoreInventory(storeId)
+      setShowStoreStockModal(true)
+    }
+  }
 
   useEffect(() => {
     if (!supabase) { setLoading(false); return }
@@ -174,6 +273,24 @@ export default function OrderSummary() {
       {/* 日期選擇器 */}
       <DateNav value={selectedDate} onChange={setSelectedDate} />
 
+      {/* 門店盤點庫存查看 */}
+      <div className="px-4 pt-2 pb-1">
+        <div className="flex items-center gap-2">
+          <Package size={16} className="text-brand-mocha shrink-0" />
+          <span className="text-sm font-medium text-brand-oak shrink-0">查看門店庫存</span>
+          <select
+            value={selectedStoreId}
+            onChange={(e) => handleStoreSelect(e.target.value)}
+            className="flex-1 h-9 rounded-lg border border-gray-200 bg-surface-input px-2 text-sm text-brand-oak outline-none focus:border-brand-lotus"
+          >
+            <option value="">選擇門店...</option>
+            {stores.map(s => (
+              <option key={s.id} value={s.id}>{s.name}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+
       {loading ? (
         <div className="flex items-center justify-center py-20 text-sm text-brand-lotus">載入中...</div>
       ) : (
@@ -307,6 +424,20 @@ export default function OrderSummary() {
       </div>
       </>
       )}
+
+      <InventoryStockModal
+        open={showStoreStockModal}
+        onClose={() => setShowStoreStockModal(false)}
+        stock={storeStock}
+        stockDate={storeStockDate}
+        stockEntries={storeStockEntries}
+        products={storeProducts}
+        productCategories={productCategories}
+        sortCategories={storeSortCats}
+        sortItems={storeSortItems}
+        title={`${stores.find(s => s.id === selectedStoreId)?.name || ''} 最新盤點庫存`}
+        loading={storeStockLoading}
+      />
     </div>
   )
 }

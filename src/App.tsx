@@ -59,6 +59,7 @@ const LeaveManagement = lazy(() => import('@/pages/admin/LeaveManagement'))
 const RecipeManager = lazy(() => import('@/pages/admin/RecipeManager'))
 const MenuItemManager = lazy(() => import('@/pages/admin/MenuItemManager'))
 const CostAnalysis = lazy(() => import('@/pages/admin/CostAnalysis'))
+const ProductionZoneManager = lazy(() => import('@/pages/admin/ProductionZoneManager'))
 
 function Loading() {
   return (
@@ -171,6 +172,7 @@ function App() {
                 <Route path="/admin/recipes" element={<RecipeManager />} />
                 <Route path="/admin/menu-items" element={<MenuItemManager />} />
                 <Route path="/admin/cost-analysis" element={<CostAnalysis />} />
+                <Route path="/admin/production-zones" element={<ProductionZoneManager />} />
               </Route>
             </Route>
           </Routes>

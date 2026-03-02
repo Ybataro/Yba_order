@@ -2,6 +2,7 @@ import { AlertTriangle } from 'lucide-react'
 import type { ZoneDef } from '@/data/productionZones'
 import { ProductionFieldInput } from '@/components/ProductionFieldInput'
 import type { StaffMember } from '@/data/staff'
+import type { SugarTypeDef } from '@/stores/useProductionZoneStore'
 
 interface ProductionZoneFormProps {
   zone: ZoneDef
@@ -14,6 +15,7 @@ interface ProductionZoneFormProps {
   supervisorBy: string
   onSupervisorByChange: (value: string) => void
   staff: StaffMember[]
+  sugarTypes?: SugarTypeDef[]
 }
 
 export function ProductionZoneForm({
@@ -27,6 +29,7 @@ export function ProductionZoneForm({
   supervisorBy,
   onSupervisorByChange,
   staff,
+  sugarTypes,
 }: ProductionZoneFormProps) {
   const focusNext = () => {
     const allInputs = document.querySelectorAll<HTMLInputElement>('[data-prodlog]')
@@ -58,6 +61,7 @@ export function ProductionZoneForm({
                 onChange={(v) => onChange(item.key, field.key, v)}
                 onNext={focusNext}
                 dataAttr={`${item.key}_${field.key}`}
+                sugarTypes={sugarTypes}
               />
             ))}
           </div>
