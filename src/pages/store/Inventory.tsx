@@ -606,8 +606,6 @@ export default function Inventory() {
 
     // 先快照 stockEntries，避免 async 過程中 state 變動導致 stale closure
     const stockEntriesSnapshot = JSON.parse(JSON.stringify(stockEntries)) as Record<string, StockEntry[]>
-    console.log('[handleSubmit] submittingRef locked, snapshot:', JSON.stringify(stockEntriesSnapshot))
-
     const success = await submitWithOffline({
       type: 'inventory',
       storeId,
@@ -655,23 +653,14 @@ export default function Inventory() {
         })
       })
       // Stock entries: 先刪除該 session 的所有舊資料，再 insert 新資料（避免 race condition）
-      console.log('[SE] snapshot keys:', Object.keys(stockEntriesSnapshot), 'seInserts:', seInserts.length, JSON.stringify(seInserts))
-      const { error: delErr, count: delCount } = await supabase.from('inventory_stock_entries')
-        .delete({ count: 'exact' }).eq('session_id', sessionId)
-      console.log('[SE] delete done, count:', delCount, 'error:', delErr)
+      const { error: delErr } = await supabase.from('inventory_stock_entries')
+        .delete().eq('session_id', sessionId)
       if (delErr) console.error('[stockEntries] delete error:', delErr)
       if (seInserts.length > 0) {
-        const { error: seErr, data: seData } = await supabase.from('inventory_stock_entries')
-          .insert(seInserts).select()
-        console.log('[SE] insert done, rows:', seData?.length, 'error:', seErr)
+        const { error: seErr } = await supabase.from('inventory_stock_entries')
+          .insert(seInserts)
         if (seErr) console.error('[stockEntries] insert error:', seErr)
-      } else {
-        console.log('[SE] no inserts (seInserts empty)')
       }
-      // 驗證：插入後立即讀取確認
-      const { data: verifyRows } = await supabase.from('inventory_stock_entries')
-        .select('product_id, expiry_date, quantity').eq('session_id', sessionId)
-      console.log('[SE] verify after save:', verifyRows?.length, 'rows', JSON.stringify(verifyRows))
       originalData.current = JSON.parse(JSON.stringify(data))
       originalFrozenData.current = JSON.parse(JSON.stringify(frozenData))
       originalStockEntries.current = JSON.parse(JSON.stringify(stockEntriesSnapshot))
