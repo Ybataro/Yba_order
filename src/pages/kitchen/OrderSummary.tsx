@@ -13,13 +13,7 @@ import { FileText, MessageSquareText, Package } from 'lucide-react'
 import { exportOrderSummaryToPdf } from '@/lib/exportOrderSummaryPdf'
 import { InventoryStockModal } from '@/components/InventoryStockModal'
 import { useStoreSortOrder } from '@/hooks/useStoreSortOrder'
-
-const fixedNoteItems = [
-  { id: 'almond1000', label: '杏仁茶瓶 1000ml', unit: '個' },
-  { id: 'almond300', label: '杏仁茶瓶 300ml', unit: '個' },
-  { id: 'bowlK520', label: 'K520 紙碗', unit: '箱' },
-  { id: 'bowl750', label: '750 紙碗', unit: '箱' },
-]
+import { NOTE_ITEMS } from '@/data/noteItems'
 
 export default function OrderSummary() {
   const { showToast } = useToast()
@@ -254,7 +248,7 @@ export default function OrderSummary() {
         categories: productCategories,
         storeOrders,
         storeNotes,
-        fixedNoteItems,
+        fixedNoteItems: NOTE_ITEMS.map(n => ({ id: n.stateKey, label: n.label, unit: n.unit })),
         productStock,
       })
       showToast('PDF 已下載', 'success')
@@ -400,8 +394,8 @@ export default function OrderSummary() {
             {hasNotes(store.id) && (
               <div className="pl-5">
                 {/* 固定項目 */}
-                {fixedNoteItems.map(item => {
-                  const qty = storeNotes[store.id]?.fixedItems[item.id] || 0
+                {NOTE_ITEMS.map(item => {
+                  const qty = storeNotes[store.id]?.fixedItems[item.stateKey] || 0
                   if (qty === 0) return null
                   return (
                     <div key={item.id} className="flex items-center gap-2 text-sm text-brand-oak py-0.5">

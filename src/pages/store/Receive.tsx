@@ -10,7 +10,8 @@ import { supabase } from '@/lib/supabase'
 import { shipmentSessionId, getTodayTW } from '@/lib/session'
 import { logAudit } from '@/lib/auditLog'
 import { formatDualUnit } from '@/lib/utils'
-import { CheckCircle, AlertTriangle, ArrowRight, RefreshCw, MessageSquare, Package } from 'lucide-react'
+import { NOTE_ITEM_MAP } from '@/data/noteItems'
+import { CheckCircle, AlertTriangle, ArrowRight, RefreshCw, MessageSquare, Package, Truck } from 'lucide-react'
 
 interface ShipmentItem {
   productId: string
@@ -89,22 +90,23 @@ export default function Receive() {
 
         items.forEach(item => {
           const product = productMap.get(item.product_id)
-          if (!product) return
+          const noteItem = NOTE_ITEM_MAP[item.product_id]
+          if (!product && !noteItem) return
           const orderQty = item.order_qty || 0
           const actualQty = item.actual_qty || 0
-          const isExtra = orderQty === 0
+          const isExtra = !noteItem && orderQty === 0
           loaded.push({
             productId: item.product_id,
-            name: product.name,
-            unit: product.unit,
-            category: product.category,
+            name: noteItem?.label || product?.name || item.product_id,
+            unit: noteItem?.unit || product?.unit || '',
+            category: noteItem ? '叫貨備註' : product!.category,
             orderQty,
             actualQty,
             hasDiff: !isExtra && orderQty !== actualQty,
             diff: Math.round((actualQty - orderQty) * 10) / 10,
             isExtra,
-            box_unit: product.box_unit,
-            box_ratio: product.box_ratio,
+            box_unit: noteItem ? undefined : product?.box_unit,
+            box_ratio: noteItem ? undefined : product?.box_ratio,
           })
           loadedConfirmed[item.product_id] = item.received ?? false
         })
@@ -119,7 +121,8 @@ export default function Receive() {
     load()
   }, [storeId, today])
 
-  const regularItems = useMemo(() => shipmentItems.filter(i => !i.isExtra), [shipmentItems])
+  const regularItems = useMemo(() => shipmentItems.filter(i => !i.isExtra && i.category !== '叫貨備註'), [shipmentItems])
+  const noteItems = useMemo(() => shipmentItems.filter(i => i.category === '叫貨備註'), [shipmentItems])
   const extraItems = useMemo(() => shipmentItems.filter(i => i.isExtra), [shipmentItems])
 
   const itemsByCategory = useMemo(() => {
@@ -128,8 +131,10 @@ export default function Receive() {
       const catItems = regularItems.filter(i => i.category === cat)
       if (catItems.length > 0) map.set(cat, catItems)
     }
+    // 備註品項獨立分類
+    if (noteItems.length > 0) map.set('叫貨備註', noteItems)
     return map
-  }, [regularItems, productCategories])
+  }, [regularItems, noteItems, productCategories])
 
   const extraByCategory = useMemo(() => {
     const map = new Map<string, ShipmentItem[]>()
@@ -195,6 +200,13 @@ export default function Receive() {
         <div className="flex items-center gap-1.5 px-4 py-1.5 bg-status-info/10 text-status-info text-xs">
           <RefreshCw size={12} />
           <span>已載入收貨確認紀錄，可修改後重新提交</span>
+        </div>
+      )}
+
+      {!loading && hasShipment && !isEdit && (
+        <div className="flex items-center gap-1.5 px-4 py-2 bg-status-success/10 text-status-success text-sm font-medium">
+          <Truck size={16} />
+          <span>央廚已出貨</span>
         </div>
       )}
 
