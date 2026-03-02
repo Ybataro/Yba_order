@@ -26,6 +26,7 @@ const ProductStock = lazy(() => import('@/pages/kitchen/ProductStock'))
 const MaterialOrder = lazy(() => import('@/pages/kitchen/MaterialOrder'))
 const ProductionSchedule = lazy(() => import('@/pages/kitchen/ProductionSchedule'))
 const KitchenDailyExpense = lazy(() => import('@/pages/kitchen/DailyExpense'))
+const ProductionLog = lazy(() => import('@/pages/kitchen/ProductionLog'))
 const KitchenSchedules = lazy(() => import('@/pages/kitchen/Schedules'))
 
 // Store pages (schedule)
@@ -134,6 +135,7 @@ function App() {
                 <Route path="/kitchen/schedule" element={<ProductionSchedule />} />
                 <Route path="/kitchen/staff-schedule" element={<KitchenSchedules />} />
                 <Route path="/kitchen/expense" element={<KitchenDailyExpense />} />
+                <Route path="/kitchen/production-log" element={<ProductionLog />} />
               </Route>
 
               {/* 排班相關：需 can_schedule 權限（任何角色） */}

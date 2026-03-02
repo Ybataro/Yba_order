@@ -29,6 +29,10 @@ export function productStockSessionId(date: string): string {
   return `kitchen_products_${date}`
 }
 
+export function productionLogSessionId(zoneKey: string, date: string): string {
+  return `prodlog_${zoneKey}_${date}`
+}
+
 // === Taiwan timezone helpers ===
 
 /** YYYY-MM-DD in Asia/Taipei */

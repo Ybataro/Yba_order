@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from 'react'
-import { ClipboardList, Truck, Package, Box, ShoppingCart, LogOut, CalendarClock, UserCircle, Receipt, CalendarDays, Settings, KeyRound } from 'lucide-react'
+import { ClipboardList, Truck, Package, Box, ShoppingCart, LogOut, CalendarClock, UserCircle, Receipt, CalendarDays, Settings, KeyRound, ClipboardCheck } from 'lucide-react'
 import { getTodayString, formatDate } from '@/lib/utils'
 import { useStaffStore } from '@/stores/useStaffStore'
 import NotificationBell from '@/components/NotificationBell'
@@ -17,6 +17,7 @@ const menuItems = [
   { key: 'products', icon: Box, label: '成品庫存', desc: '盤點成品與半成品', path: '/kitchen/products', color: 'bg-brand-blush' },
   { key: 'material-orders', icon: ShoppingCart, label: '原物料叫貨', desc: '向供應商訂購原物料', path: '/kitchen/material-orders', color: 'bg-brand-silver' },
   { key: 'production-schedule', icon: CalendarClock, label: '生產排程建議', desc: '今日/明日生產量與本週概覽', path: '/kitchen/schedule', color: 'bg-brand-oak' },
+  { key: 'production-log', icon: ClipboardCheck, label: '每日生產紀錄', desc: '記錄各區每日生產數據', path: '/kitchen/production-log', color: 'bg-brand-blush' },
   { key: 'expense', icon: Receipt, label: '雜支申報', desc: '記錄日常雜支費用', path: '/kitchen/expense', color: 'bg-brand-camel' },
   { key: 'staff-schedule', icon: CalendarDays, label: '排班表', desc: '查看/編輯央廚員工排班', path: '/kitchen/staff-schedule', color: 'bg-brand-amber' },
 ]
