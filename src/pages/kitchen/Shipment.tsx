@@ -390,39 +390,46 @@ export default function Shipment() {
       }
     })
 
-    // 從 DB 即時讀取現有的 received 狀態 + 門店是否已收貨確認
-    const [{ data: existingItems }, { data: sessionData }] = await Promise.all([
-      supabase.from('shipment_items').select('product_id, received').eq('session_id', sid),
-      supabase.from('shipment_sessions').select('received_at').eq('id', sid).maybeSingle(),
-    ])
-
-    const receivedMap: Record<string, boolean> = {}
-    if (existingItems) {
-      existingItems.forEach(item => {
-        receivedMap[item.product_id] = item.received || false
-      })
-    }
+    // 從 DB 即時讀取門店是否已收貨確認
+    const { data: sessionData } = await supabase
+      .from('shipment_sessions').select('received_at').eq('id', sid).maybeSingle()
     const storeHasConfirmed = !!sessionData?.received_at
 
-    // Delete old + Insert new（保留 received 狀態）
-    await supabase.from('shipment_items').delete().eq('session_id', sid)
-
+    // 央廚打勾 = confirmed state；門店已確認收貨 → 全部 received=true
+    const currentConfirmed = confirmed[activeStore] || {}
+    const currentNoteConfirmed = noteConfirmed[activeStore] || {}
     const shipItemsWithReceived = shipItems.map(item => ({
       ...item,
-      // 門店已確認收貨 → 全部 received=true（差異用備註提醒，不影響 received）
-      received: storeHasConfirmed ? true : (receivedMap[item.product_id] || false),
+      received: storeHasConfirmed ? true : (
+        item.product_id.startsWith('note_')
+          ? (currentNoteConfirmed[item.product_id] || false)
+          : (currentConfirmed[item.product_id] || false)
+      ),
     }))
 
+    // 安全模式：upsert + 刪除多餘（避免 DELETE 成功但 INSERT 失敗導致資料遺失）
     if (shipItemsWithReceived.length > 0) {
-      const { error: itemErr } = await supabase
+      const { error: upsertErr } = await supabase
         .from('shipment_items')
-        .insert(shipItemsWithReceived)
+        .upsert(shipItemsWithReceived, { onConflict: 'session_id,product_id' })
 
-      if (itemErr) {
-        showToast('提交失敗：' + itemErr.message, 'error')
+      if (upsertErr) {
+        showToast('提交失敗：' + upsertErr.message, 'error')
         setSubmitting(false)
         return
       }
+      // 刪除不在新列表中的舊品項
+      const newProductIds = new Set(shipItemsWithReceived.map(i => i.product_id))
+      const { data: existingItems } = await supabase
+        .from('shipment_items')
+        .select('id, product_id')
+        .eq('session_id', sid)
+      const toDelete = existingItems?.filter(e => !newProductIds.has(e.product_id))?.map(e => e.id) || []
+      if (toDelete.length > 0) {
+        await supabase.from('shipment_items').delete().in('id', toDelete)
+      }
+    } else {
+      await supabase.from('shipment_items').delete().eq('session_id', sid)
     }
 
     const staffName = kitchenStaff.find(s => s.id === confirmBy)?.name

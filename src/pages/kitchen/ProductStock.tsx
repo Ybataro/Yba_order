@@ -13,6 +13,7 @@ import { formatDate } from '@/lib/utils'
 import { Save, UserCheck, RefreshCw, ChevronDown, ChevronUp } from 'lucide-react'
 import { sendTelegramNotification } from '@/lib/telegram'
 import { useStaffStore } from '@/stores/useStaffStore'
+import { logAudit } from '@/lib/auditLog'
 import { StockEntryPanel, type StockEntry } from '@/components/StockEntryPanel'
 import { useStoreSortOrder } from '@/hooks/useStoreSortOrder'
 import { buildSortedByCategory } from '@/lib/sortByStore'
@@ -56,6 +57,7 @@ export default function ProductStock() {
   })
 
   const [submitting, setSubmitting] = useState(false)
+  const submittingRef = useRef(false)
   const [isEdit, setIsEdit] = useState(false)
   const [loading, setLoading] = useState(true)
 
@@ -155,6 +157,7 @@ export default function ProductStock() {
   }, [])
 
   const doSubmit = async () => {
+    if (submittingRef.current) return
     if (!confirmBy) {
       showToast('請先選擇盤點人員', 'error')
       return
@@ -165,6 +168,7 @@ export default function ProductStock() {
       return
     }
 
+    submittingRef.current = true
     setSubmitting(true)
 
     const { error: sessionErr } = await supabase
@@ -178,17 +182,12 @@ export default function ProductStock() {
 
     if (sessionErr) {
       showToast('提交失敗：' + sessionErr.message, 'error')
+      submittingRef.current = false
       setSubmitting(false)
       return
     }
 
-    // Delete all existing items first, then insert only non-empty ones
-    // This ensures cleared values are actually removed from DB
-    await supabase
-      .from('product_stock_items')
-      .delete()
-      .eq('session_id', sessionId)
-
+    // Save stock items: upsert + 刪除多餘（安全模式）
     const items = storeProducts
       .filter(p => stock[p.id] !== '')
       .map(p => ({
@@ -198,23 +197,33 @@ export default function ProductStock() {
       }))
 
     if (items.length > 0) {
-      const { error: itemErr } = await supabase
+      const { error: upsertItemErr } = await supabase
         .from('product_stock_items')
-        .insert(items)
+        .upsert(items, { onConflict: 'session_id,product_id' })
 
-      if (itemErr) {
-        showToast('提交失敗：' + itemErr.message, 'error')
+      if (upsertItemErr) {
+        showToast('提交失敗：' + upsertItemErr.message, 'error')
+        submittingRef.current = false
         setSubmitting(false)
         return
       }
+      // 刪除不在新列表中的舊品項
+      const newItemIds = new Set(items.map(i => i.product_id))
+      const { data: existingItems } = await supabase
+        .from('product_stock_items')
+        .select('id, product_id')
+        .eq('session_id', sessionId)
+      const itemsToDelete = existingItems?.filter(e => !newItemIds.has(e.product_id))?.map(e => e.id) || []
+      if (itemsToDelete.length > 0) {
+        await supabase.from('product_stock_items').delete().in('id', itemsToDelete)
+      }
+    } else {
+      // 全部清空
+      await supabase.from('product_stock_items').delete().eq('session_id', sessionId)
     }
 
-    // Save stock entries (到期日批次): delete + insert
-    await supabase
-      .from('product_stock_entries')
-      .delete()
-      .eq('session_id', sessionId)
-
+    // Save stock entries (到期日批次): upsert + 刪除多餘（安全模式）
+    // 避免 DELETE 成功但 INSERT 失敗導致到期日資料全部遺失
     const seInserts: { session_id: string; product_id: string; expiry_date: string; quantity: number }[] = []
     Object.entries(stockEntries).forEach(([pid, entries]) => {
       entries.forEach((e) => {
@@ -228,14 +237,64 @@ export default function ProductStock() {
         }
       })
     })
+
+    let seUpsertOk = false
+    let seDeletedCount = 0
+    let seVerifyCount = -1
+
     if (seInserts.length > 0) {
-      await supabase.from('product_stock_entries').insert(seInserts)
+      const { error: upsertErr } = await supabase
+        .from('product_stock_entries')
+        .upsert(seInserts, { onConflict: 'session_id,product_id,expiry_date' })
+
+      if (upsertErr) {
+        console.error('[productStockEntries] upsert error:', upsertErr)
+        showToast('到期日資料儲存失敗，請重新提交', 'error')
+      } else {
+        seUpsertOk = true
+        // 刪除不在新列表中的舊行
+        const { data: existing } = await supabase
+          .from('product_stock_entries')
+          .select('id, product_id, expiry_date')
+          .eq('session_id', sessionId)
+        const newKeys = new Set(seInserts.map(i => `${i.product_id}|${i.expiry_date}`))
+        const toDelete = existing?.filter(e => !newKeys.has(`${e.product_id}|${e.expiry_date}`))?.map(e => e.id) || []
+        if (toDelete.length > 0) {
+          await supabase.from('product_stock_entries').delete().in('id', toDelete)
+        }
+        seDeletedCount = toDelete.length
+        // 驗證：讀回確認筆數正確
+        const { data: verifyRows } = await supabase
+          .from('product_stock_entries')
+          .select('id')
+          .eq('session_id', sessionId)
+        seVerifyCount = verifyRows?.length ?? -1
+        if (seVerifyCount !== seInserts.length) {
+          showToast(`到期日資料筆數異常（預期 ${seInserts.length}，實際 ${seVerifyCount}），請檢查後重新提交`, 'error')
+        }
+      }
+    } else {
+      // 無到期日資料 → 清空該 session 的所有 stock entries
+      seUpsertOk = true
+      await supabase.from('product_stock_entries').delete().eq('session_id', sessionId)
     }
+
+    // Audit log：記錄 stock entries 操作結果
+    logAudit('product_stock_entries_save', 'kitchen', sessionId, {
+      staffId: confirmBy,
+      insertCount: seInserts.length,
+      upsertOk: seUpsertOk,
+      deletedCount: seDeletedCount,
+      verifyCount: seVerifyCount,
+      mismatch: seVerifyCount !== -1 && seVerifyCount !== seInserts.length,
+    })
+
     originalStockEntries.current = JSON.parse(JSON.stringify(stockEntries))
 
     const staffName = kitchenStaff.find(s => s.id === confirmBy)?.name
     const itemCount = storeProducts.filter(p => stock[p.id] !== '').length
     setIsEdit(true)
+    submittingRef.current = false
     setSubmitting(false)
     showToast(`成品庫存已儲存！盤點人：${staffName}`)
     sendTelegramNotification(
