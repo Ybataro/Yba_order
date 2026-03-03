@@ -16,6 +16,7 @@ export interface Recipe {
   notes: string
   sort_order: number
   serving_units: ServingUnit[]
+  category: string
   ingredients: RecipeIngredient[]
 }
 

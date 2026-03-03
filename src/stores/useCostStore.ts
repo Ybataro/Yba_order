@@ -5,6 +5,7 @@ import type { Recipe, RecipeIngredient, MenuItem, MenuItemIngredient } from '@/l
 interface CostState {
   recipes: Recipe[]
   menuItems: MenuItem[]
+  recipeCategories: string[]
   loading: boolean
   initialized: boolean
   initialize: () => Promise<void>
@@ -13,6 +14,12 @@ interface CostState {
   updateRecipe: (id: string, partial: Partial<Omit<Recipe, 'ingredients'>>) => void
   removeRecipe: (id: string) => void
   setRecipeIngredients: (recipeId: string, ingredients: RecipeIngredient[]) => void
+  // Recipe Category CRUD
+  addRecipeCategory: (name: string) => void
+  renameRecipeCategory: (oldName: string, newName: string) => void
+  deleteRecipeCategory: (name: string) => void
+  reorderRecipeCategories: (fromIdx: number, toIdx: number) => void
+  reorderRecipe: (recipeId: string, direction: 'up' | 'down') => void
   // MenuItem CRUD
   addMenuItem: (item: MenuItem) => void
   updateMenuItem: (id: string, partial: Partial<Omit<MenuItem, 'ingredients'>>) => void
@@ -48,6 +55,7 @@ function buildMenuIngRow(mii: MenuItemIngredient) {
 export const useCostStore = create<CostState>()((set, get) => ({
   recipes: [],
   menuItems: [],
+  recipeCategories: ['未分類'],
   loading: false,
   initialized: false,
 
@@ -55,12 +63,18 @@ export const useCostStore = create<CostState>()((set, get) => ({
     if (get().initialized || !supabase) return
     set({ loading: true })
 
-    const [recipeRes, riRes, miRes, miiRes] = await Promise.all([
+    const [recipeRes, riRes, miRes, miiRes, catRes] = await Promise.all([
       supabase.from('recipes').select('*').order('sort_order'),
       supabase.from('recipe_ingredients').select('*').order('sort_order'),
       supabase.from('menu_items').select('*').order('sort_order'),
       supabase.from('menu_item_ingredients').select('*').order('sort_order'),
+      supabase.from('categories').select('*').eq('scope', 'recipe').order('sort_order'),
     ])
+
+    const dbCategories = (catRes.data ?? []).map((c) => c.name as string)
+    const recipeCategories = dbCategories.length > 0 ? dbCategories : ['未分類']
+    // 確保「未分類」永遠存在
+    if (!recipeCategories.includes('未分類')) recipeCategories.push('未分類')
 
     const recipes: Recipe[] = (recipeRes.data ?? []).map((r) => ({
       id: r.id,
@@ -73,6 +87,7 @@ export const useCostStore = create<CostState>()((set, get) => ({
       notes: r.notes ?? '',
       sort_order: r.sort_order ?? 0,
       serving_units: Array.isArray(r.serving_units) ? r.serving_units : [],
+      category: r.category ?? '未分類',
       ingredients: (riRes.data ?? [])
         .filter((ri) => ri.recipe_id === r.id)
         .map((ri) => ({
@@ -107,7 +122,7 @@ export const useCostStore = create<CostState>()((set, get) => ({
         })),
     }))
 
-    set({ recipes, menuItems, loading: false, initialized: true })
+    set({ recipes, menuItems, recipeCategories, loading: false, initialized: true })
   },
 
   // ─── Recipe ───
@@ -127,6 +142,7 @@ export const useCostStore = create<CostState>()((set, get) => ({
         notes: recipe.notes,
         sort_order: recipe.sort_order,
         serving_units: recipe.serving_units,
+        category: recipe.category,
       }).then(({ error }) => {
         if (error) { console.error('addRecipe error:', error); return }
         if (recipe.ingredients.length > 0) {
@@ -153,6 +169,7 @@ export const useCostStore = create<CostState>()((set, get) => ({
       if (partial.notes !== undefined) db.notes = partial.notes
       if (partial.sort_order !== undefined) db.sort_order = partial.sort_order
       if (partial.serving_units !== undefined) db.serving_units = partial.serving_units
+      if (partial.category !== undefined) db.category = partial.category
       if (Object.keys(db).length > 0) {
         supabase.from('recipes').update(db).eq('id', id).then()
       }
@@ -183,6 +200,82 @@ export const useCostStore = create<CostState>()((set, get) => ({
               .then(({ error: e2 }) => { if (e2) console.error('insertRecipeIngredients error:', e2) })
           }
         })
+    }
+  },
+
+  // ─── Recipe Category ───
+
+  addRecipeCategory: (name) => {
+    set((s) => ({ recipeCategories: [...s.recipeCategories, name] }))
+    if (supabase) {
+      supabase.from('categories').insert({
+        scope: 'recipe',
+        name,
+        sort_order: get().recipeCategories.length - 1,
+      }).then()
+    }
+  },
+
+  renameRecipeCategory: (oldName, newName) => {
+    set((s) => ({
+      recipeCategories: s.recipeCategories.map((c) => (c === oldName ? newName : c)),
+      recipes: s.recipes.map((r) => (r.category === oldName ? { ...r, category: newName } : r)),
+    }))
+    if (supabase) {
+      supabase.from('categories').update({ name: newName }).eq('scope', 'recipe').eq('name', oldName).then()
+      supabase.from('recipes').update({ category: newName }).eq('category', oldName).then()
+    }
+  },
+
+  deleteRecipeCategory: (name) => {
+    set((s) => ({
+      recipeCategories: s.recipeCategories.filter((c) => c !== name),
+      recipes: s.recipes.map((r) => (r.category === name ? { ...r, category: '未分類' } : r)),
+    }))
+    if (supabase) {
+      supabase.from('categories').delete().eq('scope', 'recipe').eq('name', name).then()
+      supabase.from('recipes').update({ category: '未分類' }).eq('category', name).then()
+    }
+  },
+
+  reorderRecipeCategories: (fromIdx, toIdx) => {
+    set((s) => {
+      const arr = [...s.recipeCategories]
+      const [moved] = arr.splice(fromIdx, 1)
+      arr.splice(toIdx, 0, moved)
+      return { recipeCategories: arr }
+    })
+    if (supabase) {
+      const sb = supabase
+      const cats = get().recipeCategories
+      const updates = cats.map((name, i) =>
+        sb.from('categories').update({ sort_order: i }).eq('scope', 'recipe').eq('name', name)
+      )
+      Promise.all(updates).then()
+    }
+  },
+
+  reorderRecipe: (recipeId, direction) => {
+    const { recipes } = get()
+    const recipe = recipes.find((r) => r.id === recipeId)
+    if (!recipe) return
+    const sameCat = recipes.filter((r) => r.category === recipe.category).sort((a, b) => a.sort_order - b.sort_order)
+    const idx = sameCat.findIndex((r) => r.id === recipeId)
+    const swapIdx = direction === 'up' ? idx - 1 : idx + 1
+    if (swapIdx < 0 || swapIdx >= sameCat.length) return
+    const other = sameCat[swapIdx]
+    const myOrder = recipe.sort_order
+    const otherOrder = other.sort_order
+    set((s) => ({
+      recipes: s.recipes.map((r) => {
+        if (r.id === recipeId) return { ...r, sort_order: otherOrder }
+        if (r.id === other.id) return { ...r, sort_order: myOrder }
+        return r
+      }),
+    }))
+    if (supabase) {
+      supabase.from('recipes').update({ sort_order: otherOrder }).eq('id', recipeId).then()
+      supabase.from('recipes').update({ sort_order: myOrder }).eq('id', other.id).then()
     }
   },
 
