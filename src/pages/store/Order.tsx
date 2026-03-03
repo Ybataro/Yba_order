@@ -15,7 +15,7 @@ import { submitWithOffline } from '@/lib/submitWithOffline'
 import { logAudit } from '@/lib/auditLog'
 import { formatDate } from '@/lib/utils'
 import { fetchWeather, type WeatherData, type WeatherCondition } from '@/lib/weather'
-import { Send, Lightbulb, Sun, CloudRain, Cloud, CloudSun, Thermometer, Droplets, TrendingUp, TrendingDown, Lock, RefreshCw, History, AlertTriangle, Package } from 'lucide-react'
+import { Send, Lightbulb, Sun, CloudRain, Cloud, CloudSun, Thermometer, Droplets, TrendingUp, TrendingDown, RefreshCw, History, AlertTriangle, Package } from 'lucide-react'
 import { InventoryStockModal } from '@/components/InventoryStockModal'
 import { useStoreSortOrder } from '@/hooks/useStoreSortOrder'
 import { buildSortedByCategory } from '@/lib/sortByStore'
@@ -134,7 +134,6 @@ export default function Order() {
   const [bowl750, setBowl750] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [isEdit, setIsEdit] = useState(false)
-  const [locked, setLocked] = useState(false)
   const [loading, setLoading] = useState(true)
 
   // 天氣資料
@@ -152,7 +151,7 @@ export default function Order() {
     storeProducts.forEach(p => { init[p.id] = '' })
     setOrders(init)
     setAlmond1000(''); setAlmond300(''); setBowlK520(''); setBowl750('')
-    setNote(''); setIsEdit(false); setLocked(false)
+    setNote(''); setIsEdit(false)
     setLoading(true)
     supabase
       .from('order_sessions')
@@ -162,8 +161,6 @@ export default function Order() {
       .then(({ data: session }) => {
         if (!session) { setLoading(false); return }
         setIsEdit(true)
-        // 只鎖定目前正在生產的叫貨單（昨日），歷史資料可自由編輯
-        if (isPastDeadline(session.deadline) && orderDate >= getYesterdayTW()) setLocked(true)
         setAlmond1000(session.almond_1000 || '')
         setAlmond300(session.almond_300 || '')
         setBowlK520(session.bowl_k520 || '')
@@ -700,7 +697,6 @@ export default function Order() {
   }, [storeId, selectedDate, impactMap, stock, stockLoading, bagWeightMap, inventoryIdMap])
 
   const applyAllSuggestions = () => {
-    if (locked) return
     const newOrders: Record<string, string> = {}
     storeProducts.forEach(p => {
       newOrders[p.id] = suggested[p.id] > 0 ? String(suggested[p.id]) : ''
@@ -728,7 +724,6 @@ export default function Order() {
   }
 
   const handleSubmit = async () => {
-    if (locked) return
     if (!storeId) return
 
     setSubmitting(true)
@@ -805,15 +800,8 @@ export default function Order() {
       )}
 
       {/* Locked banner */}
-      {locked && (
-        <div className="flex items-center gap-1.5 px-4 py-2 bg-status-danger/10 text-status-danger text-xs">
-          <Lock size={12} />
-          <span>已超過修改截止時間（隔日 08:00），此叫貨單為唯讀</span>
-        </div>
-      )}
-
       {/* Edit badge */}
-      {isEdit && !locked && (
+      {isEdit && (
         <div className="flex items-center gap-1.5 px-4 py-1.5 bg-status-info/10 text-status-info text-xs">
           <RefreshCw size={12} />
           <span>已載入 {formatDate(selectedDate)} 叫貨紀錄，修改後可重新提交</span>
@@ -889,11 +877,9 @@ export default function Order() {
             <span>{isRestDayEve ? '建議量已結合近7日實際用量 + 天氣 + 安全庫存（×2 央廚休息日備量）· 點擊建議數字查看明細' : '建議量已結合近7日實際用量 + 天氣 + 安全庫存計算 · 點擊建議數字查看明細'}</span>
           </div>
 
-          {!locked && (
-            <div className="mx-4 mb-3">
-              <button onClick={applyAllSuggestions} className="btn-secondary !h-9 !text-sm">一鍵套用全部建議量</button>
-            </div>
-          )}
+          <div className="mx-4 mb-3">
+            <button onClick={applyAllSuggestions} className="btn-secondary !h-9 !text-sm">一鍵套用全部建議量</button>
+          </div>
 
           <div className="flex items-center px-4 py-1 bg-surface-section text-[11px] text-brand-lotus border-b border-gray-100">
             <span className="flex-1">品項</span>
@@ -929,14 +915,13 @@ export default function Order() {
                       <div className="w-[110px] shrink-0 flex justify-center">
                         <DualUnitInput
                           value={orders[product.id]}
-                          onChange={(v) => !locked && setOrders(prev => ({ ...prev, [product.id]: v }))}
+                          onChange={(v) => setOrders(prev => ({ ...prev, [product.id]: v }))}
                           unit={product.unit}
                           box_unit={product.box_unit}
                           box_ratio={product.box_ratio}
                           isFilled
                           onNext={focusNext}
                           data-ord=""
-                          disabled={locked}
                           className={product.wideInput ? 'input-wide' : undefined}
                         />
                       </div>
@@ -996,43 +981,38 @@ export default function Order() {
               <span className="text-sm text-brand-oak shrink-0">杏仁茶瓶</span>
               <div className="flex items-center gap-1">
                 <span className="text-xs text-brand-lotus">1000ml</span>
-                <NumericInput value={almond1000} onChange={(v) => !locked && setAlmond1000(v)} unit="個" isFilled disabled={locked} />
+                <NumericInput value={almond1000} onChange={(v) => setAlmond1000(v)} unit="個" isFilled />
               </div>
               <div className="flex items-center gap-1">
                 <span className="text-xs text-brand-lotus">300ml</span>
-                <NumericInput value={almond300} onChange={(v) => !locked && setAlmond300(v)} unit="個" isFilled disabled={locked} />
+                <NumericInput value={almond300} onChange={(v) => setAlmond300(v)} unit="個" isFilled />
               </div>
             </div>
             <div className="flex items-center gap-3 mb-3">
               <span className="text-sm text-brand-oak shrink-0">紙碗</span>
               <div className="flex items-center gap-1">
                 <span className="text-xs text-brand-lotus">K520</span>
-                <NumericInput value={bowlK520} onChange={(v) => !locked && setBowlK520(v)} unit="箱" isFilled disabled={locked} />
+                <NumericInput value={bowlK520} onChange={(v) => setBowlK520(v)} unit="箱" isFilled />
               </div>
               <div className="flex items-center gap-1">
                 <span className="text-xs text-brand-lotus">750</span>
-                <NumericInput value={bowl750} onChange={(v) => !locked && setBowl750(v)} unit="箱" isFilled disabled={locked} />
+                <NumericInput value={bowl750} onChange={(v) => setBowl750(v)} unit="箱" isFilled />
               </div>
             </div>
             <div className="mt-2">
               <label className="text-sm text-brand-lotus block mb-1.5">其他備註</label>
-              <textarea value={note} onChange={e => !locked && setNote(e.target.value)} placeholder="有特殊需求請在此備註..."
+              <textarea value={note} onChange={e => setNote(e.target.value)} placeholder="有特殊需求請在此備註..."
                 className="w-full h-20 rounded-input p-3 text-sm outline-none border border-gray-200 focus:border-brand-lotus resize-none"
-                style={{ backgroundColor: 'var(--color-input-bg)' }}
-                disabled={locked} />
+                style={{ backgroundColor: 'var(--color-input-bg)' }} />
             </div>
           </div>
 
-          {locked ? (
-            <BottomAction label="已鎖定（超過隔日 08:00）" onClick={() => {}} icon={<Lock size={18} />} disabled />
-          ) : (
-            <BottomAction
-              label={submitting ? '提交中...' : isEdit ? '更新叫貨單' : '提交叫貨單（隔日到貨）'}
-              onClick={handleSubmit}
-              icon={<Send size={18} />}
-              disabled={submitting}
-            />
-          )}
+          <BottomAction
+            label={submitting ? '提交中...' : isEdit ? '更新叫貨單' : '提交叫貨單（隔日到貨）'}
+            onClick={handleSubmit}
+            icon={<Send size={18} />}
+            disabled={submitting}
+          />
         </>
       )}
 
