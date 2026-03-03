@@ -72,6 +72,7 @@ export const useCostStore = create<CostState>()((set, get) => ({
       store_product_id: r.store_product_id ?? null,
       notes: r.notes ?? '',
       sort_order: r.sort_order ?? 0,
+      serving_units: Array.isArray(r.serving_units) ? r.serving_units : [],
       ingredients: (riRes.data ?? [])
         .filter((ri) => ri.recipe_id === r.id)
         .map((ri) => ({
@@ -125,6 +126,7 @@ export const useCostStore = create<CostState>()((set, get) => ({
         store_product_id: recipe.store_product_id ?? null,
         notes: recipe.notes,
         sort_order: recipe.sort_order,
+        serving_units: recipe.serving_units,
       }).then(({ error }) => {
         if (error) { console.error('addRecipe error:', error); return }
         if (recipe.ingredients.length > 0) {
@@ -150,6 +152,7 @@ export const useCostStore = create<CostState>()((set, get) => ({
       if (partial.store_product_id !== undefined) db.store_product_id = partial.store_product_id ?? null
       if (partial.notes !== undefined) db.notes = partial.notes
       if (partial.sort_order !== undefined) db.sort_order = partial.sort_order
+      if (partial.serving_units !== undefined) db.serving_units = partial.serving_units
       if (Object.keys(db).length > 0) {
         supabase.from('recipes').update(db).eq('id', id).then()
       }

@@ -68,12 +68,39 @@ export default function Inventory() {
   }, [FROZEN_PRODUCTS])
 
   // Build bag_weight lookup from all products (allZoneProducts includes all filtered products)
+  // 也將 parent 的 bag_weight 傳播到 linkedInventoryIds（子品項可能沒有單獨設 bag_weight）
   const bagWeightMap = useMemo(() => {
     const m: Record<string, number> = {}
     allZoneProducts.forEach(p => { if (p.bag_weight) m[p.id] = p.bag_weight })
+    allZoneProducts.forEach(p => {
+      if (p.bag_weight && p.linkedInventoryIds?.length) {
+        p.linkedInventoryIds.forEach(id => { if (!m[id]) m[id] = p.bag_weight! })
+      }
+    })
     return m
   }, [allZoneProducts])
   const hasBagWeightItems = useMemo(() => storeProducts.some(p => !!p.bag_weight), [storeProducts])
+
+  // inventoryIdMap: 每個品項的 ID 列表（自身 + linkedInventoryIds），用於加總關聯品項
+  const inventoryIdMap = useMemo(() => {
+    const m: Record<string, string[]> = {}
+    allZoneProducts.forEach(p => {
+      const ids = [p.id]
+      if (p.linkedInventoryIds?.length) {
+        p.linkedInventoryIds.forEach(id => { if (!ids.includes(id)) ids.push(id) })
+      }
+      m[p.id] = ids
+    })
+    return m
+  }, [allZoneProducts])
+
+  // 純聚合品項：linkable=false 且有關聯其他品項 → 唯讀（如芋圓總、白玉總、蔗片冰1F+2F）
+  // linkable=true 的品項（如蔗片冰1F）雖有 linkedInventoryIds 但仍需手動輸入
+  const isAggregateItem = useCallback((productId: string): boolean => {
+    const p = allZoneProducts.find(item => item.id === productId)
+    if (!p) return false
+    return !p.linkable && (p.linkedInventoryIds?.length ?? 0) > 0
+  }, [allZoneProducts])
 
   const hasMultipleZones = storeZones.length > 1
   const isMergedView = hasMultipleZones && !currentZone
@@ -455,6 +482,37 @@ export default function Inventory() {
     return data[productId] ?? { onShelf: '', stock: '', discarded: '' }
   }, [data, isMergedView, mergedData])
 
+  // 計算關聯品項的總計（架上/bag_weight + 庫存），用於 蔗片冰(1F+2F) 等聚合品項
+  const getLinkedTotal = useCallback((productId: string): number | null => {
+    const ids = inventoryIdMap[productId] || [productId]
+    const source = isMergedView ? mergedData : data
+    let sum = 0, found = false
+    for (const id of ids) {
+      const e = source[id]
+      if (e && (e.onShelf !== '' || e.stock !== '')) {
+        const bw = bagWeightMap[id]
+        const onShelfVal = parseFloat(e.onShelf) || 0
+        const stockVal = parseFloat(e.stock) || 0
+        sum += (bw ? onShelfVal / bw : onShelfVal) + stockVal
+        found = true
+      }
+    }
+    return found ? Math.round(sum * 100) / 100 : null
+  }, [inventoryIdMap, isMergedView, mergedData, data, bagWeightMap])
+
+  // 計算關聯品項的前日用量加總
+  const getLinkedPrevUsage = useCallback((productId: string): number | undefined => {
+    const ids = inventoryIdMap[productId] || [productId]
+    // 如果自身有數據就直接用
+    if (prevUsage[productId] !== undefined) return prevUsage[productId]
+    // 否則嘗試加總關聯品項
+    let sum = 0, found = false
+    for (const id of ids) {
+      if (prevUsage[id] !== undefined) { sum += prevUsage[id]; found = true }
+    }
+    return found ? Math.round(sum * 10) / 10 : undefined
+  }, [inventoryIdMap, prevUsage])
+
   const updateField = useCallback((productId: string, field: keyof InventoryEntry, value: string) => {
     setData(prev => ({
       ...prev,
@@ -473,10 +531,11 @@ export default function Inventory() {
 
   const completedCount = useMemo(() => {
     return storeProducts.filter(p => {
+      if (isAggregateItem(p.id)) return getLinkedTotal(p.id) != null
       const e = getEntry(p.id)
       return e.onShelf !== '' || e.stock !== '' || e.discarded !== ''
     }).length
-  }, [data, storeProducts, getEntry])
+  }, [data, storeProducts, getEntry, isAggregateItem, getLinkedTotal])
 
   const { sortCategories, sortItems } = useStoreSortOrder(storeId || '', 'product')
   const productsByCategory = useMemo(() =>
@@ -500,10 +559,11 @@ export default function Inventory() {
 
   const getCategoryCompleted = useCallback((products: typeof storeProducts) => {
     return products.filter(p => {
+      if (isAggregateItem(p.id)) return getLinkedTotal(p.id) != null
       const e = getEntry(p.id)
       return e.onShelf !== '' || e.stock !== '' || e.discarded !== ''
     }).length
-  }, [data, getEntry])
+  }, [data, getEntry, isAggregateItem, getLinkedTotal])
 
   // Supply tracker (其他區)
   const {
@@ -545,8 +605,9 @@ export default function Inventory() {
     if (submittingRef.current) return
     submittingRef.current = true
 
-    // 防呆：庫存欄必填
+    // 防呆：庫存欄必填（聚合品項跳過，其數據由子品項加總）
     const missingStock = storeProducts.filter(p => {
+      if (isAggregateItem(p.id)) return false
       const e = getEntry(p.id)
       return e.stock === ''
     })
@@ -637,7 +698,7 @@ export default function Inventory() {
       }
       // Save supply tracker (其他區)
       await saveSupplyData(staffId)
-      // Save stock entries (到期日批次): upsert + 刪除多餘
+      // Save stock entries (到期日批次): upsert + 刪除多餘（安全模式）
       // 用快照避免 stale closure
       const seInserts: { session_id: string; product_id: string; expiry_date: string; quantity: number }[] = []
       Object.entries(stockEntriesSnapshot).forEach(([pid, entries]) => {
@@ -652,15 +713,55 @@ export default function Inventory() {
           }
         })
       })
-      // Stock entries: 先刪除該 session 的所有舊資料，再 insert 新資料（避免 race condition）
-      const { error: delErr } = await supabase.from('inventory_stock_entries')
-        .delete().eq('session_id', sessionId)
-      if (delErr) console.error('[stockEntries] delete error:', delErr)
+      // 安全模式：先 upsert 新資料 → 成功後才刪除不在新列表中的舊行
+      // 避免 DELETE 成功但 INSERT 失敗導致到期日資料全部遺失
+      let seUpsertOk = false
+      let seDeletedCount = 0
+      let seVerifyCount = -1
       if (seInserts.length > 0) {
-        const { error: seErr } = await supabase.from('inventory_stock_entries')
-          .insert(seInserts)
-        if (seErr) console.error('[stockEntries] insert error:', seErr)
+        const { error: upsertErr } = await supabase
+          .from('inventory_stock_entries')
+          .upsert(seInserts, { onConflict: 'session_id,product_id,expiry_date' })
+        if (upsertErr) {
+          console.error('[stockEntries] upsert error:', upsertErr)
+          showToast('到期日資料儲存失敗，請重新提交', 'error')
+        } else {
+          seUpsertOk = true
+          // 刪除不在新列表中的舊行
+          const { data: existing } = await supabase
+            .from('inventory_stock_entries')
+            .select('id, product_id, expiry_date')
+            .eq('session_id', sessionId)
+          const newKeys = new Set(seInserts.map(i => `${i.product_id}|${i.expiry_date}`))
+          const toDelete = existing?.filter(e => !newKeys.has(`${e.product_id}|${e.expiry_date}`))?.map(e => e.id) || []
+          if (toDelete.length > 0) {
+            await supabase.from('inventory_stock_entries').delete().in('id', toDelete)
+          }
+          seDeletedCount = toDelete.length
+          // 驗證：讀回確認筆數正確
+          const { data: verifyRows } = await supabase
+            .from('inventory_stock_entries')
+            .select('id')
+            .eq('session_id', sessionId)
+          seVerifyCount = verifyRows?.length ?? -1
+          if (seVerifyCount !== seInserts.length) {
+            showToast(`到期日資料筆數異常（預期 ${seInserts.length}，實際 ${seVerifyCount}），請檢查後重新提交`, 'error')
+          }
+        }
+      } else {
+        // 無到期日資料 → 清空該 session 的所有 stock entries
+        seUpsertOk = true
+        await supabase.from('inventory_stock_entries').delete().eq('session_id', sessionId)
       }
+      // Audit log：記錄 stock entries 操作結果
+      logAudit('stock_entries_save', storeId, sessionId, {
+        staffId,
+        insertCount: seInserts.length,
+        upsertOk: seUpsertOk,
+        deletedCount: seDeletedCount,
+        verifyCount: seVerifyCount,
+        mismatch: seVerifyCount !== -1 && seVerifyCount !== seInserts.length,
+      })
       originalData.current = JSON.parse(JSON.stringify(data))
       originalFrozenData.current = JSON.parse(JSON.stringify(frozenData))
       originalStockEntries.current = JSON.parse(JSON.stringify(stockEntriesSnapshot))
@@ -769,6 +870,9 @@ export default function Inventory() {
                   const modified = isItemModified(product.id)
                   const hasStockEntries = (stockEntries[product.id]?.length ?? 0) > 0
                   const isExpanded = expandedStockId === product.id
+                  const linkedTotal = getLinkedTotal(product.id)
+                  const linkedUsage = getLinkedPrevUsage(product.id)
+                  const isAggregate = isAggregateItem(product.id)
 
                   return (
                     <div key={product.id}>
@@ -790,19 +894,28 @@ export default function Inventory() {
                               </span>
                               {hasBagWeightItems && (
                                 <span className="w-[44px] shrink-0 text-center text-xs font-num text-brand-mocha">
-                                  {product.bag_weight
-                                    ? (entry.onShelf || entry.stock
-                                      ? (Math.round(((parseFloat(entry.onShelf) || 0) / product.bag_weight + (parseFloat(entry.stock) || 0)) * 100) / 100)
-                                      : '')
-                                    : (entry.onShelf || entry.stock
-                                      ? (Math.round(((parseFloat(entry.onShelf) || 0) + (parseFloat(entry.stock) || 0)) * 100) / 100)
-                                      : '')}
+                                  {linkedTotal != null ? linkedTotal : ''}
                                 </span>
                               )}
                               <span className="w-[110px] shrink-0 text-center text-sm text-brand-oak">{entry.stock || '-'}</span>
                               <span className={`w-[56px] shrink-0 text-center text-sm ${entry.discarded && parseFloat(entry.discarded) > 0 ? 'text-status-danger' : 'text-brand-oak'}`}>{entry.discarded || '-'}</span>
-                              <span className={`w-[40px] shrink-0 text-center text-sm ${prevUsage[product.id] !== undefined ? (prevUsage[product.id] < 0 ? 'text-status-danger' : 'text-brand-oak') : 'text-brand-lotus'}`}>
-                                {prevUsage[product.id] !== undefined ? prevUsage[product.id] : '-'}
+                              <span className={`w-[40px] shrink-0 text-center text-sm ${linkedUsage !== undefined ? (linkedUsage < 0 ? 'text-status-danger' : 'text-brand-oak') : 'text-brand-lotus'}`}>
+                                {linkedUsage !== undefined ? linkedUsage : '-'}
+                              </span>
+                            </>
+                          ) : isAggregate ? (
+                            /* 聚合品項：唯讀顯示，數據來自關聯子品項加總 */
+                            <>
+                              <span className="w-[56px] shrink-0 text-center text-sm text-brand-lotus">-</span>
+                              {hasBagWeightItems && (
+                                <span className="w-[44px] shrink-0 text-center text-xs font-num text-brand-mocha font-semibold">
+                                  {linkedTotal != null ? linkedTotal : '-'}
+                                </span>
+                              )}
+                              <span className="w-[110px] shrink-0 text-center text-sm text-brand-lotus">-</span>
+                              <span className="w-[56px] shrink-0 text-center text-sm text-brand-lotus">-</span>
+                              <span className={`w-[40px] shrink-0 text-center text-sm ${linkedUsage !== undefined ? (linkedUsage < 0 ? 'text-status-danger' : 'text-brand-oak') : 'text-brand-lotus'}`}>
+                                {linkedUsage !== undefined ? linkedUsage : '-'}
                               </span>
                             </>
                           ) : (
@@ -831,13 +944,7 @@ export default function Inventory() {
                               </div>
                               {hasBagWeightItems && (
                                 <span className="w-[44px] shrink-0 text-center text-xs font-num text-brand-mocha">
-                                  {product.bag_weight
-                                    ? (entry.onShelf || entry.stock
-                                      ? (Math.round(((parseFloat(entry.onShelf) || 0) / product.bag_weight + (parseFloat(entry.stock) || 0)) * 100) / 100)
-                                      : '')
-                                    : (entry.onShelf || entry.stock
-                                      ? (Math.round(((parseFloat(entry.onShelf) || 0) + (parseFloat(entry.stock) || 0)) * 100) / 100)
-                                      : '')}
+                                  {linkedTotal != null ? linkedTotal : ''}
                                 </span>
                               )}
                               {/* 庫存欄：有到期日資料 → 顯示合計+展開按鈕；否則原始輸入 */}
@@ -896,8 +1003,8 @@ export default function Inventory() {
                                   data-inv=""
                                 />
                               </div>
-                              <span className={`w-[40px] shrink-0 text-center text-sm ${prevUsage[product.id] !== undefined ? (prevUsage[product.id] < 0 ? 'text-status-danger' : 'text-brand-oak') : 'text-brand-lotus'}`}>
-                                {prevUsage[product.id] !== undefined ? prevUsage[product.id] : '-'}
+                              <span className={`w-[40px] shrink-0 text-center text-sm ${linkedUsage !== undefined ? (linkedUsage < 0 ? 'text-status-danger' : 'text-brand-oak') : 'text-brand-lotus'}`}>
+                                {linkedUsage !== undefined ? linkedUsage : '-'}
                               </span>
                             </>
                           )}

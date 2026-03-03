@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Plus, Trash2 } from 'lucide-react'
 import { useMaterialStore } from '@/stores/useMaterialStore'
 import { getMaterialCostPerG } from '@/lib/costAnalysis'
@@ -9,8 +10,11 @@ interface Props {
   recipeId: string
 }
 
+const UNIT_LABELS = ['g', '顆', 'ml']
+
 export function RecipeIngredientEditor({ ingredients, onChange, recipeId }: Props) {
   const materials = useMaterialStore((s) => s.items)
+  const [unitLabels, setUnitLabels] = useState<Record<string, string>>({})
 
   const addRow = () => {
     onChange([
@@ -114,7 +118,15 @@ export function RecipeIngredientEditor({ ingredients, onChange, recipeId }: Prop
                   placeholder="克數"
                   className="w-20 h-7 rounded-input px-2 text-xs border border-gray-200 bg-white"
                 />
-                <span className="text-[10px] text-brand-lotus self-center shrink-0">g</span>
+                <select
+                  value={unitLabels[ing.id] ?? 'g'}
+                  onChange={(e) => setUnitLabels({ ...unitLabels, [ing.id]: e.target.value })}
+                  className="h-7 rounded-input px-1 text-[10px] border border-gray-200 bg-white text-brand-lotus self-center shrink-0"
+                >
+                  {UNIT_LABELS.map((u) => (
+                    <option key={u} value={u}>{u}</option>
+                  ))}
+                </select>
               </div>
 
               {subtotal != null && (

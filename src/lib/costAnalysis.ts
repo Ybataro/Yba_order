@@ -2,6 +2,9 @@ import type { RawMaterial } from '@/data/rawMaterials'
 
 // ─── 型別 ───
 
+export interface ServingUnit { label: string; grams: number }
+export const SERVING_UNIT_OPTIONS = ['1匙', '1球', '1杯', '1碗', '1份', '1顆']
+
 export interface Recipe {
   id: string
   name: string
@@ -12,6 +15,7 @@ export interface Recipe {
   store_product_id?: string | null
   notes: string
   sort_order: number
+  serving_units: ServingUnit[]
   ingredients: RecipeIngredient[]
 }
 

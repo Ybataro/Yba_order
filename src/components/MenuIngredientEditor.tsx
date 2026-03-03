@@ -1,9 +1,9 @@
+import { useState, useMemo } from 'react'
 import { Plus, Trash2 } from 'lucide-react'
 import { useMaterialStore } from '@/stores/useMaterialStore'
 import { useCostStore } from '@/stores/useCostStore'
 import { getMaterialCostPerG, getRecipeCost } from '@/lib/costAnalysis'
 import type { MenuItemIngredient } from '@/lib/costAnalysis'
-import { useMemo } from 'react'
 
 interface Props {
   ingredients: MenuItemIngredient[]
@@ -19,9 +19,13 @@ function getSourceType(ing: MenuItemIngredient): SourceType {
   return 'custom'
 }
 
+// 本地 UI state：每列的份量選擇（不存 DB）
+interface ServingSelection { unitIdx: number; count: number }  // unitIdx: -1 = 自訂克數
+
 export function MenuIngredientEditor({ ingredients, onChange, menuItemId }: Props) {
   const materials = useMaterialStore((s) => s.items)
   const recipes = useCostStore((s) => s.recipes)
+  const [servingSel, setServingSel] = useState<Record<string, ServingSelection>>({})
 
   const materialsMap = useMemo(() => {
     const m = new Map<string, typeof materials[0]>()
@@ -173,21 +177,74 @@ export function MenuIngredientEditor({ ingredients, onChange, menuItemId }: Prop
               )}
 
               {/* Amount (for recipe/material) */}
-              {source !== 'custom' && (
-                <div className="flex items-center gap-1.5">
-                  <input
-                    type="number"
-                    value={ing.amount_g || ''}
-                    onChange={(e) => updateRow(idx, { amount_g: parseFloat(e.target.value) || 0 })}
-                    placeholder="克數"
-                    className="w-20 h-7 rounded-input px-2 text-xs border border-gray-200 bg-white"
-                  />
-                  <span className="text-[10px] text-brand-lotus">g</span>
-                  {subtotal != null && (
-                    <span className="text-[10px] text-brand-mocha ml-auto">${subtotal.toFixed(2)}</span>
-                  )}
-                </div>
-              )}
+              {source !== 'custom' && (() => {
+                const recipe = source === 'recipe' && ing.recipe_id ? recipesMap.get(ing.recipe_id) : null
+                const units = recipe?.serving_units ?? []
+                const sel = servingSel[ing.id]
+                const hasUnits = units.length > 0
+                const isCustomG = !hasUnits || !sel || sel.unitIdx === -1
+
+                return (
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    {hasUnits && (
+                      <>
+                        <select
+                          value={sel?.unitIdx ?? -1}
+                          onChange={(e) => {
+                            const unitIdx = parseInt(e.target.value)
+                            const newSel = { unitIdx, count: sel?.count || 1 }
+                            setServingSel({ ...servingSel, [ing.id]: newSel })
+                            if (unitIdx >= 0 && unitIdx < units.length) {
+                              updateRow(idx, { amount_g: units[unitIdx].grams * newSel.count })
+                            }
+                          }}
+                          className="h-7 rounded-input px-1 text-xs border border-gray-200 bg-white"
+                        >
+                          <option value={-1}>自訂克數</option>
+                          {units.map((u, i) => (
+                            <option key={i} value={i}>{u.label}({u.grams}g)</option>
+                          ))}
+                        </select>
+                        {!isCustomG && (
+                          <>
+                            <span className="text-[10px] text-brand-lotus">×</span>
+                            <input
+                              type="number"
+                              value={sel?.count || ''}
+                              onChange={(e) => {
+                                const count = parseFloat(e.target.value) || 0
+                                const newSel = { unitIdx: sel!.unitIdx, count }
+                                setServingSel({ ...servingSel, [ing.id]: newSel })
+                                if (sel!.unitIdx >= 0 && sel!.unitIdx < units.length) {
+                                  updateRow(idx, { amount_g: units[sel!.unitIdx].grams * count })
+                                }
+                              }}
+                              placeholder="數量"
+                              className="w-14 h-7 rounded-input px-2 text-xs border border-gray-200 bg-white"
+                            />
+                            <span className="text-[10px] text-brand-lotus">= {ing.amount_g}g</span>
+                          </>
+                        )}
+                      </>
+                    )}
+                    {isCustomG && (
+                      <>
+                        <input
+                          type="number"
+                          value={ing.amount_g || ''}
+                          onChange={(e) => updateRow(idx, { amount_g: parseFloat(e.target.value) || 0 })}
+                          placeholder="克數"
+                          className="w-20 h-7 rounded-input px-2 text-xs border border-gray-200 bg-white"
+                        />
+                        <span className="text-[10px] text-brand-lotus">g</span>
+                      </>
+                    )}
+                    {subtotal != null && (
+                      <span className="text-[10px] text-brand-mocha ml-auto">${subtotal.toFixed(2)}</span>
+                    )}
+                  </div>
+                )
+              })()}
 
               {source === 'custom' && subtotal != null && (
                 <p className="text-[10px] text-brand-mocha">${subtotal.toFixed(2)}</p>

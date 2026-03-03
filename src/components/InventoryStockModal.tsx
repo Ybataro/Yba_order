@@ -1,14 +1,11 @@
 import { useEffect, useRef, useMemo } from 'react'
 import { X } from 'lucide-react'
-import { formatDualUnit } from '@/lib/utils'
 
 interface Product {
   id: string
   name: string
   category: string
   unit: string
-  box_unit?: string
-  box_ratio?: number
 }
 
 interface StockEntry {
@@ -123,7 +120,7 @@ export function InventoryStockModal({
                         <div className="flex items-center justify-between">
                           <span className="text-sm font-medium text-brand-oak">{product.name}</span>
                           <span className={`text-sm font-num shrink-0 ml-3 ${qty === 0 ? 'text-status-danger font-bold' : 'text-brand-oak'}`}>
-                            {formatDualUnit(qty, product.unit, product.box_unit, product.box_ratio)}
+                            {qty}{product.unit}
                           </span>
                         </div>
                         {hasEntries && (
@@ -132,7 +129,7 @@ export function InventoryStockModal({
                               <div key={i} className="flex items-center justify-between text-[11px] text-brand-lotus">
                                 <span>{e.expiryDate.replace(/-/g, '/')}</span>
                                 <span className="font-num">
-                                  {formatDualUnit(e.quantity, product.unit, product.box_unit, product.box_ratio)}
+                                  {e.quantity}{product.unit}
                                 </span>
                               </div>
                             ))}

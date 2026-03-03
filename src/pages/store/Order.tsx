@@ -76,13 +76,21 @@ export default function Order() {
   const { showToast } = useToast()
   const storeName = useStoreStore((s) => s.getName(storeId || ''))
   const allProducts = useProductStore((s) => s.items)
+  const productsReady = useProductStore((s) => s.initialized)
   const storeProducts = useMemo(() => allProducts.filter(p => !p.visibleIn || p.visibleIn === 'both' || p.visibleIn === 'order_only'), [allProducts])
   const productCategories = useProductStore((s) => s.categories)
 
   // Build bag_weight lookup for inventory → bag conversion
+  // 也將 parent 的 bag_weight 傳播到 linkedInventoryIds（子品項可能沒有單獨設 bag_weight）
   const bagWeightMap = useMemo(() => {
     const m: Record<string, number> = {}
     allProducts.forEach(p => { if (p.bag_weight) m[p.id] = p.bag_weight })
+    // 若子品項自身沒有 bag_weight，繼承 parent 的
+    allProducts.forEach(p => {
+      if (p.bag_weight && p.linkedInventoryIds?.length) {
+        p.linkedInventoryIds.forEach(id => { if (!m[id]) m[id] = p.bag_weight! })
+      }
+    })
     return m
   }, [allProducts])
 
@@ -207,17 +215,29 @@ export default function Order() {
   const [showStockModal, setShowStockModal] = useState(false)
   const [stockLoading, setStockLoading] = useState(true)
 
+  // 將 stock（per product_id）加總為 linked 版本，供 modal 顯示使用
+  const linkedStock = useMemo(() => {
+    const m: Record<string, number> = {}
+    storeProducts.forEach(p => {
+      const ids = inventoryIdMap[p.id] || [p.id]
+      const v = getLinkedSum(stock, ids)
+      if (v != null) m[p.id] = v
+    })
+    return m
+  }, [stock, storeProducts, inventoryIdMap])
+
   useEffect(() => {
-    if (!supabase || !storeId) { setStockLoading(false); return }
+    if (!supabase || !storeId || !productsReady) { setStockLoading(false); return }
 
     const load = async () => {
       setStockLoading(true)
 
-      // 找該門店最新一筆盤點 session（可能有多樓層）
+      // 找該門店 ≤ selectedDate 最新一筆盤點 session（可能有多樓層）
       const { data: sessions } = await supabase!
         .from('inventory_sessions')
         .select('id, date')
         .eq('store_id', storeId)
+        .lte('date', selectedDate)
         .order('date', { ascending: false })
         .limit(10)
 
@@ -285,13 +305,13 @@ export default function Order() {
     }
 
     load()
-  }, [storeId])
+  }, [storeId, selectedDate, bagWeightMap, productsReady])
 
   // 前日用量：叫貨頁用 D = selectedDate - 1（顯示昨日用量）
   const [prevUsage, setPrevUsage] = useState<Record<string, number>>({})
 
   useEffect(() => {
-    if (!supabase || !storeId) return
+    if (!supabase || !storeId || !productsReady) return
     setPrevUsage({})
 
     const load = async () => {
@@ -376,7 +396,11 @@ export default function Order() {
           const today = sumInv(todayInv)
           if (prev != null && today != null) {
             const disc = sumInv(todayDisc) || 0
-            const ord = orderQty[p.id] || 0
+            // 叫貨量也需查關聯品項（芋圓總的叫貨可能存在 p011）
+            let ord = 0
+            for (const id of allInvIds) {
+              if (orderQty[id] != null) ord += orderQty[id]
+            }
             usage[p.id] = Math.round((prev + ord - today - disc) * 10) / 10
           }
         })
@@ -397,7 +421,7 @@ export default function Order() {
       const { data: latestSession } = await supabase!
         .from('product_stock_sessions')
         .select('id, date')
-        .lt('date', selectedDate)
+        .lte('date', selectedDate)
         .order('date', { ascending: false })
         .limit(1)
         .maybeSingle()
@@ -638,7 +662,8 @@ export default function Order() {
       const breakdowns: Record<string, SuggestionBreakdown> = {}
 
       storeProducts.forEach(p => {
-        const ids = p.linkedInventoryIds?.length ? p.linkedInventoryIds : [p.id]
+        // 統一用 inventoryIdMap（含自身 ID + linkedInventoryIds）
+        const ids = inventoryIdMap[p.id] || [p.id]
         const linkedUsageAvg = getLinkedSum(usageAvg, ids)
         const hasUsage = linkedUsageAvg != null
         const avg = hasUsage ? linkedUsageAvg : (orderAvg[p.id] || 0)
@@ -672,7 +697,7 @@ export default function Order() {
     }
 
     load()
-  }, [storeId, selectedDate, impactMap, stock, stockLoading, bagWeightMap])
+  }, [storeId, selectedDate, impactMap, stock, stockLoading, bagWeightMap, inventoryIdMap])
 
   const applyAllSuggestions = () => {
     if (locked) return
@@ -891,7 +916,7 @@ export default function Order() {
                         <span className="text-sm font-medium text-brand-oak">{product.name}</span>
                         <span className="text-[10px] text-brand-lotus ml-1">({product.unit})</span>
                       </div>
-                      <span className="w-[32px] text-center text-xs font-num text-brand-lotus">{kitchenStock[product.id] != null ? kitchenStock[product.id] : '-'}</span>
+                      <span className="w-[32px] text-center text-xs font-num text-brand-lotus">{(() => { const v = getLinkedSum(kitchenStock, inventoryIdMap[product.id] || [product.id]); return v != null ? v : '-' })()}</span>
                       <span className={`w-[36px] text-center text-xs font-num ${prevUsage[product.id] != null && prevUsage[product.id] < 0 ? 'text-status-danger' : 'text-brand-mocha'}`}>{prevUsage[product.id] != null ? prevUsage[product.id] : '-'}</span>
                       <span className={`w-[40px] text-center text-xs font-num ${(() => { const v = getLinkedSum(stock, inventoryIdMap[product.id]); return v != null && v === 0 ? 'text-status-danger font-bold' : 'text-brand-oak' })()}`}>{(() => { const v = getLinkedSum(stock, inventoryIdMap[product.id]); return v != null ? v : '-' })()}</span>
                       <button
@@ -1014,7 +1039,7 @@ export default function Order() {
       <InventoryStockModal
         open={showStockModal}
         onClose={() => setShowStockModal(false)}
-        stock={stock}
+        stock={linkedStock}
         stockDate={stockDate}
         stockEntries={stockEntries}
         products={storeProducts}

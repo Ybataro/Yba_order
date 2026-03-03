@@ -6,8 +6,8 @@ import { RecipeIngredientEditor } from '@/components/RecipeIngredientEditor'
 import { useToast } from '@/components/Toast'
 import { useCostStore } from '@/stores/useCostStore'
 import { useMaterialStore } from '@/stores/useMaterialStore'
-import { getRecipeCost } from '@/lib/costAnalysis'
-import type { Recipe, RecipeIngredient } from '@/lib/costAnalysis'
+import { getRecipeCost, SERVING_UNIT_OPTIONS } from '@/lib/costAnalysis'
+import type { Recipe, RecipeIngredient, ServingUnit } from '@/lib/costAnalysis'
 import { Plus, ChevronDown, Trash2, Edit3 } from 'lucide-react'
 
 export default function RecipeManager() {
@@ -19,6 +19,7 @@ export default function RecipeManager() {
   const [editing, setEditing] = useState<Recipe | null>(null)
   const [form, setForm] = useState({ name: '', unit: '盒', total_weight_g: '', solid_weight_g: '', liquid_weight_g: '', notes: '' })
   const [formIngredients, setFormIngredients] = useState<RecipeIngredient[]>([])
+  const [formServingUnits, setFormServingUnits] = useState<ServingUnit[]>([])
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [deleteConfirm, setDeleteConfirm] = useState<Recipe | null>(null)
 
@@ -32,6 +33,7 @@ export default function RecipeManager() {
     setEditing(null)
     setForm({ name: '', unit: '盒', total_weight_g: '', solid_weight_g: '', liquid_weight_g: '', notes: '' })
     setFormIngredients([])
+    setFormServingUnits([])
     setModalOpen(true)
   }
 
@@ -46,6 +48,7 @@ export default function RecipeManager() {
       notes: recipe.notes,
     })
     setFormIngredients([...recipe.ingredients])
+    setFormServingUnits([...(recipe.serving_units ?? [])])
     setModalOpen(true)
   }
 
@@ -56,6 +59,8 @@ export default function RecipeManager() {
     }
     const totalWeight = parseFloat(form.total_weight_g) || 0
 
+    const validUnits = formServingUnits.filter((u) => u.label && u.grams > 0)
+
     if (editing) {
       updateRecipe(editing.id, {
         name: form.name.trim(),
@@ -64,6 +69,7 @@ export default function RecipeManager() {
         solid_weight_g: parseFloat(form.solid_weight_g) || null,
         liquid_weight_g: parseFloat(form.liquid_weight_g) || null,
         notes: form.notes,
+        serving_units: validUnits,
       })
       setRecipeIngredients(editing.id, formIngredients.map((ing, i) => ({ ...ing, recipe_id: editing.id, sort_order: i })))
       showToast('配方已更新')
@@ -80,6 +86,7 @@ export default function RecipeManager() {
         store_product_id: null,
         notes: form.notes,
         sort_order: recipes.length,
+        serving_units: validUnits,
         ingredients: ings,
       })
       showToast('配方已新增')
@@ -143,6 +150,11 @@ export default function RecipeManager() {
                       <span className="text-brand-oak">{d.subtotal != null ? `$${d.subtotal.toFixed(2)}` : '—'}</span>
                     </div>
                   ))}
+                  {recipe.serving_units?.length > 0 && (
+                    <p className="text-[10px] text-brand-lotus mt-1">
+                      份量：{recipe.serving_units.map((u) => `${u.label}=${u.grams}g`).join('、')}
+                    </p>
+                  )}
                   {recipe.notes && (
                     <p className="text-[10px] text-brand-lotus mt-1">備註：{recipe.notes}</p>
                   )}
@@ -176,6 +188,53 @@ export default function RecipeManager() {
         <ModalField label="備註">
           <ModalInput value={form.notes} onChange={(v) => setForm({ ...form, notes: v })} placeholder="選填" />
         </ModalField>
+
+        {/* 份量單位定義 */}
+        <div className="space-y-2">
+          <span className="text-sm font-medium text-brand-oak">份量單位定義</span>
+          {formServingUnits.map((su, idx) => (
+            <div key={idx} className="flex items-center gap-1.5">
+              <select
+                value={su.label}
+                onChange={(e) => {
+                  const arr = [...formServingUnits]
+                  arr[idx] = { ...arr[idx], label: e.target.value }
+                  setFormServingUnits(arr)
+                }}
+                className="flex-1 h-8 rounded-input px-2 text-xs border border-gray-200 bg-white"
+              >
+                <option value="">選擇單位</option>
+                {SERVING_UNIT_OPTIONS.map((opt) => (
+                  <option key={opt} value={opt}>{opt}</option>
+                ))}
+              </select>
+              <input
+                type="number"
+                value={su.grams || ''}
+                onChange={(e) => {
+                  const arr = [...formServingUnits]
+                  arr[idx] = { ...arr[idx], grams: parseFloat(e.target.value) || 0 }
+                  setFormServingUnits(arr)
+                }}
+                placeholder="克數"
+                className="w-20 h-8 rounded-input px-2 text-xs border border-gray-200 bg-white"
+              />
+              <span className="text-[10px] text-brand-lotus">g</span>
+              <button
+                onClick={() => setFormServingUnits(formServingUnits.filter((_, i) => i !== idx))}
+                className="p-1 text-status-danger/70 hover:text-status-danger"
+              >
+                <Trash2 size={14} />
+              </button>
+            </div>
+          ))}
+          <button
+            onClick={() => setFormServingUnits([...formServingUnits, { label: '', grams: 0 }])}
+            className="w-full flex items-center justify-center gap-1 h-8 rounded-card border border-dashed border-gray-300 text-xs text-brand-lotus hover:bg-surface-section"
+          >
+            <Plus size={14} /> 新增份量單位
+          </button>
+        </div>
 
         <RecipeIngredientEditor
           ingredients={formIngredients}
