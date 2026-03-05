@@ -1,3 +1,4 @@
+// Day32: prevUsage linkedInventoryIds fix
 import { useState, useCallback, useMemo, useEffect, useRef } from 'react'
 import { useParams, useSearchParams } from 'react-router-dom'
 import { TopNav } from '@/components/TopNav'
@@ -17,6 +18,7 @@ import { logAudit } from '@/lib/auditLog'
 import { Send, RefreshCw, ChevronDown, ChevronUp, CheckCircle } from 'lucide-react'
 import { sendTelegramNotification } from '@/lib/telegram'
 import { StockEntryPanel, type StockEntry } from '@/components/StockEntryPanel'
+import { useProductStore } from '@/stores/useProductStore'
 import { useFrozenProductStore } from '@/stores/useFrozenProductStore'
 import { useZoneStore } from '@/stores/useZoneStore'
 import { useStoreSortOrder } from '@/hooks/useStoreSortOrder'
@@ -38,6 +40,7 @@ export default function Inventory() {
   const storeName = useStoreStore((s) => s.getName(storeId || ''))
   const { products: allZoneProducts, categories: productCategories, storeZones, currentZone, setZone } = useZoneFilteredProducts(storeId || '')
   const storeProducts = useMemo(() => allZoneProducts.filter(p => !p.visibleIn || p.visibleIn === 'both' || p.visibleIn === 'inventory_only'), [allZoneProducts])
+  const allProducts = useProductStore((s) => s.items)
   const allFrozenProducts = useFrozenProductStore((s) => s.items)
   const zoneProducts = useZoneStore((s) => s.zoneProducts)
 
@@ -452,21 +455,43 @@ export default function Inventory() {
           }
         }
 
-        // Calculate: usage = prevInv + orderQty - todayInv - todayDisc
-        const allProductIds = new Set([
-          ...Object.keys(prevInv),
-          ...Object.keys(orderQty),
-          ...Object.keys(todayInv),
-        ])
+        // Calculate usage using linkedInventoryIds grouping (same approach as Order.tsx)
+        // IMPORTANT: Must use allProducts (not allZoneProducts) because parent aggregate
+        // products (芋圓(總), 白玉(總), 粉圓) are order_only and NOT in allZoneProducts,
+        // but their linkedInventoryIds and orderQty are needed for correct calculation.
+        const linkedChildren = new Set<string>()
+        allProducts.forEach(p => {
+          if (p.linkedInventoryIds?.length) {
+            p.linkedInventoryIds.forEach(id => linkedChildren.add(id))
+          }
+        })
+
         const usage: Record<string, number> = {}
-        allProductIds.forEach(pid => {
-          const prev = prevInv[pid] || 0
-          const order = orderQty[pid] || 0
-          const today = todayInv[pid] || 0
-          const disc = todayDisc[pid] || 0
-          // Only calculate if we have both prev and today inventory data
-          if (prevInv[pid] !== undefined && todayInv[pid] !== undefined) {
-            usage[pid] = Math.round((prev + order - today - disc) * 10) / 10
+        allProducts.forEach(p => {
+          const allInvIds = new Set<string>([p.id])
+          if (p.linkedInventoryIds?.length) {
+            p.linkedInventoryIds.forEach(id => allInvIds.add(id))
+          }
+          // Skip sub-products that belong to a parent group
+          // (they'll get usage from parent via getLinkedPrevUsage)
+          if (allInvIds.size === 1 && linkedChildren.has(p.id)) return
+
+          const sumData = (data: Record<string, number>) => {
+            let total = 0, found = false
+            for (const id of allInvIds) {
+              if (data[id] != null) { total += data[id]; found = true }
+            }
+            return found ? total : null
+          }
+          const prev = sumData(prevInv)
+          const today = sumData(todayInv)
+          if (prev != null && today != null) {
+            const disc = sumData(todayDisc) || 0
+            let ord = 0
+            for (const id of allInvIds) {
+              if (orderQty[id] != null) ord += orderQty[id]
+            }
+            usage[p.id] = Math.round((prev + ord - today - disc) * 10) / 10
           }
         })
         setPrevUsage(usage)
@@ -475,7 +500,7 @@ export default function Inventory() {
       }
     }
     load()
-  }, [storeId, selectedDate, bagWeightMap])
+  }, [storeId, selectedDate, bagWeightMap, allProducts])
 
   const getEntry = useCallback((productId: string): InventoryEntry => {
     if (isMergedView) return mergedData[productId] ?? { onShelf: '', stock: '', discarded: '' }
@@ -501,17 +526,26 @@ export default function Inventory() {
   }, [inventoryIdMap, isMergedView, mergedData, data, bagWeightMap])
 
   // 計算關聯品項的前日用量加總
+  // 子品項（被 parent 的 linkedInventoryIds 包含）→ 反向查找 parent 的用量
   const getLinkedPrevUsage = useCallback((productId: string): number | undefined => {
-    const ids = inventoryIdMap[productId] || [productId]
     // 如果自身有數據就直接用
     if (prevUsage[productId] !== undefined) return prevUsage[productId]
-    // 否則嘗試加總關聯品項
+    // 嘗試用 inventoryIdMap（parent → children）加總
+    const ids = inventoryIdMap[productId] || [productId]
     let sum = 0, found = false
     for (const id of ids) {
       if (prevUsage[id] !== undefined) { sum += prevUsage[id]; found = true }
     }
-    return found ? Math.round(sum * 10) / 10 : undefined
-  }, [inventoryIdMap, prevUsage])
+    if (found) return Math.round(sum * 10) / 10
+    // 反向查找：如果此品項是某 parent 的子品項，取 parent 的用量
+    // Must use allProducts (not allZoneProducts) because parent may be order_only
+    for (const p of allProducts) {
+      if (p.linkedInventoryIds?.includes(productId) && prevUsage[p.id] !== undefined) {
+        return prevUsage[p.id]
+      }
+    }
+    return undefined
+  }, [inventoryIdMap, prevUsage, allProducts])
 
   const updateField = useCallback((productId: string, field: keyof InventoryEntry, value: string) => {
     setData(prev => ({

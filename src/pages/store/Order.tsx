@@ -15,7 +15,9 @@ import { submitWithOffline } from '@/lib/submitWithOffline'
 import { logAudit } from '@/lib/auditLog'
 import { formatDate } from '@/lib/utils'
 import { fetchWeather, type WeatherData, type WeatherCondition } from '@/lib/weather'
-import { Send, Lightbulb, Sun, CloudRain, Cloud, CloudSun, Thermometer, Droplets, TrendingUp, TrendingDown, RefreshCw, History, AlertTriangle, Package } from 'lucide-react'
+import { computeSuggestions, clearSuggestionCache, type SuggestionBreakdown } from '@/lib/suggestion'
+import { backfillWeatherIfNeeded } from '@/lib/backfillWeather'
+import { Send, Lightbulb, Sun, CloudRain, Cloud, CloudSun, Thermometer, Droplets, RefreshCw, History, AlertTriangle, Package } from 'lucide-react'
 import { InventoryStockModal } from '@/components/InventoryStockModal'
 import { useStoreSortOrder } from '@/hooks/useStoreSortOrder'
 import { buildSortedByCategory } from '@/lib/sortByStore'
@@ -25,39 +27,6 @@ const weatherIcons: Record<WeatherCondition, typeof Sun> = {
   cloudy: Cloud,
   partly_cloudy: CloudSun,
   rainy: CloudRain,
-}
-
-function parseBaseStock(baseStock?: string): number {
-  if (!baseStock) return 0
-  const str = baseStock.trim()
-  if (/^\d+\.?\d*\s*(g|公斤|ml)/i.test(str)) return 0
-  const match = str.match(/^(\d+\.?\d*)/)
-  return match ? parseFloat(match[1]) : 0
-}
-
-function getWeatherImpacts(weather: WeatherData) {
-  const impacts: { category: string; adjust: number; reason: string }[] = []
-  const { tempHigh, rainProb, condition } = weather
-
-  if (tempHigh >= 30) {
-    impacts.push({ category: '冰品類', adjust: 20, reason: '高溫炎熱' })
-    impacts.push({ category: '液體類', adjust: 10, reason: '冷飲需求增加' })
-    impacts.push({ category: '加工品類', adjust: -10, reason: '熱品需求降低' })
-  } else if (tempHigh <= 18) {
-    impacts.push({ category: '加工品類', adjust: 20, reason: '天冷熱品需求增加' })
-    impacts.push({ category: '冰品類', adjust: -30, reason: '低溫冰品需求驟降' })
-  }
-
-  if (rainProb >= 60 || condition === 'rainy') {
-    impacts.push({ category: '配料類（盒裝）', adjust: -15, reason: '雨天來客減少' })
-    impacts.push({ category: '主食類（袋裝）', adjust: -15, reason: '雨天來客減少' })
-  }
-
-  if (rainProb <= 20 && (condition === 'sunny' || condition === 'partly_cloudy')) {
-    impacts.push({ category: '配料類（盒裝）', adjust: 10, reason: '好天氣來客增加' })
-  }
-
-  return impacts
 }
 
 function getLinkedSum(data: Record<string, number>, ids: string[]): number | null {
@@ -141,6 +110,7 @@ export default function Order() {
 
   useEffect(() => {
     fetchWeather().then(setWeather)
+    backfillWeatherIfNeeded().catch(() => {})
   }, [])
 
   // Load existing session
@@ -187,23 +157,6 @@ export default function Order() {
 
   const defaultWeather: WeatherData = { date: '明日', condition: 'partly_cloudy', conditionText: '多雲', tempHigh: 28, tempLow: 20, rainProb: 30, humidity: 70 }
   const currentWeather = weather || defaultWeather
-  const weatherImpacts = useMemo(() => getWeatherImpacts(currentWeather), [currentWeather])
-  const impactMap = useMemo(() => {
-    const m: Record<string, number> = {}
-    weatherImpacts.forEach(i => { m[i.category] = i.adjust })
-    return m
-  }, [weatherImpacts])
-
-  const getRoundUnit = (product: typeof storeProducts[0]): number => {
-    if (product.name === '紫米紅豆湯') return 0.5
-    if (product.name === '豆花(冷)' || product.name === '豆花(熱)') return 0.5
-    if (product.name === '薏仁湯' || product.name === '芋頭湯(冷)' || product.name === '芋頭湯(熱)') return 0.5
-    return 1
-  }
-
-  const roundToUnit = (value: number, unit: number): number => {
-    return Math.round(value / unit) * unit
-  }
 
   // 最新盤點庫存（架上 + 庫存，跨樓層加總）
   const [stock, setStock] = useState<Record<string, number>>({})
@@ -440,253 +393,31 @@ export default function Order() {
     load()
   }, [selectedDate])
 
-  // 建議量計算
-  interface SuggestionBreakdown {
-    avgUsage: number
-    dataSource: 'usage' | 'order'
-    dayType: 'weekday' | 'weekend' | 'all'
-    weatherAdjustPct: number
-    restDayMultiplier: number
-    safetyStockGap: number
-    rawBeforeRound: number
-  }
+  // 建議量計算（相似日匹配演算法）
   const [suggested, setSuggested] = useState<Record<string, number>>({})
   const [suggestionBreakdown, setSuggestionBreakdown] = useState<Record<string, SuggestionBreakdown>>({})
   const [expandedSuggestionId, setExpandedSuggestionId] = useState<string | null>(null)
   const [suggestedLoading, setSuggestedLoading] = useState(true)
 
   useEffect(() => {
-    if (!supabase || !storeId || stockLoading) { if (!stockLoading) setSuggestedLoading(false); return }
+    if (!supabase || !storeId || !productsReady || stockLoading) { if (!stockLoading) setSuggestedLoading(false); return }
 
     const load = async () => {
       setSuggestedLoading(true)
 
-      // 以 selectedDate 為基準計算 7 天前的日期
-      const d = new Date(selectedDate + 'T00:00:00+08:00')
-      d.setDate(d.getDate() - 7)
-      const sevenDaysAgo = d.toLocaleDateString('en-CA', { timeZone: 'Asia/Taipei' })
+      const targetWeather = weather
+        ? { tempHigh: weather.tempHigh, rainProb: weather.rainProb }
+        : null
 
-      // ── Step 1: 嘗試 usage-based 計算 ──
-      let usageAvg: Record<string, number> = {}
-      let usageDayType: Record<string, 'weekday' | 'weekend' | 'all'> = {}
-      let usageValidDays = 0
-
-      const { data: invSessions } = await supabase!
-        .from('inventory_sessions')
-        .select('id, date')
-        .eq('store_id', storeId)
-        .gte('date', sevenDaysAgo)
-        .lte('date', selectedDate)
-        .order('date', { ascending: true })
-
-      if (invSessions && invSessions.length > 0) {
-        // 按日期分組
-        const sessionsByDate = new Map<string, string[]>()
-        invSessions.forEach(s => {
-          const list = sessionsByDate.get(s.date) || []
-          list.push(s.id)
-          sessionsByDate.set(s.date, list)
-        })
-
-        const allInvSids = invSessions.map(s => s.id)
-        const { data: invItems } = await supabase!
-          .from('inventory_items')
-          .select('session_id, product_id, on_shelf, stock, discarded')
-          .in('session_id', allInvSids)
-
-        // 查叫貨量（date = D 的叫貨，隔日到貨 = D+1 收貨）
-        const dates = Array.from(sessionsByDate.keys())
-        const { data: ordSessionsAll } = await supabase!
-          .from('order_sessions')
-          .select('id, date')
-          .eq('store_id', storeId)
-          .in('date', dates)
-
-        let dailyOrderQty: Record<string, Record<string, number>> = {}
-        if (ordSessionsAll && ordSessionsAll.length > 0) {
-          const ordSidsAll = ordSessionsAll.map(s => s.id)
-          const { data: ordItemsAll } = await supabase!
-            .from('order_items')
-            .select('session_id, product_id, quantity')
-            .in('session_id', ordSidsAll)
-
-          // 建立 order session → date 對照
-          const ordSessionDateMap: Record<string, string> = {}
-          ordSessionsAll.forEach(s => { ordSessionDateMap[s.id] = s.date })
-
-          if (ordItemsAll) {
-            ordItemsAll.forEach(item => {
-              const dt = ordSessionDateMap[item.session_id]
-              if (!dailyOrderQty[dt]) dailyOrderQty[dt] = {}
-              dailyOrderQty[dt][item.product_id] = (dailyOrderQty[dt][item.product_id] || 0) + (item.quantity || 0)
-            })
-          }
-        }
-
-        // 建立每日庫存 map: date → pid → totalStock
-        const invBySession: Record<string, { product_id: string; on_shelf: number; stock: number; discarded: number }[]> = {}
-        invItems?.forEach(item => {
-          if (!invBySession[item.session_id]) invBySession[item.session_id] = []
-          invBySession[item.session_id].push({
-            product_id: item.product_id,
-            on_shelf: item.on_shelf || 0,
-            stock: item.stock || 0,
-            discarded: item.discarded || 0,
-          })
-        })
-
-        const dailyStock: Record<string, Record<string, number>> = {}
-        const dailyDiscarded: Record<string, Record<string, number>> = {}
-        for (const [dt, sids] of sessionsByDate.entries()) {
-          const stockMap: Record<string, number> = {}
-          const discMap: Record<string, number> = {}
-          sids.forEach(sid => {
-            (invBySession[sid] || []).forEach(item => {
-              const bw = bagWeightMap[item.product_id]
-              const onShelfBags = bw ? item.on_shelf / bw : item.on_shelf
-              stockMap[item.product_id] = (stockMap[item.product_id] || 0) + onShelfBags + item.stock
-              discMap[item.product_id] = (discMap[item.product_id] || 0) + item.discarded
-            })
-          })
-          dailyStock[dt] = stockMap
-          dailyDiscarded[dt] = discMap
-        }
-
-        // 逐日計算用量：(D-1)庫存 + (D-1)叫貨量 - (D)庫存 - (D)倒掉
-        // 分平日(週一~四)和假日(週五~日)分別計算平均
-        const isWeekend = (dateStr: string) => {
-          const dow = new Date(dateStr + 'T00:00:00+08:00').getDay()
-          return dow === 5 || dow === 6 || dow === 0 // 週五六日
-        }
-
-        const sortedDates = dates.sort()
-        const wdSums: Record<string, number> = {} // 平日
-        const wdDays: Record<string, number> = {}
-        const weSums: Record<string, number> = {} // 假日
-        const weDays: Record<string, number> = {}
-
-        for (let i = 1; i < sortedDates.length; i++) {
-          const prevDate = sortedDates[i - 1]
-          const currDate = sortedDates[i]
-          const prevStk = dailyStock[prevDate] || {}
-          const currStk = dailyStock[currDate] || {}
-          const currDisc = dailyDiscarded[currDate] || {}
-          const prevOrd = dailyOrderQty[prevDate] || {}
-          const we = isWeekend(currDate)
-
-          const allPids = new Set([...Object.keys(prevStk), ...Object.keys(currStk)])
-          allPids.forEach(pid => {
-            const prev = prevStk[pid] || 0
-            const ord = prevOrd[pid] || 0
-            const curr = currStk[pid] || 0
-            const disc = currDisc[pid] || 0
-            if (prev > 0 || curr > 0) {
-              const u = Math.max(0, prev + ord - curr - disc)
-              if (we) {
-                weSums[pid] = (weSums[pid] || 0) + u
-                weDays[pid] = (weDays[pid] || 0) + 1
-              } else {
-                wdSums[pid] = (wdSums[pid] || 0) + u
-                wdDays[pid] = (wdDays[pid] || 0) + 1
-              }
-            }
-          })
-        }
-
-        // 根據叫貨日是平日還是假日選擇對應平均
-        const selectedIsWeekend = isWeekend(selectedDate)
-        const primarySums = selectedIsWeekend ? weSums : wdSums
-        const primaryDays = selectedIsWeekend ? weDays : wdDays
-        const fallbackSums = selectedIsWeekend ? wdSums : weSums
-        const fallbackDays = selectedIsWeekend ? wdDays : weDays
-
-        usageValidDays = sortedDates.length - 1
-        if (usageValidDays >= 2) {
-          storeProducts.forEach(p => {
-            // 優先用同類型（平日/假日）平均，不足則用另一類型平均
-            const pd = primaryDays[p.id]
-            if (pd && pd >= 1) {
-              usageAvg[p.id] = primarySums[p.id] / pd
-              usageDayType[p.id] = selectedIsWeekend ? 'weekend' : 'weekday'
-            } else {
-              const fd = fallbackDays[p.id]
-              if (fd && fd >= 1) {
-                usageAvg[p.id] = fallbackSums[p.id] / fd
-                usageDayType[p.id] = selectedIsWeekend ? 'weekday' : 'weekend'
-              }
-            }
-          })
-        }
-      }
-
-      // ── Step 2: Fallback 到叫貨量 ──
-      let orderAvg: Record<string, number> = {}
-
-      const { data: ordSessions } = await supabase!
-        .from('order_sessions')
-        .select('id, date')
-        .eq('store_id', storeId)
-        .gte('date', sevenDaysAgo)
-        .lte('date', selectedDate)
-
-      if (ordSessions && ordSessions.length > 0) {
-        const ordSids = ordSessions.map(s => s.id)
-        const ordUniqueDays = new Set(ordSessions.map(s => s.date)).size
-
-        const { data: ordItems } = await supabase!
-          .from('order_items')
-          .select('product_id, quantity')
-          .in('session_id', ordSids)
-
-        if (ordItems && ordItems.length > 0) {
-          const ordTotals: Record<string, number> = {}
-          ordItems.forEach(item => {
-            ordTotals[item.product_id] = (ordTotals[item.product_id] || 0) + item.quantity
-          })
-          storeProducts.forEach(p => {
-            if (ordTotals[p.id]) {
-              orderAvg[p.id] = ordTotals[p.id] / ordUniqueDays
-            }
-          })
-        }
-      }
-
-      // ── Step 3: 套用天氣 + 休息日 + 安全庫存 ──
-      const orderDayOfWeek = new Date(selectedDate + 'T00:00:00+08:00').getDay()
-      const restMul = (orderDayOfWeek === 2 || orderDayOfWeek === 6) ? 2 : 1
-
-      const result: Record<string, number> = {}
-      const breakdowns: Record<string, SuggestionBreakdown> = {}
-
-      storeProducts.forEach(p => {
-        // 統一用 inventoryIdMap（含自身 ID + linkedInventoryIds）
-        const ids = inventoryIdMap[p.id] || [p.id]
-        const linkedUsageAvg = getLinkedSum(usageAvg, ids)
-        const hasUsage = linkedUsageAvg != null
-        const avg = hasUsage ? linkedUsageAvg : (orderAvg[p.id] || 0)
-        const dataSource: 'usage' | 'order' = hasUsage ? 'usage' : 'order'
-        const weatherPct = impactMap[p.category] || 0
-        const weatherAdj = Math.max(0, avg * (1 + weatherPct / 100))
-        const restDayQty = weatherAdj * restMul
-
-        const parsedBase = parseBaseStock(p.baseStock)
-        const currentStock = getLinkedSum(stock, ids) || 0
-        const safetyGap = Math.max(0, parsedBase - currentStock)
-
-        const rawBeforeRound = Math.max(restDayQty, safetyGap)
-        const unit = getRoundUnit(p)
-        result[p.id] = roundToUnit(rawBeforeRound, unit)
-
-        breakdowns[p.id] = {
-          avgUsage: Math.round(avg * 10) / 10,
-          dataSource,
-          dayType: hasUsage ? (usageDayType[p.id] || 'all') : 'all',
-          weatherAdjustPct: weatherPct,
-          restDayMultiplier: restMul,
-          safetyStockGap: Math.round(safetyGap * 10) / 10,
-          rawBeforeRound: Math.round(rawBeforeRound * 10) / 10,
-        }
-      })
+      const { suggested: result, breakdowns } = await computeSuggestions(
+        storeId,
+        selectedDate,
+        storeProducts,
+        bagWeightMap,
+        inventoryIdMap,
+        stock,
+        targetWeather,
+      )
 
       setSuggested(result)
       setSuggestionBreakdown(breakdowns)
@@ -694,7 +425,12 @@ export default function Order() {
     }
 
     load()
-  }, [storeId, selectedDate, impactMap, stock, stockLoading, bagWeightMap, inventoryIdMap])
+  }, [storeId, selectedDate, stock, stockLoading, bagWeightMap, inventoryIdMap, productsReady, weather])
+
+  // 切換門店時清除建議量快取
+  useEffect(() => {
+    clearSuggestionCache()
+  }, [storeId])
 
   const applyAllSuggestions = () => {
     const newOrders: Record<string, string> = {}
@@ -851,30 +587,13 @@ export default function Order() {
                     </div>
                   </div>
                 </div>
-                {weatherImpacts.length > 0 && (
-                  <div className="flex flex-wrap gap-1.5 px-3 pb-2.5 border-t border-gray-50 pt-2">
-                    {weatherImpacts.map((impact, i) => (
-                      <span
-                        key={i}
-                        className={`inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[11px] font-medium ${
-                          impact.adjust > 0
-                            ? 'bg-status-warning/10 text-status-warning'
-                            : 'bg-status-info/10 text-status-info'
-                        }`}
-                      >
-                        {impact.adjust > 0 ? <TrendingUp size={10} /> : <TrendingDown size={10} />}
-                        {impact.category.replace(/（.+）/, '')} {impact.adjust > 0 ? '+' : ''}{impact.adjust}%
-                      </span>
-                    ))}
-                  </div>
-                )}
               </div>
             )
           })()}
 
           <div className="mx-4 mb-2 flex items-center gap-2 bg-status-info/10 text-status-info px-3 py-2 rounded-btn text-xs">
             <Lightbulb size={14} />
-            <span>{isRestDayEve ? '建議量已結合近7日實際用量 + 天氣 + 安全庫存（×2 央廚休息日備量）· 點擊建議數字查看明細' : '建議量已結合近7日實際用量 + 天氣 + 安全庫存計算 · 點擊建議數字查看明細'}</span>
+            <span>{isRestDayEve ? '建議量已結合歷史相似日匹配 + 天氣 + 安全庫存（×2 央廚休息日備量）· 點擊建議數字查看明細' : '建議量已結合歷史相似日匹配 + 天氣 + 安全庫存計算 · 點擊建議數字查看明細'}</span>
           </div>
 
           <div className="mx-4 mb-3">
@@ -934,18 +653,33 @@ export default function Order() {
                     </div>
                     {expandedSuggestionId === product.id && suggestionBreakdown[product.id] && (() => {
                       const bd = suggestionBreakdown[product.id]
+                      const tierLabel = bd.matchLevel === 1 ? 'Tier 1（嚴格匹配）' : bd.matchLevel === 2 ? 'Tier 2（放寬匹配）' : 'Tier 3（近期平均）'
+                      const dayTypeLabel = bd.targetDayType === 'holiday' ? '假日' : bd.targetDayType === 'weekend' ? '週末' : '平日'
+                      const rainLabel = bd.targetRainBucket === 'none' ? '無雨' : bd.targetRainBucket === 'light' ? '小雨' : bd.targetRainBucket === 'heavy' ? '大雨' : '-'
                       return (
                         <div className={`mx-4 mb-1 px-3 py-2 rounded-lg bg-surface-section text-[11px] text-brand-lotus space-y-1 ${idx < products.length - 1 ? 'border-b border-gray-50' : ''}`}>
                           <div className="flex justify-between">
-                            <span>7日{bd.dayType === 'weekday' ? '平日' : bd.dayType === 'weekend' ? '假日' : ''}平均{bd.dataSource === 'usage' ? '用量' : '叫貨量'}</span>
-                            <span className="font-num">{bd.avgUsage} {product.unit}/天</span>
+                            <span>匹配等級</span>
+                            <span className={`font-medium ${bd.matchLevel === 1 ? 'text-status-success' : bd.matchLevel === 2 ? 'text-status-info' : 'text-status-warning'}`}>{tierLabel}</span>
                           </div>
-                          {bd.weatherAdjustPct !== 0 && (
-                            <div className="flex justify-between">
-                              <span>天氣調整</span>
-                              <span className="font-num">{bd.weatherAdjustPct > 0 ? '+' : ''}{bd.weatherAdjustPct}%</span>
+                          <div className="flex justify-between">
+                            <span>匹配天數</span>
+                            <span className="font-num">{bd.matchedDays} 天</span>
+                          </div>
+                          {bd.matchedDates.length > 0 && (
+                            <div className="flex justify-between items-start">
+                              <span className="shrink-0">匹配日期</span>
+                              <span className="font-num text-right">{bd.matchedDates.map(d => d.slice(2).replace(/-/g, '/')).join(', ')}</span>
                             </div>
                           )}
+                          <div className="flex justify-between">
+                            <span>目標條件</span>
+                            <span className="font-num">{dayTypeLabel} / {bd.targetTemp != null ? `${bd.targetTemp}°C` : '-'} / {rainLabel}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>加權平均用量</span>
+                            <span className="font-num">{bd.avgUsage} {product.unit}/天</span>
+                          </div>
                           {bd.restDayMultiplier > 1 && (
                             <div className="flex justify-between">
                               <span>休息日備量</span>
@@ -962,8 +696,8 @@ export default function Order() {
                             <span>建議量</span>
                             <span className="font-num">{suggested[product.id] > 0 ? suggested[product.id] : 0}</span>
                           </div>
-                          {bd.dataSource === 'order' && (
-                            <div className="text-[10px] text-status-warning">* 盤點資料不足，以叫貨量估算</div>
+                          {bd.matchLevel === 3 && bd.matchedDays === 0 && (
+                            <div className="text-[10px] text-status-warning">* 歷史資料不足，無法提供建議</div>
                           )}
                         </div>
                       )
