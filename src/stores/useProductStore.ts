@@ -34,7 +34,7 @@ export const useProductStore = create<ProductState>()((set, get) => ({
     ])
     if (prodRes.data && prodRes.data.length > 0) {
       // Merge static flags (wideInput) from storeProducts.ts
-      const staticFlags = new Map(storeProducts.filter(p => p.wideInput).map(p => [p.id, p]))
+      const staticFlags = new Map(storeProducts.filter(p => p.wideInput || p.integerOnly).map(p => [p.id, p]))
       set({
         items: prodRes.data.map((d) => ({
           id: d.id,
@@ -52,6 +52,7 @@ export const useProductStore = create<ProductState>()((set, get) => ({
           box_ratio: d.box_ratio ?? undefined,
           bag_weight: d.bag_weight ?? undefined,
           wideInput: staticFlags.get(d.id)?.wideInput,
+          integerOnly: staticFlags.get(d.id)?.integerOnly,
         })),
       })
     }

@@ -10,6 +10,7 @@ interface DualUnitInputProps extends Omit<InputHTMLAttributes<HTMLInputElement>,
   box_ratio?: number
   isFilled?: boolean
   onNext?: () => void
+  integerOnly?: boolean
 }
 
 export function DualUnitInput({
@@ -20,6 +21,7 @@ export function DualUnitInput({
   box_ratio,
   isFilled,
   onNext,
+  integerOnly,
   className,
   ...props
 }: DualUnitInputProps) {
@@ -32,6 +34,7 @@ export function DualUnitInput({
         unit={unit}
         isFilled={isFilled}
         onNext={onNext}
+        integerOnly={integerOnly}
         className={className}
         {...props}
       />

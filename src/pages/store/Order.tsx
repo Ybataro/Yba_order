@@ -640,6 +640,7 @@ export default function Order() {
                           box_ratio={product.box_ratio}
                           isFilled
                           onNext={focusNext}
+                          integerOnly={product.integerOnly}
                           data-ord=""
                           className={product.wideInput ? 'input-wide' : undefined}
                         />

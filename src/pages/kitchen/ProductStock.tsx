@@ -224,23 +224,39 @@ export default function ProductStock() {
 
     // Save stock entries (到期日批次): upsert + 刪除多餘（安全模式）
     // 避免 DELETE 成功但 INSERT 失敗導致到期日資料全部遺失
-    const seInserts: { session_id: string; product_id: string; expiry_date: string; quantity: number }[] = []
+    // 合併同一 (product_id, expiry_date) 的數量，避免批次內重複 key 導致 23505 錯誤
+    const seMap = new Map<string, { session_id: string; product_id: string; expiry_date: string; quantity: number }>()
+    let seRawCount = 0
+    const seMergedKeys: string[] = []
+    const seSkipped: string[] = []
     Object.entries(stockEntries).forEach(([pid, entries]) => {
       entries.forEach((e) => {
         if (e.expiryDate && e.quantity !== '') {
-          seInserts.push({
-            session_id: sessionId,
-            product_id: pid,
-            expiry_date: e.expiryDate,
-            quantity: parseFloat(e.quantity) || 0,
-          })
+          seRawCount++
+          const key = `${pid}|${e.expiryDate}`
+          const existing = seMap.get(key)
+          if (existing) {
+            existing.quantity += parseFloat(e.quantity) || 0
+            seMergedKeys.push(key)
+          } else {
+            seMap.set(key, {
+              session_id: sessionId,
+              product_id: pid,
+              expiry_date: e.expiryDate,
+              quantity: parseFloat(e.quantity) || 0,
+            })
+          }
+        } else {
+          seSkipped.push(`${pid}|date=${e.expiryDate}|qty=${e.quantity}`)
         }
       })
     })
+    const seInserts = Array.from(seMap.values())
 
     let seUpsertOk = false
     let seDeletedCount = 0
     let seVerifyCount = -1
+    let seErrorMsg = ''
 
     if (seInserts.length > 0) {
       const { error: upsertErr } = await supabase
@@ -248,6 +264,7 @@ export default function ProductStock() {
         .upsert(seInserts, { onConflict: 'session_id,product_id,expiry_date' })
 
       if (upsertErr) {
+        seErrorMsg = `${upsertErr.code}|${upsertErr.message}`
         console.error('[productStockEntries] upsert error:', upsertErr)
         showToast('到期日資料儲存失敗，請重新提交', 'error')
       } else {
@@ -279,11 +296,15 @@ export default function ProductStock() {
       await supabase.from('product_stock_entries').delete().eq('session_id', sessionId)
     }
 
-    // Audit log：記錄 stock entries 操作結果
+    // Audit log：記錄 stock entries 完整診斷資訊
     logAudit('product_stock_entries_save', 'kitchen', sessionId, {
       staffId: confirmBy,
-      insertCount: seInserts.length,
+      rawCount: seRawCount,
+      dedupCount: seInserts.length,
+      mergedKeys: seMergedKeys.length > 0 ? seMergedKeys : undefined,
+      skipped: seSkipped.length > 0 ? seSkipped : undefined,
       upsertOk: seUpsertOk,
+      errorMsg: seErrorMsg || undefined,
       deletedCount: seDeletedCount,
       verifyCount: seVerifyCount,
       mismatch: seVerifyCount !== -1 && seVerifyCount !== seInserts.length,
@@ -376,7 +397,7 @@ export default function ProductStock() {
                           </button>
                         ) : (
                           <div className="relative">
-                            <DualUnitInput value={stock[product.id]} onChange={(v) => setStock(prev => ({ ...prev, [product.id]: v }))} unit={product.unit} box_unit={product.box_unit} box_ratio={product.box_ratio} isFilled onNext={focusNext} data-pst="" />
+                            <DualUnitInput value={stock[product.id]} onChange={(v) => setStock(prev => ({ ...prev, [product.id]: v }))} unit={product.unit} box_unit={product.box_unit} box_ratio={product.box_ratio} integerOnly={product.integerOnly} isFilled onNext={focusNext} data-pst="" />
                             <button
                               type="button"
                               title="依到期日分批輸入"
@@ -419,6 +440,7 @@ export default function ProductStock() {
                           unit={product.unit}
                           box_unit={product.box_unit}
                           box_ratio={product.box_ratio}
+                          integerOnly={product.integerOnly}
                         />
                       )}
                       {isExpanded && idx < products.length - 1 && (

@@ -15,9 +15,10 @@ interface StockEntryPanelProps {
   unit?: string
   box_unit?: string
   box_ratio?: number
+  integerOnly?: boolean
 }
 
-export function StockEntryPanel({ entries, onChange, onCollapse, unit, box_unit, box_ratio }: StockEntryPanelProps) {
+export function StockEntryPanel({ entries, onChange, onCollapse, unit, box_unit, box_ratio, integerOnly }: StockEntryPanelProps) {
   const hasDual = !!(box_unit && box_ratio && box_ratio > 0)
   const lastAddedRef = useRef<boolean>(false)
   const panelRef = useRef<HTMLDivElement>(null)
@@ -90,6 +91,7 @@ export function StockEntryPanel({ entries, onChange, onCollapse, unit, box_unit,
               unit={unit}
               box_unit={box_unit}
               box_ratio={box_ratio}
+              integerOnly={integerOnly}
               isFilled
               onNext={() => handleQuantityNext(idx)}
               data-stock-qty=""

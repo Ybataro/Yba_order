@@ -615,6 +615,7 @@ export default function Shipment() {
                               box_ratio={product.box_ratio}
                               isFilled
                               onNext={focusNext}
+                              integerOnly={product.integerOnly}
                               className={`${hasDiff ? '!border-status-warning' : ''} ${product.wideInput ? 'input-wide' : ''}`.trim()}
                               data-ship=""
                             />
@@ -705,6 +706,7 @@ export default function Shipment() {
                               box_ratio={product.box_ratio}
                               isFilled
                               onNext={focusNext}
+                              integerOnly={product.integerOnly}
                               data-ship=""
                               className={product.wideInput ? 'input-wide' : undefined}
                             />

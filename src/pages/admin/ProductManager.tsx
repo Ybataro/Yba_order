@@ -47,15 +47,23 @@ export default function ProductManager() {
 
   const filteredItems = filterCat ? items.filter((p) => p.category === filterCat) : items
 
+  // 價格用字串 state 追蹤，避免 number 轉換丟失輸入中的 "0." 等中間狀態
+  const [ourCostStr, setOurCostStr] = useState('')
+  const [franchisePriceStr, setFranchisePriceStr] = useState('')
+
   const openAdd = () => {
     setEditing(null)
     setForm({ ...emptyProduct, id: `p${Date.now()}` })
+    setOurCostStr('')
+    setFranchisePriceStr('')
     setModalOpen(true)
   }
 
   const openEdit = (item: StoreProduct) => {
     setEditing(item)
     setForm({ ...item })
+    setOurCostStr(item.ourCost ? String(item.ourCost) : '')
+    setFranchisePriceStr(item.franchisePrice ? String(item.franchisePrice) : '')
     setModalOpen(true)
   }
 
@@ -64,11 +72,12 @@ export default function ProductManager() {
       showToast('請填寫品名、分類、單位', 'error')
       return
     }
+    const submitForm = { ...form, ourCost: parseFloat(ourCostStr) || 0, franchisePrice: parseFloat(franchisePriceStr) || 0 }
     if (editing) {
-      update(editing.id, form)
+      update(editing.id, submitForm)
       showToast('品項已更新')
     } else {
-      add(form)
+      add(submitForm)
       showToast('品項已新增')
     }
     setModalOpen(false)
@@ -309,10 +318,10 @@ export default function ProductManager() {
           <ModalInput value={form.baseStock ?? ''} onChange={(v) => setForm({ ...form, baseStock: v })} placeholder="例：2盒/2天" />
         </ModalField>
         <ModalField label="我們價格">
-          <ModalInput value={String(form.ourCost || '')} onChange={(v) => setForm({ ...form, ourCost: parseFloat(v) || 0 })} placeholder="例：50" />
+          <ModalInput value={ourCostStr} onChange={setOurCostStr} placeholder="例：50 或 0.031" />
         </ModalField>
         <ModalField label="加盟價格">
-          <ModalInput value={String(form.franchisePrice || '')} onChange={(v) => setForm({ ...form, franchisePrice: parseFloat(v) || 0 })} placeholder="例：65" />
+          <ModalInput value={franchisePriceStr} onChange={setFranchisePriceStr} placeholder="例：65 或 0.09" />
         </ModalField>
         <ModalField label="顯示範圍">
           <ModalSelect

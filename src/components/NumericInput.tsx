@@ -7,18 +7,20 @@ interface NumericInputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 
   unit?: string
   isFilled?: boolean
   onNext?: () => void
+  integerOnly?: boolean
 }
 
-export function NumericInput({ value, onChange, unit, isFilled, onNext, className, ...props }: NumericInputProps) {
+export function NumericInput({ value, onChange, unit, isFilled, onNext, integerOnly, className, ...props }: NumericInputProps) {
   return (
     <div className="flex items-center gap-1">
       <input
         type="text"
-        inputMode="decimal"
+        inputMode={integerOnly ? 'numeric' : 'decimal'}
         value={value}
         onChange={(e) => {
           const v = e.target.value
-          if (v === '' || /^\d*\.?\d*$/.test(v)) {
+          const pattern = integerOnly ? /^\d*$/ : /^\d*\.?\d*$/
+          if (v === '' || pattern.test(v)) {
             onChange(v)
           }
         }}

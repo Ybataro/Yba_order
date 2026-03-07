@@ -734,29 +734,46 @@ export default function Inventory() {
       await saveSupplyData(staffId)
       // Save stock entries (到期日批次): upsert + 刪除多餘（安全模式）
       // 用快照避免 stale closure
-      const seInserts: { session_id: string; product_id: string; expiry_date: string; quantity: number }[] = []
+      // 合併同一 (product_id, expiry_date) 的數量，避免批次內重複 key 導致 upsert 失敗
+      const seMap = new Map<string, { session_id: string; product_id: string; expiry_date: string; quantity: number }>()
+      let seRawCount = 0
+      const seMergedKeys: string[] = []
+      const seSkipped: string[] = []
       Object.entries(stockEntriesSnapshot).forEach(([pid, entries]) => {
         (entries as StockEntry[]).forEach((e) => {
           if (e.expiryDate && e.quantity !== '') {
-            seInserts.push({
-              session_id: sessionId,
-              product_id: pid,
-              expiry_date: e.expiryDate,
-              quantity: parseFloat(e.quantity) || 0,
-            })
+            seRawCount++
+            const key = `${pid}|${e.expiryDate}`
+            const existing = seMap.get(key)
+            if (existing) {
+              existing.quantity += parseFloat(e.quantity) || 0
+              seMergedKeys.push(key)
+            } else {
+              seMap.set(key, {
+                session_id: sessionId,
+                product_id: pid,
+                expiry_date: e.expiryDate,
+                quantity: parseFloat(e.quantity) || 0,
+              })
+            }
+          } else {
+            seSkipped.push(`${pid}|date=${e.expiryDate}|qty=${e.quantity}`)
           }
         })
       })
+      const seInserts = Array.from(seMap.values())
       // 安全模式：先 upsert 新資料 → 成功後才刪除不在新列表中的舊行
       // 避免 DELETE 成功但 INSERT 失敗導致到期日資料全部遺失
       let seUpsertOk = false
       let seDeletedCount = 0
       let seVerifyCount = -1
+      let seErrorMsg = ''
       if (seInserts.length > 0) {
         const { error: upsertErr } = await supabase
           .from('inventory_stock_entries')
           .upsert(seInserts, { onConflict: 'session_id,product_id,expiry_date' })
         if (upsertErr) {
+          seErrorMsg = `${upsertErr.code}|${upsertErr.message}`
           console.error('[stockEntries] upsert error:', upsertErr)
           showToast('到期日資料儲存失敗，請重新提交', 'error')
         } else {
@@ -787,11 +804,15 @@ export default function Inventory() {
         seUpsertOk = true
         await supabase.from('inventory_stock_entries').delete().eq('session_id', sessionId)
       }
-      // Audit log：記錄 stock entries 操作結果
+      // Audit log：記錄 stock entries 完整診斷資訊
       logAudit('stock_entries_save', storeId, sessionId, {
         staffId,
-        insertCount: seInserts.length,
+        rawCount: seRawCount,
+        dedupCount: seInserts.length,
+        mergedKeys: seMergedKeys.length > 0 ? seMergedKeys : undefined,
+        skipped: seSkipped.length > 0 ? seSkipped : undefined,
         upsertOk: seUpsertOk,
+        errorMsg: seErrorMsg || undefined,
         deletedCount: seDeletedCount,
         verifyCount: seVerifyCount,
         mismatch: seVerifyCount !== -1 && seVerifyCount !== seInserts.length,
@@ -1007,6 +1028,7 @@ export default function Inventory() {
                                       box_ratio={product.box_ratio}
                                       isFilled
                                       onNext={focusNext}
+                                      integerOnly={product.integerOnly}
                                       data-inv=""
                                       className={product.wideInput ? 'input-wide' : undefined}
                                     />
@@ -1081,6 +1103,7 @@ export default function Inventory() {
                           unit={product.unit}
                           box_unit={product.box_unit}
                           box_ratio={product.box_ratio}
+                          integerOnly={product.integerOnly}
                         />
                       )}
                       {isExpanded && idx < products.length - 1 && (
