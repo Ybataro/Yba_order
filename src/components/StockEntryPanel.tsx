@@ -1,7 +1,7 @@
-import { useRef, useEffect } from 'react'
+import { useRef, useEffect, useState } from 'react'
 import { DualUnitInput } from '@/components/DualUnitInput'
 import { formatDualUnit } from '@/lib/utils'
-import { Plus, X } from 'lucide-react'
+import { Plus, X, Calendar } from 'lucide-react'
 
 export interface StockEntry {
   expiryDate: string
@@ -18,20 +18,119 @@ interface StockEntryPanelProps {
   integerOnly?: boolean
 }
 
+/** Parse shorthand date input (e.g. "0308") into YYYY-MM-DD */
+function parseShortDate(raw: string): string | null {
+  const digits = raw.replace(/\D/g, '')
+  if (digits.length === 4) {
+    const mm = parseInt(digits.slice(0, 2), 10)
+    const dd = parseInt(digits.slice(2, 4), 10)
+    if (mm >= 1 && mm <= 12 && dd >= 1 && dd <= 31) {
+      const year = new Date().getFullYear()
+      const pad = (n: number) => String(n).padStart(2, '0')
+      return `${year}-${pad(mm)}-${pad(dd)}`
+    }
+  }
+  if (digits.length === 8) {
+    const yyyy = parseInt(digits.slice(0, 4), 10)
+    const mm = parseInt(digits.slice(4, 6), 10)
+    const dd = parseInt(digits.slice(6, 8), 10)
+    if (yyyy >= 2020 && yyyy <= 2099 && mm >= 1 && mm <= 12 && dd >= 1 && dd <= 31) {
+      const pad = (n: number) => String(n).padStart(2, '0')
+      return `${yyyy}-${pad(mm)}-${pad(dd)}`
+    }
+  }
+  return null
+}
+
+/** Format YYYY-MM-DD to MM/DD display */
+function displayDate(iso: string): string {
+  if (!iso) return ''
+  const parts = iso.split('-')
+  if (parts.length === 3) return `${parts[1]}/${parts[2]}`
+  return iso
+}
+
+function DateInput({ value, onChange, autoFocus }: { value: string; onChange: (v: string) => void; autoFocus?: boolean }) {
+  const [text, setText] = useState('')
+  const [editing, setEditing] = useState(false)
+  const hiddenRef = useRef<HTMLInputElement>(null)
+  const textRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    if (autoFocus && textRef.current) {
+      textRef.current.focus()
+    }
+  }, [autoFocus])
+
+  const handleBlur = () => {
+    setEditing(false)
+    if (!text) return
+    const parsed = parseShortDate(text)
+    if (parsed) {
+      onChange(parsed)
+      setText('')
+    } else {
+      setText('')
+    }
+  }
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault()
+      ;(e.target as HTMLInputElement).blur()
+    }
+  }
+
+  return (
+    <div className="flex-1 flex items-center gap-1">
+      <input
+        ref={textRef}
+        type="text"
+        inputMode="numeric"
+        placeholder={value ? displayDate(value) : 'MMDD'}
+        value={editing ? text : (value ? displayDate(value) : '')}
+        onFocus={() => { setEditing(true); setText('') }}
+        onBlur={handleBlur}
+        onKeyDown={handleKeyDown}
+        onChange={(e) => setText(e.target.value)}
+        className="flex-1 min-w-0 h-9 rounded-lg border border-gray-200 bg-white px-2 text-sm text-brand-oak outline-none focus:border-brand-oak/50 focus:ring-1 focus:ring-brand-oak/20"
+      />
+      <input
+        ref={hiddenRef}
+        type="date"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="sr-only"
+        tabIndex={-1}
+      />
+      <button
+        type="button"
+        onClick={() => hiddenRef.current?.showPicker?.()}
+        className="w-9 h-9 flex items-center justify-center rounded-lg border border-gray-200 bg-white text-brand-oak/60 hover:text-brand-oak active:bg-amber-50 shrink-0"
+      >
+        <Calendar size={16} />
+      </button>
+    </div>
+  )
+}
+
 export function StockEntryPanel({ entries, onChange, onCollapse, unit, box_unit, box_ratio, integerOnly }: StockEntryPanelProps) {
   const hasDual = !!(box_unit && box_ratio && box_ratio > 0)
   const lastAddedRef = useRef<boolean>(false)
   const panelRef = useRef<HTMLDivElement>(null)
+  const [focusLastDate, setFocusLastDate] = useState(false)
 
   // Focus the date input of the last row when a new entry is added
   useEffect(() => {
-    if (lastAddedRef.current && panelRef.current) {
+    if (lastAddedRef.current) {
       lastAddedRef.current = false
-      const dateInputs = panelRef.current.querySelectorAll<HTMLInputElement>('input[type="date"]')
-      const last = dateInputs[dateInputs.length - 1]
-      if (last) last.focus()
+      setFocusLastDate(true)
     }
   }, [entries.length])
+
+  useEffect(() => {
+    if (focusLastDate) setFocusLastDate(false)
+  }, [focusLastDate])
 
   const total = entries.reduce((sum, e) => {
     const n = parseFloat(e.quantity)
@@ -55,13 +154,11 @@ export function StockEntryPanel({ entries, onChange, onCollapse, unit, box_unit,
 
   const handleQuantityNext = (index: number) => {
     if (!panelRef.current) return
-    // Try to focus next row's quantity input
     const qtyInputs = panelRef.current.querySelectorAll<HTMLInputElement>('[data-stock-qty]')
     const arr = Array.from(qtyInputs)
     if (index < arr.length - 1) {
       arr[index + 1].focus()
     } else {
-      // Last row → collapse and move to discard field
       onCollapse()
     }
   }
@@ -78,11 +175,10 @@ export function StockEntryPanel({ entries, onChange, onCollapse, unit, box_unit,
       {/* Rows */}
       {entries.map((entry, idx) => (
         <div key={idx} className="flex items-center gap-1.5 mb-1.5">
-          <input
-            type="date"
+          <DateInput
             value={entry.expiryDate}
-            onChange={(e) => updateEntry(idx, 'expiryDate', e.target.value)}
-            className="flex-1 h-9 rounded-lg border border-gray-200 bg-white px-2 text-sm text-brand-oak outline-none focus:border-brand-oak/50 focus:ring-1 focus:ring-brand-oak/20"
+            onChange={(v) => updateEntry(idx, 'expiryDate', v)}
+            autoFocus={focusLastDate && idx === entries.length - 1}
           />
           <div className={`${hasDual ? 'w-[110px]' : 'w-[70px]'} flex justify-center`}>
             <DualUnitInput

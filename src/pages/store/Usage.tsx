@@ -131,7 +131,7 @@ export default function Usage() {
         <div className="flex items-center justify-center py-20 text-sm text-brand-lotus">載入中...</div>
       ) : (
         <>
-          <div className="flex items-center justify-end gap-1 px-4 py-1.5 text-[11px] text-brand-lotus bg-white border-b border-gray-100">
+          <div className="sticky top-14 z-10 flex items-center justify-end gap-1 px-4 py-1.5 text-[11px] text-brand-lotus bg-white border-b border-gray-100">
             <span className="flex-1">品項</span>
             <span className="w-[46px] text-center">前日用量</span>
             <span className="w-[46px] text-center">倒掉量</span>
@@ -142,7 +142,7 @@ export default function Usage() {
 
           {Array.from(productsByCategory.entries()).map(([category, products]) => (
             <div key={category}>
-              <SectionHeader title={category} icon="■" />
+              <SectionHeader title={category} icon="■" sticky={false} />
               <div className="bg-white">
                 {products.map((product, idx) => {
                   const d = usageData[product.id] || { prevUsage: 0, discarded: 0, stock: 0, kitchenSupply: 0, total: 0 }

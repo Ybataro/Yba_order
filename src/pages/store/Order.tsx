@@ -600,7 +600,7 @@ export default function Order() {
             <button onClick={applyAllSuggestions} className="btn-secondary !h-9 !text-sm">一鍵套用全部建議量</button>
           </div>
 
-          <div className="flex items-center px-4 py-1 bg-surface-section text-[11px] text-brand-lotus border-b border-gray-100">
+          <div className="sticky top-14 z-10 flex items-center px-4 py-1 bg-surface-section text-[11px] text-brand-lotus border-b border-gray-100">
             <span className="flex-1">品項</span>
             <span className="w-[32px] text-center">央廚</span>
             <span className="w-[36px] text-center text-[9px]">前日用量</span>
@@ -612,7 +612,7 @@ export default function Order() {
 
           {Array.from(productsByCategory.entries()).map(([category, products]) => (
             <div key={category}>
-              <SectionHeader title={category} icon="■" />
+              <SectionHeader title={category} icon="■" sticky={false} />
               <div className="bg-white">
                 {products.map((product, idx) => (
                   <div key={product.id}>
@@ -710,7 +710,7 @@ export default function Order() {
           ))}
 
           {/* 固定備註項目 */}
-          <SectionHeader title="叫貨備註" icon="■" />
+          <SectionHeader title="叫貨備註" icon="■" sticky={false} />
           <div className="bg-white px-4 py-3">
             <div className="flex items-center gap-3 mb-3">
               <span className="text-sm text-brand-oak shrink-0">杏仁茶瓶</span>

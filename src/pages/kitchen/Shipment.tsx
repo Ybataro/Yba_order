@@ -432,6 +432,39 @@ export default function Shipment() {
       await supabase.from('shipment_items').delete().eq('session_id', sid)
     }
 
+    // 出貨異動同步：actual_qty 與 order_qty 不同時，自動更新門店 order_items
+    const orderSid = `${activeStore}_${orderDate}`
+    const changedItems = shipItems.filter(
+      item => !item.product_id.startsWith('note_') && item.actual_qty !== item.order_qty && item.order_qty > 0
+    )
+    if (changedItems.length > 0) {
+      const upsertRows = changedItems.map(item => ({
+        session_id: orderSid,
+        product_id: item.product_id,
+        quantity: item.actual_qty,
+      }))
+      await supabase.from('order_items').upsert(upsertRows, { onConflict: 'session_id,product_id' })
+    }
+    // 央廚主動出貨（原本門店沒叫的品項）也寫入 order_items
+    const extraShipped = shipItems.filter(
+      item => !item.product_id.startsWith('note_') && item.order_qty === 0 && item.actual_qty > 0
+    )
+    if (extraShipped.length > 0) {
+      // 確保 order_session 存在
+      await supabase.from('order_sessions').upsert({
+        id: orderSid,
+        store_id: activeStore,
+        date: orderDate,
+        updated_at: new Date().toISOString(),
+      }, { onConflict: 'id' })
+      const extraRows = extraShipped.map(item => ({
+        session_id: orderSid,
+        product_id: item.product_id,
+        quantity: item.actual_qty,
+      }))
+      await supabase.from('order_items').upsert(extraRows, { onConflict: 'session_id,product_id' })
+    }
+
     const staffName = kitchenStaff.find(s => s.id === confirmBy)?.name
     const activeStoreName = stores.find(s => s.id === activeStore)?.name
     const shipItemCount = shipItemsWithReceived.length
@@ -571,7 +604,7 @@ export default function Shipment() {
           ) : (
             <>
               {/* 欄位標題 */}
-              <div className="flex items-center px-4 py-1.5 bg-surface-section text-[11px] text-brand-lotus border-b border-gray-100">
+              <div className="sticky top-14 z-10 flex items-center px-4 py-1.5 bg-surface-section text-[11px] text-brand-lotus border-b border-gray-100">
                 <span className="flex-1">品名</span>
                 <span className="w-[50px] text-center">叫貨</span>
                 <span className="w-[60px] text-center">實出</span>
@@ -580,7 +613,7 @@ export default function Shipment() {
 
               {Array.from(productsByCategory.entries()).map(([category, products]) => (
                 <div key={category}>
-                  <SectionHeader title={category} icon="■" />
+                  <SectionHeader title={category} icon="■" sticky={false} />
                   <div className="bg-white">
                     {products.map((product, idx) => {
                       const ordered = orderQty[activeStore]?.[product.id] || 0
@@ -679,14 +712,14 @@ export default function Shipment() {
             {/* 已加入的 extra items 列表 */}
             {extraItemsList.length > 0 && (
               <>
-                <div className="flex items-center px-4 py-1.5 bg-surface-section text-[11px] text-brand-lotus border-b border-gray-100">
+                <div className="sticky top-14 z-10 flex items-center px-4 py-1.5 bg-surface-section text-[11px] text-brand-lotus border-b border-gray-100">
                   <span className="flex-1">品名</span>
                   <span className="w-[60px] text-center">實出</span>
                   <span className="w-7"></span>
                 </div>
                 {Array.from(extraByCategory.entries()).map(([category, products]) => (
                   <div key={`extra-${category}`}>
-                    <SectionHeader title={category} icon="■" />
+                    <SectionHeader title={category} icon="■" sticky={false} />
                     <div className="bg-white">
                       {products.map((product, idx) => (
                         <div

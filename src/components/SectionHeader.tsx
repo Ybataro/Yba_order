@@ -3,13 +3,14 @@ interface SectionHeaderProps {
   completed?: number
   total?: number
   icon?: string
+  sticky?: boolean
 }
 
-export function SectionHeader({ title, completed, total, icon }: SectionHeaderProps) {
+export function SectionHeader({ title, completed, total, icon, sticky = true }: SectionHeaderProps) {
   const showProgress = completed !== undefined && total !== undefined
 
   return (
-    <div className="section-header">
+    <div className={sticky ? 'section-header' : 'section-header !static'}>
       <div className="flex items-center gap-2">
         {icon && <span className="w-2 h-2 rounded-sm bg-brand-mocha inline-block" />}
         <span>{title}</span>

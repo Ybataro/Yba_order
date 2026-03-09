@@ -901,23 +901,25 @@ export default function Inventory() {
         <>
           <ProgressBar current={completedCount} total={storeProducts.length} />
 
+          {/* 欄位標題列 */}
+          <div className="sticky top-14 z-10 flex items-center px-4 py-1 bg-surface-section text-[11px] text-brand-lotus border-b border-gray-100">
+            <span className="flex-1">品名</span>
+            <span className="w-[56px] text-center">架上</span>
+            {hasBagWeightItems && <span className="w-[44px] text-center text-[9px]">總計</span>}
+            <span className="w-[110px] text-center">庫存</span>
+            <span className="w-[56px] text-center">倒掉</span>
+            <span className="w-[40px] text-center text-[9px]">前日用量</span>
+          </div>
+
           {Array.from(productsByCategory.entries()).map(([category, products]) => (
             <div key={category}>
               <SectionHeader
                 title={category}
                 icon="■"
+                sticky={false}
                 completed={getCategoryCompleted(products)}
                 total={products.length}
               />
-              {/* 欄位標題列 */}
-              <div className="flex items-center px-4 py-1 bg-surface-section text-[11px] text-brand-lotus border-b border-gray-100">
-                <span className="flex-1">品名</span>
-                <span className="w-[56px] text-center">架上</span>
-                {hasBagWeightItems && <span className="w-[44px] text-center text-[9px]">總計</span>}
-                <span className="w-[110px] text-center">庫存</span>
-                <span className="w-[56px] text-center">倒掉</span>
-                <span className="w-[40px] text-center text-[9px]">前日用量</span>
-              </div>
               <div className="bg-white">
                 {products.map((product, idx) => {
                   const entry = getEntry(product.id)
@@ -1122,6 +1124,7 @@ export default function Inventory() {
               <SectionHeader
                 title="冷凍品販售"
                 icon="■"
+                sticky={false}
                 completed={frozenCompletedCount}
                 total={FROZEN_PRODUCTS.length}
               />
@@ -1180,7 +1183,7 @@ export default function Inventory() {
           {/* 其他區（消耗品追蹤） */}
           {!supplyLoading && visibleSupplyItems.length > 0 && (
             <div>
-              <SectionHeader title="其他區" icon="■" />
+              <SectionHeader title="其他區" icon="■" sticky={false} />
               <div className="flex items-center px-4 py-1 bg-surface-section text-[11px] text-brand-lotus border-b border-gray-100">
                 <span className="flex-1">品名</span>
                 <span className="w-[70px] text-center">補貨</span>

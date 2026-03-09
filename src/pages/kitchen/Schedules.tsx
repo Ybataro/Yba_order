@@ -344,6 +344,7 @@ export default function KitchenSchedules() {
         }}
         staffId={session?.staffId ?? ''}
         staffName={session?.staffName ?? ''}
+        storeContext="kitchen"
       />
     </div>
   )

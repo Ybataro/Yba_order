@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { supabase } from '@/lib/supabase'
-import { sendTelegramNotification, sendTelegramPhotos } from '@/lib/telegram'
+import { sendTelegramToTargets, sendTelegramPhotosToTargets, LEAVE_NOTIFY_MAP } from '@/lib/telegram'
 import { calcLeaveDays, getLeaveTypeName } from '@/lib/leave'
 import type { LeaveRequest, LeaveType, DayPart } from '@/lib/leave'
 
@@ -13,6 +13,7 @@ interface SubmitData {
   day_part: DayPart
   reason: string
   photos?: File[]
+  store_context?: string  // 'lehua' | 'xingnan' | 'kitchen'
 }
 
 interface LeaveState {
@@ -99,7 +100,8 @@ export const useLeaveStore = create<LeaveState>()((set, get) => ({
       return false
     }
 
-    // 發送 Telegram 通知
+    // 發送 Telegram 通知（僅通知該店主管 + 管理者，不發群組）
+    const notifyTargets = LEAVE_NOTIFY_MAP[data.store_context || ''] || Object.values(LEAVE_NOTIFY_MAP).flat().filter((v, i, a) => a.indexOf(v) === i)
     const typeName = getLeaveTypeName(data.leave_type)
     const dateRange = data.start_date === data.end_date
       ? data.start_date
@@ -113,17 +115,16 @@ export const useLeaveStore = create<LeaveState>()((set, get) => ({
       data.reason ? `💬 事由：${data.reason}` : '',
     ].filter(Boolean).join('\n')
 
-    // 文字通知 fire-and-forget
-    sendTelegramNotification(msg, true)
+    // 文字通知 fire-and-forget（私訊主管+管理者）
+    sendTelegramToTargets(msg, notifyTargets)
       .then((ok) => { if (!ok) console.warn('[請假通知] 發送失敗') })
       .catch((err) => console.error('[請假通知] 錯誤:', err))
 
     // 照片需要 await，避免 modal 關閉後 File 物件被回收
-    // 加 timeout 避免壓縮或上傳卡住導致「一直提交中」
     if (data.photos && data.photos.length > 0) {
       const caption = `📋 ${data.staff_name} 的請假附件`
       try {
-        const photoPromise = sendTelegramPhotos(data.photos, caption, true)
+        const photoPromise = sendTelegramPhotosToTargets(data.photos, caption, notifyTargets)
         const timeout = new Promise<boolean>((resolve) => setTimeout(() => resolve(false), 15000))
         const ok = await Promise.race([photoPromise, timeout])
         if (!ok) console.warn('[請假照片] 發送失敗或超時')

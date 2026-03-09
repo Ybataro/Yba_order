@@ -11,9 +11,10 @@ interface Props {
   onClose: () => void
   staffId: string
   staffName: string
+  storeContext?: string  // 'lehua' | 'xingnan' | 'kitchen'
 }
 
-export default function LeaveRequestModal({ open, onClose, staffId, staffName }: Props) {
+export default function LeaveRequestModal({ open, onClose, staffId, staffName, storeContext }: Props) {
   const { submit } = useLeaveStore()
   const { showToast } = useToast()
   const currentYear = new Date().getFullYear()
@@ -95,6 +96,7 @@ export default function LeaveRequestModal({ open, onClose, staffId, staffName }:
       day_part: dayPart,
       reason,
       photos: photos.length > 0 ? photos : undefined,
+      store_context: storeContext,
     })
     setSubmitting(false)
     if (ok) {

@@ -350,6 +350,7 @@ export default function StoreSchedules() {
         }}
         staffId={session?.staffId ?? ''}
         staffName={session?.staffName ?? ''}
+        storeContext={storeId}
       />
     </div>
   )

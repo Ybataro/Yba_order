@@ -8,13 +8,14 @@ import { formatCurrency } from '@/lib/utils'
 import { exportToExcel } from '@/lib/exportExcel'
 import { exportToPdf } from '@/lib/exportPdf'
 import ExportButtons from '@/components/ExportButtons'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Settings } from 'lucide-react'
 import {
   computeMonthlyPnL,
   computeYearlyPnL,
   upsertMonthlyExpense,
   type PnLResult,
 } from '@/lib/profitLoss'
+import { ExpenseCategoryModal } from '@/components/ExpenseCategoryModal'
 
 type ViewMode = 'month' | 'year'
 type EntityId = string // 'lehua' | 'xingnan' | 'kitchen'
@@ -37,6 +38,7 @@ export default function ProfitLoss() {
 
   // Manual expense editing
   const [editValues, setEditValues] = useState<Record<string, string>>({})
+  const [categoryModalOpen, setCategoryModalOpen] = useState(false)
 
   // Year view
   const [yearData, setYearData] = useState<{
@@ -360,7 +362,15 @@ export default function ProfitLoss() {
             )}
 
             {/* Manual expenses */}
-            <SectionHeader title={isKitchen ? '營運費用' : '營運費用（手動輸入）'} icon="■" />
+            <div className="flex items-center justify-between">
+              <SectionHeader title={isKitchen ? '營運費用' : '營運費用（手動輸入）'} icon="■" />
+              <button
+                onClick={() => setCategoryModalOpen(true)}
+                className="mr-4 p-1.5 rounded-lg hover:bg-gray-100 active:bg-gray-200"
+              >
+                <Settings size={16} className="text-brand-lotus" />
+              </button>
+            </div>
             <div className="bg-white">
               {pnl.manualExpenses.map((e, idx) => (
                 <div
@@ -524,6 +534,13 @@ export default function ProfitLoss() {
           <div className="flex items-center justify-center py-20 text-sm text-brand-lotus">無資料</div>
         )
       )}
+
+      <ExpenseCategoryModal
+        open={categoryModalOpen}
+        onClose={() => setCategoryModalOpen(false)}
+        storeId={isKitchen ? 'kitchen' : 'store'}
+        onSaved={() => { if (viewMode === 'month') fetchMonth() }}
+      />
     </div>
   )
 }

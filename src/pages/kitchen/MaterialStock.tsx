@@ -98,7 +98,7 @@ export default function MaterialStock() {
     load()
   }, [selectedDate])
 
-  // 近 7 日原物料叫貨日均
+  // 週用 = 前一次盤點庫存 + 期間所有叫貨量合計 - 最新一次盤點庫存
   const [weeklyUsage, setWeeklyUsage] = useState<Record<string, number>>({})
   const [weeklyLoading, setWeeklyLoading] = useState(true)
 
@@ -106,37 +106,76 @@ export default function MaterialStock() {
     if (!supabase) { setWeeklyLoading(false); return }
     const load = async () => {
       setWeeklyLoading(true)
-      const d = new Date()
-      d.setDate(d.getDate() - 7)
-      const sevenDaysAgo = d.toLocaleDateString('en-CA', { timeZone: 'Asia/Taipei' })
 
-      const { data: sessions } = await supabase!
-        .from('material_order_sessions')
+      // 取最近兩次盤點 session（按日期降序）
+      const { data: stockSessions } = await supabase!
+        .from('material_stock_sessions')
         .select('id, date')
-        .gte('date', sevenDaysAgo)
-        .lte('date', today)
+        .order('date', { ascending: false })
+        .limit(2)
 
-      if (!sessions || sessions.length === 0) { setWeeklyLoading(false); return }
+      if (!stockSessions || stockSessions.length < 2) { setWeeklyLoading(false); return }
 
-      const uniqueDays = new Set(sessions.map(s => s.date)).size
-      const sids = sessions.map(s => s.id)
+      const [latestSession, prevSession] = stockSessions
 
-      const { data: items } = await supabase!
-        .from('material_order_items')
-        .select('material_id, quantity')
-        .in('session_id', sids)
+      // 取兩次盤點之間的所有叫貨 session
+      const { data: orderSessions } = await supabase!
+        .from('material_order_sessions')
+        .select('id')
+        .gte('date', prevSession.date)
+        .lte('date', latestSession.date)
 
-      if (items) {
-        const totals: Record<string, number> = {}
-        items.forEach(item => {
-          totals[item.material_id] = (totals[item.material_id] || 0) + item.quantity
+      const orderSessionIds = orderSessions?.map(s => s.id) || []
+
+      // 並行查：前次盤點品項 + 最新盤點品項 + 所有叫貨品項
+      const [prevItemsRes, latestItemsRes, orderItemsRes] = await Promise.all([
+        supabase!
+          .from('material_stock_items')
+          .select('material_id, stock_qty, bulk_qty')
+          .eq('session_id', prevSession.id),
+        supabase!
+          .from('material_stock_items')
+          .select('material_id, stock_qty, bulk_qty')
+          .eq('session_id', latestSession.id),
+        orderSessionIds.length > 0
+          ? supabase!
+              .from('material_order_items')
+              .select('material_id, quantity')
+              .in('session_id', orderSessionIds)
+          : Promise.resolve({ data: [] as { material_id: string; quantity: number }[] }),
+      ])
+
+      const prevStock: Record<string, number> = {}
+      prevItemsRes.data?.forEach(item => {
+        prevStock[item.material_id] = (item.stock_qty || 0) + (item.bulk_qty || 0)
+      })
+
+      const latestStock: Record<string, number> = {}
+      latestItemsRes.data?.forEach(item => {
+        latestStock[item.material_id] = (item.stock_qty || 0) + (item.bulk_qty || 0)
+      })
+
+      const totalOrders: Record<string, number> = {}
+      const orderItems = 'data' in orderItemsRes ? orderItemsRes.data : orderItemsRes
+      if (Array.isArray(orderItems)) {
+        orderItems.forEach((item: { material_id: string; quantity: number }) => {
+          totalOrders[item.material_id] = (totalOrders[item.material_id] || 0) + item.quantity
         })
-        const result: Record<string, number> = {}
-        Object.entries(totals).forEach(([mid, total]) => {
-          result[mid] = Math.round((total / uniqueDays) * 10) / 10
-        })
-        setWeeklyUsage(result)
       }
+
+      // 週用 = 前一次庫存 + 期間所有叫貨合計 - 最新一次庫存
+      const allIds = new Set([...Object.keys(prevStock), ...Object.keys(latestStock)])
+      const result: Record<string, number> = {}
+      allIds.forEach(mid => {
+        const prev = prevStock[mid] || 0
+        const order = totalOrders[mid] || 0
+        const latest = latestStock[mid] || 0
+        const usage = prev + order - latest
+        if (usage > 0) {
+          result[mid] = Math.round(usage * 10) / 10
+        }
+      })
+      setWeeklyUsage(result)
       setWeeklyLoading(false)
     }
     load()
@@ -276,15 +315,16 @@ export default function MaterialStock() {
             </select>
           </div>
 
+          <div className="sticky top-14 z-10 flex items-center px-4 py-1 bg-surface-section text-[11px] text-brand-lotus border-b border-gray-100">
+            <span className="flex-1">品名</span>
+            <span className="w-[110px] text-center">庫存</span>
+            <span className="w-[36px] text-center">週用</span>
+            <span className="w-[18px]"></span>
+          </div>
+
           {Array.from(materialsByCategory.entries()).map(([category, materials]) => (
             <div key={category}>
-              <SectionHeader title={category} icon="■" />
-              <div className="flex items-center px-4 py-1 bg-surface-section text-[11px] text-brand-lotus border-b border-gray-100">
-                <span className="flex-1">品名</span>
-                <span className="w-[110px] text-center">庫存</span>
-                <span className="w-[36px] text-center">週用</span>
-                <span className="w-[18px]"></span>
-              </div>
+              <SectionHeader title={category} icon="■" sticky={false} />
               <div className="bg-white">
                 {materials.map((material, idx) => {
                   const status = getStatus(material.id)

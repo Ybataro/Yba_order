@@ -31,6 +31,14 @@ function loadConfig(): Promise<{ token: string; chatId: string } | null> {
 
 const GROUP_CHAT_ID = '-4715692611'
 const ELLEN_CHAT_ID = '8515675347'  // 老闆娘
+const YEN_CHAT_ID = '7920645981'    // 管理者
+
+// 各店請假通知對象（管理者 + 該店主管）
+export const LEAVE_NOTIFY_MAP: Record<string, string[]> = {
+  lehua:  [YEN_CHAT_ID, ELLEN_CHAT_ID, '7250361245'],  // 管理者 + 老闆娘 + 樂華主管(顏伊偲)
+  xingnan:[YEN_CHAT_ID, ELLEN_CHAT_ID, '7855426610'],  // 管理者 + 老闆娘 + 興南主管(YoYo)
+  kitchen:[YEN_CHAT_ID, ELLEN_CHAT_ID],                 // 管理者 + 老闆娘
+}
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string
 
@@ -84,6 +92,54 @@ function blobToBase64(blob: Blob): Promise<string> {
     reader.onerror = () => reject(new Error('FileReader failed'))
     reader.readAsDataURL(blob)
   })
+}
+
+export async function sendTelegramToTargets(message: string, chatIds: string[]): Promise<boolean> {
+  try {
+    const config = await loadConfig()
+    if (!config || chatIds.length === 0) return false
+    const results = await Promise.all(
+      chatIds.map((chatId) =>
+        fetch(`https://api.telegram.org/bot${config.token}/sendMessage`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ chat_id: chatId, text: message, parse_mode: 'HTML' }),
+        }).then((r) => {
+          if (!r.ok) console.warn(`[Telegram] chat_id=${chatId} 回應:`, r.status)
+          return r.ok
+        }).catch((err) => { console.error(`[Telegram] chat_id=${chatId} 失敗:`, err); return false })
+      )
+    )
+    return results.some((ok) => ok)
+  } catch (err) {
+    console.warn('[Telegram] 通知發送失敗:', err)
+    return false
+  }
+}
+
+export async function sendTelegramPhotosToTargets(photos: File[], caption: string, chatIds: string[]): Promise<boolean> {
+  try {
+    const config = await loadConfig()
+    if (!config || chatIds.length === 0) { console.warn('[Telegram Photo] config 載入失敗'); return false }
+    if (photos.length === 0) return true
+    const compressed = await Promise.all(photos.map((f) => compressPhoto(f)))
+    const base64Photos = await Promise.all(compressed.map((b) => blobToBase64(b)))
+    const r = await fetch(`${SUPABASE_URL}/functions/v1/send-telegram-photo`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ photos: base64Photos, caption, chat_ids: chatIds }),
+    })
+    if (!r.ok) {
+      const body = await r.text().catch(() => '')
+      console.error('[Telegram Photo] Edge Function 錯誤:', r.status, body)
+      return false
+    }
+    const data = await r.json()
+    return data.ok === true
+  } catch (err) {
+    console.error('[Telegram Photo] 發送失敗:', err)
+    return false
+  }
 }
 
 export async function sendTelegramNotification(message: string, privateOnly = false, extraChatIds?: string[]): Promise<boolean> {
