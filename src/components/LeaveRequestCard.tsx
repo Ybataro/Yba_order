@@ -2,20 +2,33 @@ import { getLeaveTypeName, DAY_PARTS } from '@/lib/leave'
 import type { LeaveRequest } from '@/lib/leave'
 
 const STATUS_STYLES: Record<string, { label: string; bg: string; text: string }> = {
-  pending:  { label: '待審核', bg: 'bg-amber-100', text: 'text-amber-700' },
-  approved: { label: '已核准', bg: 'bg-green-100', text: 'text-green-700' },
-  rejected: { label: '已駁回', bg: 'bg-red-100', text: 'text-red-700' },
+  pending:          { label: '待主管審核', bg: 'bg-amber-100', text: 'text-amber-700' },
+  manager_approved: { label: '待最終審核', bg: 'bg-blue-100', text: 'text-blue-700' },
+  approved:         { label: '已核准', bg: 'bg-green-100', text: 'text-green-700' },
+  rejected:         { label: '已駁回', bg: 'bg-red-100', text: 'text-red-700' },
 }
 
 interface Props {
   request: LeaveRequest
   showStaffName?: string
+  // 主管審核按鈕
+  onManagerApprove?: () => void
+  onManagerReject?: () => void
+  // 後台最終審核按鈕
   onApprove?: () => void
   onReject?: () => void
   onDelete?: () => void
 }
 
-export default function LeaveRequestCard({ request, showStaffName, onApprove, onReject, onDelete }: Props) {
+export default function LeaveRequestCard({
+  request,
+  showStaffName,
+  onManagerApprove,
+  onManagerReject,
+  onApprove,
+  onReject,
+  onDelete,
+}: Props) {
   const status = STATUS_STYLES[request.status] ?? STATUS_STYLES.pending
   const dayPartLabel = DAY_PARTS.find((d) => d.id === request.day_part)?.name ?? ''
   const dateRange = request.start_date === request.end_date
@@ -46,9 +59,32 @@ export default function LeaveRequestCard({ request, showStaffName, onApprove, on
         )}
       </div>
 
+      {/* 主管審核按鈕 */}
+      {(onManagerApprove || onManagerReject) && request.status === 'pending' && (
+        <div className="flex gap-2 mt-2">
+          {onManagerApprove && (
+            <button
+              onClick={onManagerApprove}
+              className="flex-1 py-1.5 rounded-lg bg-blue-500 text-white text-xs font-medium active:scale-95 transition-transform"
+            >
+              核准（轉後台）
+            </button>
+          )}
+          {onManagerReject && (
+            <button
+              onClick={onManagerReject}
+              className="flex-1 py-1.5 rounded-lg bg-red-500 text-white text-xs font-medium active:scale-95 transition-transform"
+            >
+              駁回
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* 後台最終審核按鈕 */}
       {(onApprove || onReject || onDelete) && (
         <div className="flex gap-2 mt-2">
-          {onApprove && request.status === 'pending' && (
+          {onApprove && request.status === 'manager_approved' && (
             <button
               onClick={onApprove}
               className="flex-1 py-1.5 rounded-lg bg-green-500 text-white text-xs font-medium active:scale-95 transition-transform"
@@ -56,7 +92,7 @@ export default function LeaveRequestCard({ request, showStaffName, onApprove, on
               核准
             </button>
           )}
-          {onReject && request.status === 'pending' && (
+          {onReject && request.status === 'manager_approved' && (
             <button
               onClick={onReject}
               className="flex-1 py-1.5 rounded-lg bg-red-500 text-white text-xs font-medium active:scale-95 transition-transform"

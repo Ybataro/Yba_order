@@ -1,6 +1,11 @@
 import { create } from 'zustand'
 import { supabase } from '@/lib/supabase'
-import { sendTelegramToTargets, sendTelegramPhotosToTargets, LEAVE_NOTIFY_MAP } from '@/lib/telegram'
+import {
+  sendTelegramToTargets,
+  sendTelegramPhotosToTargets,
+  getLeaveNotifyTargets,
+  getAdminNotifyTargets,
+} from '@/lib/telegram'
 import { calcLeaveDays, getLeaveTypeName } from '@/lib/leave'
 import type { LeaveRequest, LeaveType, DayPart } from '@/lib/leave'
 
@@ -22,8 +27,12 @@ interface LeaveState {
 
   fetchByStaff: (staffId: string) => Promise<void>
   fetchPending: () => Promise<void>
+  fetchManagerPending: (storeContext: string, staffIds: string[]) => Promise<void>
+  fetchAdminPending: () => Promise<void>
   fetchAll: (year?: number) => Promise<void>
   submit: (data: SubmitData) => Promise<boolean>
+  managerApprove: (id: string, reviewerId: string) => Promise<boolean>
+  managerReject: (id: string, reviewerId: string, reason: string) => Promise<boolean>
   approve: (id: string, reviewerId: string) => Promise<boolean>
   reject: (id: string, reviewerId: string, reason: string) => Promise<boolean>
   remove: (id: string) => Promise<boolean>
@@ -47,16 +56,47 @@ export const useLeaveStore = create<LeaveState>()((set, get) => ({
     set({ requests: (data as LeaveRequest[] | null) ?? [], loading: false })
   },
 
+  // 後台用：只抓 manager_approved（主管已核准，等最終審核）
   fetchPending: async () => {
     if (!supabase) return
     set({ loading: true })
     const { data, error } = await supabase
       .from('leave_requests')
       .select('*')
-      .eq('status', 'pending')
+      .eq('status', 'manager_approved')
       .order('created_at', { ascending: false })
     if (error) {
       console.error('載入待審核請假失敗:', error.message)
+    }
+    set({ requests: (data as LeaveRequest[] | null) ?? [], loading: false })
+  },
+
+  fetchAdminPending: async () => {
+    if (!supabase) return
+    set({ loading: true })
+    const { data, error } = await supabase
+      .from('leave_requests')
+      .select('*')
+      .eq('status', 'manager_approved')
+      .order('created_at', { ascending: false })
+    if (error) {
+      console.error('載入待最終審核請假失敗:', error.message)
+    }
+    set({ requests: (data as LeaveRequest[] | null) ?? [], loading: false })
+  },
+
+  // 主管用：抓該店員工的 pending 請假
+  fetchManagerPending: async (storeContext, staffIds) => {
+    if (!supabase || staffIds.length === 0) return
+    set({ loading: true })
+    const { data, error } = await supabase
+      .from('leave_requests')
+      .select('*')
+      .eq('status', 'pending')
+      .in('staff_id', staffIds)
+      .order('created_at', { ascending: false })
+    if (error) {
+      console.error(`載入${storeContext}待審核請假失敗:`, error.message)
     }
     set({ requests: (data as LeaveRequest[] | null) ?? [], loading: false })
   },
@@ -100,46 +140,133 @@ export const useLeaveStore = create<LeaveState>()((set, get) => ({
       return false
     }
 
-    // 發送 Telegram 通知（僅通知該店主管 + 管理者，不發群組）
-    const notifyTargets = LEAVE_NOTIFY_MAP[data.store_context || ''] || Object.values(LEAVE_NOTIFY_MAP).flat().filter((v, i, a) => a.indexOf(v) === i)
+    // 發送 Telegram 通知（僅通知該店主管，不通知後台管理員）
+    const notifyTargets = await getLeaveNotifyTargets(data.store_context || '')
     const typeName = getLeaveTypeName(data.leave_type)
     const dateRange = data.start_date === data.end_date
       ? data.start_date
       : `${data.start_date} ~ ${data.end_date}`
     const dayPartLabel = data.day_part === 'full' ? '' : data.day_part === 'am' ? '（上半天）' : '（下半天）'
     const msg = [
-      '📋 <b>請假申請</b>',
+      '📋 <b>請假申請（待主管審核）</b>',
       `👤 員工：${data.staff_name}`,
       `📅 日期：${dateRange}${dayPartLabel}（${leaveDays}天）`,
       `📝 假別：${typeName}`,
       data.reason ? `💬 事由：${data.reason}` : '',
     ].filter(Boolean).join('\n')
 
-    // 文字通知 fire-and-forget（私訊主管+管理者）
-    sendTelegramToTargets(msg, notifyTargets)
-      .then((ok) => { if (!ok) console.warn('[請假通知] 發送失敗') })
-      .catch((err) => console.error('[請假通知] 錯誤:', err))
+    if (notifyTargets.length > 0) {
+      // 文字通知 fire-and-forget（私訊主管）
+      sendTelegramToTargets(msg, notifyTargets)
+        .then((ok) => { if (!ok) console.warn('[請假通知] 發送失敗') })
+        .catch((err) => console.error('[請假通知] 錯誤:', err))
 
-    // 照片需要 await，避免 modal 關閉後 File 物件被回收
-    if (data.photos && data.photos.length > 0) {
-      const caption = `📋 ${data.staff_name} 的請假附件`
-      try {
-        const photoPromise = sendTelegramPhotosToTargets(data.photos, caption, notifyTargets)
-        const timeout = new Promise<boolean>((resolve) => setTimeout(() => resolve(false), 15000))
-        const ok = await Promise.race([photoPromise, timeout])
-        if (!ok) console.warn('[請假照片] 發送失敗或超時')
-      } catch (err) {
-        console.error('[請假照片] 錯誤:', err)
+      // 照片需要 await，避免 modal 關閉後 File 物件被回收
+      if (data.photos && data.photos.length > 0) {
+        const caption = `📋 ${data.staff_name} 的請假附件`
+        try {
+          const photoPromise = sendTelegramPhotosToTargets(data.photos, caption, notifyTargets)
+          const timeout = new Promise<boolean>((resolve) => setTimeout(() => resolve(false), 15000))
+          const ok = await Promise.race([photoPromise, timeout])
+          if (!ok) console.warn('[請假照片] 發送失敗或超時')
+        } catch (err) {
+          console.error('[請假照片] 錯誤:', err)
+        }
       }
     }
 
     return true
   },
 
+  // ── 主管審核 ──
+  managerApprove: async (id, reviewerId) => {
+    if (!supabase) return false
+    const req = get().requests.find((r) => r.id === id)
+    if (!req) return false
+
+    const now = new Date().toISOString()
+    const { error } = await supabase
+      .from('leave_requests')
+      .update({
+        status: 'manager_approved',
+        manager_reviewed_by: reviewerId,
+        manager_reviewed_at: now,
+      })
+      .eq('id', id)
+    if (error) {
+      console.error('主管核准失敗:', error.message)
+      return false
+    }
+
+    // 通知後台管理員
+    const adminTargets = await getAdminNotifyTargets()
+    if (adminTargets.length > 0) {
+      const typeName = getLeaveTypeName(req.leave_type)
+      const dateRange = req.start_date === req.end_date
+        ? req.start_date
+        : `${req.start_date} ~ ${req.end_date}`
+      const dayPartLabel = req.day_part === 'full' ? '' : req.day_part === 'am' ? '（上半天）' : '（下半天）'
+
+      // 查員工姓名
+      const { data: staffData } = await supabase
+        .from('staff')
+        .select('name')
+        .eq('id', req.staff_id)
+        .single()
+      const staffName = staffData?.name || req.staff_id
+
+      const msg = [
+        '✅ <b>請假申請（主管已核准，待最終審核）</b>',
+        `👤 員工：${staffName}`,
+        `📅 日期：${dateRange}${dayPartLabel}（${req.leave_days}天）`,
+        `📝 假別：${typeName}`,
+        req.reason ? `💬 事由：${req.reason}` : '',
+      ].filter(Boolean).join('\n')
+
+      sendTelegramToTargets(msg, adminTargets)
+        .then((ok) => { if (!ok) console.warn('[主管核准通知] 發送失敗') })
+        .catch((err) => console.error('[主管核准通知] 錯誤:', err))
+    }
+
+    set((s) => ({
+      requests: s.requests.map((r) =>
+        r.id === id ? { ...r, status: 'manager_approved' as const, manager_reviewed_by: reviewerId, manager_reviewed_at: now } : r
+      ),
+    }))
+
+    return true
+  },
+
+  managerReject: async (id, reviewerId, reason) => {
+    if (!supabase) return false
+    const now = new Date().toISOString()
+    const { error } = await supabase
+      .from('leave_requests')
+      .update({
+        status: 'rejected',
+        manager_reviewed_by: reviewerId,
+        manager_reviewed_at: now,
+        reject_reason: reason,
+      })
+      .eq('id', id)
+    if (error) {
+      console.error('主管駁回失敗:', error.message)
+      return false
+    }
+
+    set((s) => ({
+      requests: s.requests.map((r) =>
+        r.id === id ? { ...r, status: 'rejected' as const, manager_reviewed_by: reviewerId, manager_reviewed_at: now, reject_reason: reason } : r
+      ),
+    }))
+
+    return true
+  },
+
+  // ── 後台最終審核 ──
   approve: async (id, reviewerId) => {
     if (!supabase) return false
 
-    // 取得申請資料
     const req = get().requests.find((r) => r.id === id)
     if (!req) return false
 
@@ -207,7 +334,6 @@ export const useLeaveStore = create<LeaveState>()((set, get) => ({
         .update({ used_days: Number(balData.used_days) + req.leave_days })
         .eq('id', balData.id)
     } else {
-      // 若無餘額記錄則自動建立
       const def = (await import('@/lib/leave')).TRACKED_LEAVE_TYPES.find((t) => t.id === req.leave_type)
       await supabase
         .from('leave_balances')

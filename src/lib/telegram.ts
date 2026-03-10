@@ -33,11 +33,51 @@ const GROUP_CHAT_ID = '-4715692611'
 const ELLEN_CHAT_ID = '8515675347'  // 老闆娘
 const YEN_CHAT_ID = '7920645981'    // 管理者
 
-// 各店請假通知對象（管理者 + 該店主管）
+// Legacy: 各店請假通知對象（保留給非請假用途）
 export const LEAVE_NOTIFY_MAP: Record<string, string[]> = {
-  lehua:  [YEN_CHAT_ID, ELLEN_CHAT_ID, '7250361245'],  // 管理者 + 老闆娘 + 樂華主管(顏伊偲)
-  xingnan:[YEN_CHAT_ID, ELLEN_CHAT_ID, '7855426610'],  // 管理者 + 老闆娘 + 興南主管(YoYo)
-  kitchen:[YEN_CHAT_ID, ELLEN_CHAT_ID],                 // 管理者 + 老闆娘
+  lehua:  [YEN_CHAT_ID, ELLEN_CHAT_ID, '7250361245'],
+  xingnan:[YEN_CHAT_ID, ELLEN_CHAT_ID, '7855426610'],
+  kitchen:[YEN_CHAT_ID, ELLEN_CHAT_ID],
+}
+
+// ── 動態請假通知對象（從 app_settings 讀取）──
+export interface NotifyTarget {
+  name: string
+  chat_id: string
+}
+
+let notifyCache: Record<string, NotifyTarget[]> | null = null
+
+export async function getLeaveNotifyTargets(storeContext: string): Promise<string[]> {
+  if (!supabase) return []
+  if (!notifyCache) {
+    const { data } = await supabase
+      .from('app_settings')
+      .select('key, value')
+      .like('key', 'leave_notify_%')
+    notifyCache = {}
+    if (data) {
+      for (const row of data) {
+        const scope = row.key.replace('leave_notify_', '')
+        try {
+          notifyCache[scope] = JSON.parse(row.value) as NotifyTarget[]
+        } catch {
+          notifyCache[scope] = []
+        }
+      }
+    }
+  }
+  const targets = notifyCache[storeContext] || []
+  return targets.map((t) => t.chat_id)
+}
+
+export async function getAdminNotifyTargets(): Promise<string[]> {
+  return getLeaveNotifyTargets('admin')
+}
+
+/** 清除快取（後台更新設定後呼叫） */
+export function clearLeaveNotifyCache(): void {
+  notifyCache = null
 }
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string

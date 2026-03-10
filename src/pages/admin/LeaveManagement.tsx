@@ -7,10 +7,12 @@ import { useToast } from '@/components/Toast'
 import { getSession } from '@/lib/auth'
 import { TRACKED_LEAVE_TYPES } from '@/lib/leave'
 import { supabase } from '@/lib/supabase'
+import { clearLeaveNotifyCache } from '@/lib/telegram'
+import type { NotifyTarget } from '@/lib/telegram'
 import LeaveRequestCard from '@/components/LeaveRequestCard'
 import type { LeaveBalance } from '@/lib/leave'
 
-type Tab = 'review' | 'balance'
+type Tab = 'review' | 'balance' | 'notify'
 
 export default function LeaveManagement() {
   const [tab, setTab] = useState<Tab>('review')
@@ -97,8 +99,8 @@ export default function LeaveManagement() {
     }
   }
 
-  const pendingRequests = requests.filter((r) => r.status === 'pending')
-  const historyRequests = requests.filter((r) => r.status !== 'pending')
+  const pendingRequests = requests.filter((r) => r.status === 'manager_approved')
+  const historyRequests = requests.filter((r) => r.status !== 'manager_approved')
 
   return (
     <div className="page-container">
@@ -109,6 +111,7 @@ export default function LeaveManagement() {
         {[
           { id: 'review' as const, label: '請假審核' },
           { id: 'balance' as const, label: '假別餘額' },
+          { id: 'notify' as const, label: '通知設定' },
         ].map((t) => (
           <button
             key={t.id}
@@ -124,13 +127,14 @@ export default function LeaveManagement() {
 
       {tab === 'review' && (
         <div className="px-4 py-3 space-y-3">
-          {/* 待審核 */}
+          {/* 待最終審核 */}
           <h3 className="text-sm font-bold text-brand-oak">
-            待審核 ({pendingRequests.length})
+            待最終審核 ({pendingRequests.length})
           </h3>
+          <p className="text-xs text-brand-lotus">以下為主管已核准、等待最終審核的申請</p>
           {loading && <p className="text-sm text-brand-lotus">載入中...</p>}
           {!loading && pendingRequests.length === 0 && (
-            <p className="text-sm text-brand-lotus">目前沒有待審核的請假申請</p>
+            <p className="text-sm text-brand-lotus">目前沒有待最終審核的請假申請</p>
           )}
           {pendingRequests.map((req) => (
             <LeaveRequestCard
@@ -167,6 +171,10 @@ export default function LeaveManagement() {
 
       {tab === 'balance' && (
         <BalanceTab allStaff={allStaff} />
+      )}
+
+      {tab === 'notify' && (
+        <NotifySettingsTab />
       )}
 
       {/* 駁回彈窗 */}
@@ -333,6 +341,182 @@ function BalanceTab({ allStaff }: { allStaff: { id: string; name: string; group:
       {allStaff.length === 0 && (
         <p className="text-sm text-brand-lotus mt-3">尚無員工資料</p>
       )}
+    </div>
+  )
+}
+
+// ── 通知設定 Tab ──────────────────────────────────────
+const NOTIFY_SCOPES = [
+  { key: 'lehua', label: '樂華店' },
+  { key: 'xingnan', label: '興南店' },
+  { key: 'kitchen', label: '央廚' },
+  { key: 'admin', label: '後台管理員' },
+] as const
+
+function NotifySettingsTab() {
+  const [settings, setSettings] = useState<Record<string, NotifyTarget[]>>({})
+  const [loading, setLoading] = useState(true)
+  const [newName, setNewName] = useState('')
+  const [newChatId, setNewChatId] = useState('')
+  const [addingScope, setAddingScope] = useState<string | null>(null)
+  const { showToast } = useToast()
+
+  const loadSettings = useCallback(async () => {
+    if (!supabase) return
+    setLoading(true)
+    const { data } = await supabase
+      .from('app_settings')
+      .select('key, value')
+      .like('key', 'leave_notify_%')
+
+    const map: Record<string, NotifyTarget[]> = {}
+    if (data) {
+      for (const row of data) {
+        const scope = row.key.replace('leave_notify_', '')
+        try {
+          map[scope] = JSON.parse(row.value) as NotifyTarget[]
+        } catch {
+          map[scope] = []
+        }
+      }
+    }
+    setSettings(map)
+    setLoading(false)
+  }, [])
+
+  useEffect(() => {
+    loadSettings()
+  }, [loadSettings])
+
+  const saveScope = async (scope: string, targets: NotifyTarget[]) => {
+    if (!supabase) return
+    const key = `leave_notify_${scope}`
+    const { error } = await supabase
+      .from('app_settings')
+      .upsert({ key, value: JSON.stringify(targets), updated_at: new Date().toISOString() })
+
+    if (error) {
+      showToast('儲存失敗', 'error')
+      return
+    }
+
+    setSettings((prev) => ({ ...prev, [scope]: targets }))
+    clearLeaveNotifyCache()
+    showToast('已儲存')
+  }
+
+  const handleAdd = async (scope: string) => {
+    if (!newName.trim() || !newChatId.trim()) {
+      showToast('請填寫名稱和 Chat ID', 'error')
+      return
+    }
+    const current = settings[scope] || []
+    if (current.some((t) => t.chat_id === newChatId.trim())) {
+      showToast('此 Chat ID 已存在', 'error')
+      return
+    }
+    const updated = [...current, { name: newName.trim(), chat_id: newChatId.trim() }]
+    await saveScope(scope, updated)
+    setNewName('')
+    setNewChatId('')
+    setAddingScope(null)
+  }
+
+  const handleRemove = async (scope: string, chatId: string) => {
+    const current = settings[scope] || []
+    const updated = current.filter((t) => t.chat_id !== chatId)
+    await saveScope(scope, updated)
+  }
+
+  if (loading) return <p className="px-4 py-3 text-sm text-brand-lotus">載入中...</p>
+
+  return (
+    <div className="px-4 py-3 space-y-4">
+      <p className="text-xs text-brand-lotus">管理各店/央廚的請假 Telegram 通知對象</p>
+
+      {NOTIFY_SCOPES.map(({ key, label }) => {
+        const targets = settings[key] || []
+        return (
+          <div key={key} className="card !p-3">
+            <h4 className="text-sm font-bold text-brand-oak mb-2">{label}</h4>
+            {targets.length === 0 && (
+              <p className="text-xs text-brand-lotus mb-2">尚無通知對象</p>
+            )}
+            <div className="space-y-1.5 mb-2">
+              {targets.map((t) => (
+                <div key={t.chat_id} className="flex items-center justify-between bg-gray-50 rounded-lg px-3 py-1.5">
+                  <div>
+                    <span className="text-sm text-brand-oak font-medium">{t.name}</span>
+                    <span className="text-xs text-brand-lotus ml-2">ID: {t.chat_id}</span>
+                  </div>
+                  <button
+                    onClick={() => {
+                      if (confirm(`確定要刪除 ${t.name} 的通知設定嗎？`)) {
+                        handleRemove(key, t.chat_id)
+                      }
+                    }}
+                    className="text-red-400 hover:text-red-600 text-xs font-medium px-2 py-1"
+                  >
+                    刪除
+                  </button>
+                </div>
+              ))}
+            </div>
+
+            {addingScope === key ? (
+              <div className="space-y-2 bg-blue-50 rounded-lg p-3">
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={newName}
+                    onChange={(e) => setNewName(e.target.value)}
+                    placeholder="名稱（如：伊偲）"
+                    className="flex-1 border rounded-lg px-2 py-1.5 text-sm"
+                  />
+                  <input
+                    type="text"
+                    value={newChatId}
+                    onChange={(e) => setNewChatId(e.target.value)}
+                    placeholder="Telegram Chat ID"
+                    className="flex-1 border rounded-lg px-2 py-1.5 text-sm"
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => { setAddingScope(null); setNewName(''); setNewChatId('') }}
+                    className="flex-1 py-1.5 rounded-lg bg-gray-200 text-brand-mocha text-xs font-medium"
+                  >
+                    取消
+                  </button>
+                  <button
+                    onClick={() => handleAdd(key)}
+                    className="flex-1 py-1.5 rounded-lg bg-brand-oak text-white text-xs font-medium"
+                  >
+                    新增
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <button
+                onClick={() => { setAddingScope(key); setNewName(''); setNewChatId('') }}
+                className="text-xs text-brand-oak font-medium underline"
+              >
+                + 新增通知對象
+              </button>
+            )}
+          </div>
+        )
+      })}
+
+      <div className="card !p-3 bg-amber-50">
+        <h4 className="text-sm font-bold text-amber-700 mb-1">如何取得 Telegram Chat ID？</h4>
+        <ol className="text-xs text-amber-600 space-y-1 list-decimal list-inside">
+          <li>在 Telegram 搜尋 @userinfobot</li>
+          <li>點擊 Start 或傳送任意訊息</li>
+          <li>機器人會回覆你的 Chat ID（純數字）</li>
+          <li>將 Chat ID 貼到上方對應的欄位</li>
+        </ol>
+      </div>
     </div>
   )
 }

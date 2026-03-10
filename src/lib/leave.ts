@@ -14,7 +14,7 @@ export const DAY_PARTS = [
 
 export type LeaveType = typeof TRACKED_LEAVE_TYPES[number]['id']
 export type DayPart = typeof DAY_PARTS[number]['id']
-export type LeaveStatus = 'pending' | 'approved' | 'rejected'
+export type LeaveStatus = 'pending' | 'manager_approved' | 'approved' | 'rejected'
 
 export interface LeaveRequest {
   id: string
@@ -29,6 +29,8 @@ export interface LeaveRequest {
   reviewed_by: string | null
   reviewed_at: string | null
   reject_reason: string
+  manager_reviewed_by: string | null
+  manager_reviewed_at: string | null
   created_at: string
 }
 

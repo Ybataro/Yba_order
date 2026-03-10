@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { TopNav } from '@/components/TopNav'
 import { MonthNav } from '@/components/MonthNav'
 import { ScheduleGrid } from '@/components/ScheduleGrid'
@@ -53,11 +53,56 @@ export default function KitchenSchedules() {
   // Leave request state
   const [leaveModalOpen, setLeaveModalOpen] = useState(false)
   const session = getSession()
-  const { requests: myLeaveRequests, fetchByStaff: fetchMyLeave, remove: removeLeave } = useLeaveStore()
+  const { requests: myLeaveRequests, fetchByStaff: fetchMyLeave, remove: removeLeave, managerApprove, managerReject: managerRejectAction } = useLeaveStore()
+
+  // 主管待審核 — 獨立 local state
+  const [pendingForManager, setPendingForManager] = useState<import('@/lib/leave').LeaveRequest[]>([])
+  const [mgrRejectId, setMgrRejectId] = useState<string | null>(null)
+  const [mgrRejectReason, setMgrRejectReason] = useState('')
 
   useEffect(() => {
     if (session?.staffId) fetchMyLeave(session.staffId)
   }, [session?.staffId, fetchMyLeave])
+
+  // 主管抓待審核
+  const loadManagerPending = useCallback(async () => {
+    if (!canSchedule || !supabase || staffIds.length === 0) return
+    const { data } = await supabase
+      .from('leave_requests')
+      .select('*')
+      .eq('status', 'pending')
+      .in('staff_id', staffIds)
+      .order('created_at', { ascending: false })
+    setPendingForManager((data as import('@/lib/leave').LeaveRequest[] | null) ?? [])
+  }, [canSchedule, staffIds])
+
+  useEffect(() => {
+    loadManagerPending()
+  }, [loadManagerPending])
+
+  const handleManagerApprove = async (id: string) => {
+    if (!session) return
+    const ok = await managerApprove(id, session.staffId)
+    if (ok) {
+      showToast('已核准，轉交後台審核')
+      loadManagerPending()
+    } else {
+      showToast('核准失敗', 'error')
+    }
+  }
+
+  const handleManagerRejectConfirm = async () => {
+    if (!mgrRejectId || !session) return
+    const ok = await managerRejectAction(mgrRejectId, session.staffId, mgrRejectReason)
+    if (ok) {
+      showToast('已駁回')
+      setMgrRejectId(null)
+      setMgrRejectReason('')
+      loadManagerPending()
+    } else {
+      showToast('駁回失敗', 'error')
+    }
+  }
 
   // Month schedules (shared between both views)
   const [monthSchedules, setMonthSchedules] = useState<Schedule[]>([])
@@ -297,6 +342,25 @@ export default function KitchenSchedules() {
         </div>
       )}
 
+      {/* 主管待審核請假 */}
+      {canSchedule && pendingForManager.length > 0 && (
+        <div className="px-4 py-3 space-y-2 no-print">
+          <h3 className="text-sm font-bold text-blue-600">待審核請假 ({pendingForManager.length})</h3>
+          {pendingForManager.map((req) => {
+            const name = kitchenStaff.find((s) => s.id === req.staff_id)?.name || req.staff_id
+            return (
+              <LeaveRequestCard
+                key={req.id}
+                request={req}
+                showStaffName={name}
+                onManagerApprove={() => handleManagerApprove(req.id)}
+                onManagerReject={() => { setMgrRejectId(req.id); setMgrRejectReason('') }}
+              />
+            )
+          })}
+        </div>
+      )}
+
       {/* 我的請假申請 */}
       {session?.staffId && myLeaveRequests.length > 0 && (
         <div className="px-4 py-3 space-y-2 no-print">
@@ -314,6 +378,36 @@ export default function KitchenSchedules() {
               } : undefined}
             />
           ))}
+        </div>
+      )}
+
+      {/* 主管駁回彈窗 */}
+      {mgrRejectId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setMgrRejectId(null)}>
+          <div className="bg-white rounded-2xl w-[90%] max-w-sm p-5 shadow-xl" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-base font-bold text-brand-oak mb-3">駁回原因</h3>
+            <textarea
+              value={mgrRejectReason}
+              onChange={(e) => setMgrRejectReason(e.target.value)}
+              rows={3}
+              placeholder="請輸入駁回原因"
+              className="w-full border rounded-lg px-3 py-2 text-sm mb-4 resize-none"
+            />
+            <div className="flex gap-3">
+              <button
+                onClick={() => setMgrRejectId(null)}
+                className="flex-1 py-2 rounded-lg bg-gray-100 text-brand-mocha text-sm font-medium"
+              >
+                取消
+              </button>
+              <button
+                onClick={handleManagerRejectConfirm}
+                className="flex-1 py-2 rounded-lg bg-red-500 text-white text-sm font-medium"
+              >
+                確認駁回
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
