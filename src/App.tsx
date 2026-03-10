@@ -60,6 +60,7 @@ const RecipeManager = lazy(() => import('@/pages/admin/RecipeManager'))
 const MenuItemManager = lazy(() => import('@/pages/admin/MenuItemManager'))
 const CostAnalysis = lazy(() => import('@/pages/admin/CostAnalysis'))
 const ProductionZoneManager = lazy(() => import('@/pages/admin/ProductionZoneManager'))
+const KitchenRealtimeItems = lazy(() => import('@/pages/admin/KitchenRealtimeItems'))
 
 function Loading() {
   return (
@@ -173,6 +174,7 @@ function App() {
                 <Route path="/admin/menu-items" element={<MenuItemManager />} />
                 <Route path="/admin/cost-analysis" element={<CostAnalysis />} />
                 <Route path="/admin/production-zones" element={<ProductionZoneManager />} />
+                <Route path="/admin/kitchen-realtime-items" element={<KitchenRealtimeItems />} />
               </Route>
             </Route>
           </Routes>

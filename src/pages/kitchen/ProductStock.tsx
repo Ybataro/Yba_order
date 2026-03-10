@@ -10,13 +10,15 @@ import { useZoneStore } from '@/stores/useZoneStore'
 import { supabase } from '@/lib/supabase'
 import { productStockSessionId, getTodayTW } from '@/lib/session'
 import { formatDate } from '@/lib/utils'
-import { Save, UserCheck, RefreshCw, ChevronDown, ChevronUp } from 'lucide-react'
+import { Save, UserCheck, RefreshCw, ChevronDown, ChevronUp, Check } from 'lucide-react'
 import { sendTelegramNotification } from '@/lib/telegram'
 import { useStaffStore } from '@/stores/useStaffStore'
 import { logAudit } from '@/lib/auditLog'
 import { StockEntryPanel, type StockEntry } from '@/components/StockEntryPanel'
 import { useStoreSortOrder } from '@/hooks/useStoreSortOrder'
 import { buildSortedByCategory } from '@/lib/sortByStore'
+import { NumericInput } from '@/components/NumericInput'
+import { useKitchenRealtimeStock } from '@/hooks/useKitchenRealtimeStock'
 
 export default function ProductStock() {
   const { showToast } = useToast()
@@ -133,6 +135,34 @@ export default function ProductStock() {
 
     load()
   }, [selectedDate])
+
+  // 即時庫存區
+  const {
+    items: realtimeItems,
+    restockValues: rtRestock,
+    remainingValues: rtRemaining,
+    updateRestock: updateRtRestock,
+    saveItem: saveRtItem,
+    loading: rtLoading,
+  } = useKitchenRealtimeStock({ selectedDate })
+  const [rtSaving, setRtSaving] = useState<Record<string, boolean>>({})
+  const [rtSaved, setRtSaved] = useState<Record<string, boolean>>({})
+
+  const handleRtSave = async (itemKey: string) => {
+    if (!confirmBy) {
+      showToast('請先選擇盤點人員', 'error')
+      return
+    }
+    setRtSaving((p) => ({ ...p, [itemKey]: true }))
+    const ok = await saveRtItem(itemKey, confirmBy)
+    setRtSaving((p) => ({ ...p, [itemKey]: false }))
+    if (ok) {
+      setRtSaved((p) => ({ ...p, [itemKey]: true }))
+      setTimeout(() => setRtSaved((p) => ({ ...p, [itemKey]: false })), 2000)
+    } else {
+      showToast('儲存失敗', 'error')
+    }
+  }
 
   const { sortCategories, sortItems } = useStoreSortOrder('kitchen', 'product')
   const productsByCategory = useMemo(() =>
@@ -364,6 +394,57 @@ export default function ProductStock() {
               ))}
             </select>
           </div>
+
+          {/* 即時庫存區 */}
+          {!rtLoading && realtimeItems.length > 0 && (
+            <div>
+              <SectionHeader title="即時庫存區" icon="■" />
+              <div className="flex items-center px-4 py-1 bg-surface-section text-[11px] text-brand-lotus border-b border-gray-100">
+                <span className="flex-1">品名</span>
+                <span className="w-[70px] text-center">補貨</span>
+                <span className="w-10" />
+                <span className="w-[60px] text-center">剩餘</span>
+              </div>
+              <div className="bg-white">
+                {realtimeItems.map((item, idx) => {
+                  const remaining = rtRemaining[item.id] || 0
+                  const isSaving = rtSaving[item.id] || false
+                  const isSaved = rtSaved[item.id] || false
+
+                  return (
+                    <div
+                      key={item.id}
+                      className={`flex items-center px-4 py-2 ${idx < realtimeItems.length - 1 ? 'border-b border-gray-50' : ''}`}
+                    >
+                      <div className="flex-1 min-w-0 pr-2">
+                        <p className="text-sm font-semibold text-brand-oak leading-tight">{item.name}</p>
+                        <p className="text-[10px] text-brand-lotus leading-tight">{item.unit}</p>
+                      </div>
+                      <div className="w-[70px] shrink-0">
+                        <NumericInput
+                          value={rtRestock[item.id] || ''}
+                          onChange={(v) => updateRtRestock(item.id, v)}
+                          isFilled
+                        />
+                      </div>
+                      <button
+                        onClick={() => handleRtSave(item.id)}
+                        disabled={isSaving}
+                        className={`w-10 h-8 flex items-center justify-center rounded-lg mx-1 text-white text-xs font-medium active:scale-95 transition-all ${
+                          isSaved ? 'bg-green-500' : 'bg-brand-mocha'
+                        }`}
+                      >
+                        {isSaving ? '...' : isSaved ? <Check size={14} /> : '確認'}
+                      </button>
+                      <span className={`w-[60px] text-center text-sm font-semibold ${remaining < 0 ? 'text-status-danger' : 'text-brand-oak'}`}>
+                        {remaining}
+                      </span>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )}
 
           {Array.from(productsByCategory.entries()).map(([category, products]) => (
             <div key={category}>

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Package, Warehouse, Users, Store, Receipt, QrCode, Layers, ClipboardList, FileText, DollarSign, CloudSun, ChefHat, LayoutDashboard, LogOut, KeyRound, ScrollText, Wallet, TrendingUp, ChevronDown, CalendarClock, Clock, Snowflake, CalendarDays, ArrowUpDown, CalendarOff, BookOpen, UtensilsCrossed, Calculator, Factory } from 'lucide-react'
+import { Package, Warehouse, Users, Store, Receipt, QrCode, Layers, ClipboardList, FileText, DollarSign, CloudSun, ChefHat, LayoutDashboard, LogOut, KeyRound, ScrollText, Wallet, TrendingUp, ChevronDown, CalendarClock, Clock, Snowflake, CalendarDays, ArrowUpDown, CalendarOff, BookOpen, UtensilsCrossed, Calculator, Factory, BarChart3 } from 'lucide-react'
 import { getTodayString, formatDate } from '@/lib/utils'
 import { useStoreStore } from '@/stores/useStoreStore'
 import { clearSession } from '@/lib/auth'
@@ -47,6 +47,7 @@ const menuGroups: MenuGroup[] = [
       { icon: BookOpen, label: '成品配方管理', desc: '設定央廚成品的原料配方與成本', path: '/admin/recipes', color: 'bg-brand-amber' },
       { icon: UtensilsCrossed, label: '販售品管理', desc: '設定販售品的配料組成與售價', path: '/admin/menu-items', color: 'bg-brand-blush' },
       { icon: Factory, label: '生產區域管理', desc: '管理生產紀錄的區域、品項、欄位與糖種', path: '/admin/production-zones', color: 'bg-brand-silver' },
+      { icon: BarChart3, label: '即時庫存品項', desc: '管理央廚即時庫存品項及出貨對應', path: '/admin/kitchen-realtime-items', color: 'bg-brand-oak' },
     ],
   },
   {
