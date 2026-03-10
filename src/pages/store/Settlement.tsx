@@ -286,6 +286,10 @@ export default function Settlement() {
               <span className="text-sm text-brand-oak">當日實收現金</span>
               <span className="text-sm font-bold font-num text-brand-amber">{formatCurrency(computed.cashTotal)}</span>
             </div>
+            <div className="flex items-center justify-between px-4 py-2 mb-1 rounded-lg bg-surface-section">
+              <span className="text-sm text-brand-oak">鈔票總額</span>
+              <span className="text-sm font-bold font-num text-brand-amber">{formatCurrency(computed.billTotal)}</span>
+            </div>
             <div className="flex items-center justify-between px-4 py-2 mb-4 rounded-lg bg-surface-section">
               <span className="text-sm text-brand-oak">結帳差額</span>
               <span className={`text-sm font-bold font-num ${computed.diff !== 0 ? 'text-status-danger' : 'text-status-success'}`}>{formatCurrency(computed.diff)}</span>
