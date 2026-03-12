@@ -82,7 +82,7 @@ function DateInput({ value, onChange, autoFocus }: { value: string; onChange: (v
   }
 
   return (
-    <div className="flex-1 flex items-center gap-1">
+    <div className="flex-1 min-w-0 flex items-center gap-1">
       <input
         ref={textRef}
         type="text"
@@ -164,7 +164,7 @@ export function StockEntryPanel({ entries, onChange, onCollapse, unit, box_unit,
   }
 
   return (
-    <div ref={panelRef} className="mx-4 mb-1 rounded-lg border border-brand-oak/20 bg-amber-50/50 p-3">
+    <div ref={panelRef} className="mx-4 mb-1 rounded-lg border border-brand-oak/20 bg-amber-50/50 p-3 overflow-hidden">
       {/* Header */}
       <div className="flex items-center text-[11px] text-brand-lotus mb-1.5">
         <span className="flex-1">到期日</span>
@@ -180,7 +180,7 @@ export function StockEntryPanel({ entries, onChange, onCollapse, unit, box_unit,
             onChange={(v) => updateEntry(idx, 'expiryDate', v)}
             autoFocus={focusLastDate && idx === entries.length - 1}
           />
-          <div className={`${hasDual ? 'w-[110px]' : 'w-[70px]'} flex justify-center`}>
+          <div className={`${hasDual ? 'w-[110px]' : 'w-[70px]'} shrink-0 flex justify-center`}>
             <DualUnitInput
               value={entry.quantity}
               onChange={(v) => updateEntry(idx, 'quantity', v)}
@@ -196,7 +196,7 @@ export function StockEntryPanel({ entries, onChange, onCollapse, unit, box_unit,
           <button
             type="button"
             onClick={() => removeEntry(idx)}
-            className="w-[28px] h-9 flex items-center justify-center text-red-400 hover:text-red-600 active:bg-red-50 rounded"
+            className="w-[28px] h-9 shrink-0 flex items-center justify-center text-red-400 hover:text-red-600 active:bg-red-50 rounded"
           >
             <X size={16} />
           </button>

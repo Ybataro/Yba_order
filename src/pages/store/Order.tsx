@@ -593,7 +593,7 @@ export default function Order() {
 
           <div className="mx-4 mb-2 flex items-center gap-2 bg-status-info/10 text-status-info px-3 py-2 rounded-btn text-xs">
             <Lightbulb size={14} />
-            <span>{isRestDayEve ? '建議量已結合歷史相似日匹配 + 天氣 + 安全庫存（×2 央廚休息日備量）· 點擊建議數字查看明細' : '建議量已結合歷史相似日匹配 + 天氣 + 安全庫存計算 · 點擊建議數字查看明細'}</span>
+            <span>{isRestDayEve ? '建議量已扣除庫存、結合季節 + 天氣 + 安全庫存（含休息日覆蓋）· 點擊建議數字查看明細' : '建議量已扣除庫存、結合季節 + 天氣 + 安全庫存 · 點擊建議數字查看明細'}</span>
           </div>
 
           <div className="mx-4 mb-3">
@@ -629,7 +629,7 @@ export default function Order() {
                         className="w-[40px] text-center text-xs font-num text-status-info active:opacity-60"
                         onClick={() => setExpandedSuggestionId(prev => prev === product.id ? null : product.id)}
                       >
-                        {suggested[product.id] > 0 ? suggested[product.id] : '-'}
+                        {suggested[product.id] > 0 ? suggested[product.id] : (suggestionBreakdown[product.id]?.matchedDays > 0 ? 0 : '-')}
                       </button>
                       <div className="w-[110px] shrink-0 flex justify-center">
                         <DualUnitInput
@@ -657,6 +657,8 @@ export default function Order() {
                       const tierLabel = bd.matchLevel === 1 ? 'Tier 1（嚴格匹配）' : bd.matchLevel === 2 ? 'Tier 2（放寬匹配）' : 'Tier 3（近期平均）'
                       const dayTypeLabel = bd.targetDayType === 'holiday' ? '假日' : bd.targetDayType === 'weekend' ? '週末' : '平日'
                       const rainLabel = bd.targetRainBucket === 'none' ? '無雨' : bd.targetRainBucket === 'light' ? '小雨' : bd.targetRainBucket === 'heavy' ? '大雨' : '-'
+                      const seasonLabel = bd.targetSeason === 'cool' ? '秋冬' : '春夏'
+                      const coverDayTypeLabel = (dt: string) => dt === 'holiday' ? '假日' : dt === 'weekend' ? '週末' : '平日'
                       return (
                         <div className={`mx-4 mb-1 px-3 py-2 rounded-lg bg-surface-section text-[11px] text-brand-lotus space-y-1 ${idx < products.length - 1 ? 'border-b border-gray-50' : ''}`}>
                           <div className="flex justify-between">
@@ -678,15 +680,46 @@ export default function Order() {
                             <span className="font-num">{dayTypeLabel} / {bd.targetTemp != null ? `${bd.targetTemp}°C` : '-'} / {rainLabel}</span>
                           </div>
                           <div className="flex justify-between">
+                            <span>季節</span>
+                            <span className="font-medium">{seasonLabel}{bd.targetSchoolBreak ? '（寒暑假）' : ''}</span>
+                          </div>
+                          {bd.targetRevenue != null && (
+                            <div className="flex justify-between">
+                              <span>預估營業額</span>
+                              <span className="font-num">${bd.targetRevenue.toLocaleString()}</span>
+                            </div>
+                          )}
+                          <div className="flex justify-between">
                             <span>加權平均用量</span>
                             <span className="font-num">{bd.avgUsage} {product.unit}/天</span>
                           </div>
-                          {bd.restDayMultiplier > 1 && (
-                            <div className="flex justify-between">
-                              <span>休息日備量</span>
-                              <span className="font-num">×{bd.restDayMultiplier}</span>
+                          {/* 覆蓋天數明細 */}
+                          <div className="flex justify-between">
+                            <span>覆蓋天數</span>
+                            <span className="font-num">{bd.coverDays} 天</span>
+                          </div>
+                          {bd.coverDetails.length > 0 && (
+                            <div className="pl-2 space-y-0.5">
+                              {bd.coverDetails.map(cd => (
+                                <div key={cd.date} className="flex justify-between text-[10px]">
+                                  <span>{cd.date.slice(5).replace('-', '/')}（{coverDayTypeLabel(cd.dayType)}）</span>
+                                  <span className="font-num">{cd.estimatedUsage} {product.unit}</span>
+                                </div>
+                              ))}
                             </div>
                           )}
+                          <div className="flex justify-between">
+                            <span>預估總需求</span>
+                            <span className="font-num">{bd.totalDemand} {product.unit}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>現有庫存</span>
+                            <span className="font-num">{bd.currentStock} {product.unit}</span>
+                          </div>
+                          <div className="flex justify-between font-medium">
+                            <span>淨需求</span>
+                            <span className="font-num">{bd.netDemand} {product.unit}</span>
+                          </div>
                           {bd.safetyStockGap > 0 && (
                             <div className="flex justify-between">
                               <span>安全庫存補充</span>

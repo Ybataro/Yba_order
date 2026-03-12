@@ -1,6 +1,6 @@
 /**
- * 相似日匹配建議量演算法
- * 利用歷史天氣 + 日類型 + 氣溫，匹配最相似的歷史日計算加權平均用量
+ * 相似日匹配建議量演算法 V2
+ * 改善：季節過濾、寒暑假加分、recency weight、庫存扣除、動態休息日覆蓋
  */
 import { supabase } from '@/lib/supabase'
 import { getDayType } from '@/lib/holidays'
@@ -10,6 +10,12 @@ import type { StoreProduct } from '@/data/storeProducts'
 
 export type RainBucket = 'none' | 'light' | 'heavy'
 
+export interface CoverDayDetail {
+  date: string
+  dayType: 'holiday' | 'weekend' | 'weekday'
+  estimatedUsage: number
+}
+
 export interface SuggestionBreakdown {
   avgUsage: number
   matchLevel: 1 | 2 | 3
@@ -18,6 +24,14 @@ export interface SuggestionBreakdown {
   targetDayType: 'holiday' | 'weekend' | 'weekday'
   targetTemp: number | null
   targetRainBucket: RainBucket | null
+  targetSeason: 'cool' | 'warm'
+  targetSchoolBreak: boolean
+  targetRevenue: number | null
+  currentStock: number
+  totalDemand: number
+  netDemand: number
+  coverDays: number
+  coverDetails: CoverDayDetail[]
   restDayMultiplier: number
   safetyStockGap: number
   rawBeforeRound: number
@@ -76,12 +90,57 @@ function getLinkedSum(data: Record<string, number>, ids: string[]): number | nul
   return found ? Math.round(sum * 10) / 10 : null
 }
 
+// ── V2 新增輔助函式 ──
+
+/** 季節判斷：11-3月涼季、4-10月暖季 */
+export function getSeason(dateStr: string): 'cool' | 'warm' {
+  const month = parseInt(dateStr.slice(5, 7), 10)
+  return (month >= 11 || month <= 3) ? 'cool' : 'warm'
+}
+
+/** 寒暑假判斷：寒假 1/20~2/15、暑假 7-8 月 */
+export function isSchoolBreak(dateStr: string): boolean {
+  const month = parseInt(dateStr.slice(5, 7), 10)
+  const day = parseInt(dateStr.slice(8, 10), 10)
+  // 暑假 7-8 月
+  if (month === 7 || month === 8) return true
+  // 寒假 1/20 ~ 2/15
+  if (month === 1 && day >= 20) return true
+  if (month === 2 && day <= 15) return true
+  return false
+}
+
+/** 央廚休息日：週三(3) 或 週日(0) */
+export function isKitchenRestDay(dateStr: string): boolean {
+  const dow = new Date(dateStr + 'T00:00:00+08:00').getDay()
+  return dow === 3 || dow === 0
+}
+
+/** 近期權重：越近的歷史資料權重越高 */
+export function getRecencyWeight(histDateStr: string, targetDateStr: string): number {
+  const hist = new Date(histDateStr + 'T00:00:00+08:00').getTime()
+  const target = new Date(targetDateStr + 'T00:00:00+08:00').getTime()
+  const diffDays = Math.abs(target - hist) / (1000 * 60 * 60 * 24)
+  if (diffDays <= 7) return 2
+  if (diffDays <= 14) return 1.5
+  if (diffDays <= 30) return 1.2
+  return 1
+}
+
+/** 日期加減天數 */
+export function addDays(dateStr: string, days: number): string {
+  const d = new Date(dateStr + 'T00:00:00+08:00')
+  d.setDate(d.getDate() + days)
+  return d.toLocaleDateString('en-CA', { timeZone: 'Asia/Taipei' })
+}
+
 // ── Module-level 快取 ──
 
 interface CachedData {
   storeId: string
   weatherMap: Map<string, WeatherDay>
   dailyUsages: DailyUsage[]
+  revenueMap: Map<string, number>
   loadedAt: number
 }
 
@@ -94,27 +153,30 @@ async function loadHistoricalData(
   products: StoreProduct[],
   bagWeightMap: Record<string, number>,
   inventoryIdMap: Record<string, string[]>,
-): Promise<{ weatherMap: Map<string, WeatherDay>; dailyUsages: DailyUsage[] }> {
-  if (!supabase) return { weatherMap: new Map(), dailyUsages: [] }
+): Promise<{ weatherMap: Map<string, WeatherDay>; dailyUsages: DailyUsage[]; revenueMap: Map<string, number> }> {
+  if (!supabase) return { weatherMap: new Map(), dailyUsages: [], revenueMap: new Map() }
 
   // 用快取（同 store 10 分鐘內不重查）
   if (_cache && _cache.storeId === storeId && Date.now() - _cache.loadedAt < 10 * 60 * 1000) {
-    return { weatherMap: _cache.weatherMap, dailyUsages: _cache.dailyUsages }
+    return { weatherMap: _cache.weatherMap, dailyUsages: _cache.dailyUsages, revenueMap: _cache.revenueMap }
   }
 
-  // 1. 平行查詢 sessions + weather
-  const [invRes, ordRes, weatherRes] = await Promise.all([
+  // 1. 平行查詢 sessions + weather + revenue
+  const [invRes, ordRes, weatherRes, revenueRes] = await Promise.all([
     supabase.from('inventory_sessions').select('id, date')
       .eq('store_id', storeId).gte('date', '2021-01-01').order('date'),
     supabase.from('order_sessions').select('id, date')
       .eq('store_id', storeId).gte('date', '2021-01-01').order('date'),
     supabase.from('weather_records').select('date, temp_high, temp_low, rain_prob')
       .gte('date', '2021-01-01').order('date'),
+    supabase.from('daily_revenue').select('date, revenue')
+      .eq('store_id', storeId).order('date'),
   ])
 
   const invSessions = invRes.data || []
   const ordSessions = ordRes.data || []
   const weatherRows = weatherRes.data || []
+  const revenueRows = revenueRes.data || []
 
   // 天氣 map
   const weatherMap = new Map<string, WeatherDay>()
@@ -125,6 +187,12 @@ async function loadHistoricalData(
       tempLow: w.temp_low,
       rainProb: w.rain_prob,
     })
+  })
+
+  // 營業額 map
+  const revenueMap = new Map<string, number>()
+  revenueRows.forEach((r: { date: string; revenue: number }) => {
+    revenueMap.set(r.date, r.revenue)
   })
 
   // 2. 批次查 inventory_items 和 order_items
@@ -257,11 +325,11 @@ async function loadHistoricalData(
   // 按日期排序
   dailyUsages.sort((a, b) => a.date.localeCompare(b.date))
 
-  _cache = { storeId, weatherMap, dailyUsages, loadedAt: Date.now() }
-  return { weatherMap, dailyUsages }
+  _cache = { storeId, weatherMap, dailyUsages, revenueMap, loadedAt: Date.now() }
+  return { weatherMap, dailyUsages, revenueMap }
 }
 
-// ── 核心：三階段匹配 ──
+// ── 核心：三階段匹配 V2 ──
 
 interface MatchedDay {
   date: string
@@ -269,13 +337,28 @@ interface MatchedDay {
   usage: number
 }
 
-function matchDays(
+/** 計算營業額相似度加分（越接近 targetRevenue，分數越高，最高 15 分） */
+function revenueBonus(histDate: string, targetRevenue: number | null, revenueMap: Map<string, number>): number {
+  if (targetRevenue == null || targetRevenue <= 0) return 0
+  const histRevenue = revenueMap.get(histDate)
+  if (histRevenue == null || histRevenue <= 0) return 0
+  const ratio = Math.min(histRevenue, targetRevenue) / Math.max(histRevenue, targetRevenue)
+  // ratio 1.0 = 完全一樣 → 15分, ratio 0.5 = 差一倍 → 0分
+  return Math.max(0, (ratio - 0.5) * 30) // 0.5→0, 0.75→7.5, 1.0→15
+}
+
+function matchDaysV2(
   targetDayType: 'holiday' | 'weekend' | 'weekday',
   targetTemp: number | null,
   targetRainBucket: RainBucket | null,
+  targetSeason: 'cool' | 'warm',
+  targetSchoolBreak: boolean,
+  targetDateStr: string,
   dailyUsages: DailyUsage[],
   weatherMap: Map<string, WeatherDay>,
   productId: string,
+  revenueMap: Map<string, number>,
+  targetRevenue: number | null,
 ): { matchLevel: 1 | 2 | 3; matched: MatchedDay[] } {
 
   // 過濾出該品項有用量的日子
@@ -286,40 +369,15 @@ function matchDays(
     return { matchLevel: 3, matched: [] }
   }
 
-  // Tier 1：嚴格匹配
+  // Tier 1：嚴格匹配 — 日類型 + 季節 + 溫差5°C + 降雨 ≥2天
   if (targetTemp != null && targetRainBucket != null) {
     const tier1: MatchedDay[] = []
     for (const d of daysWithUsage) {
       const dayType = getDayType(d.date)
       if (dayType !== targetDayType) continue
 
-      const w = weatherMap.get(d.date)
-      if (!w) continue
-
-      const tempDiff = Math.abs(w.tempHigh - targetTemp)
-      if (tempDiff > 3) continue
-
-      const histRain = getRainBucketFromProb(w.rainProb)
-      if (histRain !== targetRainBucket) continue
-
-      tier1.push({
-        date: d.date,
-        score: 100 - tempDiff * 5,
-        usage: d.usage[productId],
-      })
-    }
-
-    if (tier1.length >= 3) {
-      return { matchLevel: 1, matched: tier1 }
-    }
-  }
-
-  // Tier 2：放寬匹配（忽略 rainBucket）
-  if (targetTemp != null) {
-    const tier2: MatchedDay[] = []
-    for (const d of daysWithUsage) {
-      const dayType = getDayType(d.date)
-      if (dayType !== targetDayType) continue
+      // 季節過濾
+      if (getSeason(d.date) !== targetSeason) continue
 
       const w = weatherMap.get(d.date)
       if (!w) continue
@@ -327,27 +385,123 @@ function matchDays(
       const tempDiff = Math.abs(w.tempHigh - targetTemp)
       if (tempDiff > 5) continue
 
-      tier2.push({
-        date: d.date,
-        score: 60 - tempDiff * 3,
-        usage: d.usage[productId],
-      })
+      const histRain = getRainBucketFromProb(w.rainProb)
+      if (histRain !== targetRainBucket) continue
+
+      const recency = getRecencyWeight(d.date, targetDateStr)
+      let score = (100 - tempDiff * 5) * recency
+      // 寒暑假加分
+      if (targetSchoolBreak && isSchoolBreak(d.date)) score += 10
+      if (!targetSchoolBreak && !isSchoolBreak(d.date)) score += 5
+      // 營業額相似度加分
+      score += revenueBonus(d.date, targetRevenue, revenueMap)
+
+      tier1.push({ date: d.date, score, usage: d.usage[productId] })
     }
 
-    if (tier2.length >= 3) {
+    if (tier1.length >= 2) {
+      return { matchLevel: 1, matched: tier1 }
+    }
+  }
+
+  // Tier 2：放寬匹配 — 日類型 + 季節 + 溫差8°C ≥2天，降雨/假期加分
+  if (targetTemp != null) {
+    const tier2: MatchedDay[] = []
+    for (const d of daysWithUsage) {
+      const dayType = getDayType(d.date)
+      if (dayType !== targetDayType) continue
+
+      // 季節過濾
+      if (getSeason(d.date) !== targetSeason) continue
+
+      const w = weatherMap.get(d.date)
+      if (!w) continue
+
+      const tempDiff = Math.abs(w.tempHigh - targetTemp)
+      if (tempDiff > 8) continue
+
+      const recency = getRecencyWeight(d.date, targetDateStr)
+      let score = (60 - tempDiff * 3) * recency
+
+      // 降雨匹配加分
+      if (targetRainBucket != null) {
+        const histRain = getRainBucketFromProb(w.rainProb)
+        if (histRain === targetRainBucket) score += 10
+      }
+      // 寒暑假加分
+      if (targetSchoolBreak && isSchoolBreak(d.date)) score += 8
+      if (!targetSchoolBreak && !isSchoolBreak(d.date)) score += 3
+      // 營業額相似度加分
+      score += revenueBonus(d.date, targetRevenue, revenueMap)
+
+      tier2.push({ date: d.date, score, usage: d.usage[productId] })
+    }
+
+    if (tier2.length >= 2) {
       return { matchLevel: 2, matched: tier2 }
     }
   }
 
-  // Tier 3：兜底 — 最近 14 天平均
+  // Tier 3：兜底 — 同日類型+同季節 → 同日類型 → 最近14天
+  const sameDayTypeSeason = daysWithUsage.filter(d =>
+    getDayType(d.date) === targetDayType && getSeason(d.date) === targetSeason,
+  )
+  if (sameDayTypeSeason.length >= 2) {
+    const tier3 = sameDayTypeSeason.map(d => ({
+      date: d.date,
+      score: (30 + revenueBonus(d.date, targetRevenue, revenueMap)) * getRecencyWeight(d.date, targetDateStr),
+      usage: d.usage[productId],
+    }))
+    return { matchLevel: 3, matched: tier3 }
+  }
+
+  const sameDayType = daysWithUsage.filter(d => getDayType(d.date) === targetDayType)
+  if (sameDayType.length >= 2) {
+    const tier3 = sameDayType.map(d => ({
+      date: d.date,
+      score: (25 + revenueBonus(d.date, targetRevenue, revenueMap)) * getRecencyWeight(d.date, targetDateStr),
+      usage: d.usage[productId],
+    }))
+    return { matchLevel: 3, matched: tier3 }
+  }
+
+  // 最後兜底：最近 14 天
   const recent14 = daysWithUsage.slice(-14)
   const tier3: MatchedDay[] = recent14.map(d => ({
     date: d.date,
-    score: 30,
+    score: (20 + revenueBonus(d.date, targetRevenue, revenueMap)) * getRecencyWeight(d.date, targetDateStr),
     usage: d.usage[productId],
   }))
 
   return { matchLevel: 3, matched: tier3 }
+}
+
+/** 針對特定日期的 dayType 匹配歷史用量，用於覆蓋天數各天預估 */
+function estimateDailyUsage(
+  dayType: 'holiday' | 'weekend' | 'weekday',
+  dateStr: string,
+  dailyUsages: DailyUsage[],
+  weatherMap: Map<string, WeatherDay>,
+  productId: string,
+  revenueMap: Map<string, number>,
+  targetRevenue: number | null,
+): number {
+  const season = getSeason(dateStr)
+  const schoolBreak = isSchoolBreak(dateStr)
+
+  const { matched } = matchDaysV2(
+    dayType, null, null, season, schoolBreak, dateStr,
+    dailyUsages, weatherMap, productId, revenueMap, targetRevenue,
+  )
+
+  if (matched.length === 0) return 0
+
+  let weightedSum = 0, scoreSum = 0
+  for (const m of matched) {
+    weightedSum += m.usage * m.score
+    scoreSum += m.score
+  }
+  return scoreSum > 0 ? weightedSum / scoreSum : 0
 }
 
 // ── 主函式 ──
@@ -370,7 +524,7 @@ export async function computeSuggestions(
   const breakdowns: Record<string, SuggestionBreakdown> = {}
 
   try {
-    const { weatherMap, dailyUsages } = await loadHistoricalData(
+    const { weatherMap, dailyUsages, revenueMap } = await loadHistoricalData(
       storeId, products, bagWeightMap, inventoryIdMap,
     )
 
@@ -379,22 +533,50 @@ export async function computeSuggestions(
     const targetRainBucket = targetWeather
       ? getRainBucketFromProb(targetWeather.rainProb)
       : null
+    const targetSeason = getSeason(selectedDate)
+    const targetSchoolBreak = isSchoolBreak(selectedDate)
 
-    // 休息日倍率（週二/六叫貨 ×2）
-    const dow = new Date(selectedDate + 'T00:00:00+08:00').getDay()
-    const restMul = (dow === 2 || dow === 6) ? 2 : 1
+    // 預估目標日營業額：取最近 4 週同日類型（weekday/weekend/holiday）的營業額平均
+    let targetRevenue: number | null = null
+    const revenueEntries = [...revenueMap.entries()]
+      .filter(([d]) => getDayType(d) === targetDayType && getSeason(d) === targetSeason)
+      .sort((a, b) => b[0].localeCompare(a[0])) // 最近的在前
+      .slice(0, 8) // 取最近 8 個同類型日
+    if (revenueEntries.length >= 2) {
+      const sum = revenueEntries.reduce((acc, [, rev]) => acc + rev, 0)
+      targetRevenue = sum / revenueEntries.length
+    }
+
+    // 動態休息日覆蓋（當天叫貨、當天出貨）
+    // 叫貨日當天到貨，覆蓋當天 + 之後連續央廚休息日
+    // 例: 週二叫貨 → 當天到貨 → 隔天週三央廚休息 → 覆蓋週二+週三共2天
+    // 例: 週六叫貨 → 當天到貨 → 隔天週日央廚休息 → 覆蓋週六+週日共2天
+    // 例: 週一叫貨 → 當天到貨 → 隔天週二正常 → 覆蓋週一共1天
+    const coverDates: string[] = [selectedDate] // 當天到貨，先覆蓋當天
+
+    // 檢查隔天起的連續休息日
+    let cursor = addDays(selectedDate, 1)
+    while (isKitchenRestDay(cursor)) {
+      coverDates.push(cursor)
+      cursor = addDays(cursor, 1)
+    }
+
+    const coverDays = coverDates.length
+    // 舊 restMul 相容值（用於 breakdown 顯示）
+    const restMul = coverDays
 
     products.forEach(p => {
       const ids = inventoryIdMap[p.id] || [p.id]
 
-      const { matchLevel, matched } = matchDays(
+      // 用 matchDaysV2 匹配（以到貨日條件為主）
+      const { matchLevel, matched } = matchDaysV2(
         targetDayType, targetTemp, targetRainBucket,
-        dailyUsages, weatherMap, p.id,
+        targetSeason, targetSchoolBreak, selectedDate,
+        dailyUsages, weatherMap, p.id, revenueMap, targetRevenue,
       )
 
       let avgUsage = 0
       if (matched.length > 0) {
-        // 加權平均
         let weightedSum = 0, scoreSum = 0
         for (const m of matched) {
           weightedSum += m.usage * m.score
@@ -403,13 +585,32 @@ export async function computeSuggestions(
         avgUsage = scoreSum > 0 ? weightedSum / scoreSum : 0
       }
 
-      const restDayQty = avgUsage * restMul
+      // 覆蓋天數各天用量明細
+      // 每天先嘗試用各自 dayType 匹配歷史用量；若匹配不到則 fallback 到主匹配的 avgUsage
+      const coverDetails: CoverDayDetail[] = coverDates.map(date => {
+        const dayType = getDayType(date)
+        const estUsage = estimateDailyUsage(dayType, date, dailyUsages, weatherMap, p.id, revenueMap, targetRevenue)
+        return {
+          date,
+          dayType,
+          estimatedUsage: Math.round((estUsage > 0 ? estUsage : avgUsage) * 10) / 10,
+        }
+      })
 
-      const parsedBase = parseBaseStock(p.baseStock)
+      // 需求量 = 覆蓋期間各天用量加總（鮮食每天需要新鮮補貨，不因庫存扣減）
+      const totalDemand = coverDetails.reduce((sum, d) => sum + d.estimatedUsage, 0)
+
+      // 現有庫存（供 breakdown 顯示參考）
       const currentStock = getLinkedSum(stock, ids) || 0
+
+      // 安全庫存缺口
+      const parsedBase = parseBaseStock(p.baseStock)
       const safetyGap = Math.max(0, parsedBase - currentStock)
 
-      const rawBeforeRound = Math.max(restDayQty, safetyGap)
+      // 建議量 = max(每日需求 × 覆蓋天數, 安全庫存缺口)
+      // 鮮食叫貨不扣庫存，因為每天都需要新鮮補貨維持品質
+      const netDemand = totalDemand
+      const rawBeforeRound = Math.max(netDemand, safetyGap)
       const unit = getRoundUnit(p.name)
       suggested[p.id] = roundToUnit(rawBeforeRound, unit)
 
@@ -427,6 +628,14 @@ export async function computeSuggestions(
         targetDayType,
         targetTemp,
         targetRainBucket,
+        targetSeason,
+        targetSchoolBreak,
+        targetRevenue: targetRevenue != null ? Math.round(targetRevenue) : null,
+        currentStock: Math.round(currentStock * 10) / 10,
+        totalDemand: Math.round(totalDemand * 10) / 10,
+        netDemand: Math.round(netDemand * 10) / 10,
+        coverDays,
+        coverDetails,
         restDayMultiplier: restMul,
         safetyStockGap: Math.round(safetyGap * 10) / 10,
         rawBeforeRound: Math.round(rawBeforeRound * 10) / 10,

@@ -172,7 +172,7 @@ export function useKitchenRealtimeStock({
                     const shipped = shipmentByDate[dd]?.[ded.product_id] || 0
                     deduction += shipped * ded.ratio
                   })
-                  nextRunning[item.id] = prev + restock - deduction
+                  nextRunning[item.id] = parseFloat((prev + restock - deduction).toFixed(2))
                 })
                 running = nextRunning
               }
@@ -256,7 +256,7 @@ export function useKitchenRealtimeStock({
       const prev = yesterdayRemaining[item.id] || 0
       const restock = parseFloat(restockValues[item.id] || '0') || 0
       const deduction = deductions[item.id] || 0
-      result[item.id] = prev + restock - deduction
+      result[item.id] = parseFloat((prev + restock - deduction).toFixed(2))
     })
     return result
   }, [items, yesterdayRemaining, restockValues, deductions])

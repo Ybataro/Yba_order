@@ -181,8 +181,6 @@ export const useLeaveStore = create<LeaveState>()((set, get) => ({
   // ── 主管審核 ──
   managerApprove: async (id, reviewerId) => {
     if (!supabase) return false
-    const req = get().requests.find((r) => r.id === id)
-    if (!req) return false
 
     const now = new Date().toISOString()
     const { error } = await supabase
@@ -198,34 +196,44 @@ export const useLeaveStore = create<LeaveState>()((set, get) => ({
       return false
     }
 
+    // 從 DB 查該筆請假（store.requests 可能不包含待審核資料）
+    const { data: reqData } = await supabase
+      .from('leave_requests')
+      .select('*')
+      .eq('id', id)
+      .single()
+    const req = reqData as LeaveRequest | null
+
     // 通知後台管理員
-    const adminTargets = await getAdminNotifyTargets()
-    if (adminTargets.length > 0) {
-      const typeName = getLeaveTypeName(req.leave_type)
-      const dateRange = req.start_date === req.end_date
-        ? req.start_date
-        : `${req.start_date} ~ ${req.end_date}`
-      const dayPartLabel = req.day_part === 'full' ? '' : req.day_part === 'am' ? '（上半天）' : '（下半天）'
+    if (req) {
+      const adminTargets = await getAdminNotifyTargets()
+      if (adminTargets.length > 0) {
+        const typeName = getLeaveTypeName(req.leave_type)
+        const dateRange = req.start_date === req.end_date
+          ? req.start_date
+          : `${req.start_date} ~ ${req.end_date}`
+        const dayPartLabel = req.day_part === 'full' ? '' : req.day_part === 'am' ? '（上半天）' : '（下半天）'
 
-      // 查員工姓名
-      const { data: staffData } = await supabase
-        .from('staff')
-        .select('name')
-        .eq('id', req.staff_id)
-        .single()
-      const staffName = staffData?.name || req.staff_id
+        // 查員工姓名
+        const { data: staffData } = await supabase
+          .from('staff')
+          .select('name')
+          .eq('id', req.staff_id)
+          .single()
+        const staffName = staffData?.name || req.staff_id
 
-      const msg = [
-        '✅ <b>請假申請（主管已核准，待最終審核）</b>',
-        `👤 員工：${staffName}`,
-        `📅 日期：${dateRange}${dayPartLabel}（${req.leave_days}天）`,
-        `📝 假別：${typeName}`,
-        req.reason ? `💬 事由：${req.reason}` : '',
-      ].filter(Boolean).join('\n')
+        const msg = [
+          '✅ <b>請假申請（主管已核准，待最終審核）</b>',
+          `👤 員工：${staffName}`,
+          `📅 日期：${dateRange}${dayPartLabel}（${req.leave_days}天）`,
+          `📝 假別：${typeName}`,
+          req.reason ? `💬 事由：${req.reason}` : '',
+        ].filter(Boolean).join('\n')
 
-      sendTelegramToTargets(msg, adminTargets)
-        .then((ok) => { if (!ok) console.warn('[主管核准通知] 發送失敗') })
-        .catch((err) => console.error('[主管核准通知] 錯誤:', err))
+        sendTelegramToTargets(msg, adminTargets)
+          .then((ok) => { if (!ok) console.warn('[主管核准通知] 發送失敗') })
+          .catch((err) => console.error('[主管核准通知] 錯誤:', err))
+      }
     }
 
     set((s) => ({
