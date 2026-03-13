@@ -407,11 +407,18 @@ export default function Shipment() {
       ),
     }))
 
+    // 去重：同一 (session_id, product_id) 只保留最後一筆，避免 upsert 500 錯誤
+    const deduped = new Map<string, (typeof shipItemsWithReceived)[number]>()
+    shipItemsWithReceived.forEach(item => {
+      deduped.set(`${item.session_id}|${item.product_id}`, item)
+    })
+    const dedupedItems = Array.from(deduped.values())
+
     // 安全模式：upsert + 刪除多餘（避免 DELETE 成功但 INSERT 失敗導致資料遺失）
-    if (shipItemsWithReceived.length > 0) {
+    if (dedupedItems.length > 0) {
       const { error: upsertErr } = await supabase
         .from('shipment_items')
-        .upsert(shipItemsWithReceived, { onConflict: 'session_id,product_id' })
+        .upsert(dedupedItems, { onConflict: 'session_id,product_id' })
 
       if (upsertErr) {
         showToast('提交失敗：' + upsertErr.message, 'error')
@@ -419,7 +426,7 @@ export default function Shipment() {
         return
       }
       // 刪除不在新列表中的舊品項
-      const newProductIds = new Set(shipItemsWithReceived.map(i => i.product_id))
+      const newProductIds = new Set(dedupedItems.map(i => i.product_id))
       const { data: existingItems } = await supabase
         .from('shipment_items')
         .select('id, product_id')
@@ -434,7 +441,7 @@ export default function Shipment() {
 
     // 出貨異動同步：actual_qty 與 order_qty 不同時，自動更新門店 order_items
     const orderSid = `${activeStore}_${orderDate}`
-    const changedItems = shipItems.filter(
+    const changedItems = dedupedItems.filter(
       item => !item.product_id.startsWith('note_') && item.actual_qty !== item.order_qty && item.order_qty > 0
     )
     if (changedItems.length > 0) {
@@ -446,7 +453,7 @@ export default function Shipment() {
       await supabase.from('order_items').upsert(upsertRows, { onConflict: 'session_id,product_id' })
     }
     // 央廚主動出貨（原本門店沒叫的品項）也寫入 order_items
-    const extraShipped = shipItems.filter(
+    const extraShipped = dedupedItems.filter(
       item => !item.product_id.startsWith('note_') && item.order_qty === 0 && item.actual_qty > 0
     )
     if (extraShipped.length > 0) {
@@ -467,7 +474,7 @@ export default function Shipment() {
 
     const staffName = kitchenStaff.find(s => s.id === confirmBy)?.name
     const activeStoreName = stores.find(s => s.id === activeStore)?.name
-    const shipItemCount = shipItemsWithReceived.length
+    const shipItemCount = dedupedItems.length
     setIsEdit(prev => ({ ...prev, [activeStore]: true }))
     setSubmitting(false)
     logAudit('shipment_submit', activeStore, sid)

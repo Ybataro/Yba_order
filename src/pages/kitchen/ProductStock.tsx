@@ -425,6 +425,7 @@ export default function ProductStock() {
                           value={rtRestock[item.id] || ''}
                           onChange={(v) => updateRtRestock(item.id, v)}
                           isFilled
+                          allowNegative
                         />
                       </div>
                       <button

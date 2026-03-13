@@ -8,9 +8,10 @@ interface NumericInputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 
   isFilled?: boolean
   onNext?: () => void
   integerOnly?: boolean
+  allowNegative?: boolean
 }
 
-export function NumericInput({ value, onChange, unit, isFilled, onNext, integerOnly, className, ...props }: NumericInputProps) {
+export function NumericInput({ value, onChange, unit, isFilled, onNext, integerOnly, allowNegative, className, ...props }: NumericInputProps) {
   return (
     <div className="flex items-center gap-1">
       <input
@@ -19,8 +20,10 @@ export function NumericInput({ value, onChange, unit, isFilled, onNext, integerO
         value={value}
         onChange={(e) => {
           const v = e.target.value
-          const pattern = integerOnly ? /^\d*$/ : /^\d*\.?\d*$/
-          if (v === '' || pattern.test(v)) {
+          const pattern = allowNegative
+            ? (integerOnly ? /^-?\d*$/ : /^-?\d*\.?\d*$/)
+            : (integerOnly ? /^\d*$/ : /^\d*\.?\d*$/)
+          if (v === '' || v === '-' || pattern.test(v)) {
             onChange(v)
           }
         }}

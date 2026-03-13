@@ -182,12 +182,12 @@ export default function Order() {
     const load = async () => {
       setStockLoading(true)
 
-      // 找該門店 ≤ selectedDate 最新一筆盤點 session（可能有多樓層）
+      // 找該門店 < selectedDate 最新一筆盤點 session（可能有多樓層）
       const { data: sessions } = await supabase!
         .from('inventory_sessions')
         .select('id, date')
         .eq('store_id', storeId)
-        .lte('date', selectedDate)
+        .lt('date', selectedDate)
         .order('date', { ascending: false })
         .limit(10)
 
