@@ -143,7 +143,7 @@ export default function OrderSummary() {
       // 初始化
       stores.forEach(store => {
         ordersData[store.id] = {}
-        notesData[store.id] = { fixedItems: { almond1000: 0, almond300: 0, bowlK520: 0, bowl750: 0 }, freeText: '' }
+        notesData[store.id] = { fixedItems: { almond1000: 0, almond300: 0, bowlK520: 0, bowl750: 0, bowl750Lid: 0 }, freeText: '' }
       })
 
       // 查今日各店 order_sessions + order_items
@@ -171,6 +171,7 @@ export default function OrderSummary() {
               almond300: parseInt(session.almond_300) || 0,
               bowlK520: parseInt(session.bowl_k520) || 0,
               bowl750: parseInt(session.bowl_750) || 0,
+              bowl750Lid: parseInt(session.bowl_750_lid) || 0,
             },
             freeText: session.note || '',
           }

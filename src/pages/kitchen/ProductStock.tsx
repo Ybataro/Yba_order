@@ -165,9 +165,13 @@ export default function ProductStock() {
   }
 
   const { sortCategories, sortItems } = useStoreSortOrder('kitchen', 'product')
+  // 過濾掉「包材類」（已移至即時庫存區）
+  const filteredCategories = useMemo(() =>
+    productCategories.filter((c) => c !== '包材類'),
+    [productCategories])
   const productsByCategory = useMemo(() =>
-    buildSortedByCategory(productCategories, storeProducts, sortCategories, sortItems),
-    [productCategories, storeProducts, sortCategories, sortItems])
+    buildSortedByCategory(filteredCategories, storeProducts, sortCategories, sortItems),
+    [filteredCategories, storeProducts, sortCategories, sortItems])
 
   const focusNext = () => {
     const allInputs = document.querySelectorAll<HTMLInputElement>('[data-pst]')

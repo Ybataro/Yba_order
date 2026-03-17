@@ -101,6 +101,7 @@ export default function Order() {
   const [almond300, setAlmond300] = useState('')
   const [bowlK520, setBowlK520] = useState('')
   const [bowl750, setBowl750] = useState('')
+  const [bowl750Lid, setBowl750Lid] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [isEdit, setIsEdit] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -120,7 +121,7 @@ export default function Order() {
     const init: Record<string, string> = {}
     storeProducts.forEach(p => { init[p.id] = '' })
     setOrders(init)
-    setAlmond1000(''); setAlmond300(''); setBowlK520(''); setBowl750('')
+    setAlmond1000(''); setAlmond300(''); setBowlK520(''); setBowl750(''); setBowl750Lid('')
     setNote(''); setIsEdit(false)
     setLoading(true)
     supabase
@@ -135,6 +136,7 @@ export default function Order() {
         setAlmond300(session.almond_300 || '')
         setBowlK520(session.bowl_k520 || '')
         setBowl750(session.bowl_750 || '')
+        setBowl750Lid(session.bowl_750_lid || '')
         setNote(session.note || '')
 
         supabase!
@@ -473,6 +475,7 @@ export default function Order() {
       almond_300: almond300,
       bowl_k520: bowlK520,
       bowl_750: bowl750,
+      bowl_750_lid: bowl750Lid,
       note,
       submitted_by: staffId || null,
       updated_at: new Date().toISOString(),
@@ -765,6 +768,10 @@ export default function Order() {
               <div className="flex items-center gap-1">
                 <span className="text-xs text-brand-lotus">750</span>
                 <NumericInput value={bowl750} onChange={(v) => setBowl750(v)} unit="箱" isFilled />
+              </div>
+              <div className="flex items-center gap-1">
+                <span className="text-xs text-brand-lotus">750蓋</span>
+                <NumericInput value={bowl750Lid} onChange={(v) => setBowl750Lid(v)} unit="箱" isFilled />
               </div>
             </div>
             <div className="mt-2">

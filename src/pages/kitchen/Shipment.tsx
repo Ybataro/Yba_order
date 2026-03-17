@@ -36,7 +36,7 @@ export default function Shipment() {
   const [showHistoryConfirm, setShowHistoryConfirm] = useState(false)
 
   // 各店叫貨備註（杏仁茶瓶、紙碗等）
-  const [orderNotes, setOrderNotes] = useState<Record<string, { almond1000: number; almond300: number; bowlK520: number; bowl750: number; freeText: string }>>({})
+  const [orderNotes, setOrderNotes] = useState<Record<string, { almond1000: number; almond300: number; bowlK520: number; bowl750: number; bowl750Lid: number; freeText: string }>>({})
 
   // 各店叫貨備註品項的實出數量 & 勾選狀態
   const [noteActualQty, setNoteActualQty] = useState<Record<string, Record<string, string>>>({})
@@ -114,7 +114,7 @@ export default function Shipment() {
         // Load order note fields（杏仁茶瓶、紙碗等）
         const { data: orderSession } = await supabase!
           .from('order_sessions')
-          .select('almond_1000, almond_300, bowl_k520, bowl_750, note')
+          .select('almond_1000, almond_300, bowl_k520, bowl_750, bowl_750_lid, note')
           .eq('id', orderSid)
           .maybeSingle()
 
@@ -124,6 +124,7 @@ export default function Shipment() {
             almond300: parseInt(orderSession.almond_300) || 0,
             bowlK520: parseInt(orderSession.bowl_k520) || 0,
             bowl750: parseInt(orderSession.bowl_750) || 0,
+            bowl750Lid: parseInt(orderSession.bowl_750_lid) || 0,
             freeText: orderSession.note || '',
           }
           // 用叫貨數量作為備註品項實出的預設值

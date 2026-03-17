@@ -166,7 +166,7 @@ export const useLeaveStore = create<LeaveState>()((set, get) => ({
         const caption = `📋 ${data.staff_name} 的請假附件`
         try {
           const photoPromise = sendTelegramPhotosToTargets(data.photos, caption, notifyTargets)
-          const timeout = new Promise<boolean>((resolve) => setTimeout(() => resolve(false), 15000))
+          const timeout = new Promise<boolean>((resolve) => setTimeout(() => resolve(false), 30000))
           const ok = await Promise.race([photoPromise, timeout])
           if (!ok) console.warn('[請假照片] 發送失敗或超時')
         } catch (err) {

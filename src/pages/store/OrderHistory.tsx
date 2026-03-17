@@ -16,6 +16,7 @@ interface OrderSession {
   almond_300?: string
   bowl_k520?: string
   bowl_750?: string
+  bowl_750_lid?: string
   order_items?: OrderItem[]
 }
 
@@ -169,13 +170,13 @@ export default function StoreOrderHistory() {
                     )}
 
                     {/* Extra notes */}
-                    {(session.almond_1000 || session.almond_300 || session.bowl_k520 || session.bowl_750) && (
+                    {(session.almond_1000 || session.almond_300 || session.bowl_k520 || session.bowl_750 || session.bowl_750_lid) && (
                       <div className="mt-2 text-xs text-brand-lotus space-y-0.5">
                         {(session.almond_1000 || session.almond_300) && (
                           <p>杏仁茶瓶：{session.almond_1000 ? `1000ml ${session.almond_1000}個` : ''}{session.almond_1000 && session.almond_300 ? '、' : ''}{session.almond_300 ? `300ml ${session.almond_300}個` : ''}</p>
                         )}
-                        {(session.bowl_k520 || session.bowl_750) && (
-                          <p>紙碗：{session.bowl_k520 ? `K520 ${session.bowl_k520}箱` : ''}{session.bowl_k520 && session.bowl_750 ? '、' : ''}{session.bowl_750 ? `750 ${session.bowl_750}箱` : ''}</p>
+                        {(session.bowl_k520 || session.bowl_750 || session.bowl_750_lid) && (
+                          <p>紙碗：{session.bowl_k520 ? `K520 ${session.bowl_k520}箱` : ''}{session.bowl_k520 && (session.bowl_750 || session.bowl_750_lid) ? '、' : ''}{session.bowl_750 ? `750 ${session.bowl_750}箱` : ''}{session.bowl_750 && session.bowl_750_lid ? '、' : ''}{session.bowl_750_lid ? `750蓋 ${session.bowl_750_lid}箱` : ''}</p>
                         )}
                       </div>
                     )}

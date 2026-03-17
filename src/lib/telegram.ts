@@ -80,8 +80,6 @@ export function clearLeaveNotifyCache(): void {
   notifyCache = null
 }
 
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string
-
 const MAX_PHOTO_SIZE = 1600
 const JPEG_QUALITY = 0.7
 
@@ -121,17 +119,48 @@ function compressPhoto(file: File): Promise<Blob> {
   })
 }
 
-function blobToBase64(blob: Blob): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader()
-    reader.onload = () => {
-      const dataUrl = reader.result as string
-      // Strip "data:image/jpeg;base64," prefix
-      resolve(dataUrl.split(',')[1])
+async function sendPhotosDirect(
+  token: string,
+  blobs: Blob[],
+  caption: string,
+  chatIds: string[]
+): Promise<boolean> {
+  const baseUrl = `https://api.telegram.org/bot${token}`
+  let anyOk = false
+
+  for (const chatId of chatIds) {
+    try {
+      if (blobs.length === 1) {
+        const form = new FormData()
+        form.append('chat_id', chatId)
+        form.append('photo', new File([blobs[0]], 'photo.jpg', { type: 'image/jpeg' }))
+        form.append('caption', caption)
+        form.append('parse_mode', 'HTML')
+        const r = await fetch(`${baseUrl}/sendPhoto`, { method: 'POST', body: form })
+        if (r.ok) { anyOk = true }
+        else { const t = await r.text().catch(() => ''); console.warn(`[Telegram Photo] chat_id=${chatId} ${r.status}:`, t) }
+      } else {
+        const form = new FormData()
+        form.append('chat_id', chatId)
+        const media = blobs.map((_, i) => ({
+          type: 'photo',
+          media: `attach://photo${i}`,
+          ...(i === 0 ? { caption, parse_mode: 'HTML' } : {}),
+        }))
+        form.append('media', JSON.stringify(media))
+        blobs.forEach((blob, i) => {
+          form.append(`photo${i}`, new File([blob], `photo${i}.jpg`, { type: 'image/jpeg' }), `photo${i}.jpg`)
+        })
+        const r = await fetch(`${baseUrl}/sendMediaGroup`, { method: 'POST', body: form })
+        if (r.ok) { anyOk = true }
+        else { const t = await r.text().catch(() => ''); console.warn(`[Telegram Photo] chat_id=${chatId} ${r.status}:`, t) }
+      }
+    } catch (err) {
+      console.error(`[Telegram Photo] chat_id=${chatId} 失敗:`, err)
     }
-    reader.onerror = () => reject(new Error('FileReader failed'))
-    reader.readAsDataURL(blob)
-  })
+  }
+
+  return anyOk
 }
 
 export async function sendTelegramToTargets(message: string, chatIds: string[]): Promise<boolean> {
@@ -160,22 +189,12 @@ export async function sendTelegramToTargets(message: string, chatIds: string[]):
 export async function sendTelegramPhotosToTargets(photos: File[], caption: string, chatIds: string[]): Promise<boolean> {
   try {
     const config = await loadConfig()
-    if (!config || chatIds.length === 0) { console.warn('[Telegram Photo] config 載入失敗'); return false }
+    if (!config || chatIds.length === 0) { console.warn('[Telegram Photo] config 載入失敗, chatIds:', chatIds.length); return false }
     if (photos.length === 0) return true
+    console.log(`[Telegram Photo] 壓縮 ${photos.length} 張照片...`)
     const compressed = await Promise.all(photos.map((f) => compressPhoto(f)))
-    const base64Photos = await Promise.all(compressed.map((b) => blobToBase64(b)))
-    const r = await fetch(`${SUPABASE_URL}/functions/v1/send-telegram-photo`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ photos: base64Photos, caption, chat_ids: chatIds }),
-    })
-    if (!r.ok) {
-      const body = await r.text().catch(() => '')
-      console.error('[Telegram Photo] Edge Function 錯誤:', r.status, body)
-      return false
-    }
-    const data = await r.json()
-    return data.ok === true
+    console.log(`[Telegram Photo] 壓縮完成, sizes:`, compressed.map((b) => b.size))
+    return sendPhotosDirect(config.token, compressed, caption, chatIds)
   } catch (err) {
     console.error('[Telegram Photo] 發送失敗:', err)
     return false
@@ -224,34 +243,12 @@ export async function sendTelegramPhotos(
     if (!config) { console.warn('[Telegram Photo] config 載入失敗'); return false }
     if (photos.length === 0) return true
 
-    // 壓縮照片
     const compressed = await Promise.all(photos.map((f) => compressPhoto(f)))
-
-    // 轉 base64
-    const base64Photos = await Promise.all(compressed.map((b) => blobToBase64(b)))
 
     const chatIds = privateOnly ? [config.chatId, ELLEN_CHAT_ID] : [config.chatId, ELLEN_CHAT_ID, GROUP_CHAT_ID]
     if (extraChatIds) chatIds.push(...extraChatIds)
 
-    // POST to Supabase Edge Function
-    const r = await fetch(`${SUPABASE_URL}/functions/v1/send-telegram-photo`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        photos: base64Photos,
-        caption,
-        chat_ids: chatIds,
-      }),
-    })
-
-    if (!r.ok) {
-      const body = await r.text().catch(() => '')
-      console.error('[Telegram Photo] Edge Function 錯誤:', r.status, body)
-      return false
-    }
-
-    const data = await r.json()
-    return data.ok === true
+    return sendPhotosDirect(config.token, compressed, caption, chatIds)
   } catch (err) {
     console.error('[Telegram Photo] 發送失敗:', err)
     return false

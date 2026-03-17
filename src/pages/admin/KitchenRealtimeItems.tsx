@@ -179,11 +179,14 @@ export default function KitchenRealtimeItems() {
   }
 
   // Update ratio for a specific deduction
-  const updateDeductionRatio = (pid: string, ratio: string) => {
+  const updateDeductionRatio = (key: string, ratio: string) => {
     const num = parseFloat(ratio)
     if (ratio !== '' && isNaN(num)) return
     setFormDeductions((prev) =>
-      prev.map((d) => d.product_id === pid ? { ...d, ratio: num || 1 } : d),
+      prev.map((d) => {
+        const dKey = d.product_id || d.field || ''
+        return dKey === key ? { ...d, ratio: num || 1 } : d
+      }),
     )
   }
 
@@ -312,17 +315,20 @@ export default function KitchenRealtimeItems() {
           {formDeductions.length > 0 && (
             <div className="mt-2 space-y-1.5">
               <p className="text-[10px] text-brand-lotus font-medium">已選品項與比例：</p>
-              {formDeductions.map((ded) => {
-                const name = allProducts.find((p) => p.id === ded.product_id)?.name || ded.product_id
+              {formDeductions.map((ded, i) => {
+                const key = ded.product_id || ded.field || `ded-${i}`
+                const name = ded.type === 'order_note'
+                  ? `備註: ${ded.field}`
+                  : allProducts.find((p) => p.id === ded.product_id)?.name || ded.product_id || ''
                 return (
-                  <div key={ded.product_id} className="flex items-center gap-2">
+                  <div key={key} className="flex items-center gap-2">
                     <span className="text-xs text-brand-oak flex-1 min-w-0 truncate">{name}</span>
                     <span className="text-[10px] text-brand-lotus shrink-0">×</span>
                     <input
                       type="text"
                       inputMode="decimal"
                       value={String(ded.ratio)}
-                      onChange={(e) => updateDeductionRatio(ded.product_id, e.target.value)}
+                      onChange={(e) => updateDeductionRatio(ded.product_id || ded.field || '', e.target.value)}
                       className="w-14 h-7 text-center text-sm border border-gray-200 rounded-lg bg-surface-input outline-none focus:border-brand-lotus"
                     />
                   </div>
