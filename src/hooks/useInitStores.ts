@@ -8,6 +8,7 @@ import { useZoneStore } from '@/stores/useZoneStore'
 import { useFrozenProductStore } from '@/stores/useFrozenProductStore'
 import { useCostStore } from '@/stores/useCostStore'
 import { useProductionZoneStore } from '@/stores/useProductionZoneStore'
+import { useSopStore } from '@/stores/useSopStore'
 
 export function useInitStores() {
   useEffect(() => {
@@ -20,5 +21,6 @@ export function useInitStores() {
     useFrozenProductStore.getState().initialize()
     useCostStore.getState().initialize()
     useProductionZoneStore.getState().initialize()
+    useSopStore.getState().initialize()
   }, [])
 }

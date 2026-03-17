@@ -61,6 +61,9 @@ const MenuItemManager = lazy(() => import('@/pages/admin/MenuItemManager'))
 const CostAnalysis = lazy(() => import('@/pages/admin/CostAnalysis'))
 const ProductionZoneManager = lazy(() => import('@/pages/admin/ProductionZoneManager'))
 const KitchenRealtimeItems = lazy(() => import('@/pages/admin/KitchenRealtimeItems'))
+const ProductionStats = lazy(() => import('@/pages/admin/ProductionStats'))
+const SopManager = lazy(() => import('@/pages/admin/SopManager'))
+const SopDetail = lazy(() => import('@/pages/admin/SopDetail'))
 
 function Loading() {
   return (
@@ -175,6 +178,9 @@ function App() {
                 <Route path="/admin/cost-analysis" element={<CostAnalysis />} />
                 <Route path="/admin/production-zones" element={<ProductionZoneManager />} />
                 <Route path="/admin/kitchen-realtime-items" element={<KitchenRealtimeItems />} />
+                <Route path="/admin/production-stats" element={<ProductionStats />} />
+                <Route path="/admin/sop" element={<SopManager />} />
+                <Route path="/admin/sop/:categoryId" element={<SopDetail />} />
               </Route>
             </Route>
           </Routes>

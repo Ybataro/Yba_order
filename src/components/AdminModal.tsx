@@ -8,9 +8,10 @@ interface AdminModalProps {
   children: ReactNode
   onSubmit: () => void
   submitLabel?: string
+  submitting?: boolean
 }
 
-export function AdminModal({ open, onClose, title, children, onSubmit, submitLabel = '儲存' }: AdminModalProps) {
+export function AdminModal({ open, onClose, title, children, onSubmit, submitLabel = '儲存', submitting }: AdminModalProps) {
   const overlayRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -53,8 +54,8 @@ export function AdminModal({ open, onClose, title, children, onSubmit, submitLab
 
         {/* Footer */}
         <div className="px-5 py-4 border-t border-gray-100 flex gap-3">
-          <button onClick={onClose} className="btn-secondary flex-1 !h-11">取消</button>
-          <button onClick={onSubmit} className="btn-primary flex-1 !h-11">{submitLabel}</button>
+          <button onClick={onClose} disabled={submitting} className="btn-secondary flex-1 !h-11">取消</button>
+          <button onClick={onSubmit} disabled={submitting} className="btn-primary flex-1 !h-11">{submitting ? '處理中...' : submitLabel}</button>
         </div>
       </div>
 

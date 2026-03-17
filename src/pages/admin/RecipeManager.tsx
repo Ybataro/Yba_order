@@ -8,7 +8,7 @@ import { useCostStore } from '@/stores/useCostStore'
 import { useMaterialStore } from '@/stores/useMaterialStore'
 import { getRecipeCost, SERVING_UNIT_OPTIONS } from '@/lib/costAnalysis'
 import type { Recipe, RecipeIngredient, ServingUnit } from '@/lib/costAnalysis'
-import { Plus, ChevronDown, ChevronUp, Trash2, Edit3, Settings } from 'lucide-react'
+import { Plus, ChevronDown, ChevronUp, Trash2, Edit3, Settings, Copy } from 'lucide-react'
 
 export default function RecipeManager() {
   const {
@@ -120,6 +120,27 @@ export default function RecipeManager() {
       showToast('配方已新增')
     }
     setModalOpen(false)
+  }
+
+  const duplicateRecipe = (recipe: Recipe) => {
+    const newId = `recipe_${Date.now()}`
+    const sameCat = recipes.filter((r) => r.category === recipe.category)
+    const maxSort = sameCat.length > 0 ? Math.max(...sameCat.map((r) => r.sort_order)) + 1 : 0
+    const newIngs = recipe.ingredients.map((ing, i) => ({
+      ...ing,
+      id: `ri_${Date.now()}_${i}`,
+      recipe_id: newId,
+      sort_order: i,
+    }))
+    addRecipe({
+      ...recipe,
+      id: newId,
+      name: `${recipe.name}複製`,
+      sort_order: maxSort,
+      serving_units: recipe.serving_units ? [...recipe.serving_units] : [],
+      ingredients: newIngs,
+    })
+    showToast(`已複製「${recipe.name}」`)
   }
 
   const confirmDelete = () => {
@@ -305,6 +326,9 @@ export default function RecipeManager() {
                           </button>
                           <button onClick={(e) => { e.stopPropagation(); openEdit(recipe) }} className="p-1.5 text-brand-lotus hover:text-brand-oak">
                             <Edit3 size={14} />
+                          </button>
+                          <button onClick={(e) => { e.stopPropagation(); duplicateRecipe(recipe) }} className="p-1.5 text-brand-lotus hover:text-brand-oak">
+                            <Copy size={14} />
                           </button>
                           <button onClick={(e) => { e.stopPropagation(); setDeleteConfirm(recipe) }} className="p-1.5 text-status-danger/60 hover:text-status-danger">
                             <Trash2 size={14} />

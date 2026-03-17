@@ -11,7 +11,8 @@ import { shipmentSessionId, getTodayTW } from '@/lib/session'
 import { logAudit } from '@/lib/auditLog'
 import { formatDualUnit } from '@/lib/utils'
 import { NOTE_ITEM_MAP } from '@/data/noteItems'
-import { CheckCircle, AlertTriangle, ArrowRight, RefreshCw, MessageSquare, Package, Truck } from 'lucide-react'
+import { exportReceivePdf } from '@/lib/exportReceivePdf'
+import { CheckCircle, AlertTriangle, ArrowRight, RefreshCw, MessageSquare, Package, Truck, FileText } from 'lucide-react'
 
 interface ShipmentItem {
   productId: string
@@ -50,6 +51,7 @@ export default function Receive() {
   const [kitchenReply, setKitchenReply] = useState('')
   const [kitchenReplyAt, setKitchenReplyAt] = useState<string | null>(null)
   const [kitchenReplyBy, setKitchenReplyBy] = useState<string | null>(null)
+  const [exporting, setExporting] = useState(false)
 
   // Load shipment data
   useEffect(() => {
@@ -192,6 +194,27 @@ export default function Receive() {
     showToast(isEdit ? '收貨確認已更新！' : '收貨確認已提交！')
   }
 
+  const handleExportPdf = async () => {
+    setExporting(true)
+    try {
+      await exportReceivePdf({
+        storeName,
+        date: today,
+        items: shipmentItems.filter(i => !i.isExtra),
+        extraItems: shipmentItems.filter(i => i.isExtra),
+        categories: productCategories,
+        note,
+        confirmedCount,
+        totalCount: shipmentItems.length,
+        diffCount,
+      })
+      showToast('PDF 已下載')
+    } catch {
+      showToast('PDF 匯出失敗', 'error')
+    }
+    setExporting(false)
+  }
+
   return (
     <div className="page-container">
       <TopNav title={`${storeName} 收貨確認`} />
@@ -224,12 +247,22 @@ export default function Receive() {
               <p className="text-sm text-brand-oak font-medium">
                 已確認 <span className="font-semibold">{confirmedCount}/{shipmentItems.length}</span> 項
               </p>
-              {diffCount > 0 && (
-                <p className="flex items-center gap-1 text-xs text-status-warning font-medium">
-                  <AlertTriangle size={12} />
-                  {diffCount} 項數量異動
-                </p>
-              )}
+              <div className="flex items-center gap-2">
+                {diffCount > 0 && (
+                  <p className="flex items-center gap-1 text-xs text-status-warning font-medium">
+                    <AlertTriangle size={12} />
+                    {diffCount} 項數量異動
+                  </p>
+                )}
+                <button
+                  onClick={handleExportPdf}
+                  disabled={exporting}
+                  className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-brand-mocha/10 text-brand-mocha text-xs font-medium active:scale-95 transition-transform disabled:opacity-50"
+                >
+                  <FileText size={13} />
+                  {exporting ? '匯出中...' : 'PDF'}
+                </button>
+              </div>
             </div>
           </div>
 

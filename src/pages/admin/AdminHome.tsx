@@ -1,8 +1,9 @@
-import { useState } from 'react'
-import { Package, Warehouse, Users, Store, Receipt, QrCode, Layers, ClipboardList, FileText, DollarSign, CloudSun, ChefHat, LayoutDashboard, LogOut, KeyRound, ScrollText, Wallet, TrendingUp, ChevronDown, CalendarClock, Clock, Snowflake, CalendarDays, ArrowUpDown, CalendarOff, BookOpen, UtensilsCrossed, Calculator, Factory, BarChart3 } from 'lucide-react'
+import { useState, useMemo } from 'react'
+import { Package, Warehouse, Users, Store, Receipt, QrCode, Layers, ClipboardList, FileText, DollarSign, CloudSun, ChefHat, LayoutDashboard, LogOut, KeyRound, ScrollText, Wallet, TrendingUp, ChevronDown, ChevronUp, CalendarClock, Clock, Snowflake, CalendarDays, ArrowUpDown, CalendarOff, BookOpen, UtensilsCrossed, Calculator, Factory, BarChart3, GripVertical, Check, X, ClipboardCheck } from 'lucide-react'
 import { getTodayString, formatDate } from '@/lib/utils'
 import { useStoreStore } from '@/stores/useStoreStore'
 import { clearSession } from '@/lib/auth'
+import { useAppSetting } from '@/hooks/useAppSetting'
 import ChangePinModal from '@/components/ChangePinModal'
 
 interface MenuItem {
@@ -32,11 +33,22 @@ const menuGroups: MenuGroup[] = [
     ],
   },
   {
+    title: '生產管理',
+    defaultOpen: false,
+    items: [
+      { icon: Warehouse, label: '央廚原物料管理', desc: '新增/編輯/排序原物料', path: '/admin/materials', color: 'bg-brand-camel' },
+      { icon: BookOpen, label: '成品配方管理', desc: '設定央廚成品的原料配方與成本', path: '/admin/recipes', color: 'bg-brand-amber' },
+      { icon: UtensilsCrossed, label: '販售品管理', desc: '設定販售品的配料組成與售價', path: '/admin/menu-items', color: 'bg-brand-blush' },
+      { icon: Factory, label: '生產區域管理', desc: '管理生產紀錄的區域、品項、欄位與糖種', path: '/admin/production-zones', color: 'bg-brand-silver' },
+      { icon: BarChart3, label: '即時庫存品項', desc: '管理央廚即時庫存品項及出貨對應', path: '/admin/kitchen-realtime-items', color: 'bg-brand-oak' },
+      { icon: ClipboardCheck, label: 'SOP 管理', desc: '管理央廚標準作業程序與配方', path: '/admin/sop', color: 'bg-brand-camel' },
+    ],
+  },
+  {
     title: '基礎設定',
     defaultOpen: false,
     items: [
       { icon: Package, label: '門店品項管理', desc: '新增/編輯/排序門店品項', path: '/admin/products', color: 'bg-brand-mocha' },
-      { icon: Warehouse, label: '央廚原物料管理', desc: '新增/編輯/排序原物料', path: '/admin/materials', color: 'bg-brand-camel' },
       { icon: Users, label: '人員管理', desc: '管理央廚及各門店人員', path: '/admin/staff', color: 'bg-brand-lotus' },
       { icon: Store, label: '門店管理', desc: '新增/編輯門店資訊', path: '/admin/stores', color: 'bg-brand-blush' },
       { icon: Receipt, label: '結帳欄位管理', desc: '管理每日結帳表單欄位', path: '/admin/settlement-fields', color: 'bg-brand-silver' },
@@ -44,10 +56,6 @@ const menuGroups: MenuGroup[] = [
       { icon: CalendarDays, label: '排班管理', desc: 'PC 全寬行事曆排班、快速排班模式', path: '/admin/schedule', color: 'bg-brand-lotus' },
       { icon: CalendarClock, label: '班次與職位管理', desc: '設定班次時段、職位與標籤', path: '/admin/shift-types', color: 'bg-brand-oak' },
       { icon: ArrowUpDown, label: '品項排序管理', desc: '設定各門店叫貨/盤點品項的顯示順序', path: '/admin/item-sort', color: 'bg-brand-mocha' },
-      { icon: BookOpen, label: '成品配方管理', desc: '設定央廚成品的原料配方與成本', path: '/admin/recipes', color: 'bg-brand-amber' },
-      { icon: UtensilsCrossed, label: '販售品管理', desc: '設定販售品的配料組成與售價', path: '/admin/menu-items', color: 'bg-brand-blush' },
-      { icon: Factory, label: '生產區域管理', desc: '管理生產紀錄的區域、品項、欄位與糖種', path: '/admin/production-zones', color: 'bg-brand-silver' },
-      { icon: BarChart3, label: '即時庫存品項', desc: '管理央廚即時庫存品項及出貨對應', path: '/admin/kitchen-realtime-items', color: 'bg-brand-oak' },
     ],
   },
   {
@@ -60,6 +68,7 @@ const menuGroups: MenuGroup[] = [
       { icon: Clock, label: '工時統計', desc: '依職別統計每月排班工時與薪資', path: '/admin/schedule-stats', color: 'bg-brand-mocha' },
       { icon: Snowflake, label: '冷凍品統計', desc: '冷凍產品銷售數量與金額統計', path: '/admin/frozen-stats', color: 'bg-brand-blush' },
       { icon: Calculator, label: '成本分析', desc: '原料/成品/販售品成本與毛利率分析', path: '/admin/cost-analysis', color: 'bg-brand-oak' },
+      { icon: Factory, label: '生產紀錄總表', desc: '日/月/年生產數量與平均值統計', path: '/admin/production-stats', color: 'bg-brand-mocha' },
     ],
   },
   {
@@ -73,9 +82,114 @@ const menuGroups: MenuGroup[] = [
   },
 ]
 
+// Build a lookup map: path → MenuItem
+const itemByPath: Record<string, MenuItem> = {}
+for (const g of menuGroups) {
+  for (const item of g.items) {
+    itemByPath[item.path] = item
+  }
+}
+
+// Build default order map: groupTitle → path[]
+const defaultOrder: Record<string, string[]> = {}
+for (const g of menuGroups) {
+  defaultOrder[g.title] = g.items.map((i) => i.path)
+}
+
+type OrderMap = Record<string, string[]>
+
+function applySavedOrder(saved: OrderMap | null): MenuGroup[] {
+  if (!saved) return menuGroups
+  return menuGroups.map((g) => {
+    const paths = saved[g.title]
+    if (!paths) return g
+    // Reorder items based on saved paths; append any new items not in saved list
+    const ordered: MenuItem[] = []
+    for (const p of paths) {
+      const found = g.items.find((i) => i.path === p)
+      if (found) ordered.push(found)
+    }
+    // Append items that exist in default but not in saved (new features)
+    for (const item of g.items) {
+      if (!ordered.includes(item)) ordered.push(item)
+    }
+    return { ...g, items: ordered }
+  })
+}
+
 export default function AdminHome() {
   const stores = useStoreStore((s) => s.items)
   const [changePinOpen, setChangePinOpen] = useState(false)
+  const { value: savedOrderStr, loading: orderLoading, update: updateOrder } = useAppSetting('admin_menu_order')
+
+  // Parse saved order
+  const savedOrder = useMemo<OrderMap | null>(() => {
+    if (!savedOrderStr) return null
+    try { return JSON.parse(savedOrderStr) } catch { return null }
+  }, [savedOrderStr])
+
+  // Apply saved order to menu groups
+  const sortedGroups = useMemo(() => applySavedOrder(savedOrder), [savedOrder])
+
+  // Edit mode state
+  const [editing, setEditing] = useState(false)
+  const [editOrder, setEditOrder] = useState<OrderMap>({})
+
+  const startEditing = () => {
+    // Initialize edit order from current sorted groups
+    const current: OrderMap = {}
+    for (const g of sortedGroups) {
+      current[g.title] = g.items.map((i) => i.path)
+    }
+    setEditOrder(current)
+    setEditing(true)
+    // Expand all groups when editing
+    const allOpen: Record<string, boolean> = {}
+    menuGroups.forEach((g) => { allOpen[g.title] = true })
+    setOpenGroups(allOpen)
+  }
+
+  const cancelEditing = () => {
+    setEditing(false)
+    // Restore default open states
+    const init: Record<string, boolean> = {}
+    menuGroups.forEach((g) => { init[g.title] = g.defaultOpen })
+    setOpenGroups(init)
+  }
+
+  const saveOrder = async () => {
+    await updateOrder(JSON.stringify(editOrder))
+    setEditing(false)
+  }
+
+  const moveItem = (groupTitle: string, index: number, direction: 'up' | 'down') => {
+    setEditOrder((prev) => {
+      const paths = [...(prev[groupTitle] || [])]
+      const swapIdx = direction === 'up' ? index - 1 : index + 1
+      if (swapIdx < 0 || swapIdx >= paths.length) return prev
+      ;[paths[index], paths[swapIdx]] = [paths[swapIdx], paths[index]]
+      return { ...prev, [groupTitle]: paths }
+    })
+  }
+
+  // Groups to render: in edit mode use editOrder, otherwise use sortedGroups
+  const displayGroups = useMemo<MenuGroup[]>(() => {
+    if (!editing) return sortedGroups
+    return menuGroups.map((g) => {
+      const paths = editOrder[g.title]
+      if (!paths) return g
+      const ordered: MenuItem[] = []
+      for (const p of paths) {
+        const found = g.items.find((i) => i.path === p)
+        if (found) ordered.push(found)
+      }
+      for (const item of g.items) {
+        if (!ordered.includes(item)) ordered.push(item)
+      }
+      return { ...g, items: ordered }
+    })
+  }, [editing, editOrder, sortedGroups])
+
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => {
     const init: Record<string, boolean> = {}
     menuGroups.forEach((g) => { init[g.title] = g.defaultOpen })
@@ -83,6 +197,7 @@ export default function AdminHome() {
   })
 
   const toggleGroup = (title: string) => {
+    if (editing) return // Don't collapse during editing
     setOpenGroups((prev) => ({ ...prev, [title]: !prev[title] }))
   }
 
@@ -96,6 +211,16 @@ export default function AdminHome() {
             <p className="text-base opacity-90 mt-1">後台管理系統</p>
           </div>
           <div className="flex items-center gap-1">
+            {!editing && (
+              <button
+                onClick={startEditing}
+                className="p-2 rounded-full text-white/80 hover:bg-white/20"
+                title="排序功能"
+                disabled={orderLoading}
+              >
+                <GripVertical size={20} />
+              </button>
+            )}
             <button onClick={() => setChangePinOpen(true)} className="p-2 rounded-full text-white/80 hover:bg-white/20" title="修改 PIN">
               <KeyRound size={20} />
             </button>
@@ -110,9 +235,17 @@ export default function AdminHome() {
         </div>
       </div>
 
-      <div className="px-4 mt-4 space-y-3 pb-2">
-        {menuGroups.map((group) => {
-          const isOpen = openGroups[group.title]
+      {/* 編輯模式提示條 */}
+      {editing && (
+        <div className="mx-4 mt-3 bg-status-info/10 border border-status-info/30 rounded-xl px-4 py-2.5 flex items-center gap-2">
+          <ArrowUpDown size={16} className="text-status-info shrink-0" />
+          <span className="text-sm text-status-info font-medium">點擊箭頭調整功能排序</span>
+        </div>
+      )}
+
+      <div className={`px-4 mt-4 space-y-3 ${editing ? 'pb-24' : 'pb-2'}`}>
+        {displayGroups.map((group) => {
+          const isOpen = editing || openGroups[group.title]
           return (
             <div key={group.title}>
               {/* 分類標題 */}
@@ -124,10 +257,12 @@ export default function AdminHome() {
                   <span className="text-[15px] font-bold text-brand-oak">{group.title}</span>
                   <span className="text-xs text-brand-lotus bg-surface-section rounded-full px-2 py-0.5">{group.items.length}</span>
                 </div>
-                <ChevronDown
-                  size={18}
-                  className={`text-brand-mocha transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
-                />
+                {!editing && (
+                  <ChevronDown
+                    size={18}
+                    className={`text-brand-mocha transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
+                  />
+                )}
               </button>
 
               {/* 摺疊內容 */}
@@ -136,20 +271,39 @@ export default function AdminHome() {
                   isOpen ? 'max-h-[2000px] opacity-100 mt-3' : 'max-h-0 opacity-0'
                 }`}
               >
-                {group.items.map((item) => (
-                  <button
-                    key={item.path}
-                    onClick={() => { window.location.href = item.path }}
-                    className="card w-full flex items-center gap-4 active:scale-[0.98] transition-transform text-left"
-                  >
-                    <div className={`${item.color} w-12 h-12 rounded-xl flex items-center justify-center text-white shrink-0`}>
-                      <item.icon size={24} />
-                    </div>
-                    <div>
-                      <h2 className="text-base font-semibold text-brand-oak">{item.label}</h2>
-                      <p className="text-sm text-brand-lotus">{item.desc}</p>
-                    </div>
-                  </button>
+                {group.items.map((item, idx) => (
+                  <div key={item.path} className="flex items-center gap-2">
+                    <button
+                      onClick={() => { if (!editing) window.location.href = item.path }}
+                      className={`card flex-1 flex items-center gap-4 text-left ${editing ? 'cursor-default' : 'active:scale-[0.98] transition-transform'}`}
+                    >
+                      <div className={`${item.color} w-12 h-12 rounded-xl flex items-center justify-center text-white shrink-0`}>
+                        <item.icon size={24} />
+                      </div>
+                      <div className="min-w-0">
+                        <h2 className="text-base font-semibold text-brand-oak">{item.label}</h2>
+                        <p className="text-sm text-brand-lotus">{item.desc}</p>
+                      </div>
+                    </button>
+                    {editing && (
+                      <div className="flex flex-col gap-1 shrink-0">
+                        <button
+                          onClick={() => moveItem(group.title, idx, 'up')}
+                          disabled={idx === 0}
+                          className={`p-1.5 rounded-lg ${idx === 0 ? 'text-gray-300' : 'text-brand-mocha bg-surface-section active:bg-surface-filled'}`}
+                        >
+                          <ChevronUp size={18} />
+                        </button>
+                        <button
+                          onClick={() => moveItem(group.title, idx, 'down')}
+                          disabled={idx === group.items.length - 1}
+                          className={`p-1.5 rounded-lg ${idx === group.items.length - 1 ? 'text-gray-300' : 'text-brand-mocha bg-surface-section active:bg-surface-filled'}`}
+                        >
+                          <ChevronDown size={18} />
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 ))}
               </div>
             </div>
@@ -157,33 +311,55 @@ export default function AdminHome() {
         })}
       </div>
 
-      {/* 快速前往 */}
-      <div className="px-4 mt-4 pb-6">
-        <p className="text-xs text-brand-lotus mb-2">快速前往</p>
-        <div className="grid grid-cols-3 gap-2">
-          {stores.map((s) => (
+      {/* 快速前往 — 編輯模式隱藏 */}
+      {!editing && (
+        <div className="px-4 mt-4 pb-6">
+          <p className="text-xs text-brand-lotus mb-2">快速前往</p>
+          <div className="grid grid-cols-3 gap-2">
+            {stores.map((s) => (
+              <button
+                key={s.id}
+                onClick={() => { window.location.href = `/store/${s.id}` }}
+                className="card flex flex-col items-center gap-1.5 py-3 active:scale-[0.97] transition-transform"
+              >
+                <div className="bg-brand-lotus w-9 h-9 rounded-lg flex items-center justify-center text-white">
+                  <Store size={18} />
+                </div>
+                <span className="text-xs font-medium text-brand-oak">{s.name}</span>
+              </button>
+            ))}
             <button
-              key={s.id}
-              onClick={() => { window.location.href = `/store/${s.id}` }}
+              onClick={() => { window.location.href = '/kitchen' }}
               className="card flex flex-col items-center gap-1.5 py-3 active:scale-[0.97] transition-transform"
             >
-              <div className="bg-brand-lotus w-9 h-9 rounded-lg flex items-center justify-center text-white">
-                <Store size={18} />
+              <div className="bg-brand-silver w-9 h-9 rounded-lg flex items-center justify-center text-white">
+                <ChefHat size={18} />
               </div>
-              <span className="text-xs font-medium text-brand-oak">{s.name}</span>
+              <span className="text-xs font-medium text-brand-oak">央廚</span>
             </button>
-          ))}
+          </div>
+        </div>
+      )}
+
+      {/* 編輯模式底部按鈕 */}
+      {editing && (
+        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-surface-section px-4 py-3 flex gap-3 z-50 max-w-[512px] mx-auto">
           <button
-            onClick={() => { window.location.href = '/kitchen' }}
-            className="card flex flex-col items-center gap-1.5 py-3 active:scale-[0.97] transition-transform"
+            onClick={cancelEditing}
+            className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border border-surface-section text-brand-mocha font-medium active:scale-[0.98]"
           >
-            <div className="bg-brand-silver w-9 h-9 rounded-lg flex items-center justify-center text-white">
-              <ChefHat size={18} />
-            </div>
-            <span className="text-xs font-medium text-brand-oak">央廚</span>
+            <X size={18} />
+            取消
+          </button>
+          <button
+            onClick={saveOrder}
+            className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-brand-oak text-white font-medium active:scale-[0.98]"
+          >
+            <Check size={18} />
+            儲存排序
           </button>
         </div>
-      </div>
+      )}
 
       <ChangePinModal open={changePinOpen} onClose={() => setChangePinOpen(false)} />
     </div>

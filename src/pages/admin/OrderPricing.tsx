@@ -46,6 +46,11 @@ function getFirstOfMonth(dateStr: string): string {
   return dateStr.slice(0, 8) + '01'
 }
 
+/** Fix floating point display: 41.599999999999994 → 41.6 */
+function fmtNum(n: number): string {
+  return String(parseFloat(n.toFixed(4)))
+}
+
 /** Generate array of YYYY-MM-DD from start to end */
 function getDateRange(start: string, end: string): string[] {
   const dates: string[] = []
@@ -373,8 +378,8 @@ export default function OrderPricing() {
                     '分類': prod.category,
                     '品名': prod.name,
                   }
-                  dates.forEach(d => { row[formatShortDate(d)] = dateMap[d] || 0 })
-                  row['總數'] = total
+                  dates.forEach(d => { row[formatShortDate(d)] = parseFloat((dateMap[d] || 0).toFixed(4)) })
+                  row['總數'] = parseFloat(total.toFixed(4))
                   row['我們價'] = prod.ourCost || 0
                   row['我們總價'] = total * (prod.ourCost || 0)
                   row['加盟價'] = prod.franchisePrice || 0
@@ -461,11 +466,11 @@ export default function OrderPricing() {
                               const qty = dateMap[d] || 0
                               return (
                                 <td key={d} className="text-center py-1.5 font-num text-brand-oak">
-                                  {qty > 0 ? qty : <span className="text-gray-300">-</span>}
+                                  {qty > 0 ? fmtNum(qty) : <span className="text-gray-300">-</span>}
                                 </td>
                               )
                             })}
-                            <td className="text-center py-1.5 font-num font-semibold text-brand-oak">{total}</td>
+                            <td className="text-center py-1.5 font-num font-semibold text-brand-oak">{fmtNum(total)}</td>
                             <td className="text-center py-0.5 px-0.5">
                               <NumericInput
                                 value={getPriceValue(prod.id, 'ourCost', ourPrice)}

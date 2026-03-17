@@ -21,6 +21,7 @@ export default function OrderSummary() {
   const staffId = searchParams.get('staff') || ''
   const allProducts = useProductStore((s) => s.items)
   const storeProducts = useMemo(() => allProducts.filter(p => !p.visibleIn || p.visibleIn === 'both' || p.visibleIn === 'order_only'), [allProducts])
+  const inventoryProducts = useMemo(() => allProducts.filter(p => !p.visibleIn || p.visibleIn === 'both' || p.visibleIn === 'inventory_only'), [allProducts])
   const productCategories = useProductStore((s) => s.categories)
   const stores = useStoreStore((s) => s.items)
 
@@ -221,6 +222,32 @@ export default function OrderSummary() {
   const getTotal = (productId: string) =>
     Math.round(stores.reduce((sum, s) => sum + (storeOrders[s.id]?.[productId] || 0), 0) * 10) / 10
 
+  // 取得品項庫存（聚合品項加總 linkedInventoryIds 的庫存）
+  const getStock = useCallback((product: typeof storeProducts[0]): number | null => {
+    const ids = product.linkedInventoryIds?.length
+      ? product.linkedInventoryIds
+      : [product.id]
+    let total = 0
+    let found = false
+    for (const id of ids) {
+      if (productStock[id] != null) {
+        total += productStock[id]
+        found = true
+      }
+    }
+    return found ? Math.round(total * 10) / 10 : null
+  }, [productStock])
+
+  // 解析聚合品項庫存（供 PDF 用）
+  const resolvedStock = useMemo(() => {
+    const m: Record<string, number> = {}
+    storeProducts.forEach(p => {
+      const v = getStock(p)
+      if (v != null) m[p.id] = v
+    })
+    return m
+  }, [storeProducts, getStock])
+
   // 統計有叫貨的品項數
   const orderedCount = useMemo(() => {
     let count = 0
@@ -249,7 +276,7 @@ export default function OrderSummary() {
         storeOrders,
         storeNotes,
         fixedNoteItems: NOTE_ITEMS.map(n => ({ id: n.stateKey, label: n.label, unit: n.unit })),
-        productStock,
+        productStock: resolvedStock,
       })
       showToast('PDF 已下載', 'success')
     } catch (e) {
@@ -330,7 +357,7 @@ export default function OrderSummary() {
                 {products.map((product, idx) => {
                   const total = getTotal(product.id)
                   const hasOrder = total > 0
-                  const stock = productStock[product.id]
+                  const stock = getStock(product)
                   return (
                     <div
                       key={product.id}
@@ -425,7 +452,7 @@ export default function OrderSummary() {
         stock={storeStock}
         stockDate={storeStockDate}
         stockEntries={storeStockEntries}
-        products={storeProducts}
+        products={inventoryProducts}
         productCategories={productCategories}
         sortCategories={storeSortCats}
         sortItems={storeSortItems}
