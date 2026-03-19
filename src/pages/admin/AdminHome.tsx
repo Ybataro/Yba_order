@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { Package, Warehouse, Users, Store, Receipt, QrCode, Layers, ClipboardList, FileText, DollarSign, CloudSun, ChefHat, LayoutDashboard, LogOut, KeyRound, ScrollText, Wallet, TrendingUp, ChevronDown, ChevronUp, CalendarClock, Clock, Snowflake, CalendarDays, ArrowUpDown, CalendarOff, BookOpen, UtensilsCrossed, Calculator, Factory, BarChart3, GripVertical, Check, X, ClipboardCheck } from 'lucide-react'
+import { Package, Warehouse, Users, Store, Receipt, QrCode, Layers, ClipboardList, FileText, DollarSign, CloudSun, ChefHat, LayoutDashboard, LogOut, KeyRound, ScrollText, Wallet, TrendingUp, ChevronDown, ChevronUp, CalendarClock, Clock, Snowflake, CalendarDays, ArrowUpDown, CalendarOff, BookOpen, UtensilsCrossed, Calculator, Factory, BarChart3, GripVertical, Check, X, ClipboardCheck, Eye } from 'lucide-react'
 import { getTodayString, formatDate } from '@/lib/utils'
 import { useStoreStore } from '@/stores/useStoreStore'
 import { clearSession } from '@/lib/auth'
@@ -56,6 +56,7 @@ const menuGroups: MenuGroup[] = [
       { icon: CalendarDays, label: '排班管理', desc: 'PC 全寬行事曆排班、快速排班模式', path: '/admin/schedule', color: 'bg-brand-lotus' },
       { icon: CalendarClock, label: '班次與職位管理', desc: '設定班次時段、職位與標籤', path: '/admin/shift-types', color: 'bg-brand-oak' },
       { icon: ArrowUpDown, label: '品項排序管理', desc: '設定各門店叫貨/盤點品項的顯示順序', path: '/admin/item-sort', color: 'bg-brand-mocha' },
+      { icon: Eye, label: '叫貨品項管理', desc: '設定各門店叫貨頁面顯示/隱藏品項', path: '/admin/order-visibility', color: 'bg-brand-oak' },
     ],
   },
   {

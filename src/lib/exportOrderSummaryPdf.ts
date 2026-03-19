@@ -53,8 +53,7 @@ export interface OrderSummaryPdfOptions {
   products: StoreProduct[]
   categories: string[]
   storeOrders: Record<string, Record<string, number>>
-  storeNotes: Record<string, { fixedItems: Record<string, number>; freeText: string }>
-  fixedNoteItems: { id: string; label: string; unit: string }[]
+  storeNotes: Record<string, { freeText: string }>
   productStock: Record<string, number>
 }
 
@@ -79,7 +78,7 @@ function formatDateCN(date: string): string {
 }
 
 export async function exportOrderSummaryToPdf(opts: OrderSummaryPdfOptions) {
-  const { date, stores, products, categories, storeOrders, storeNotes, fixedNoteItems, productStock } = opts
+  const { date, stores, products, categories, storeOrders, storeNotes, productStock } = opts
 
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
   const hasCJK = await registerFont(doc)
@@ -403,16 +402,7 @@ export async function exportOrderSummaryToPdf(opts: OrderSummaryPdfOptions) {
       doc.text(`${store.name}：`, margin + 2, ny)
       endBold(doc)
 
-      const parts: string[] = []
-      if (n) {
-        fixedNoteItems.forEach(item => {
-          const qty = n.fixedItems[item.id] || 0
-          if (qty > 0) parts.push(`${item.label} ${qty}${item.unit}`)
-        })
-        if (n.freeText) parts.push(n.freeText)
-      }
-
-      const noteText = parts.length > 0 ? parts.join('、') : '無備註'
+      const noteText = n?.freeText || '無備註'
       setBold(doc, [80, 70, 60], 0.3)
       doc.text(noteText, margin + 24, ny)
       endBold(doc)

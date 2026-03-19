@@ -36,7 +36,6 @@ const CATEGORY_COLORS: Record<string, [number, number, number]> = {
   '液體類':         [240, 239, 238],
   '冰品類':         [247, 242, 241],
   '其他':           [233, 231, 230],
-  '叫貨備註':       [240, 245, 250],
 }
 
 const CATEGORY_HEADER_COLORS: Record<string, [number, number, number]> = {
@@ -46,7 +45,6 @@ const CATEGORY_HEADER_COLORS: Record<string, [number, number, number]> = {
   '液體類':         [216, 213, 211],
   '冰品類':         [233, 219, 217],
   '其他':           [196, 190, 187],
-  '叫貨備註':       [200, 218, 235],
 }
 
 function setBold(doc: jsPDF, color: [number, number, number], strokeW = 0.35) {
@@ -145,22 +143,6 @@ export async function exportReceivePdf(opts: ReceivePdfOptions) {
         : ''
 
       rowMeta.push({ type: 'item', category: cat, hasDiff: item.hasDiff })
-      body.push([item.name, orderStr, actualStr, diffStr])
-    }
-  }
-
-  // Note items
-  const noteItems = items.filter(i => i.category === '叫貨備註')
-  if (noteItems.length > 0) {
-    rowMeta.push({ type: 'category', category: '叫貨備註', catText: '■ 叫貨備註' })
-    body.push(['', '', '', ''])
-    for (const item of noteItems) {
-      const orderStr = formatDualUnit(item.orderQty, item.unit, item.box_unit, item.box_ratio)
-      const actualStr = formatDualUnit(item.actualQty, item.unit, item.box_unit, item.box_ratio)
-      const diffStr = item.hasDiff
-        ? `${item.diff > 0 ? '+' : ''}${item.diff} ${item.unit}`
-        : ''
-      rowMeta.push({ type: 'item', category: '叫貨備註', hasDiff: item.hasDiff })
       body.push([item.name, orderStr, actualStr, diffStr])
     }
   }

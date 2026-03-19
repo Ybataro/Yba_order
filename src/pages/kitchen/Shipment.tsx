@@ -14,8 +14,7 @@ import { formatDate } from '@/lib/utils'
 import { logAudit } from '@/lib/auditLog'
 import { Truck, AlertTriangle, UserCheck, RefreshCw, MessageSquare, Clock, Send, Plus, X } from 'lucide-react'
 import { sendTelegramNotification } from '@/lib/telegram'
-import { NumericInput } from '@/components/NumericInput'
-import { NOTE_ITEMS } from '@/data/noteItems'
+
 
 export default function Shipment() {
   const { showToast } = useToast()
@@ -35,12 +34,8 @@ export default function Shipment() {
   // 歷史編輯確認
   const [showHistoryConfirm, setShowHistoryConfirm] = useState(false)
 
-  // 各店叫貨備註（杏仁茶瓶、紙碗等）
-  const [orderNotes, setOrderNotes] = useState<Record<string, { almond1000: number; almond300: number; bowlK520: number; bowl750: number; bowl750Lid: number; freeText: string }>>({})
-
-  // 各店叫貨備註品項的實出數量 & 勾選狀態
-  const [noteActualQty, setNoteActualQty] = useState<Record<string, Record<string, string>>>({})
-  const [noteConfirmed, setNoteConfirmed] = useState<Record<string, Record<string, boolean>>>({})
+  // 各店叫貨備註（自由文字）
+  const [orderNotes, setOrderNotes] = useState<Record<string, { freeText: string }>>({})
 
   // 各店叫貨量（從 order_sessions/order_items 載入）
   const [orderQty, setOrderQty] = useState<Record<string, Record<string, number>>>({})
@@ -81,8 +76,6 @@ export default function Shipment() {
       const rplyData: Record<string, string> = {}
       const exData: Record<string, Record<string, string>> = {}
       const noteData: typeof orderNotes = {}
-      const noteAqData: Record<string, Record<string, string>> = {}
-      const noteCfData: Record<string, Record<string, boolean>> = {}
       const productMap = new Map(storeProducts.map(p => [p.id, p]))
 
       for (const store of stores) {
@@ -90,8 +83,6 @@ export default function Shipment() {
         aqData[store.id] = {}
         cfData[store.id] = {}
         exData[store.id] = {}
-        noteAqData[store.id] = {}
-        noteCfData[store.id] = {}
         storeProducts.forEach(p => {
           oqData[store.id][p.id] = 0
           aqData[store.id][p.id] = ''
@@ -111,29 +102,17 @@ export default function Shipment() {
           })
         }
 
-        // Load order note fields（杏仁茶瓶、紙碗等）
+        // Load order note (free text only)
         const { data: orderSession } = await supabase!
           .from('order_sessions')
-          .select('almond_1000, almond_300, bowl_k520, bowl_750, bowl_750_lid, note')
+          .select('note')
           .eq('id', orderSid)
           .maybeSingle()
 
         if (orderSession) {
           noteData[store.id] = {
-            almond1000: parseInt(orderSession.almond_1000) || 0,
-            almond300: parseInt(orderSession.almond_300) || 0,
-            bowlK520: parseInt(orderSession.bowl_k520) || 0,
-            bowl750: parseInt(orderSession.bowl_750) || 0,
-            bowl750Lid: parseInt(orderSession.bowl_750_lid) || 0,
             freeText: orderSession.note || '',
           }
-          // 用叫貨數量作為備註品項實出的預設值
-          NOTE_ITEMS.forEach(n => {
-            const qty = noteData[store.id]?.[n.stateKey as keyof typeof noteData[string]] || 0
-            if (typeof qty === 'number' && qty > 0) {
-              noteAqData[store.id][n.id] = String(qty)
-            }
-          })
         }
 
         // Load existing shipment (含收貨回饋欄位)
@@ -157,12 +136,6 @@ export default function Shipment() {
 
           if (shipItems) {
             shipItems.forEach(item => {
-              // 備註品項（note_ 前綴）
-              if (item.product_id.startsWith('note_')) {
-                noteAqData[store.id][item.product_id] = String(item.actual_qty || 0)
-                noteCfData[store.id][item.product_id] = item.received || false
-                return
-              }
               // 未叫貨品項（order_qty === 0）歸入 extraItems
               if (item.order_qty === 0 && item.actual_qty > 0) {
                 exData[store.id][item.product_id] = String(item.actual_qty)
@@ -210,8 +183,6 @@ export default function Shipment() {
       setReplyText(rplyData)
       setExtraItems(exData)
       setOrderNotes(noteData)
-      setNoteActualQty(noteAqData)
-      setNoteConfirmed(noteCfData)
       setLoading(false)
     }
 
@@ -276,19 +247,8 @@ export default function Shipment() {
     return map
   }, [extraItemsList, productCategories])
 
-  // 有叫貨量的備註品項
-  const activeNoteItems = useMemo(() => {
-    const notes = orderNotes[activeStore]
-    if (!notes) return []
-    return NOTE_ITEMS.filter(n => {
-      const qty = notes[n.stateKey as keyof typeof notes]
-      return typeof qty === 'number' && qty > 0
-    })
-  }, [orderNotes, activeStore])
-
-  const noteConfirmedCount = activeNoteItems.filter(n => noteConfirmed[activeStore]?.[n.id]).length
-  const confirmedCount = items.filter(p => confirmed[activeStore]?.[p.id]).length + noteConfirmedCount
-  const totalItemCount = items.length + activeNoteItems.length
+  const confirmedCount = items.filter(p => confirmed[activeStore]?.[p.id]).length
+  const totalItemCount = items.length
   const diffCount = items.filter(p => {
     const ordered = orderQty[activeStore]?.[p.id] || 0
     const actual = parseFloat(actualQty[activeStore]?.[p.id] || '0') || 0
@@ -376,21 +336,6 @@ export default function Shipment() {
       }
     })
 
-    // 加入備註品項（note_ 前綴）
-    const storeNotes = orderNotes[activeStore]
-    NOTE_ITEMS.forEach(n => {
-      const orderQ = (storeNotes?.[n.stateKey as keyof typeof storeNotes] as number) || 0
-      const actualQ = parseFloat(noteActualQty[activeStore]?.[n.id] || '0') || 0
-      if (orderQ > 0 || actualQ > 0) {
-        shipItems.push({
-          session_id: sid,
-          product_id: n.id,
-          order_qty: orderQ,
-          actual_qty: actualQ,
-        })
-      }
-    })
-
     // 從 DB 即時讀取門店是否已收貨確認
     const { data: sessionData } = await supabase
       .from('shipment_sessions').select('received_at').eq('id', sid).maybeSingle()
@@ -398,14 +343,9 @@ export default function Shipment() {
 
     // 央廚打勾 = confirmed state；門店已確認收貨 → 全部 received=true
     const currentConfirmed = confirmed[activeStore] || {}
-    const currentNoteConfirmed = noteConfirmed[activeStore] || {}
     const shipItemsWithReceived = shipItems.map(item => ({
       ...item,
-      received: storeHasConfirmed ? true : (
-        item.product_id.startsWith('note_')
-          ? (currentNoteConfirmed[item.product_id] || false)
-          : (currentConfirmed[item.product_id] || false)
-      ),
+      received: storeHasConfirmed ? true : (currentConfirmed[item.product_id] || false),
     }))
 
     // 去重：同一 (session_id, product_id) 只保留最後一筆，避免 upsert 500 錯誤
@@ -443,7 +383,7 @@ export default function Shipment() {
     // 出貨異動同步：actual_qty 與 order_qty 不同時，自動更新門店 order_items
     const orderSid = `${activeStore}_${orderDate}`
     const changedItems = dedupedItems.filter(
-      item => !item.product_id.startsWith('note_') && item.actual_qty !== item.order_qty && item.order_qty > 0
+      item => item.actual_qty !== item.order_qty && item.order_qty > 0
     )
     if (changedItems.length > 0) {
       const upsertRows = changedItems.map(item => ({
@@ -455,7 +395,7 @@ export default function Shipment() {
     }
     // 央廚主動出貨（原本門店沒叫的品項）也寫入 order_items
     const extraShipped = dedupedItems.filter(
-      item => !item.product_id.startsWith('note_') && item.order_qty === 0 && item.actual_qty > 0
+      item => item.order_qty === 0 && item.actual_qty > 0
     )
     if (extraShipped.length > 0) {
       // 確保 order_session 存在
@@ -770,81 +710,18 @@ export default function Shipment() {
             )}
           </div>
 
-          {/* 叫貨備註（可編輯） */}
+          {/* 叫貨備註（文字） */}
           {(() => {
             const notes = orderNotes[activeStore]
-            if (!notes) return null
-            const hasAnyNote = activeNoteItems.length > 0 || notes.freeText
-            if (!hasAnyNote) return null
+            if (!notes?.freeText) return null
             return (
               <div className="mt-3">
                 <div className="flex items-center gap-1.5 px-4 py-2 bg-surface-section border-y border-gray-200">
                   <span className="text-sm font-semibold text-brand-oak">📋 叫貨備註</span>
                 </div>
-                {activeNoteItems.length > 0 && (
-                  <>
-                    <div className="flex items-center px-4 py-1.5 bg-surface-section text-[11px] text-brand-lotus border-b border-gray-100">
-                      <span className="flex-1">品名</span>
-                      <span className="w-[50px] text-center">叫貨</span>
-                      <span className="w-[60px] text-center">實出</span>
-                      <span className="w-7 text-center">✓</span>
-                    </div>
-                    <div className="bg-white">
-                      {activeNoteItems.map((n, idx) => {
-                        const orderQ = (notes[n.stateKey as keyof typeof notes] as number) || 0
-                        const actualQ = parseFloat(noteActualQty[activeStore]?.[n.id] || '0') || 0
-                        const hasDiff = orderQ !== actualQ
-                        const isConfirmed = noteConfirmed[activeStore]?.[n.id]
-                        return (
-                          <div
-                            key={n.id}
-                            className={`flex items-center px-4 py-2 ${idx < activeNoteItems.length - 1 ? 'border-b border-gray-50' : ''} ${isConfirmed ? 'bg-status-success/5' : ''} ${hasDiff ? 'bg-status-warning/5' : ''}`}
-                          >
-                            <div className="flex-1 min-w-0 pr-2">
-                              <p className="text-sm font-medium text-brand-oak leading-tight">{n.label}</p>
-                              <p className="text-[10px] text-brand-lotus leading-tight">{n.unit}</p>
-                              {hasDiff && (
-                                <p className="text-[10px] text-status-warning font-medium leading-tight">
-                                  差異 {actualQ - orderQ > 0 ? '+' : ''}{Math.round((actualQ - orderQ) * 10) / 10} {n.unit}
-                                </p>
-                              )}
-                            </div>
-                            <span className="w-[50px] text-center text-sm font-num text-brand-lotus">{orderQ}</span>
-                            <div className="w-[60px] flex justify-center">
-                              <NumericInput
-                                value={noteActualQty[activeStore]?.[n.id] || ''}
-                                onChange={(v) => setNoteActualQty(prev => ({
-                                  ...prev,
-                                  [activeStore]: { ...prev[activeStore], [n.id]: v }
-                                }))}
-                                isFilled
-                                className={hasDiff ? '!border-status-warning' : ''}
-                                data-ship=""
-                              />
-                            </div>
-                            <button
-                              onClick={() => setNoteConfirmed(prev => ({
-                                ...prev,
-                                [activeStore]: { ...prev[activeStore], [n.id]: !prev[activeStore]?.[n.id] }
-                              }))}
-                              className="w-7 flex justify-center"
-                            >
-                              <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${isConfirmed ? 'bg-status-success border-status-success text-white' : 'border-gray-300'}`}>
-                                {isConfirmed && <span className="text-[10px]">✓</span>}
-                              </div>
-                            </button>
-                          </div>
-                        )
-                      })}
-                    </div>
-                  </>
-                )}
-                {notes.freeText && (
-                  <div className="bg-white px-4 py-2 border-t border-gray-100">
-                    <p className="text-xs text-brand-lotus mb-0.5">自由備註</p>
-                    <p className="text-sm text-brand-oak">{notes.freeText}</p>
-                  </div>
-                )}
+                <div className="bg-white px-4 py-2">
+                  <p className="text-sm text-brand-oak">{notes.freeText}</p>
+                </div>
               </div>
             )
           })()}

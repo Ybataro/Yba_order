@@ -346,14 +346,29 @@ export default function ProductStock() {
 
     originalStockEntries.current = JSON.parse(JSON.stringify(stockEntries))
 
+    // 一併儲存即時庫存區有填寫的品項
+    let rtSavedCount = 0
+    for (const item of realtimeItems) {
+      const val = rtRestock[item.id]
+      if (val !== undefined && val !== '') {
+        const ok = await saveRtItem(item.id, confirmBy)
+        if (ok) {
+          rtSavedCount++
+          setRtSaved((p) => ({ ...p, [item.id]: true }))
+          setTimeout(() => setRtSaved((p) => ({ ...p, [item.id]: false })), 2000)
+        }
+      }
+    }
+
     const staffName = kitchenStaff.find(s => s.id === confirmBy)?.name
     const itemCount = storeProducts.filter(p => stock[p.id] !== '').length
     setIsEdit(true)
     submittingRef.current = false
     setSubmitting(false)
-    showToast(`成品庫存已儲存！盤點人：${staffName}`)
+    const rtMsg = rtSavedCount > 0 ? `（含即時庫存 ${rtSavedCount} 項）` : ''
+    showToast(`成品庫存已儲存！盤點人：${staffName}${rtMsg}`)
     sendTelegramNotification(
-      `🏭 成品庫存盤點完成\n📅 日期：${selectedDate}\n👤 盤點人：${staffName}\n📊 品項數：${itemCount} 項`
+      `🏭 成品庫存盤點完成\n📅 日期：${selectedDate}\n👤 盤點人：${staffName}\n📊 品項數：${itemCount} 項${rtSavedCount > 0 ? `\n📦 即時庫存：${rtSavedCount} 項` : ''}`
     )
   }
 

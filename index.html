@@ -20,6 +20,21 @@
     </style>
   </head>
   <body>
+    <script>
+      // 攔截 Vercel 舊站，強制導向 VPS 新站
+      if (location.hostname.includes('vercel.app')) {
+        document.documentElement.innerHTML = '<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>已搬遷</title></head>'
+          + '<body style="margin:0;min-height:100dvh;display:flex;align-items:center;justify-content:center;background:#F5F0EB;font-family:\'Noto Sans TC\',sans-serif">'
+          + '<div style="text-align:center;padding:2rem;max-width:360px">'
+          + '<div style="font-size:4rem;margin-bottom:1rem">🚚</div>'
+          + '<h1 style="color:#44403C;font-size:1.5rem;margin:0 0 0.75rem">系統已搬遷</h1>'
+          + '<p style="color:#78716C;font-size:1.1rem;line-height:1.6;margin:0 0 1.5rem">此網址已停用，請使用新網址操作。<br>在此輸入的資料<b style="color:#DC2626">不會被儲存</b>。</p>'
+          + '<a href="https://order.yen-design.com' + location.pathname + location.search + '" style="display:block;background:#44403C;color:#fff;padding:1rem;border-radius:12px;font-size:1.2rem;font-weight:700;text-decoration:none">前往新網址 →</a>'
+          + '<p style="color:#A8A29E;font-size:0.85rem;margin-top:1rem">order.yen-design.com</p>'
+          + '</div></body>';
+        throw new Error('blocked');
+      }
+    </script>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

@@ -4,6 +4,8 @@ export const TRACKED_LEAVE_TYPES = [
   { id: 'annual_leave',   name: '特休', defaultDays: 7 },
   { id: 'sick_leave',     name: '病假', defaultDays: 30 },
   { id: 'personal_leave', name: '事假', defaultDays: 14 },
+  { id: 'comp_leave',     name: '補休', defaultDays: 0 },
+  { id: 'other_leave',    name: '其他', defaultDays: 0 },
 ] as const
 
 export const DAY_PARTS = [

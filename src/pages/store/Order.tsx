@@ -1,7 +1,6 @@
 import { useState, useMemo, useEffect } from 'react'
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom'
 import { TopNav } from '@/components/TopNav'
-import { NumericInput } from '@/components/NumericInput'
 import { DualUnitInput } from '@/components/DualUnitInput'
 import { SectionHeader } from '@/components/SectionHeader'
 import { BottomAction } from '@/components/BottomAction'
@@ -20,6 +19,7 @@ import { backfillWeatherIfNeeded } from '@/lib/backfillWeather'
 import { Send, Lightbulb, Sun, CloudRain, Cloud, CloudSun, Thermometer, Droplets, RefreshCw, History, AlertTriangle, Package } from 'lucide-react'
 import { InventoryStockModal } from '@/components/InventoryStockModal'
 import { useStoreSortOrder } from '@/hooks/useStoreSortOrder'
+import { useStoreOrderVisibility } from '@/hooks/useStoreOrderVisibility'
 import { buildSortedByCategory } from '@/lib/sortByStore'
 
 const weatherIcons: Record<WeatherCondition, typeof Sun> = {
@@ -46,7 +46,9 @@ export default function Order() {
   const storeName = useStoreStore((s) => s.getName(storeId || ''))
   const allProducts = useProductStore((s) => s.items)
   const productsReady = useProductStore((s) => s.initialized)
-  const storeProducts = useMemo(() => allProducts.filter(p => !p.visibleIn || p.visibleIn === 'both' || p.visibleIn === 'order_only'), [allProducts])
+  const orderableProducts = useMemo(() => allProducts.filter(p => !p.visibleIn || p.visibleIn === 'both' || p.visibleIn === 'order_only'), [allProducts])
+  const { filterProducts: filterVisible, loading: visibilityLoading } = useStoreOrderVisibility(storeId || '')
+  const storeProducts = useMemo(() => filterVisible(orderableProducts), [orderableProducts, filterVisible])
   const productCategories = useProductStore((s) => s.categories)
 
   // Build bag_weight lookup for inventory → bag conversion
@@ -97,11 +99,6 @@ export default function Order() {
     return init
   })
   const [note, setNote] = useState('')
-  const [almond1000, setAlmond1000] = useState('')
-  const [almond300, setAlmond300] = useState('')
-  const [bowlK520, setBowlK520] = useState('')
-  const [bowl750, setBowl750] = useState('')
-  const [bowl750Lid, setBowl750Lid] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [isEdit, setIsEdit] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -121,7 +118,6 @@ export default function Order() {
     const init: Record<string, string> = {}
     storeProducts.forEach(p => { init[p.id] = '' })
     setOrders(init)
-    setAlmond1000(''); setAlmond300(''); setBowlK520(''); setBowl750(''); setBowl750Lid('')
     setNote(''); setIsEdit(false)
     setLoading(true)
     supabase
@@ -132,11 +128,6 @@ export default function Order() {
       .then(({ data: session }) => {
         if (!session) { setLoading(false); return }
         setIsEdit(true)
-        setAlmond1000(session.almond_1000 || '')
-        setAlmond300(session.almond_300 || '')
-        setBowlK520(session.bowl_k520 || '')
-        setBowl750(session.bowl_750 || '')
-        setBowl750Lid(session.bowl_750_lid || '')
         setNote(session.note || '')
 
         supabase!
@@ -471,11 +462,6 @@ export default function Order() {
       store_id: storeId,
       date: orderDate,
       deadline,
-      almond_1000: almond1000,
-      almond_300: almond300,
-      bowl_k520: bowlK520,
-      bowl_750: bowl750,
-      bowl_750_lid: bowl750Lid,
       note,
       submitted_by: staffId || null,
       updated_at: new Date().toISOString(),
@@ -561,7 +547,7 @@ export default function Order() {
         )}
       </button>
 
-      {(loading || stockLoading || suggestedLoading) ? (
+      {(loading || stockLoading || suggestedLoading || visibilityLoading) ? (
         <div className="flex items-center justify-center py-20 text-sm text-brand-lotus">載入中...</div>
       ) : (
         <>
@@ -745,41 +731,13 @@ export default function Order() {
             </div>
           ))}
 
-          {/* 固定備註項目 */}
+          {/* 叫貨備註 */}
           <SectionHeader title="叫貨備註" icon="■" sticky={false} />
           <div className="bg-white px-4 py-3">
-            <div className="flex items-center gap-3 mb-3">
-              <span className="text-sm text-brand-oak shrink-0">杏仁茶瓶</span>
-              <div className="flex items-center gap-1">
-                <span className="text-xs text-brand-lotus">1000ml</span>
-                <NumericInput value={almond1000} onChange={(v) => setAlmond1000(v)} unit="個" isFilled />
-              </div>
-              <div className="flex items-center gap-1">
-                <span className="text-xs text-brand-lotus">300ml</span>
-                <NumericInput value={almond300} onChange={(v) => setAlmond300(v)} unit="個" isFilled />
-              </div>
-            </div>
-            <div className="flex items-center gap-3 mb-3">
-              <span className="text-sm text-brand-oak shrink-0">紙碗</span>
-              <div className="flex items-center gap-1">
-                <span className="text-xs text-brand-lotus">K520</span>
-                <NumericInput value={bowlK520} onChange={(v) => setBowlK520(v)} unit="箱" isFilled />
-              </div>
-              <div className="flex items-center gap-1">
-                <span className="text-xs text-brand-lotus">750</span>
-                <NumericInput value={bowl750} onChange={(v) => setBowl750(v)} unit="箱" isFilled />
-              </div>
-              <div className="flex items-center gap-1">
-                <span className="text-xs text-brand-lotus">750蓋</span>
-                <NumericInput value={bowl750Lid} onChange={(v) => setBowl750Lid(v)} unit="箱" isFilled />
-              </div>
-            </div>
-            <div className="mt-2">
-              <label className="text-sm text-brand-lotus block mb-1.5">其他備註</label>
-              <textarea value={note} onChange={e => setNote(e.target.value)} placeholder="有特殊需求請在此備註..."
-                className="w-full h-20 rounded-input p-3 text-sm outline-none border border-gray-200 focus:border-brand-lotus resize-none"
-                style={{ backgroundColor: 'var(--color-input-bg)' }} />
-            </div>
+            <label className="text-sm text-brand-lotus block mb-1.5">備註</label>
+            <textarea value={note} onChange={e => setNote(e.target.value)} placeholder="有特殊需求請在此備註..."
+              className="w-full h-20 rounded-input p-3 text-sm outline-none border border-gray-200 focus:border-brand-lotus resize-none"
+              style={{ backgroundColor: 'var(--color-input-bg)' }} />
           </div>
 
           <BottomAction

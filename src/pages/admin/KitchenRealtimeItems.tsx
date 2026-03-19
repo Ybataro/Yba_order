@@ -184,8 +184,7 @@ export default function KitchenRealtimeItems() {
     if (ratio !== '' && isNaN(num)) return
     setFormDeductions((prev) =>
       prev.map((d) => {
-        const dKey = d.product_id || d.field || ''
-        return dKey === key ? { ...d, ratio: num || 1 } : d
+        return d.product_id === key ? { ...d, ratio: num || 1 } : d
       }),
     )
   }
@@ -316,10 +315,8 @@ export default function KitchenRealtimeItems() {
             <div className="mt-2 space-y-1.5">
               <p className="text-[10px] text-brand-lotus font-medium">已選品項與比例：</p>
               {formDeductions.map((ded, i) => {
-                const key = ded.product_id || ded.field || `ded-${i}`
-                const name = ded.type === 'order_note'
-                  ? `備註: ${ded.field}`
-                  : allProducts.find((p) => p.id === ded.product_id)?.name || ded.product_id || ''
+                const key = ded.product_id || `ded-${i}`
+                const name = allProducts.find((p) => p.id === ded.product_id)?.name || ded.product_id || ''
                 return (
                   <div key={key} className="flex items-center gap-2">
                     <span className="text-xs text-brand-oak flex-1 min-w-0 truncate">{name}</span>
@@ -328,7 +325,7 @@ export default function KitchenRealtimeItems() {
                       type="text"
                       inputMode="decimal"
                       value={String(ded.ratio)}
-                      onChange={(e) => updateDeductionRatio(ded.product_id || ded.field || '', e.target.value)}
+                      onChange={(e) => updateDeductionRatio(ded.product_id, e.target.value)}
                       className="w-14 h-7 text-center text-sm border border-gray-200 rounded-lg bg-surface-input outline-none focus:border-brand-lotus"
                     />
                   </div>

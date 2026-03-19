@@ -13,7 +13,6 @@ import { FileText, MessageSquareText, Package } from 'lucide-react'
 import { exportOrderSummaryToPdf } from '@/lib/exportOrderSummaryPdf'
 import { InventoryStockModal } from '@/components/InventoryStockModal'
 import { useStoreSortOrder } from '@/hooks/useStoreSortOrder'
-import { NOTE_ITEMS } from '@/data/noteItems'
 
 export default function OrderSummary() {
   const { showToast } = useToast()
@@ -30,7 +29,7 @@ export default function OrderSummary() {
   const orderDate = selectedDate
 
   const [storeOrders, setStoreOrders] = useState<Record<string, Record<string, number>>>({})
-  const [storeNotes, setStoreNotes] = useState<Record<string, { fixedItems: Record<string, number>; freeText: string }>>({})
+  const [storeNotes, setStoreNotes] = useState<Record<string, { freeText: string }>>({})
   const [productStock, setProductStock] = useState<Record<string, number>>({})
   const [loading, setLoading] = useState(true)
   const [pdfLoading, setPdfLoading] = useState(false)
@@ -138,12 +137,12 @@ export default function OrderSummary() {
     const load = async () => {
       setLoading(true)
       const ordersData: Record<string, Record<string, number>> = {}
-      const notesData: Record<string, { fixedItems: Record<string, number>; freeText: string }> = {}
+      const notesData: Record<string, { freeText: string }> = {}
 
       // 初始化
       stores.forEach(store => {
         ordersData[store.id] = {}
-        notesData[store.id] = { fixedItems: { almond1000: 0, almond300: 0, bowlK520: 0, bowl750: 0, bowl750Lid: 0 }, freeText: '' }
+        notesData[store.id] = { freeText: '' }
       })
 
       // 查今日各店 order_sessions + order_items
@@ -166,13 +165,6 @@ export default function OrderSummary() {
 
           // 備註
           notesData[sid] = {
-            fixedItems: {
-              almond1000: parseInt(session.almond_1000) || 0,
-              almond300: parseInt(session.almond_300) || 0,
-              bowlK520: parseInt(session.bowl_k520) || 0,
-              bowl750: parseInt(session.bowl_750) || 0,
-              bowl750Lid: parseInt(session.bowl_750_lid) || 0,
-            },
             freeText: session.note || '',
           }
         })
@@ -262,8 +254,7 @@ export default function OrderSummary() {
   const hasNotes = (storeId: string) => {
     const n = storeNotes[storeId]
     if (!n) return false
-    if (n.freeText) return true
-    return Object.values(n.fixedItems).some(v => v > 0)
+    return !!n.freeText
   }
 
   const handleExportPdf = async () => {
@@ -276,7 +267,6 @@ export default function OrderSummary() {
         categories: productCategories,
         storeOrders,
         storeNotes,
-        fixedNoteItems: NOTE_ITEMS.map(n => ({ id: n.stateKey, label: n.label, unit: n.unit })),
         productStock: resolvedStock,
       })
       showToast('PDF 已下載', 'success')
@@ -421,24 +411,9 @@ export default function OrderSummary() {
             </div>
             {hasNotes(store.id) && (
               <div className="pl-5">
-                {/* 固定項目 */}
-                {NOTE_ITEMS.map(item => {
-                  const qty = storeNotes[store.id]?.fixedItems[item.stateKey] || 0
-                  if (qty === 0) return null
-                  return (
-                    <div key={item.id} className="flex items-center gap-2 text-sm text-brand-oak py-0.5">
-                      <span className="text-brand-lotus">{item.label}：</span>
-                      <span className="font-semibold font-num">{qty}</span>
-                      <span className="text-xs text-brand-lotus">{item.unit}</span>
-                    </div>
-                  )
-                })}
-                {/* 自由備註 */}
-                {storeNotes[store.id]?.freeText && (
-                  <p className="text-sm text-brand-oak mt-1 bg-status-warning/5 px-2 py-1 rounded-lg">
-                    {storeNotes[store.id].freeText}
-                  </p>
-                )}
+                <p className="text-sm text-brand-oak mt-1 bg-status-warning/5 px-2 py-1 rounded-lg">
+                  {storeNotes[store.id].freeText}
+                </p>
               </div>
             )}
           </div>

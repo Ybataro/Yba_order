@@ -2,9 +2,7 @@ import { useState, useEffect, useMemo, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 
 export interface ShipmentDeduction {
-  product_id?: string  // 出貨扣除（原有）
-  type?: 'order_note'  // 叫貨備註扣除
-  field?: string       // order_sessions 欄位名 (bowl_k520, bowl_750, almond_1000, almond_300)
+  product_id: string   // 出貨扣除（product_id from shipment_items）
   ratio: number        // 1 單位 → 扣 ratio 單位庫存
 }
 
@@ -36,11 +34,9 @@ const BASE_DATE = '2026-03-10'
 function parseDeductions(raw: unknown): ShipmentDeduction[] {
   if (!Array.isArray(raw)) return []
   return raw
-    .filter((d) => d && (typeof d.product_id === 'string' || d.type === 'order_note'))
+    .filter((d) => d && typeof d.product_id === 'string')
     .map((d) => ({
-      ...(d.product_id ? { product_id: d.product_id } : {}),
-      ...(d.type ? { type: d.type } : {}),
-      ...(d.field ? { field: d.field } : {}),
+      product_id: d.product_id,
       ratio: Number(d.ratio) || 1,
     }))
 }
@@ -99,14 +95,9 @@ export function useKitchenRealtimeStock({
 
         // Collect all shipment product_ids for deduction lookup
         const allProductIds = new Set<string>()
-        const allNoteFields = new Set<string>()
         activeItems.forEach((item) => {
           item.shipment_deductions.forEach((d) => {
-            if (d.type === 'order_note' && d.field) {
-              allNoteFields.add(d.field)
-            } else if (d.product_id) {
-              allProductIds.add(d.product_id)
-            }
+            allProductIds.add(d.product_id)
           })
         })
 
@@ -165,29 +156,6 @@ export function useKitchenRealtimeStock({
                 }
               }
 
-              // Load order_note deductions: sum note fields from order_sessions across ALL stores
-              const noteByDate: Record<string, Record<string, number>> = {}
-              if (allNoteFields.size > 0) {
-                const noteFieldsArr = Array.from(allNoteFields)
-                const selectFields = ['date', ...noteFieldsArr].join(',')
-                const { data: noteData } = await supabase!
-                  .from('order_sessions')
-                  .select(selectFields)
-                  .gte('date', chainDates[0])
-                  .lte('date', chainDates[chainDates.length - 1])
-
-                if (noteData) {
-                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                  ;(noteData as any[]).forEach((r) => {
-                    const d = r.date as string
-                    if (!noteByDate[d]) noteByDate[d] = {}
-                    noteFieldsArr.forEach((f) => {
-                      noteByDate[d][f] = (noteByDate[d][f] || 0) + (Number(r[f]) || 0)
-                    })
-                  })
-                }
-              }
-
               // Build restock by date
               const restockByDate: Record<string, Record<string, number>> = {}
               if (chainTracker) {
@@ -206,13 +174,8 @@ export function useKitchenRealtimeStock({
                   const restock = restockByDate[dd]?.[item.id] || 0
                   let deduction = 0
                   item.shipment_deductions.forEach((ded) => {
-                    if (ded.type === 'order_note' && ded.field) {
-                      const noteQty = noteByDate[dd]?.[ded.field] || 0
-                      deduction += noteQty * ded.ratio
-                    } else if (ded.product_id) {
-                      const shipped = shipmentByDate[dd]?.[ded.product_id] || 0
-                      deduction += shipped * ded.ratio
-                    }
+                    const shipped = shipmentByDate[dd]?.[ded.product_id] || 0
+                    deduction += shipped * ded.ratio
                   })
                   nextRunning[item.id] = parseFloat((prev + restock - deduction).toFixed(2))
                 })
@@ -245,26 +208,19 @@ export function useKitchenRealtimeStock({
     load()
   }, [selectedDate])
 
-  // Calculate today's deductions from shipment_items + order_sessions
+  // Calculate today's deductions from shipment_items
   const [todayShipments, setTodayShipments] = useState<Record<string, number>>({})
-  const [todayNotes, setTodayNotes] = useState<Record<string, number>>({})
 
   useEffect(() => {
     const loadShipments = async () => {
       if (!supabase || items.length === 0) return
       const allProductIds = new Set<string>()
-      const allNoteFields = new Set<string>()
       items.forEach((item) => {
         item.shipment_deductions.forEach((d) => {
-          if (d.type === 'order_note' && d.field) {
-            allNoteFields.add(d.field)
-          } else if (d.product_id) {
-            allProductIds.add(d.product_id)
-          }
+          allProductIds.add(d.product_id)
         })
       })
 
-      // Shipment deductions
       if (allProductIds.size === 0) {
         setTodayShipments({})
       } else {
@@ -285,29 +241,6 @@ export function useKitchenRealtimeStock({
         }
         setTodayShipments(result)
       }
-
-      // Order note deductions
-      if (allNoteFields.size === 0) {
-        setTodayNotes({})
-      } else {
-        const noteFieldsArr = Array.from(allNoteFields)
-        const selectFields = ['date', ...noteFieldsArr].join(',')
-        const { data: noteData } = await supabase!
-          .from('order_sessions')
-          .select(selectFields)
-          .eq('date', selectedDate)
-
-        const result: Record<string, number> = {}
-        if (noteData) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          ;(noteData as any[]).forEach((r) => {
-            noteFieldsArr.forEach((f) => {
-              result[f] = (result[f] || 0) + (Number(r[f]) || 0)
-            })
-          })
-        }
-        setTodayNotes(result)
-      }
     }
     loadShipments()
   }, [selectedDate, items])
@@ -318,18 +251,13 @@ export function useKitchenRealtimeStock({
     items.forEach((item) => {
       let total = 0
       item.shipment_deductions.forEach((ded) => {
-        if (ded.type === 'order_note' && ded.field) {
-          const noteQty = todayNotes[ded.field] || 0
-          total += noteQty * ded.ratio
-        } else if (ded.product_id) {
-          const shipped = todayShipments[ded.product_id] || 0
-          total += shipped * ded.ratio
-        }
+        const shipped = todayShipments[ded.product_id] || 0
+        total += shipped * ded.ratio
       })
       result[item.id] = total
     })
     return result
-  }, [items, todayShipments, todayNotes])
+  }, [items, todayShipments])
 
   // remaining = yesterday remaining + restock - deductions
   const remainingValues = useMemo(() => {
