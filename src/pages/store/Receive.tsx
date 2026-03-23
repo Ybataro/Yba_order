@@ -119,7 +119,7 @@ export default function Receive() {
     }
 
     load()
-  }, [storeId, today])
+  }, [storeId, today, storeProducts])
 
   const regularItems = useMemo(() => shipmentItems.filter(i => !i.isExtra), [shipmentItems])
   const extraItems = useMemo(() => shipmentItems.filter(i => i.isExtra), [shipmentItems])

@@ -187,7 +187,7 @@ export default function Shipment() {
     }
 
     loadAll()
-  }, [selectedDate])
+  }, [selectedDate, storeProducts])
 
   const toggleConfirm = (productId: string) => {
     setConfirmed(prev => ({

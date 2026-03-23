@@ -37,7 +37,7 @@ export default function ScheduleStats() {
   const [shiftTypes, setShiftTypes] = useState<ShiftType[]>([])
   const [staffExtra, setStaffExtra] = useState<Record<string, { employment_type: string; hourly_rate: number; monthly_salary: number }>>({})
 
-  const { kitchenStaff, storeStaff } = useStaffStore()
+  const { kitchenStaff, storeStaff, initialized: staffReady } = useStaffStore()
   const stores = useStoreStore((s) => s.items)
 
   // All staff flat
@@ -58,7 +58,7 @@ export default function ScheduleStats() {
   const endDate = monthDates[monthDates.length - 1]
 
   useEffect(() => {
-    if (!supabase || allStaffIds.length === 0) { setLoading(false); return }
+    if (!staffReady || !supabase || allStaffIds.length === 0) { setLoading(false); return }
 
     const load = async () => {
       setLoading(true)
@@ -78,7 +78,7 @@ export default function ScheduleStats() {
       setLoading(false)
     }
     load()
-  }, [allStaffIds, startDate, endDate])
+  }, [staffReady, allStaffIds, startDate, endDate])
 
   const shiftMap = useMemo(() => {
     const m: Record<string, ShiftType> = {}

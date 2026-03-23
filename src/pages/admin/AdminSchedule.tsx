@@ -24,6 +24,7 @@ export default function AdminSchedule() {
   const stores = useStoreStore((s) => s.items)
   const kitchenStaff = useStaffStore((s) => s.kitchenStaff)
   const storeStaff = useStaffStore((s) => s.storeStaff)
+  const staffReady = useStaffStore((s) => s.initialized)
   const session = getSession()
 
   // 根據角色過濾可見群組：admin 全部、kitchen 僅央廚、store 僅允許門店
@@ -76,12 +77,12 @@ export default function AdminSchedule() {
     fetchPositions(activeGroup)
   }, [activeGroup, fetchShiftTypes, fetchPositions])
 
-  // Fetch schedules for month
+  // Fetch schedules for month (wait for staff DB data to avoid race condition)
   useEffect(() => {
-    if (staffIds.length > 0 && monthDates.length > 0) {
+    if (staffReady && staffIds.length > 0 && monthDates.length > 0) {
       fetchSchedules(staffIds, monthDates[0], monthDates[monthDates.length - 1])
     }
-  }, [staffIds, monthDates, fetchSchedules])
+  }, [staffReady, staffIds, monthDates, fetchSchedules])
 
   // ── Per-staff auto-fill modal ───────────────────────
   const [autoFillModal, setAutoFillModal] = useState<{ staffId: string; staffName: string } | null>(null)
