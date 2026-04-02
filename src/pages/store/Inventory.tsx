@@ -43,6 +43,7 @@ export default function Inventory() {
   const allProducts = useProductStore((s) => s.items)
   const allFrozenProducts = useFrozenProductStore((s) => s.items)
   const zoneProducts = useZoneStore((s) => s.zoneProducts)
+  const zoneStoreReady = useZoneStore((s) => s.initialized)
 
   // Filter frozen products by zone assignment (same logic as regular products)
   const FROZEN_PRODUCTS = useMemo(() => {
@@ -150,6 +151,8 @@ export default function Inventory() {
     if (!supabase || !storeId) { setLoading(false); return }
     // 有樓層但 zone 尚未自動設定（首次 render），跳過此次避免用錯 session ID
     if (storeZones.length > 0 && !currentZone && !searchParams.get('zone')) return
+    // Zone store 尚未初始化完成（zones 還沒載入），也跳過避免用無 zone 的 session ID
+    if (!zoneStoreReady) return
     const sid = inventorySessionId(storeId, selectedDate, currentZone || '')
     setLoading(true)
     setIsEdit(false)
@@ -214,7 +217,7 @@ export default function Inventory() {
     }
 
     load()
-  }, [storeId, storeZones, currentZone, selectedDate])
+  }, [storeId, storeZones, currentZone, selectedDate, zoneStoreReady])
 
   // Auto-sum stock entries → data[productId].stock
   const updateStockFromEntries = useCallback((productId: string, entries: StockEntry[]) => {
