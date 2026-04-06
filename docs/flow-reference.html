@@ -428,7 +428,7 @@ Child（子品項）：linkable=true
 5. 網路復通 → OfflineBanner 提示手動同步
 
 IndexedDB 結構：
-  DB: yba_offline (version 1)
+  DB: yba_offline (version 2)
   Store: pending_submissions (keyPath: 'id')
 
   PendingSubmission = {
@@ -436,10 +436,39 @@ IndexedDB 結構：
     type: 'inventory' | 'order' | 'settlement',
     storeId, sessionId,
     payload: { session, items },
-    createdAt: number
+    createdAt: number,
+    status?: 'pending' | 'failed',   // V2.0 新增
+    failReason?: string              // V2.0 新增
   }
   </pre>
-  <div class="danger"><strong>submittingRef 鎖死風險：</strong>handleSubmit 用 useRef 防重複提交。若提交過程中頁面切到背景或網路超時，鎖可能不會釋放，導致按鈕永久無反應。需關閉 tab 重開才能解鎖。</div>
+
+  <h3>V2.0 升級：防鎖死 + 去重 + 原子操作</h3>
+  <pre>
+1. handleSubmit 全部加 try/catch/finally
+   - finally 永遠解鎖 submittingRef + setSubmitting(false)
+   - catch 自動 Telegram 報錯
+
+2. 離線佇列去重（deduplicateQueue）
+   - 同一 sessionId 只保留 createdAt 最新的一筆
+   - 已標記 failed 的不參與去重（保留給手動處理）
+
+3. 到期日批次改用 Supabase RPC 原子操作
+   - sync_inventory_stock_entries(session_id, entries_json)
+   - 單一 Transaction: DELETE + INSERT（失敗自動回滾）
+   - 取代原本 40 行的 upsert→讀→比較→刪除
+
+4. 全域錯誤攔截（crashReport.ts）
+   - window.error + unhandledrejection → Telegram 報錯
+   - 離線/網路噪音自動過濾，5 分鐘節流防洪水
+
+5. 版本檢查（useVersionCheck）
+   - 每 5 分鐘比對 version.json
+   - 版本不符 → Toast 提示重新整理
+
+6. 收貨二次確認 Dialog
+   - 「確認後將核銷全部品項，且無法撤銷」
+  </pre>
+  <div class="note"><strong>V2.0 已解決 submittingRef 鎖死：</strong>所有 handleSubmit 都有 try/catch/finally，finally 永遠解鎖。</div>
 </section>
 
 <!-- 13. 已知問題 -->
@@ -447,11 +476,11 @@ IndexedDB 結構：
   <h2>13. 已知問題與風險點</h2>
   <table>
     <tr><th>問題</th><th>位置</th><th>風險</th><th>影響</th></tr>
-    <tr><td>submittingRef 鎖死</td><td>Inventory/Order handleSubmit</td><td style="color:var(--danger);">高</td><td>提交按鈕永久無反應，需關閉 tab</td></tr>
-    <tr><td>IndexedDB 佇列卡住</td><td>offlineQueue.ts</td><td style="color:var(--danger);">高</td><td>同一 sessionId 重複寫入，同步失敗</td></tr>
-    <tr><td>舊版 JS 快取</td><td>Nginx immutable cache</td><td style="color:var(--danger);">高</td><td>手機載入舊版程式碼，功能異常</td></tr>
-    <tr><td>到期日批次刪除失敗</td><td>Inventory handleSubmit L780</td><td style="color:var(--warning);">中</td><td>舊到期日資料殘留</td></tr>
-    <tr><td>建議量快取 10 分鐘</td><td>suggestion.ts</td><td style="color:var(--warning);">中</td><td>切換門店未清快取 → 建議量錯誤</td></tr>
+    <tr><td><s>submittingRef 鎖死</s></td><td>Inventory/Order handleSubmit</td><td style="color:var(--success);">已修</td><td>V2.0：try/catch/finally 永遠解鎖</td></tr>
+    <tr><td><s>IndexedDB 佇列卡住</s></td><td>offlineQueue.ts</td><td style="color:var(--success);">已修</td><td>V2.0：去重 + 失敗標記</td></tr>
+    <tr><td><s>舊版 JS 快取</s></td><td>Nginx immutable cache</td><td style="color:var(--success);">已修</td><td>V2.0：版本檢查 + Nginx no-cache 已確認</td></tr>
+    <tr><td><s>到期日批次刪除失敗</s></td><td>Inventory handleSubmit</td><td style="color:var(--success);">已修</td><td>V2.0：RPC 原子操作取代前端讀→刪→寫</td></tr>
+    <tr><td>建議量快取 10 分鐘</td><td>suggestion.ts</td><td style="color:var(--info);">低</td><td>已確認有門店隔離（_cache.storeId）</td></tr>
     <tr><td>多樓層前日用量加總</td><td>Inventory.tsx L461</td><td style="color:var(--warning);">中</td><td>各樓層無法獨立查看用量</td></tr>
     <tr><td>出貨量無上限</td><td>Shipment.tsx</td><td style="color:var(--info);">低</td><td>可出貨超過叫貨量</td></tr>
     <tr><td>收貨全部一次確認</td><td>Receive.tsx</td><td style="color:var(--info);">低</td><td>不支持部分品項分別確認</td></tr>
@@ -462,7 +491,7 @@ IndexedDB 結構：
 
 <div style="text-align:center; color:var(--text2); font-size:0.75rem; margin-top:2rem; padding-bottom:2rem;">
   阿爸的芋圓 — 盤點叫貨出貨全流程架構文件<br>
-  Generated 2026-04-07 | Yba_order by YEN
+  V2.0 穩定性升級完成 | Generated 2026-04-07 | Yba_order by YEN
 </div>
 
 </body>
