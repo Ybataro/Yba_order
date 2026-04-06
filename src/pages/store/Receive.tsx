@@ -44,6 +44,7 @@ export default function Receive() {
   const [confirmed, setConfirmed] = useState<Record<string, boolean>>({})
   const [note, setNote] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false)
   const [isEdit, setIsEdit] = useState(false)
   const [loading, setLoading] = useState(true)
   const [hasShipment, setHasShipment] = useState(false)
@@ -420,11 +421,31 @@ export default function Receive() {
 
           <BottomAction
             label={submitting ? '提交中...' : isEdit ? '更新收貨確認' : '確認收貨完成'}
-            onClick={handleSubmit}
+            onClick={() => setShowConfirmDialog(true)}
             variant="success"
             icon={<CheckCircle size={18} />}
             disabled={submitting}
           />
+
+          {/* V2.0：收貨二次確認 Dialog */}
+          {showConfirmDialog && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-6">
+              <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-xl">
+                <p className="text-base font-bold text-brand-oak mb-2">確認收貨</p>
+                <p className="text-sm text-brand-lotus mb-5">確認後將<b>核銷全部品項</b>，且無法撤銷。確定嗎？</p>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setShowConfirmDialog(false)}
+                    className="flex-1 py-2.5 rounded-xl border border-brand-silver text-sm text-brand-oak font-medium"
+                  >取消</button>
+                  <button
+                    onClick={() => { setShowConfirmDialog(false); handleSubmit() }}
+                    className="flex-1 py-2.5 rounded-xl bg-status-success text-white text-sm font-bold"
+                  >確認收貨</button>
+                </div>
+              </div>
+            </div>
+          )}
         </>
       )}
     </div>

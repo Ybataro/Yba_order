@@ -276,10 +276,13 @@ export default function ProductionLog() {
     } catch (err) {
       console.error('[ProductionLog] Submit error:', err)
       showToast('提交失敗', 'error')
+      const { sendCrashReport } = await import('@/lib/crashReport')
+      sendCrashReport({ type: 'production_log_submit_error', message: String(err), stack: (err as Error)?.stack })
+    } finally {
+      // V2.0：永遠解鎖
+      submittingRef.current = false
+      setSubmitting(false)
     }
-
-    submittingRef.current = false
-    setSubmitting(false)
   }
 
   const handleSubmit = () => {

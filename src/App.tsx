@@ -2,6 +2,7 @@ import { lazy, Suspense } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom'
 import { ToastProvider } from '@/components/Toast'
 import { useInitStores } from '@/hooks/useInitStores'
+import { useVersionCheck } from '@/hooks/useVersionCheck'
 import AuthGuard from '@/components/AuthGuard'
 import ScheduleGuard from '@/components/ScheduleGuard'
 import ErrorBoundary from '@/components/ErrorBoundary'
@@ -96,6 +97,7 @@ function NarrowLayout() {
 
 function App() {
   useInitStores()
+  useVersionCheck()
 
   return (
     <ErrorBoundary>

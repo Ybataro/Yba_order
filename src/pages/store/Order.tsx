@@ -457,6 +457,8 @@ export default function Order() {
 
     setSubmitting(true)
 
+    try { // V2.0：try/catch/finally 防鎖死
+
     const session = {
       id: sessionId,
       store_id: storeId,
@@ -495,7 +497,13 @@ export default function Order() {
       setIsEdit(true)
     }
 
-    setSubmitting(false)
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : '提交過程發生異常，請重試', 'error')
+      const { sendCrashReport } = await import('@/lib/crashReport')
+      sendCrashReport({ type: 'order_submit_error', message: String(err), stack: (err as Error)?.stack })
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   return (

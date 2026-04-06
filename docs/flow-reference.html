@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>阿爸的芋圓 — 盤點叫貨出貨全流程架構文件</title>
+<style>
+  :root {
+    --bg: #F5F0EB; --card: #fff; --border: #e0d5c8;
+    --text: #3C2415; --text2: #7A6555; --brand: #8B5E3C;
+    --brand-light: #C4956A; --success: #5B8C5A; --warning: #E8A840;
+    --danger: #C0392B; --info: #5B7FA5; --section: #FFF8F0;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--bg); color: var(--text); font-family: 'Noto Sans TC', sans-serif; line-height: 1.8; padding: 2rem; }
+  h1 { text-align: center; font-size: 1.8rem; color: var(--brand); margin-bottom: 0.3rem; }
+  .subtitle { text-align: center; color: var(--text2); font-size: 0.85rem; margin-bottom: 2rem; }
+  .toc { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 1.5rem 2rem; margin-bottom: 2rem; max-width: 900px; margin-left: auto; margin-right: auto; }
+  .toc h2 { color: var(--brand); font-size: 1.1rem; margin-bottom: 0.8rem; }
+  .toc ol { padding-left: 1.5rem; }
+  .toc li { margin-bottom: 0.3rem; }
+  .toc a { color: var(--info); text-decoration: none; }
+  section { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 2rem; margin-bottom: 1.5rem; max-width: 1100px; margin-left: auto; margin-right: auto; }
+  section h2 { font-size: 1.25rem; color: var(--brand); border-bottom: 2px solid var(--border); padding-bottom: 0.5rem; margin-bottom: 1rem; }
+  section h3 { font-size: 1rem; color: var(--brand-light); margin: 1rem 0 0.5rem; }
+  section h4 { font-size: 0.9rem; color: var(--text2); margin: 0.8rem 0 0.3rem; }
+  table { width: 100%; border-collapse: collapse; margin: 0.8rem 0; font-size: 0.85rem; }
+  th { background: var(--section); color: var(--brand); padding: 8px 10px; text-align: left; border: 1px solid var(--border); }
+  td { padding: 8px 10px; border: 1px solid var(--border); vertical-align: top; }
+  tr:nth-child(even) { background: #faf7f4; }
+  code { background: #f0ebe5; padding: 2px 6px; border-radius: 4px; font-family: 'Consolas', monospace; font-size: 0.83rem; color: var(--brand); }
+  pre { background: #f8f5f0; border: 1px solid var(--border); border-radius: 10px; padding: 1rem; overflow-x: auto; font-family: 'Consolas', monospace; font-size: 0.8rem; line-height: 1.6; color: var(--text); margin: 0.8rem 0; }
+  .note { background: #E8A84015; border-left: 3px solid var(--warning); padding: 8px 14px; border-radius: 0 10px 10px 0; font-size: 0.82rem; color: var(--text2); margin: 0.6rem 0; }
+  .danger { background: #C0392B10; border-left: 3px solid var(--danger); padding: 8px 14px; border-radius: 0 10px 10px 0; font-size: 0.82rem; color: var(--danger); margin: 0.6rem 0; }
+  .flow-box { display: flex; flex-wrap: wrap; gap: 8px; margin: 0.8rem 0; }
+  .flow-step { background: var(--section); border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px; font-size: 0.82rem; flex: 1; min-width: 150px; }
+  .flow-step strong { color: var(--brand); }
+  .arrow { display: flex; align-items: center; font-size: 1.2rem; color: var(--brand-light); padding: 0 4px; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  @media (max-width: 768px) { .grid-2 { grid-template-columns: 1fr; } body { padding: 1rem; } section { padding: 1.2rem; } .flow-box { flex-direction: column; } }
+</style>
+</head>
+<body>
+
+<h1>阿爸的芋圓 — 盤點叫貨出貨全流程</h1>
+<p class="subtitle">Yba_order 系統架構文件 | 2026-04-07</p>
+
+<nav class="toc">
+  <h2>目錄</h2>
+  <ol>
+    <li><a href="#flow">完整業務流程圖</a></li>
+    <li><a href="#db">DB 表結構總覽</a></li>
+    <li><a href="#inventory">門店物料盤點</a></li>
+    <li><a href="#prev-usage">前日用量計算公式</a></li>
+    <li><a href="#order">門店叫貨</a></li>
+    <li><a href="#suggestion">叫貨建議算法</a></li>
+    <li><a href="#summary">央廚各店叫貨總表</a></li>
+    <li><a href="#shipment">央廚出貨</a></li>
+    <li><a href="#receive">門店收貨確認</a></li>
+    <li><a href="#product-stock">央廚成品庫存盤點</a></li>
+    <li><a href="#product">產品管理（新增/修改）</a></li>
+    <li><a href="#offline">離線提交機制</a></li>
+    <li><a href="#issues">已知問題與風險點</a></li>
+  </ol>
+</nav>
+
+<!-- 1. 流程圖 -->
+<section id="flow">
+  <h2>1. 完整業務流程圖</h2>
+  <div class="flow-box">
+    <div class="flow-step"><strong>門店盤點</strong><br>架上+庫存+倒掉<br><code>inventory_sessions/items</code></div>
+    <div class="arrow">→</div>
+    <div class="flow-step"><strong>前日用量計算</strong><br>(D-1)庫存 + (D)叫貨<br>- (D)庫存 - (D)倒掉</div>
+    <div class="arrow">→</div>
+    <div class="flow-step"><strong>門店叫貨</strong><br>建議量+手動調整<br><code>order_sessions/items</code></div>
+    <div class="arrow">→</div>
+    <div class="flow-step"><strong>央廚叫貨總表</strong><br>各店彙總+央廚庫存<br><code>OrderSummary</code></div>
+    <div class="arrow">→</div>
+    <div class="flow-step"><strong>央廚出貨</strong><br>實際出貨量<br><code>shipment_sessions/items</code></div>
+    <div class="arrow">→</div>
+    <div class="flow-step"><strong>門店收貨</strong><br>確認+差異備註<br><code>received_at</code></div>
+  </div>
+  <div class="flow-box" style="margin-top: 1rem;">
+    <div class="flow-step"><strong>央廚成品庫存</strong><br>每日盤點<br><code>product_stock_sessions/items</code></div>
+    <div class="arrow">→</div>
+    <div class="flow-step"><strong>叫貨總表參照</strong><br>央廚可出貨量<br><code>stock_qty</code></div>
+  </div>
+</section>
+
+<!-- 2. DB 表結構 -->
+<section id="db">
+  <h2>2. DB 表結構總覽</h2>
+  <h3>門店盤點</h3>
+  <table>
+    <tr><th>表名</th><th>主要欄位</th><th>PK / Unique</th></tr>
+    <tr><td><code>inventory_sessions</code></td><td>id, store_id, date, zone_code, submitted_by, updated_at</td><td>id (TEXT)</td></tr>
+    <tr><td><code>inventory_items</code></td><td>session_id, product_id, on_shelf, stock, discarded</td><td>session_id + product_id</td></tr>
+    <tr><td><code>inventory_stock_entries</code></td><td>session_id, product_id, expiry_date, quantity</td><td>session_id + product_id + expiry_date</td></tr>
+    <tr><td><code>frozen_sales</code></td><td>store_id, date, zone_code, product_key, takeout, delivery</td><td>store_id + date + zone_code + product_key</td></tr>
+  </table>
+  <h3>門店叫貨</h3>
+  <table>
+    <tr><th>表名</th><th>主要欄位</th><th>PK / Unique</th></tr>
+    <tr><td><code>order_sessions</code></td><td>id, store_id, date, deadline, note, submitted_by</td><td>id</td></tr>
+    <tr><td><code>order_items</code></td><td>session_id, product_id, quantity</td><td>session_id + product_id</td></tr>
+  </table>
+  <h3>央廚出貨 / 收貨</h3>
+  <table>
+    <tr><th>表名</th><th>主要欄位</th><th>PK / Unique</th></tr>
+    <tr><td><code>shipment_sessions</code></td><td>id, store_id, date, confirmed_by, confirmed_at, receive_note, received_at, received_by, kitchen_reply</td><td>id</td></tr>
+    <tr><td><code>shipment_items</code></td><td>session_id, product_id, order_qty, actual_qty, received (BOOL)</td><td>session_id + product_id</td></tr>
+  </table>
+  <h3>央廚成品庫存</h3>
+  <table>
+    <tr><th>表名</th><th>主要欄位</th><th>PK / Unique</th></tr>
+    <tr><td><code>product_stock_sessions</code></td><td>id, date, submitted_by, updated_at</td><td>id</td></tr>
+    <tr><td><code>product_stock_items</code></td><td>session_id, product_id, stock_qty</td><td>session_id + product_id</td></tr>
+    <tr><td><code>product_stock_entries</code></td><td>session_id, product_id, expiry_date, quantity</td><td>session_id + product_id + expiry_date</td></tr>
+  </table>
+
+  <h3>Session ID 生成規則</h3>
+  <pre>
+盤點：inventorySessionId = "{storeId}_{date}_{zoneCode}"  (無 zone 時 = "{storeId}_{date}")
+叫貨：orderSessionId     = "{storeId}_{date}"
+出貨：shipmentSessionId  = "{storeId}_{date}"
+央廚成品：productStockSessionId = "kitchen_products_{date}"
+  </pre>
+</section>
+
+<!-- 3. 門店盤點 -->
+<section id="inventory">
+  <h2>3. 門店物料盤點<code>Inventory.tsx</code></h2>
+  <h3>資料結構</h3>
+  <table>
+    <tr><th>欄位</th><th>型別</th><th>說明</th></tr>
+    <tr><td>onShelf</td><td>string</td><td>架上數量（若有 bag_weight 則單位為克）</td></tr>
+    <tr><td>stock</td><td>string</td><td>庫存數量（盒/袋/桶）</td></tr>
+    <tr><td>discarded</td><td>string</td><td>倒掉數量</td></tr>
+  </table>
+
+  <h3>總計公式</h3>
+  <pre>
+若有 bag_weight（如花生、紅豆等散裝品）：
+  bagValue = onShelf(克) / bag_weight
+  總計 = bagValue + stock
+
+若無 bag_weight：
+  總計 = onShelf + stock
+
+關聯品項（linkedInventoryIds）：
+  linkedTotal = SUM(各子品項的總計)
+  </pre>
+
+  <h3>到期日批次邏輯</h3>
+  <pre>
+1. StockEntryPanel 讓使用者輸入多筆 (到期日, 數量)
+2. 自動加總 → 回寫 stock 欄位
+3. 提交時合併同一 (product_id, expiry_date) 的數量
+4. Upsert → 讀取舊值 → 刪除不在新列表的行 → 驗證筆數
+  </pre>
+
+  <h3>提交流程（handleSubmit）</h3>
+  <pre>
+1. 驗證：所有非聚合品項的「庫存」欄必填（無則填 0）
+2. 構建 session + items + frozenItems
+3. submitWithOffline() 提交主表：
+   - Upsert inventory_sessions (onConflict: 'id')
+   - Upsert inventory_items (onConflict: 'session_id,product_id')
+   - Delete 不在新列表的舊 items
+4. 額外寫入（線上時）：
+   - Upsert frozen_sales
+   - Save supply tracker（其他區消耗品）
+   - Upsert inventory_stock_entries（到期日批次）
+5. Telegram 通知 + Audit Log
+  </pre>
+</section>
+
+<!-- 4. 前日用量 -->
+<section id="prev-usage">
+  <h2>4. 前日用量計算公式</h2>
+  <pre>
+前日用量 = (D-1)庫存 + (D)叫貨 - (D)庫存 - (D)倒掉
+
+其中：
+  (D-1)庫存 = 前一天盤點的 bagValue + stock
+      bagValue = bag_weight ? on_shelf / bag_weight : on_shelf
+  (D)叫貨    = 該日 order_items 的 quantity
+  (D)庫存    = 當日盤點的 bagValue + stock
+  (D)倒掉    = 當日盤點的 discarded
+
+特殊情況：
+  - 若前一天沒盤點 → 顯示 "-"
+  - 關聯品項：加總所有 linkedInventoryIds 的前日用量
+  - 負值或異常值 → 顯示但不阻擋提交
+  </pre>
+  <div class="note">Inventory.tsx 和 Order.tsx 都用同一套公式計算前日用量，但各自獨立查詢 DB。</div>
+</section>
+
+<!-- 5. 門店叫貨 -->
+<section id="order">
+  <h2>5. 門店叫貨<code>Order.tsx</code></h2>
+  <h3>頁面功能</h3>
+  <pre>
+1. 載入最新盤點庫存（跨樓層加總）
+2. 載入建議叫貨量（suggestion.ts）
+3. 使用者修改數量 + 備註
+4. 提交叫貨
+  </pre>
+
+  <h3>庫存查詢邏輯</h3>
+  <pre>
+1. 查 inventory_sessions WHERE store_id AND date &lt; selectedDate，按日期倒序
+2. 取最新有品項資料的那一天（可能多樓層）
+3. 跨樓層加總：stock[pid] = SUM(onShelf / bag_weight + stock)
+  </pre>
+
+  <h3>截止時間</h3>
+  <pre>
+deadline = 叫貨日期的隔天 08:00 台灣時間
+例：4/7 叫貨 → deadline = 4/8 08:00+08:00 = 4/8 00:00 UTC
+超過截止時間 → 無法修改（isPastDeadline）
+  </pre>
+
+  <h3>提交流程</h3>
+  <pre>
+1. 構建 session（含 deadline）+ items（quantity &gt; 0 的品項）
+2. submitWithOffline() 提交：
+   - Upsert order_sessions (onConflict: 'id')
+   - Upsert order_items (onConflict: 'session_id,product_id')
+   - Delete 舊品項
+3. Telegram 通知
+  </pre>
+</section>
+
+<!-- 6. 建議算法 -->
+<section id="suggestion">
+  <h2>6. 叫貨建議算法<code>suggestion.ts</code></h2>
+
+  <h3>Step 1：歷史資料載入（10 分鐘快取）</h3>
+  <pre>
+查詢範圍：2021-01-01 至今
+資料來源：
+  - inventory_sessions + inventory_items（跨樓層加總）
+  - order_sessions + order_items
+  - weather_records（溫度、降雨）
+  - daily_revenue（營業額）
+  </pre>
+
+  <h3>Step 2：每日用量計算</h3>
+  <pre>
+策略一（有連續盤點）：
+  usage = (D-1)庫存 + (D)叫貨 - (D)庫存 - (D)倒掉
+
+策略二（僅有叫貨資料）：
+  usage ≈ 叫貨量（Excel 匯入歷史用）
+  </pre>
+
+  <h3>Step 3：三階段匹配</h3>
+  <table>
+    <tr><th>階段</th><th>條件</th><th>最低天數</th><th>基礎分</th></tr>
+    <tr><td><strong>Tier 1 嚴格</strong></td><td>日類型 + 季節 + 溫差≤5°C + 降雨相同</td><td>≥2天</td><td>100 - 溫差×5</td></tr>
+    <tr><td><strong>Tier 2 放寬</strong></td><td>日類型 + 季節 + 溫差≤8°C</td><td>≥2天</td><td>60 - 溫差×3</td></tr>
+    <tr><td><strong>Tier 3 兜底</strong></td><td>同日類型+同季 → 同日類型 → 最近14天</td><td>≥2天</td><td>25~30</td></tr>
+  </table>
+  <pre>
+加分項：
+  - 寒暑假匹配 +10 / 不匹配 +5
+  - 營業額相似度 revenueBonus (0~15)
+  - 近期權重：7天內×2.0, 14天×1.5, 30天×1.2
+
+季節判斷：11-3月=cool, 4-10月=warm
+寒暑假：7-8月, 1/20~2/15
+  </pre>
+
+  <h3>Step 4：覆蓋天數</h3>
+  <pre>
+央廚休息日：週三(3) + 週日(0)
+
+覆蓋日期 = [叫貨當天] + [接下來連續的央廚休息日]
+例：
+  週二叫貨 → 覆蓋 2 天（週二+週三休息）
+  週六叫貨 → 覆蓋 2 天（週六+週日休息）
+  週一叫貨 → 覆蓋 1 天
+  </pre>
+
+  <h3>Step 5：最終建議量</h3>
+  <pre>
+1. matchDaysV2() 匹配歷史 → avgUsage（加權平均）
+2. 覆蓋期間總需求 = SUM(各天估計用量)
+3. 安全庫存缺口 = MAX(0, baseStock - currentStock)
+4. 建議量 = MAX(totalDemand, safetyStockGap)
+5. 四捨五入到 roundUnit（如豆花 0.5 單位）
+6. 鮮食不扣庫存（每天需新鮮補貨）
+  </pre>
+</section>
+
+<!-- 7. 叫貨總表 -->
+<section id="summary">
+  <h2>7. 央廚各店叫貨總表<code>OrderSummary.tsx</code></h2>
+  <pre>
+1. 查詢各店 order_sessions + order_items WHERE date = selectedDate
+2. 按門店分組 → 按品項彙總
+3. 顯示央廚成品庫存（product_stock_items 最新一筆）
+4. 聚合品項庫存 = SUM(linkedInventoryIds 的 stock_qty)
+  </pre>
+  <div class="note">央廚庫存為快照（非即時），若央廚當日未盤點，會顯示前一天的數據。</div>
+</section>
+
+<!-- 8. 央廚出貨 -->
+<section id="shipment">
+  <h2>8. 央廚出貨<code>Shipment.tsx</code></h2>
+  <h3>資料結構</h3>
+  <table>
+    <tr><th>欄位</th><th>說明</th></tr>
+    <tr><td>order_qty</td><td>門店叫貨量（從 order_items 讀取）</td></tr>
+    <tr><td>actual_qty</td><td>實際出貨量（央廚填寫，可≠叫貨量）</td></tr>
+    <tr><td>received</td><td>門店是否已收貨（初始 false）</td></tr>
+  </table>
+
+  <h3>提交流程</h3>
+  <pre>
+1. 選擇出貨人員
+2. 叫貨品項：讀取 order_items → 填寫實際出貨量
+3. 未叫貨品項：央廚可主動出貨（order_qty = 0）
+4. Upsert shipment_sessions (onConflict: 'id')
+5. Upsert shipment_items (onConflict: 'session_id,product_id')
+6. Delete 不在新列表的舊品項
+7. 可填寫央廚回覆（kitchen_reply）
+  </pre>
+</section>
+
+<!-- 9. 收貨 -->
+<section id="receive">
+  <h2>9. 門店收貨確認<code>Receive.tsx</code></h2>
+  <pre>
+1. 讀取 shipment_items WHERE session_id = "{storeId}_{date}"
+2. 顯示叫貨量 vs 實際收到量
+3. 門店填寫差異備註
+4. 提交：
+   - Update shipment_sessions SET received_at, received_by, receive_note
+   - Update shipment_items SET received = true（全部品項）
+5. Telegram 通知（有差異時）
+  </pre>
+  <div class="danger">收貨為全部一次確認，不支持部分品項分別確認。</div>
+</section>
+
+<!-- 10. 央廚成品庫存 -->
+<section id="product-stock">
+  <h2>10. 央廚成品庫存盤點<code>ProductStock.tsx</code></h2>
+  <pre>
+1. 選擇盤點人員
+2. 各成品填寫庫存量（支援到期日批次）
+3. 提交：
+   - Upsert product_stock_sessions (onConflict: 'id')
+   - Upsert product_stock_items (onConflict: 'session_id,product_id')
+   - Delete 舊品項
+   - Upsert product_stock_entries（到期日批次）
+4. 與門店盤點的到期日邏輯完全一致
+  </pre>
+</section>
+
+<!-- 11. 產品管理 -->
+<section id="product">
+  <h2>11. 產品管理（新增/修改）</h2>
+  <h3>產品欄位結構</h3>
+  <table>
+    <tr><th>欄位</th><th>型別</th><th>說明</th></tr>
+    <tr><td>id</td><td>TEXT</td><td>唯一識別（如 taro_ball）</td></tr>
+    <tr><td>name</td><td>TEXT</td><td>品名</td></tr>
+    <tr><td>category</td><td>TEXT</td><td>分類（配料類、加工品類...）</td></tr>
+    <tr><td>unit</td><td>TEXT</td><td>單位（盒、袋、桶、份）</td></tr>
+    <tr><td>shelfLifeDays</td><td>NUMBER</td><td>期效天數</td></tr>
+    <tr><td>baseStock</td><td>TEXT</td><td>安全庫存（如 "2盒/2天"）</td></tr>
+    <tr><td>bag_weight</td><td>NUMBER</td><td>袋重（克）— on_shelf 轉換用</td></tr>
+    <tr><td>box_unit / box_ratio</td><td>TEXT/NUMBER</td><td>箱單位換算</td></tr>
+    <tr><td>visibleIn</td><td>TEXT</td><td>'both' / 'inventory_only' / 'order_only'</td></tr>
+    <tr><td>linkable</td><td>BOOL</td><td>是否可作子品項</td></tr>
+    <tr><td>linkedInventoryIds</td><td>TEXT[]</td><td>關聯的子品項 ID 陣列</td></tr>
+    <tr><td>integerOnly</td><td>BOOL</td><td>僅允許整數輸入</td></tr>
+  </table>
+
+  <h3>DB 表</h3>
+  <pre>
+store_products (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  category TEXT NOT NULL,
+  unit TEXT,
+  shelf_life_days TEXT,
+  base_stock TEXT,
+  our_cost NUMERIC,
+  franchise_price NUMERIC,
+  visible_in TEXT DEFAULT 'both',
+  linkable BOOLEAN DEFAULT false,
+  linked_inventory_ids TEXT[],
+  box_unit TEXT,
+  box_ratio NUMERIC,
+  bag_weight NUMERIC,
+  sort_order INTEGER DEFAULT 0
+)
+  </pre>
+
+  <h3>關聯品項機制</h3>
+  <pre>
+Parent（聚合品項）：linkable=false + linkedInventoryIds=[子ID1, 子ID2...]
+Child（子品項）：linkable=true
+
+盤點時：
+  - Child 各自填寫架上/庫存/倒掉
+  - Parent 顯示 linkedTotal = SUM(各 Child 的總計)
+  - Parent 自己的 stock 欄為唯讀
+
+叫貨時：
+  - 只叫 Parent（代表整個品類的需求）
+  - 建議量基於 Parent 的前日用量（加總 Children）
+  </pre>
+</section>
+
+<!-- 12. 離線機制 -->
+<section id="offline">
+  <h2>12. 離線提交機制<code>submitWithOffline.ts</code></h2>
+  <pre>
+流程：
+1. 檢查 navigator.onLine
+2. 若離線 → 存入 IndexedDB 佇列（yba_offline/pending_submissions）
+3. 若線上 → 直接 Supabase upsert
+4. 線上但網路中斷 → 自動降級為離線佇列
+5. 網路復通 → OfflineBanner 提示手動同步
+
+IndexedDB 結構：
+  DB: yba_offline (version 1)
+  Store: pending_submissions (keyPath: 'id')
+
+  PendingSubmission = {
+    id: "{type}_{sessionId}_{timestamp}",
+    type: 'inventory' | 'order' | 'settlement',
+    storeId, sessionId,
+    payload: { session, items },
+    createdAt: number
+  }
+  </pre>
+  <div class="danger"><strong>submittingRef 鎖死風險：</strong>handleSubmit 用 useRef 防重複提交。若提交過程中頁面切到背景或網路超時，鎖可能不會釋放，導致按鈕永久無反應。需關閉 tab 重開才能解鎖。</div>
+</section>
+
+<!-- 13. 已知問題 -->
+<section id="issues">
+  <h2>13. 已知問題與風險點</h2>
+  <table>
+    <tr><th>問題</th><th>位置</th><th>風險</th><th>影響</th></tr>
+    <tr><td>submittingRef 鎖死</td><td>Inventory/Order handleSubmit</td><td style="color:var(--danger);">高</td><td>提交按鈕永久無反應，需關閉 tab</td></tr>
+    <tr><td>IndexedDB 佇列卡住</td><td>offlineQueue.ts</td><td style="color:var(--danger);">高</td><td>同一 sessionId 重複寫入，同步失敗</td></tr>
+    <tr><td>舊版 JS 快取</td><td>Nginx immutable cache</td><td style="color:var(--danger);">高</td><td>手機載入舊版程式碼，功能異常</td></tr>
+    <tr><td>到期日批次刪除失敗</td><td>Inventory handleSubmit L780</td><td style="color:var(--warning);">中</td><td>舊到期日資料殘留</td></tr>
+    <tr><td>建議量快取 10 分鐘</td><td>suggestion.ts</td><td style="color:var(--warning);">中</td><td>切換門店未清快取 → 建議量錯誤</td></tr>
+    <tr><td>多樓層前日用量加總</td><td>Inventory.tsx L461</td><td style="color:var(--warning);">中</td><td>各樓層無法獨立查看用量</td></tr>
+    <tr><td>出貨量無上限</td><td>Shipment.tsx</td><td style="color:var(--info);">低</td><td>可出貨超過叫貨量</td></tr>
+    <tr><td>收貨全部一次確認</td><td>Receive.tsx</td><td style="color:var(--info);">低</td><td>不支持部分品項分別確認</td></tr>
+    <tr><td>央廚庫存為快照</td><td>OrderSummary.tsx</td><td style="color:var(--info);">低</td><td>休息日未盤點顯示舊數據</td></tr>
+    <tr><td>覆蓋天數無上限</td><td>suggestion.ts L555</td><td style="color:var(--info);">低</td><td>連續休息日可能膨脹建議量</td></tr>
+  </table>
+</section>
+
+<div style="text-align:center; color:var(--text2); font-size:0.75rem; margin-top:2rem; padding-bottom:2rem;">
+  阿爸的芋圓 — 盤點叫貨出貨全流程架構文件<br>
+  Generated 2026-04-07 | Yba_order by YEN
+</div>
+
+</body>
+</html>

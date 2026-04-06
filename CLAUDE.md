@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**阿爸的芋圓 (YBA)** — A restaurant chain management system for inventory, ordering, production, scheduling, and financial tracking. Mobile-first SPA deployed on Vercel with Supabase backend.
+**阿爸的芋圓 (YBA)** — A restaurant chain management system for inventory, ordering, production, scheduling, and financial tracking. Mobile-first SPA deployed on VPS (Docker + Nginx) with self-hosted Supabase backend.
 
 Three user roles: **admin** (全部管理), **kitchen** (央廚), **store** (門店). Authentication is PIN-based (no OAuth), stored in `user_pins` table with SHA-256 hashing via Web Crypto API. Sessions use `sessionStorage`.
 
@@ -26,7 +26,7 @@ npm run test:ui      # vitest --ui
 - **React 19** + **TypeScript 5.9** + **Vite 7**
 - **React Router v7** with lazy-loaded pages, two layout modes: `WideLayout` (admin schedule) and `NarrowLayout` (max 512px, all other pages)
 - **Zustand** for state management — stores in `src/stores/`, all initialized via `useInitStores()` hook on app mount
-- **Supabase** (PostgreSQL + Realtime) — client in `src/lib/supabase.ts`, migrations in `supabase/migrations/`
+- **Supabase** (自架 Docker，PostgreSQL + Realtime) — client in `src/lib/supabase.ts`, migrations in `supabase/migrations/`
 - **Tailwind CSS 3** with custom design tokens in `tailwind.config.js`
 - **react-hook-form** + **zod** for form validation
 - **date-fns** for date utilities
@@ -109,10 +109,21 @@ Each Zustand store follows the same pattern:
 - Supabase column names use `snake_case`; TypeScript properties use `camelCase`
 - Environment variables prefixed with `VITE_` for client access
 
+## Deployment (VPS)
+
+- **VPS**: `root@5.104.87.209`（SSH key: `~/.ssh/id_ed25519`）
+- **VPS 路徑**: `/root/vps-deploy/sites/yba-order`
+- **容器**: `site-yba-order`（Docker Nginx 靜態檔）
+- **網域**: `https://order.yen-design.com`
+- **部署腳本**: `bash deploy.sh`（git push → npm run build → rsync dist/ → docker restart）
+- **GitHub**: `Ybataro/Yba_order`，分支 `main`
+
+> **注意**：已全面從 Vercel 搬遷至 VPS。`vercel.json` 僅保留作為備用，正式環境一律走 VPS 部署。
+
 ## Environment Variables
 
 ```
-VITE_SUPABASE_URL      # Supabase project URL
+VITE_SUPABASE_URL      # Supabase project URL (自架 Supabase)
 VITE_SUPABASE_ANON_KEY # Supabase anonymous key
 VITE_CWA_API_KEY       # Taiwan Central Weather Bureau API key
 ```

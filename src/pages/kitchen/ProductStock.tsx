@@ -205,6 +205,8 @@ export default function ProductStock() {
     submittingRef.current = true
     setSubmitting(true)
 
+    try { // V2.0：try/catch/finally 防鎖死
+
     const { error: sessionErr } = await supabase
       .from('product_stock_sessions')
       .upsert({
@@ -363,13 +365,20 @@ export default function ProductStock() {
     const staffName = kitchenStaff.find(s => s.id === confirmBy)?.name
     const itemCount = storeProducts.filter(p => stock[p.id] !== '').length
     setIsEdit(true)
-    submittingRef.current = false
-    setSubmitting(false)
     const rtMsg = rtSavedCount > 0 ? `（含即時庫存 ${rtSavedCount} 項）` : ''
     showToast(`成品庫存已儲存！盤點人：${staffName}${rtMsg}`)
     sendTelegramNotification(
       `🏭 成品庫存盤點完成\n📅 日期：${selectedDate}\n👤 盤點人：${staffName}\n📊 品項數：${itemCount} 項${rtSavedCount > 0 ? `\n📦 即時庫存：${rtSavedCount} 項` : ''}`
     )
+
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : '提交過程發生異常，請重試', 'error')
+      const { sendCrashReport } = await import('@/lib/crashReport')
+      sendCrashReport({ type: 'product_stock_submit_error', message: String(err), stack: (err as Error)?.stack })
+    } finally {
+      submittingRef.current = false
+      setSubmitting(false)
+    }
   }
 
   const handleSubmit = () => {

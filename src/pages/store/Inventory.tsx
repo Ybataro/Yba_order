@@ -656,6 +656,8 @@ export default function Inventory() {
 
     setSubmitting(true)
 
+    try { // V2.0：try/catch/finally 防鎖死
+
     const session = {
       id: sessionId,
       store_id: storeId,
@@ -735,91 +737,32 @@ export default function Inventory() {
       }
       // Save supply tracker (其他區)
       await saveSupplyData(staffId)
-      // Save stock entries (到期日批次): upsert + 刪除多餘（安全模式）
-      // 用快照避免 stale closure
-      // 合併同一 (product_id, expiry_date) 的數量，避免批次內重複 key 導致 upsert 失敗
-      const seMap = new Map<string, { session_id: string; product_id: string; expiry_date: string; quantity: number }>()
-      let seRawCount = 0
-      const seMergedKeys: string[] = []
-      const seSkipped: string[] = []
+      // V2.0：到期日批次用 RPC 原子操作（取代前端讀→比較→刪→寫）
+      // 合併同一 (product_id, expiry_date) 的數量
+      const seMap = new Map<string, { product_id: string; expiry_date: string; quantity: number }>()
       Object.entries(stockEntriesSnapshot).forEach(([pid, entries]) => {
         (entries as StockEntry[]).forEach((e) => {
           if (e.expiryDate && e.quantity !== '') {
-            seRawCount++
             const key = `${pid}|${e.expiryDate}`
             const existing = seMap.get(key)
             if (existing) {
               existing.quantity += parseFloat(e.quantity) || 0
-              seMergedKeys.push(key)
             } else {
-              seMap.set(key, {
-                session_id: sessionId,
-                product_id: pid,
-                expiry_date: e.expiryDate,
-                quantity: parseFloat(e.quantity) || 0,
-              })
+              seMap.set(key, { product_id: pid, expiry_date: e.expiryDate, quantity: parseFloat(e.quantity) || 0 })
             }
-          } else {
-            seSkipped.push(`${pid}|date=${e.expiryDate}|qty=${e.quantity}`)
           }
         })
       })
-      const seInserts = Array.from(seMap.values())
-      // 安全模式：先 upsert 新資料 → 成功後才刪除不在新列表中的舊行
-      // 避免 DELETE 成功但 INSERT 失敗導致到期日資料全部遺失
-      let seUpsertOk = false
-      let seDeletedCount = 0
-      let seVerifyCount = -1
-      let seErrorMsg = ''
-      if (seInserts.length > 0) {
-        const { error: upsertErr } = await supabase
-          .from('inventory_stock_entries')
-          .upsert(seInserts, { onConflict: 'session_id,product_id,expiry_date' })
-        if (upsertErr) {
-          seErrorMsg = `${upsertErr.code}|${upsertErr.message}`
-          console.error('[stockEntries] upsert error:', upsertErr)
-          showToast('到期日資料儲存失敗，請重新提交', 'error')
-        } else {
-          seUpsertOk = true
-          // 刪除不在新列表中的舊行
-          const { data: existing } = await supabase
-            .from('inventory_stock_entries')
-            .select('id, product_id, expiry_date')
-            .eq('session_id', sessionId)
-          const newKeys = new Set(seInserts.map(i => `${i.product_id}|${i.expiry_date}`))
-          const toDelete = existing?.filter(e => !newKeys.has(`${e.product_id}|${e.expiry_date}`))?.map(e => e.id) || []
-          if (toDelete.length > 0) {
-            await supabase.from('inventory_stock_entries').delete().in('id', toDelete)
-          }
-          seDeletedCount = toDelete.length
-          // 驗證：讀回確認筆數正確
-          const { data: verifyRows } = await supabase
-            .from('inventory_stock_entries')
-            .select('id')
-            .eq('session_id', sessionId)
-          seVerifyCount = verifyRows?.length ?? -1
-          if (seVerifyCount !== seInserts.length) {
-            showToast(`到期日資料筆數異常（預期 ${seInserts.length}，實際 ${seVerifyCount}），請檢查後重新提交`, 'error')
-          }
-        }
-      } else {
-        // 無到期日資料 → 清空該 session 的所有 stock entries
-        seUpsertOk = true
-        await supabase.from('inventory_stock_entries').delete().eq('session_id', sessionId)
-      }
-      // Audit log：記錄 stock entries 完整診斷資訊
-      logAudit('stock_entries_save', storeId, sessionId, {
-        staffId,
-        rawCount: seRawCount,
-        dedupCount: seInserts.length,
-        mergedKeys: seMergedKeys.length > 0 ? seMergedKeys : undefined,
-        skipped: seSkipped.length > 0 ? seSkipped : undefined,
-        upsertOk: seUpsertOk,
-        errorMsg: seErrorMsg || undefined,
-        deletedCount: seDeletedCount,
-        verifyCount: seVerifyCount,
-        mismatch: seVerifyCount !== -1 && seVerifyCount !== seInserts.length,
+      const seEntries = Array.from(seMap.values())
+      const { error: rpcErr } = await supabase.rpc('sync_inventory_stock_entries', {
+        p_session_id: sessionId,
+        p_entries: seEntries,
       })
+      if (rpcErr) {
+        console.error('[stockEntries] RPC error:', rpcErr)
+        showToast('到期日資料同步失敗，請重新提交', 'error')
+      }
+      logAudit('stock_entries_save', storeId, sessionId, { staffId, entryCount: seEntries.length, rpcOk: !rpcErr })
       originalData.current = JSON.parse(JSON.stringify(data))
       originalFrozenData.current = JSON.parse(JSON.stringify(frozenData))
       originalStockEntries.current = JSON.parse(JSON.stringify(stockEntriesSnapshot))
@@ -833,8 +776,16 @@ export default function Inventory() {
       setIsEdit(true)
     }
 
-    setSubmitting(false)
-    submittingRef.current = false
+    } catch (err) {
+      // V2.0：捕捉未預期的提交錯誤
+      showToast(err instanceof Error ? err.message : '提交過程發生異常，請重試', 'error')
+      const { sendCrashReport } = await import('@/lib/crashReport')
+      sendCrashReport({ type: 'inventory_submit_error', message: String(err), stack: (err as Error)?.stack })
+    } finally {
+      // V2.0：永遠解鎖，防止按鈕鎖死
+      setSubmitting(false)
+      submittingRef.current = false
+    }
   }
 
   return (
