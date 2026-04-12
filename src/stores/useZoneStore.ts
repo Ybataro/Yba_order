@@ -7,6 +7,7 @@ interface ZoneState {
   zoneProducts: ZoneProduct[]
   loading: boolean
   initialized: boolean
+  lastFetchedAt: number | null
   initialize: () => Promise<void>
   getStoreZones: (storeId: string) => StoreZone[]
   getZoneProductIds: (zoneId: string) => string[]
@@ -22,9 +23,14 @@ export const useZoneStore = create<ZoneState>()((set, get) => ({
   zoneProducts: defaultZoneProducts,
   loading: false,
   initialized: false,
+  lastFetchedAt: null,
 
   initialize: async () => {
-    if (get().initialized || !supabase) return
+    const now = Date.now()
+    const { initialized, lastFetchedAt } = get()
+    // 5 分鐘內不重抓（TTL），超過則強制重新從 Supabase fetch
+    if (initialized && lastFetchedAt && now - lastFetchedAt < 5 * 60 * 1000) return
+    if (!supabase) return
     set({ loading: true })
     const [zoneRes, zpRes] = await Promise.all([
       supabase.from('store_zones').select('*').order('sort_order'),
@@ -50,7 +56,7 @@ export const useZoneStore = create<ZoneState>()((set, get) => ({
         })),
       })
     }
-    set({ loading: false, initialized: true })
+    set({ loading: false, initialized: true, lastFetchedAt: Date.now() })
   },
 
   getStoreZones: (storeId) => {

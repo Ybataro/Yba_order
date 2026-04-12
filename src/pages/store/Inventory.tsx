@@ -153,6 +153,9 @@ export default function Inventory() {
     if (storeZones.length > 0 && !currentZone && !searchParams.get('zone')) return
     // Zone store 尚未初始化完成（zones 還沒載入），也跳過避免用無 zone 的 session ID
     if (!zoneStoreReady) return
+    // URL 已帶 zone 參數，但 currentZone 尚未對應到（zones 剛從 Supabase 載入中）→ 等下一輪
+    const urlZone = searchParams.get('zone')
+    if (urlZone && urlZone !== 'all' && !currentZone) return
     const sid = inventorySessionId(storeId, selectedDate, currentZone || '')
     setLoading(true)
     setIsEdit(false)
