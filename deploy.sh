@@ -21,7 +21,9 @@ echo ""
 
 # 3. 上傳 dist/ 到 VPS
 echo "🚢 上傳到 VPS..."
-rsync -avz --delete -e "ssh -i $SSH_KEY" dist/ $VPS:$VPS_PATH/
+# 清空舊檔後上傳（等同 rsync --delete），Windows Git Bash 不支援 rsync
+ssh -i $SSH_KEY $VPS "rm -rf $VPS_PATH/assets $VPS_PATH/fonts $VPS_PATH/index.html $VPS_PATH/version.json $VPS_PATH/vite.svg"
+scp -i $SSH_KEY -r dist/* $VPS:$VPS_PATH/
 echo ""
 
 # 4. Restart container
