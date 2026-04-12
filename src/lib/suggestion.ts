@@ -1,6 +1,12 @@
 /**
- * 相似日匹配建議量演算法 V2
- * 改善：季節過濾、寒暑假加分、recency weight、庫存扣除、動態休息日覆蓋
+ * 相似日匹配建議量演算法 V3
+ * V3 新增：
+ *  - Tier 0/0b/0c：同星期幾匹配（優先於原 Tier 1/2/3 的 dayType 匹配）
+ *  - IQR 中位數：取代加權平均，剔除外送大單等異常值
+ *    ※ Tier 0/0b 已按溫差分群，高溫大量不會被誤殺
+ *    ※ Tier 0c（無天氣條件分群）使用較寬鬆係數 2.5 保護高溫需求
+ *  - 覆蓋天獨立計算：週二+週三各自用對應 dow 的歷史資料
+ * 舊函式（matchDaysV2、estimateDailyUsage）保留供 rollback 用
  */
 import { supabase } from '@/lib/supabase'
 import { getDayType } from '@/lib/holidays'
@@ -35,6 +41,11 @@ export interface SuggestionBreakdown {
   restDayMultiplier: number
   safetyStockGap: number
   rawBeforeRound: number
+  // V3 新增（選填，UI 可忽略，不破壞現有顯示邏輯）
+  targetDOW?: number              // 目標日星期幾（0=日,1=一,...,6=六）
+  isExactDayOfWeek?: boolean      // true = 命中 Tier 0（同星期幾匹配）
+  medianUsage?: number            // 中位數用量（供 debug）
+  rawMatchLevel?: 0 | 1 | 2 | 3  // 真實 Tier（含 Tier 0）
 }
 
 interface WeatherDay {
@@ -108,6 +119,46 @@ export function isSchoolBreak(dateStr: string): boolean {
   if (month === 1 && day >= 20) return true
   if (month === 2 && day <= 15) return true
   return false
+}
+
+/** 取得星期幾（台北時區）：0=日, 1=一, ..., 6=六 */
+export function getDOW(dateStr: string): number {
+  return new Date(dateStr + 'T00:00:00+08:00').getDay()
+}
+
+/**
+ * IQR 中位數計算（取代加權平均）
+ * iqrCoeff：IQR 係數，預設 1.5（標準），Tier 0c 傳入 2.5（較寬鬆，保護高溫大量）
+ * 保護條款：filtered < 2 筆時不剔除，用原始資料取中位數
+ */
+export function calcMedianUsage(matched: MatchedDay[], iqrCoeff = 1.5): number {
+  if (matched.length === 0) return 0
+  if (matched.length === 1) return matched[0].usage
+
+  const values = matched.map(m => m.usage)
+
+  if (values.length === 2) {
+    return Math.round(((values[0] + values[1]) / 2) * 10) / 10
+  }
+
+  const sorted = [...values].sort((a, b) => a - b)
+  const n = sorted.length
+  const Q1 = sorted[Math.floor(n * 0.25)]
+  const Q3 = sorted[Math.floor(n * 0.75)]
+  const IQR = Q3 - Q1
+  const lower = Q1 - iqrCoeff * IQR
+  const upper = Q3 + iqrCoeff * IQR
+
+  let filtered = sorted.filter(v => v >= lower && v <= upper)
+  // 保護條款：剔除後不足 2 筆則不剔除
+  if (filtered.length < 2) filtered = sorted
+
+  const m = filtered.length
+  const median = m % 2 === 1
+    ? filtered[Math.floor(m / 2)]
+    : (filtered[m / 2 - 1] + filtered[m / 2]) / 2
+
+  return Math.round(median * 10) / 10
 }
 
 /** 央廚休息日：週三(3) 或 週日(0) */
@@ -476,9 +527,122 @@ function matchDaysV2(
   return { matchLevel: 3, matched: tier3 }
 }
 
-/** 針對特定日期的 dayType 匹配歷史用量，用於覆蓋天數各天預估 */
-function estimateDailyUsage(
+// ── V3 核心匹配函式 ──
+// rollback 方式：git checkout v3-suggestion-before -- src/lib/suggestion.ts
+
+/**
+ * matchDaysV3：六階段匹配（V3 新函式，取代 matchDaysV2）
+ * Tier 0/0b/0c 以同星期幾為最優先，門檻 ≥3 筆
+ * 未達門檻時 fallback 到原 Tier 1/2/3（完全沿用 matchDaysV2 邏輯）
+ */
+function matchDaysV3(
+  targetDayType: 'holiday' | 'weekend' | 'weekday',
+  targetDOW: number,
+  targetTemp: number | null,
+  targetRainBucket: RainBucket | null,
+  targetSeason: 'cool' | 'warm',
+  targetSchoolBreak: boolean,
+  targetDateStr: string,
+  dailyUsages: DailyUsage[],
+  weatherMap: Map<string, WeatherDay>,
+  productId: string,
+  revenueMap: Map<string, number>,
+  targetRevenue: number | null,
+): { matchLevel: 1 | 2 | 3; matched: MatchedDay[]; rawMatchLevel: 0 | 1 | 2 | 3; iqrCoeff: number } {
+
+  const daysWithUsage = dailyUsages
+    .filter(d => d.usage[productId] != null && d.usage[productId] > 0)
+
+  if (daysWithUsage.length === 0) {
+    return { matchLevel: 3, matched: [], rawMatchLevel: 3, iqrCoeff: 1.5 }
+  }
+
+  // ── Tier 0：同星期幾 + 同季節 + 溫差≤5°C + 同降雨 ≥3筆 ──
+  if (targetTemp != null && targetRainBucket != null) {
+    const tier0: MatchedDay[] = []
+    for (const d of daysWithUsage) {
+      if (getDOW(d.date) !== targetDOW) continue
+      if (getSeason(d.date) !== targetSeason) continue
+      const w = weatherMap.get(d.date)
+      if (!w) continue
+      const tempDiff = Math.abs(w.tempHigh - targetTemp)
+      if (tempDiff > 5) continue
+      const histRain = getRainBucketFromProb(w.rainProb)
+      if (histRain !== targetRainBucket) continue
+      const recency = getRecencyWeight(d.date, targetDateStr)
+      let score = (100 - tempDiff * 5) * recency
+      if (targetSchoolBreak && isSchoolBreak(d.date)) score += 10
+      if (!targetSchoolBreak && !isSchoolBreak(d.date)) score += 5
+      score += revenueBonus(d.date, targetRevenue, revenueMap)
+      tier0.push({ date: d.date, score, usage: d.usage[productId] })
+    }
+    if (tier0.length >= 3) {
+      return { matchLevel: 1, matched: tier0, rawMatchLevel: 0, iqrCoeff: 1.5 }
+    }
+  }
+
+  // ── Tier 0b：同星期幾 + 同季節 + 溫差≤8°C ≥3筆 ──
+  if (targetTemp != null) {
+    const tier0b: MatchedDay[] = []
+    for (const d of daysWithUsage) {
+      if (getDOW(d.date) !== targetDOW) continue
+      if (getSeason(d.date) !== targetSeason) continue
+      const w = weatherMap.get(d.date)
+      if (!w) continue
+      const tempDiff = Math.abs(w.tempHigh - targetTemp)
+      if (tempDiff > 8) continue
+      const recency = getRecencyWeight(d.date, targetDateStr)
+      let score = (80 - tempDiff * 4) * recency
+      if (targetRainBucket != null) {
+        const histRain = getRainBucketFromProb(w.rainProb)
+        if (histRain === targetRainBucket) score += 10
+      }
+      if (targetSchoolBreak && isSchoolBreak(d.date)) score += 8
+      if (!targetSchoolBreak && !isSchoolBreak(d.date)) score += 3
+      score += revenueBonus(d.date, targetRevenue, revenueMap)
+      tier0b.push({ date: d.date, score, usage: d.usage[productId] })
+    }
+    if (tier0b.length >= 3) {
+      return { matchLevel: 1, matched: tier0b, rawMatchLevel: 0, iqrCoeff: 1.5 }
+    }
+  }
+
+  // ── Tier 0c：同星期幾 + 同季節（無天氣條件）≥3筆 ──
+  // 此層不帶天氣分群，高溫/涼天混合 → 使用寬鬆 IQR 係數 2.5 保護高溫大量需求
+  {
+    const tier0c: MatchedDay[] = []
+    for (const d of daysWithUsage) {
+      if (getDOW(d.date) !== targetDOW) continue
+      if (getSeason(d.date) !== targetSeason) continue
+      const recency = getRecencyWeight(d.date, targetDateStr)
+      let score = 60 * recency
+      if (targetSchoolBreak && isSchoolBreak(d.date)) score += 8
+      if (!targetSchoolBreak && !isSchoolBreak(d.date)) score += 3
+      score += revenueBonus(d.date, targetRevenue, revenueMap)
+      tier0c.push({ date: d.date, score, usage: d.usage[productId] })
+    }
+    if (tier0c.length >= 3) {
+      // iqrCoeff: 2.5 — 寬鬆，避免把高溫日大量視為異常值剔除
+      return { matchLevel: 1, matched: tier0c, rawMatchLevel: 0, iqrCoeff: 2.5 }
+    }
+  }
+
+  // ── Tier 1/2/3：沿用原 matchDaysV2 邏輯（dayType 維度）──
+  const v2result = matchDaysV2(
+    targetDayType, targetTemp, targetRainBucket,
+    targetSeason, targetSchoolBreak, targetDateStr,
+    dailyUsages, weatherMap, productId, revenueMap, targetRevenue,
+  )
+  return { ...v2result, rawMatchLevel: v2result.matchLevel, iqrCoeff: 1.5 }
+}
+
+/**
+ * estimateDailyUsageV3：覆蓋天各自用對應 dow 的歷史資料（V3 新函式）
+ * 不帶天氣（未來幾天無預報），直接走 Tier 0c 或 Tier 3 兜底
+ */
+function estimateDailyUsageV3(
   dayType: 'holiday' | 'weekend' | 'weekday',
+  dow: number,
   dateStr: string,
   dailyUsages: DailyUsage[],
   weatherMap: Map<string, WeatherDay>,
@@ -489,19 +653,15 @@ function estimateDailyUsage(
   const season = getSeason(dateStr)
   const schoolBreak = isSchoolBreak(dateStr)
 
-  const { matched } = matchDaysV2(
-    dayType, null, null, season, schoolBreak, dateStr,
+  const { matched, iqrCoeff } = matchDaysV3(
+    dayType, dow,
+    null, null, // 覆蓋天不帶天氣
+    season, schoolBreak, dateStr,
     dailyUsages, weatherMap, productId, revenueMap, targetRevenue,
   )
 
   if (matched.length === 0) return 0
-
-  let weightedSum = 0, scoreSum = 0
-  for (const m of matched) {
-    weightedSum += m.usage * m.score
-    scoreSum += m.score
-  }
-  return scoreSum > 0 ? weightedSum / scoreSum : 0
+  return calcMedianUsage(matched, iqrCoeff)
 }
 
 // ── 主函式 ──
@@ -529,6 +689,7 @@ export async function computeSuggestions(
     )
 
     const targetDayType = getDayType(selectedDate)
+    const targetDOW = getDOW(selectedDate) // V3 新增：星期幾維度
     const targetTemp = targetWeather?.tempHigh ?? null
     const targetRainBucket = targetWeather
       ? getRainBucketFromProb(targetWeather.rainProb)
@@ -568,28 +729,22 @@ export async function computeSuggestions(
     products.forEach(p => {
       const ids = inventoryIdMap[p.id] || [p.id]
 
-      // 用 matchDaysV2 匹配（以到貨日條件為主）
-      const { matchLevel, matched } = matchDaysV2(
-        targetDayType, targetTemp, targetRainBucket,
+      // V3：用 matchDaysV3 匹配（同星期幾優先）
+      const { matchLevel, matched, rawMatchLevel, iqrCoeff } = matchDaysV3(
+        targetDayType, targetDOW, targetTemp, targetRainBucket,
         targetSeason, targetSchoolBreak, selectedDate,
         dailyUsages, weatherMap, p.id, revenueMap, targetRevenue,
       )
 
-      let avgUsage = 0
-      if (matched.length > 0) {
-        let weightedSum = 0, scoreSum = 0
-        for (const m of matched) {
-          weightedSum += m.usage * m.score
-          scoreSum += m.score
-        }
-        avgUsage = scoreSum > 0 ? weightedSum / scoreSum : 0
-      }
+      // V3：IQR 中位數取代加權平均
+      const medianUsage = matched.length > 0 ? calcMedianUsage(matched, iqrCoeff) : 0
+      const avgUsage = medianUsage
 
-      // 覆蓋天數各天用量明細
-      // 每天先嘗試用各自 dayType 匹配歷史用量；若匹配不到則 fallback 到主匹配的 avgUsage
+      // V3：覆蓋天數各天獨立計算——各用自己的 dow 歷史
       const coverDetails: CoverDayDetail[] = coverDates.map(date => {
         const dayType = getDayType(date)
-        const estUsage = estimateDailyUsage(dayType, date, dailyUsages, weatherMap, p.id, revenueMap, targetRevenue)
+        const dow = getDOW(date)
+        const estUsage = estimateDailyUsageV3(dayType, dow, date, dailyUsages, weatherMap, p.id, revenueMap, targetRevenue)
         return {
           date,
           dayType,
@@ -639,6 +794,11 @@ export async function computeSuggestions(
         restDayMultiplier: restMul,
         safetyStockGap: Math.round(safetyGap * 10) / 10,
         rawBeforeRound: Math.round(rawBeforeRound * 10) / 10,
+        // V3 新增欄位
+        targetDOW,
+        isExactDayOfWeek: rawMatchLevel === 0,
+        medianUsage: Math.round(medianUsage * 10) / 10,
+        rawMatchLevel,
       }
     })
   } catch (err) {
