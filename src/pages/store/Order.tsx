@@ -16,8 +16,11 @@ import { formatDate } from '@/lib/utils'
 import { fetchWeather, type WeatherData, type WeatherCondition } from '@/lib/weather'
 import { computeSuggestions, clearSuggestionCache, type SuggestionBreakdown } from '@/lib/suggestion'
 import { backfillWeatherIfNeeded } from '@/lib/backfillWeather'
-import { Send, Lightbulb, Sun, CloudRain, Cloud, CloudSun, Thermometer, Droplets, RefreshCw, History, AlertTriangle, Package } from 'lucide-react'
+import { Send, Lightbulb, Sun, CloudRain, Cloud, CloudSun, Thermometer, Droplets, RefreshCw, History, AlertTriangle, Package, Settings2 } from 'lucide-react'
 import { InventoryStockModal } from '@/components/InventoryStockModal'
+import { OrderMinTotalSheet } from '@/components/OrderMinTotalSheet'
+import { OrderAlertModal, type OrderAlertItem } from '@/components/OrderAlertModal'
+import { fetchOrderMinTotals } from '@/lib/orderMinTotal'
 import { useStoreSortOrder } from '@/hooks/useStoreSortOrder'
 import { useStoreOrderVisibility } from '@/hooks/useStoreOrderVisibility'
 import { buildSortedByCategory } from '@/lib/sortByStore'
@@ -157,6 +160,11 @@ export default function Order() {
   const [stockEntries, setStockEntries] = useState<Record<string, { expiryDate: string; quantity: number }[]>>({})
   const [showStockModal, setShowStockModal] = useState(false)
   const [stockLoading, setStockLoading] = useState(true)
+
+  // 最低總量提醒設定
+  const [minTotals, setMinTotals] = useState<Map<string, number>>(new Map())
+  const [showMinTotalSheet, setShowMinTotalSheet] = useState(false)
+  const [orderAlertItems, setOrderAlertItems] = useState<OrderAlertItem[]>([])
 
   // 將 stock（per product_id）加總為 linked 版本，供 modal 顯示使用
   const linkedStock = useMemo(() => {
@@ -425,6 +433,12 @@ export default function Order() {
     clearSuggestionCache()
   }, [storeId])
 
+  // 載入最低總量設定（門店切換時重載）
+  useEffect(() => {
+    if (!storeId) return
+    fetchOrderMinTotals(storeId).then(setMinTotals)
+  }, [storeId])
+
   const applyAllSuggestions = () => {
     const newOrders: Record<string, string> = {}
     storeProducts.forEach(p => {
@@ -433,6 +447,22 @@ export default function Order() {
     setOrders(newOrders)
     showToast('已套用全部建議叫貨量', 'info')
   }
+
+  // 每個品項的即時總量與最低總量警示狀態（SSOT）
+  // total = linkedStock + orderQty；isBelow = 有設閾值且 total < threshold
+  const totalAndAlert = useMemo(() => {
+    const map = new Map<string, { total: number | null; isBelow: boolean; isWatched: boolean }>()
+    storeProducts.forEach(p => {
+      const inv = getLinkedSum(stock, inventoryIdMap[p.id])
+      const ord = parseFloat(orders[p.id]) || 0
+      const total = inv != null ? Math.round((inv + ord) * 10) / 10 : (ord > 0 ? ord : null)
+      const threshold = minTotals.get(p.id)
+      const isWatched = threshold != null
+      const isBelow = isWatched && total != null && total < threshold
+      map.set(p.id, { total, isBelow, isWatched })
+    })
+    return map
+  }, [storeProducts, stock, inventoryIdMap, orders, minTotals])
 
   // 判斷所選日期是否為央廚休息日前一天（週二/週六叫貨需 ×2）
   const isRestDayEve = (() => {
@@ -489,6 +519,21 @@ export default function Order() {
         setIsEdit(true)
         logAudit('order_submit', storeId, sessionId, { itemCount: items.length })
         showToast(msg || (isEdit ? '叫貨單已更新！' : '叫貨單已提交成功！'))
+        // 偵測低於最低總量的品項
+        const alerts: OrderAlertItem[] = []
+        storeProducts.forEach(p => {
+          const state = totalAndAlert.get(p.id)
+          if (state?.isBelow && state.total != null) {
+            alerts.push({
+              productId: p.id,
+              productName: p.name,
+              unit: p.unit,
+              currentTotal: state.total,
+              minTotal: minTotals.get(p.id)!,
+            })
+          }
+        })
+        if (alerts.length > 0) setOrderAlertItems(alerts)
       },
       onError: (msg) => showToast(msg, 'error'),
     })
@@ -604,7 +649,15 @@ export default function Order() {
             <span className="w-[40px] text-center">庫存</span>
             <span className="w-[40px] text-center text-status-info">建議</span>
             <span className="w-[110px] text-center">叫貨量</span>
-            <span className="w-[32px] text-center">總量</span>
+            <button
+              type="button"
+              onClick={() => setShowMinTotalSheet(true)}
+              className="w-[32px] flex items-center justify-center gap-0.5 active:opacity-60"
+              title="設定最低總量提醒"
+            >
+              <span>總量</span>
+              <Settings2 size={9} className={minTotals.size > 0 ? 'text-brand-amber' : 'text-brand-lotus/60'} />
+            </button>
           </div>
 
           {Array.from(productsByCategory.entries()).map(([category, products]) => (
@@ -643,10 +696,13 @@ export default function Order() {
                         />
                       </div>
                       {(() => {
-                        const inv = getLinkedSum(stock, inventoryIdMap[product.id])
-                        const ord = parseFloat(orders[product.id]) || 0
-                        const total = inv != null ? Math.round((inv + ord) * 10) / 10 : (ord > 0 ? ord : null)
-                        return <span className="w-[32px] text-center text-xs font-num text-brand-mocha">{total != null ? total : '-'}</span>
+                        const { total, isBelow, isWatched } = totalAndAlert.get(product.id) ?? { total: null, isBelow: false, isWatched: false }
+                        const colorClass = isBelow
+                          ? 'text-status-danger font-bold'
+                          : isWatched
+                            ? 'text-brand-amber'
+                            : 'text-brand-mocha'
+                        return <span className={`w-[32px] text-center text-xs font-num ${colorClass}`}>{total != null ? total : '-'}</span>
                       })()}
                     </div>
                     {expandedSuggestionId === product.id && suggestionBreakdown[product.id] && (() => {
@@ -767,6 +823,23 @@ export default function Order() {
         productCategories={productCategories}
         sortCategories={sortCategories}
         sortItems={sortItems}
+      />
+
+      <OrderMinTotalSheet
+        open={showMinTotalSheet}
+        onClose={() => setShowMinTotalSheet(false)}
+        storeId={storeId || ''}
+        products={storeProducts}
+        productCategories={productCategories}
+        sortCategories={sortCategories}
+        sortItems={sortItems}
+        currentMinTotals={minTotals}
+        onSaved={setMinTotals}
+      />
+
+      <OrderAlertModal
+        items={orderAlertItems}
+        onClose={() => setOrderAlertItems([])}
       />
     </div>
   )
