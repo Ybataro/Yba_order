@@ -254,3 +254,147 @@ export async function sendTelegramPhotos(
     return false
   }
 }
+
+// ══════════════════════════════════════════════════════════
+// V2 請假系統專用函式
+// ══════════════════════════════════════════════════════════
+
+/** V2 快取：主管清單（從 user_pins + staff 查詢，取代 app_settings）*/
+let approverCache: Record<string, string[]> | null = null
+
+/** 清除 V2 主管快取（PinManager 儲存後呼叫）*/
+export function clearLeaveApproverCache(): void {
+  approverCache = null
+}
+
+/**
+ * V2：依 scope + order 查詢請假主管的 Telegram chat_id
+ * 從 user_pins 的 is_leave_approver / leave_approver_scope / leave_approver_order
+ * join staff.telegram_id 取得 chat_id
+ *
+ * @param scope  群組：'kitchen' | 'lehua' | 'xingnan'
+ * @param order  簽核順序：1 = 第一主管, 2 = 第二主管, undefined = 全部
+ */
+export async function getLeaveApproverChatIds(
+  scope: string,
+  order?: 1 | 2
+): Promise<string[]> {
+  if (!supabase) return []
+
+  const cacheKey = `${scope}_${order ?? 'all'}`
+  if (approverCache?.[cacheKey]) return approverCache[cacheKey]
+
+  // 查 user_pins 找到符合 scope 的主管
+  let query = supabase
+    .from('user_pins')
+    .select('staff_id, leave_approver_order')
+    .eq('is_leave_approver', true)
+    .eq('leave_approver_scope', scope)
+    .eq('is_active', true)
+
+  if (order !== undefined) {
+    query = query.eq('leave_approver_order', order)
+  }
+
+  const { data: pinData, error: pinErr } = await query
+  if (pinErr || !pinData || pinData.length === 0) return []
+
+  const staffIds = pinData.map((p) => p.staff_id as string)
+
+  // 從 staff 取 telegram_id
+  const { data: staffData, error: staffErr } = await supabase
+    .from('staff')
+    .select('id, telegram_id')
+    .in('id', staffIds)
+
+  if (staffErr || !staffData) return []
+
+  const chatIds = staffData
+    .map((s) => s.telegram_id as string | null)
+    .filter((id): id is string => !!id && id.trim() !== '')
+
+  if (!approverCache) approverCache = {}
+  approverCache[cacheKey] = chatIds
+
+  return chatIds
+}
+
+/**
+ * V2：查詢某 scope 是否已設定完整的雙主管（order 1 + order 2 各一人）
+ * 用於送假前的前置驗證：若未設滿，阻擋送假並提示
+ */
+export async function checkLeaveApproversReady(scope: string): Promise<{
+  ready: boolean
+  approver1Count: number
+  approver2Count: number
+}> {
+  if (!supabase) return { ready: false, approver1Count: 0, approver2Count: 0 }
+
+  const { data, error } = await supabase
+    .from('user_pins')
+    .select('leave_approver_order')
+    .eq('is_leave_approver', true)
+    .eq('leave_approver_scope', scope)
+    .eq('is_active', true)
+
+  if (error || !data) return { ready: false, approver1Count: 0, approver2Count: 0 }
+
+  const approver1Count = data.filter((p) => p.leave_approver_order === 1).length
+  const approver2Count = data.filter((p) => p.leave_approver_order === 2).length
+
+  return {
+    ready: approver1Count >= 1 && approver2Count >= 1,
+    approver1Count,
+    approver2Count,
+  }
+}
+
+/**
+ * V2：通知 admin 最終審核者（從 user_pins 查 role=admin 且有 telegram_id 的員工）
+ * 取代舊的 getAdminNotifyTargets()（仍保留舊版供向後相容）
+ */
+export async function getAdminApproverChatIds(): Promise<string[]> {
+  if (!supabase) return []
+
+  const { data: pinData, error: pinErr } = await supabase
+    .from('user_pins')
+    .select('staff_id')
+    .eq('role', 'admin')
+    .eq('is_active', true)
+
+  if (pinErr || !pinData || pinData.length === 0) return []
+
+  const staffIds = pinData.map((p) => p.staff_id as string)
+
+  const { data: staffData, error: staffErr } = await supabase
+    .from('staff')
+    .select('telegram_id')
+    .in('id', staffIds)
+
+  if (staffErr || !staffData) return []
+
+  return staffData
+    .map((s) => s.telegram_id as string | null)
+    .filter((id): id is string => !!id && id.trim() !== '')
+}
+
+/**
+ * V2：通知員工本人請假結果（核准或駁回）
+ * @param staffId  員工 staff_id
+ * @param message  HTML 格式訊息
+ */
+export async function notifyStaffLeaveResult(staffId: string, message: string): Promise<void> {
+  if (!supabase) return
+
+  const { data, error } = await supabase
+    .from('staff')
+    .select('telegram_id')
+    .eq('id', staffId)
+    .single()
+
+  if (error || !data?.telegram_id) return
+
+  sendTelegramToTargets(message, [data.telegram_id])
+    .then((ok) => { if (!ok) console.warn(`[V2 員工通知] staff_id=${staffId} 發送失敗`) })
+    .catch((err) => console.error(`[V2 員工通知] staff_id=${staffId} 錯誤:`, err))
+}

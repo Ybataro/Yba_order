@@ -1,7 +1,9 @@
 {
   "permissions": {
     "allow": [
-      "Bash(grep -E '\\\\.\\(sh|md|yml|env|ts|json\\)$')"
+      "Bash(grep -E '\\\\.\\(sh|md|yml|env|ts|json\\)$')",
+      "Bash(ssh:*)",
+      "Bash(npx tsc:*)"
     ]
   }
 }
