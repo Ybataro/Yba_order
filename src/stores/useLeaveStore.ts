@@ -192,13 +192,10 @@ export const useLeaveStore = create<LeaveState>()((set, get) => ({
 
     const scope = data.store_context || ''
 
-    // 前置驗證：雙主管是否設滿（方案B）
+    // 前置驗證：至少設定第一主管（第二主管為選配）
     const approverStatus = await checkLeaveApproversReady(scope)
     if (!approverStatus.ready) {
-      const msg = approverStatus.approver1Count === 0
-        ? `${scope} 尚未設定第一主管，請聯絡管理員`
-        : `${scope} 尚未設定第二主管，請聯絡管理員`
-      return { ok: false, error: msg }
+      return { ok: false, error: `${scope} 尚未設定主管，請聯絡管理員` }
     }
 
     const leaveDays = calcLeaveDays(data.start_date, data.end_date, data.day_part)
@@ -279,13 +276,10 @@ export const useLeaveStore = create<LeaveState>()((set, get) => ({
 
     const scope = data.store_context || ''
 
-    // 前置驗證：雙主管是否設滿
+    // 前置驗證：至少設定第一主管（第二主管為選配）
     const approverStatus = await checkLeaveApproversReady(scope)
     if (!approverStatus.ready) {
-      const msg = approverStatus.approver1Count === 0
-        ? `${scope} 尚未設定第一主管，請聯絡管理員`
-        : `${scope} 尚未設定第二主管，請聯絡管理員`
-      return { ok: false, error: msg }
+      return { ok: false, error: `${scope} 尚未設定主管，請聯絡管理員` }
     }
 
     const leaveDays = calcLeaveDays(data.start_date, data.end_date, data.day_part)
@@ -475,14 +469,36 @@ export const useLeaveStore = create<LeaveState>()((set, get) => ({
     if (!supabase) return false
     const now = new Date().toISOString()
 
+    // 取得此假單資料，從 staff.group_id 推算 scope，判斷是否有第二主管
+    const { data: reqData } = await supabase
+      .from('leave_requests').select('*').eq('id', id).single()
+    if (!reqData) return false
+    const req = reqData as LeaveRequest
+
+    const { data: staffRow } = await supabase
+      .from('staff').select('group_id').eq('id', req.staff_id).single()
+    const scope = (staffRow?.group_id as string | null) ?? ''
+    const approverStatus = await checkLeaveApproversReady(scope)
+    // 有第二主管 → approver1_approved；無第二主管 → 直接跳 manager_approved
+    const nextStatus = approverStatus.approver2Count >= 1
+      ? 'approver1_approved'
+      : 'manager_approved'
+
+    const updatePayload: Record<string, unknown> = {
+      status: nextStatus,
+      approver1_id: approverId,
+      approver1_at: now,
+      approver1_note: note,
+    }
+    // 無第二主管時同步寫向後相容欄位
+    if (nextStatus === 'manager_approved') {
+      updatePayload.manager_reviewed_by = approverId
+      updatePayload.manager_reviewed_at = now
+    }
+
     const { error } = await supabase
       .from('leave_requests')
-      .update({
-        status: 'approver1_approved',
-        approver1_id: approverId,
-        approver1_at: now,
-        approver1_note: note,
-      })
+      .update(updatePayload)
       .eq('id', id)
 
     if (error) { console.error('第一主管核准失敗:', error.message); return false }
@@ -491,7 +507,7 @@ export const useLeaveStore = create<LeaveState>()((set, get) => ({
       requests: s.requests.map((r) =>
         r.id === id ? {
           ...r,
-          status: 'approver1_approved' as const,
+          status: nextStatus as LeaveRequest['status'],
           approver1_id: approverId,
           approver1_at: now,
           approver1_note: note,
@@ -499,10 +515,38 @@ export const useLeaveStore = create<LeaveState>()((set, get) => ({
       ),
     }))
 
-    // 通知說明：送假時已同時通知兩位主管（方案A），此處不重複通知第二主管
-    // 僅記錄 log 供追蹤
-    console.log(`[approver1Approve] id=${id} by=${approverId}`)
+    // 無第二主管時，直接通知 admin 進行最終審核
+    if (nextStatus === 'manager_approved') {
+      const { data: staffData } = await supabase
+        .from('staff').select('name').eq('id', req.staff_id).single()
+      const staffName = staffData?.name || req.staff_id
 
+      const adminChatIds = await getAdminApproverChatIds()
+      const targets = adminChatIds.length > 0
+        ? adminChatIds
+        : await getAdminNotifyTargets()
+
+      if (targets.length > 0) {
+        const typeName = req.leave_type === 'other_leave' && req.other_leave_type_name
+          ? `其他（${req.other_leave_type_name}）`
+          : getLeaveTypeName(req.leave_type)
+        const dateRange = req.start_date === req.end_date
+          ? req.start_date
+          : `${req.start_date} ~ ${req.end_date}`
+        sendTelegramToTargets([
+          '✅ <b>請假申請（主管已核准，待最終審核）</b>',
+          `👤 員工：${staffName}`,
+          `📅 日期：${dateRange}（${req.leave_days}天）`,
+          `📝 假別：${typeName}`,
+          `🔄 代理人：${req.proxy_name}`,
+          req.reason ? `💬 事由：${req.reason}` : '',
+          note ? `📌 主管備注：${note}` : '',
+        ].filter(Boolean).join('\n'), targets)
+          .catch((err) => console.error('[第一主管單簽通知admin] 錯誤:', err))
+      }
+    }
+
+    console.log(`[approver1Approve] id=${id} by=${approverId} nextStatus=${nextStatus}`)
     return true
   },
 

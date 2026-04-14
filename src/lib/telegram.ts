@@ -343,7 +343,7 @@ export async function checkLeaveApproversReady(scope: string): Promise<{
   const approver2Count = data.filter((p) => p.leave_approver_order === 2).length
 
   return {
-    ready: approver1Count >= 1 && approver2Count >= 1,
+    ready: approver1Count >= 1, // 第二主管為選配，只要有第一主管即可送假
     approver1Count,
     approver2Count,
   }
