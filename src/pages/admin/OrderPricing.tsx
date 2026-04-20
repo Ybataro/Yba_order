@@ -13,11 +13,11 @@ import ExportButtons from '@/components/ExportButtons'
 
 type DateRange = 'today' | 'week' | 'month' | 'custom'
 
-interface OrderSession {
+interface ShipmentSession {
   id: string
   store_id: string
   date: string
-  order_items: { product_id: string; quantity: number }[]
+  shipment_items: { product_id: string; actual_qty: number }[]
 }
 
 interface SettlementSession {
@@ -106,7 +106,7 @@ export default function OrderPricing() {
   const [customStart, setCustomStart] = useState('')
   const [customEnd, setCustomEnd] = useState('')
 
-  const [orderSessions, setOrderSessions] = useState<OrderSession[]>([])
+  const [shipmentSessions, setShipmentSessions] = useState<ShipmentSession[]>([])
   const [settlementSessions, setSettlementSessions] = useState<SettlementSession[]>([])
   const [loading, setLoading] = useState(false)
 
@@ -115,7 +115,7 @@ export default function OrderPricing() {
 
   // Yearly cost section
   const [selectedYear, setSelectedYear] = useState(currentYear)
-  const [yearlyOrders, setYearlyOrders] = useState<OrderSession[]>([])
+  const [yearlyOrders, setYearlyOrders] = useState<ShipmentSession[]>([])
   const [yearlyLoading, setYearlyLoading] = useState(false)
 
   const { startDate, endDate } = useMemo(() => {
@@ -138,10 +138,10 @@ export default function OrderPricing() {
     if (!supabase) return
     setLoading(true)
 
-    const orderQuery = (() => {
+    const shipmentQuery = (() => {
       let q = supabase
-        .from('order_sessions')
-        .select('*, order_items(*)')
+        .from('shipment_sessions')
+        .select('*, shipment_items(*)')
         .gte('date', startDate)
         .lte('date', endDate)
       if (storeFilter !== 'all') q = q.eq('store_id', storeFilter)
@@ -158,8 +158,8 @@ export default function OrderPricing() {
       return q
     })()
 
-    Promise.all([orderQuery, settlementQuery]).then(([orderRes, settlementRes]) => {
-      setOrderSessions(orderRes.data || [])
+    Promise.all([shipmentQuery, settlementQuery]).then(([shipmentRes, settlementRes]) => {
+      setShipmentSessions(shipmentRes.data || [])
       setSettlementSessions(settlementRes.data || [])
       setLoading(false)
     })
@@ -172,8 +172,8 @@ export default function OrderPricing() {
     const yearStart = `${selectedYear}-01-01`
     const yearEnd = `${selectedYear}-12-31`
     let q = supabase
-      .from('order_sessions')
-      .select('*, order_items(*)')
+      .from('shipment_sessions')
+      .select('*, shipment_items(*)')
       .gte('date', yearStart)
       .lte('date', yearEnd)
     if (storeFilter !== 'all') q = q.eq('store_id', storeFilter)
@@ -193,11 +193,11 @@ export default function OrderPricing() {
       const mm = String(m).padStart(2, '0')
       yearlyOrders.forEach((s) => {
         if (s.date.slice(5, 7) !== mm) return
-        ;(s.order_items || []).forEach((item) => {
-          if (item.quantity <= 0) return
+        ;(s.shipment_items || []).forEach((item) => {
+          if (item.actual_qty <= 0) return
           const prod = products.find((p) => p.id === item.product_id)
-          ourCost += item.quantity * (prod?.ourCost || 0)
-          franchiseCost += item.quantity * (prod?.franchisePrice || 0)
+          ourCost += item.actual_qty * (prod?.ourCost || 0)
+          franchiseCost += item.actual_qty * (prod?.franchisePrice || 0)
         })
       })
       months.push({ month: m, ourCost, franchiseCost })
@@ -230,12 +230,12 @@ export default function OrderPricing() {
     const matrix: Record<string, Record<string, number>> = {}
     const productTotals: Record<string, number> = {}
 
-    orderSessions.forEach((s) => {
-      (s.order_items || []).forEach((item) => {
-        if (item.quantity <= 0) return
+    shipmentSessions.forEach((s) => {
+      (s.shipment_items || []).forEach((item) => {
+        if (item.actual_qty <= 0) return
         if (!matrix[item.product_id]) matrix[item.product_id] = {}
-        matrix[item.product_id][s.date] = (matrix[item.product_id][s.date] || 0) + item.quantity
-        productTotals[item.product_id] = (productTotals[item.product_id] || 0) + item.quantity
+        matrix[item.product_id][s.date] = (matrix[item.product_id][s.date] || 0) + item.actual_qty
+        productTotals[item.product_id] = (productTotals[item.product_id] || 0) + item.actual_qty
       })
     })
 
@@ -266,7 +266,7 @@ export default function OrderPricing() {
       dateTotals,
       grandTotal: { ourCost: grandOurCost, franchiseCost: grandFranchiseCost },
     }
-  }, [orderSessions, dates, products])
+  }, [shipmentSessions, dates, products])
 
   // Settlement summary by date
   const settlementByDate = useMemo(() => {

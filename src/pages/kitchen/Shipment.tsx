@@ -380,39 +380,6 @@ export default function Shipment() {
       await supabase.from('shipment_items').delete().eq('session_id', sid)
     }
 
-    // 出貨異動同步：actual_qty 與 order_qty 不同時，自動更新門店 order_items
-    const orderSid = `${activeStore}_${orderDate}`
-    const changedItems = dedupedItems.filter(
-      item => item.actual_qty !== item.order_qty && item.order_qty > 0
-    )
-    if (changedItems.length > 0) {
-      const upsertRows = changedItems.map(item => ({
-        session_id: orderSid,
-        product_id: item.product_id,
-        quantity: item.actual_qty,
-      }))
-      await supabase.from('order_items').upsert(upsertRows, { onConflict: 'session_id,product_id' })
-    }
-    // 央廚主動出貨（原本門店沒叫的品項）也寫入 order_items
-    const extraShipped = dedupedItems.filter(
-      item => item.order_qty === 0 && item.actual_qty > 0
-    )
-    if (extraShipped.length > 0) {
-      // 確保 order_session 存在
-      await supabase.from('order_sessions').upsert({
-        id: orderSid,
-        store_id: activeStore,
-        date: orderDate,
-        updated_at: new Date().toISOString(),
-      }, { onConflict: 'id' })
-      const extraRows = extraShipped.map(item => ({
-        session_id: orderSid,
-        product_id: item.product_id,
-        quantity: item.actual_qty,
-      }))
-      await supabase.from('order_items').upsert(extraRows, { onConflict: 'session_id,product_id' })
-    }
-
     const staffName = kitchenStaff.find(s => s.id === confirmBy)?.name
     const activeStoreName = stores.find(s => s.id === activeStore)?.name
     const shipItemCount = dedupedItems.length

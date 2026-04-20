@@ -212,8 +212,8 @@ async function loadHistoricalData(
     return { weatherMap: _cache.weatherMap, dailyUsages: _cache.dailyUsages, revenueMap: _cache.revenueMap }
   }
 
-  // 1. 平行查詢 sessions + weather + revenue
-  const [invRes, ordRes, weatherRes, revenueRes] = await Promise.all([
+  // 1. 平行查詢 sessions + weather + revenue + shipment_sessions
+  const [invRes, ordRes, weatherRes, revenueRes, shipRes] = await Promise.all([
     supabase.from('inventory_sessions').select('id, date')
       .eq('store_id', storeId).gte('date', '2021-01-01').order('date'),
     supabase.from('order_sessions').select('id, date')
@@ -222,12 +222,15 @@ async function loadHistoricalData(
       .gte('date', '2021-01-01').order('date'),
     supabase.from('daily_revenue').select('date, revenue')
       .eq('store_id', storeId).order('date'),
+    supabase.from('shipment_sessions').select('id, date')
+      .eq('store_id', storeId).gte('date', '2021-01-01').order('date'),
   ])
 
   const invSessions = invRes.data || []
   const ordSessions = ordRes.data || []
   const weatherRows = weatherRes.data || []
   const revenueRows = revenueRes.data || []
+  const shipSessions = shipRes.data || []
 
   // 天氣 map
   const weatherMap = new Map<string, WeatherDay>()
@@ -246,9 +249,10 @@ async function loadHistoricalData(
     revenueMap.set(r.date, r.revenue)
   })
 
-  // 2. 批次查 inventory_items 和 order_items
+  // 2. 批次查 inventory_items、order_items、shipment_items
   const invSids = invSessions.map((s: { id: string }) => s.id)
   const ordSids = ordSessions.map((s: { id: string }) => s.id)
+  const shipSids = shipSessions.map((s: { id: string }) => s.id)
 
   // Supabase `.in()` 有上限，分批查
   const BATCH = 500
@@ -272,11 +276,23 @@ async function loadHistoricalData(
     if (data) ordItemsList.push(...data)
   }
 
+  const shipItemsList: { session_id: string; product_id: string; actual_qty: number }[] = []
+  for (let i = 0; i < shipSids.length; i += BATCH) {
+    const batch = shipSids.slice(i, i + BATCH)
+    const { data } = await supabase
+      .from('shipment_items')
+      .select('session_id, product_id, actual_qty')
+      .in('session_id', batch)
+    if (data) shipItemsList.push(...data)
+  }
+
   // 3. 建立 session→date 對照
   const invSessionDate: Record<string, string> = {}
   invSessions.forEach((s: { id: string; date: string }) => { invSessionDate[s.id] = s.date })
   const ordSessionDate: Record<string, string> = {}
   ordSessions.forEach((s: { id: string; date: string }) => { ordSessionDate[s.id] = s.date })
+  const shipSessionDate: Record<string, string> = {}
+  shipSessions.forEach((s: { id: string; date: string }) => { shipSessionDate[s.id] = s.date })
 
   // 4. 每日庫存 map: date → pid → total
   const dailyStock: Record<string, Record<string, number>> = {}
@@ -292,7 +308,7 @@ async function loadHistoricalData(
     dailyDisc[date][item.product_id] = (dailyDisc[date][item.product_id] || 0) + (item.discarded || 0)
   })
 
-  // 每日叫貨 map: date → pid → quantity
+  // 每日叫貨 map: date → pid → quantity（供策略一公式用，及策略三兜底）
   const dailyOrder: Record<string, Record<string, number>> = {}
   ordItemsList.forEach(item => {
     const date = ordSessionDate[item.session_id]
@@ -301,9 +317,19 @@ async function loadHistoricalData(
     dailyOrder[date][item.product_id] = (dailyOrder[date][item.product_id] || 0) + (item.quantity || 0)
   })
 
+  // 每日實際出貨 map: date → pid → actual_qty（策略二：最準確的用量近似值）
+  const dailyActual: Record<string, Record<string, number>> = {}
+  shipItemsList.forEach(item => {
+    const date = shipSessionDate[item.session_id]
+    if (!date) return
+    if (!dailyActual[date]) dailyActual[date] = {}
+    dailyActual[date][item.product_id] = (dailyActual[date][item.product_id] || 0) + (item.actual_qty || 0)
+  })
+
   // 5. 建立每日用量
-  // 策略一：有連續盤點資料 → 用公式 (D-1)庫存 + (D)叫貨 - (D)庫存 - (D)倒掉
-  // 策略二：只有叫貨資料（Excel 匯入歷史）→ 直接用叫貨量作為用量近似值
+  // 策略一：有連續盤點資料 → 用公式 (D-1)庫存 + (D-1)叫貨 - (D)庫存 - (D)倒掉
+  // 策略二：有出貨資料（shipment_items.actual_qty）→ 用實際出貨量（最準確）
+  // 策略三：只有叫貨資料（Excel 匯入歷史）→ 叫貨量作為用量近似（早期無出貨記錄的資料）
   const dailyUsages: DailyUsage[] = []
   const invDates = new Set(Object.keys(dailyStock))
 
@@ -348,9 +374,38 @@ async function loadHistoricalData(
     }
   }
 
-  // 策略二：沒有盤點的日期，直接用叫貨量作為用量近似值
+  // 策略二：有實際出貨記錄的日期，用 actual_qty 作為用量（優先於叫貨量）
   const usageDates = new Set(dailyUsages.map(d => d.date))
-  const orderOnlyDates = Object.keys(dailyOrder).filter(d => !invDates.has(d) && !usageDates.has(d)).sort()
+  const actualOnlyDates = Object.keys(dailyActual)
+    .filter(d => !invDates.has(d) && !usageDates.has(d))
+    .sort()
+
+  for (const date of actualOnlyDates) {
+    const actualData = dailyActual[date]
+    if (!actualData) continue
+
+    const usage: Record<string, number> = {}
+    products.forEach(p => {
+      const ids = inventoryIdMap[p.id] || [p.id]
+      let total = 0, found = false
+      for (const id of ids) {
+        if (actualData[id] != null) { total += actualData[id]; found = true }
+      }
+      if (found && total > 0) {
+        usage[p.id] = Math.round(total * 10) / 10
+      }
+    })
+
+    if (Object.keys(usage).length > 0) {
+      dailyUsages.push({ date, usage })
+    }
+  }
+
+  // 策略三：無盤點也無出貨記錄，直接用叫貨量作為用量近似（早期 Excel 匯入歷史資料）
+  const usageDatesAfterActual = new Set(dailyUsages.map(d => d.date))
+  const orderOnlyDates = Object.keys(dailyOrder)
+    .filter(d => !invDates.has(d) && !usageDatesAfterActual.has(d))
+    .sort()
 
   for (const date of orderOnlyDates) {
     const orderData = dailyOrder[date]
