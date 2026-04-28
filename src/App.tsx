@@ -75,6 +75,14 @@ function Loading() {
   )
 }
 
+function StoreLoadingScreen() {
+  return (
+    <div className="flex items-center justify-center min-h-screen" style={{ backgroundColor: 'var(--color-page-bg)' }}>
+      <p className="text-sm text-brand-lotus">載入中...</p>
+    </div>
+  )
+}
+
 /** 全寬佈局（PC 排班等大螢幕頁面） */
 function WideLayout() {
   return (
@@ -96,8 +104,10 @@ function NarrowLayout() {
 }
 
 function App() {
-  useInitStores()
+  const isReady = useInitStores()
   useVersionCheck()
+
+  if (!isReady) return <StoreLoadingScreen />
 
   return (
     <ErrorBoundary>
