@@ -19,6 +19,7 @@ import { sendTelegramNotification } from '@/lib/telegram'
 export default function Shipment() {
   const { showToast } = useToast()
   const allProducts = useProductStore((s) => s.items)
+  const productsInitialized = useProductStore((s) => s.initialized)
   const storeProducts = useMemo(() => allProducts.filter(p => !p.visibleIn || p.visibleIn === 'both' || p.visibleIn === 'order_only'), [allProducts])
   const productCategories = useProductStore((s) => s.categories)
   const stores = useStoreStore((s) => s.items)
@@ -65,6 +66,7 @@ export default function Shipment() {
   // Load order data + existing shipment for all stores
   useEffect(() => {
     if (!supabase) { setLoading(false); return }
+    if (!productsInitialized) return
     setLoading(true)
 
     const loadAll = async () => {
@@ -187,7 +189,7 @@ export default function Shipment() {
     }
 
     loadAll()
-  }, [selectedDate, storeProducts])
+  }, [selectedDate, productsInitialized])
 
   const toggleConfirm = (productId: string) => {
     setConfirmed(prev => ({

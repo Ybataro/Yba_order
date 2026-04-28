@@ -34,6 +34,7 @@ export default function Receive() {
   const { showToast } = useToast()
   const storeName = useStoreStore((s) => s.getName(storeId || ''))
   const allProducts = useProductStore((s) => s.items)
+  const productsInitialized = useProductStore((s) => s.initialized)
   const storeProducts = useMemo(() => allProducts.filter(p => !p.visibleIn || p.visibleIn === 'both' || p.visibleIn === 'order_only'), [allProducts])
   const productCategories = useProductStore((s) => s.categories)
 
@@ -56,7 +57,7 @@ export default function Receive() {
   // Load shipment data
   useEffect(() => {
     if (!supabase || !storeId) { setLoading(false); return }
-    if (storeProducts.length === 0) return
+    if (!productsInitialized) return
     setLoading(true)
 
     const load = async () => {
@@ -121,7 +122,7 @@ export default function Receive() {
     }
 
     load()
-  }, [storeId, today, storeProducts])
+  }, [storeId, today, productsInitialized])
 
   const regularItems = useMemo(() => shipmentItems.filter(i => !i.isExtra), [shipmentItems])
   const extraItems = useMemo(() => shipmentItems.filter(i => i.isExtra), [shipmentItems])
