@@ -3,7 +3,9 @@
     "allow": [
       "Bash(grep -E '\\\\.\\(sh|md|yml|env|ts|json\\)$')",
       "Bash(ssh:*)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Read(//d/YEN_project/**)",
+      "Read(//d/YEN_project/Yba_order/src/**)"
     ]
   }
 }

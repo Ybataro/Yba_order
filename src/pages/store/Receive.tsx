@@ -56,6 +56,7 @@ export default function Receive() {
   // Load shipment data
   useEffect(() => {
     if (!supabase || !storeId) { setLoading(false); return }
+    if (storeProducts.length === 0) return
     setLoading(true)
 
     const load = async () => {
