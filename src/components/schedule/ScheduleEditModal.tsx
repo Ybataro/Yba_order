@@ -33,6 +33,10 @@ export function ScheduleEditModal({
   const [note, setNote] = useState('')
   const [positionId, setPositionId] = useState<string | null>(null)
   const [selectedTags, setSelectedTags] = useState<string[]>([])
+  // 選取狀態（不立刻存，等按確認）
+  const [selectedShiftId, setSelectedShiftId] = useState<string | null>(null)
+  const [selectedLeaveId, setSelectedLeaveId] = useState<string | null>(null)
+  const [selectedTagOnly, setSelectedTagOnly] = useState<string | null>(null)
   const overlayRef = useRef<HTMLDivElement>(null)
 
   const leaveTypes = ATTENDANCE_TYPES.filter((t) => t.category !== 'work')
@@ -51,12 +55,21 @@ export function ScheduleEditModal({
         const at = existing.attendance_type || 'work'
         if (at !== 'work' && at !== 'late_early') {
           setTab('leave')
+          setSelectedLeaveId(at)
+          setSelectedShiftId(null)
+          setSelectedTagOnly(null)
         } else if (existing.custom_start && existing.custom_end && !existing.shift_type_id) {
           setTab('custom')
           setCustomStart(existing.custom_start)
           setCustomEnd(existing.custom_end)
+          setSelectedShiftId(null)
+          setSelectedLeaveId(null)
+          setSelectedTagOnly(null)
         } else {
           setTab('preset')
+          setSelectedShiftId(existing.shift_type_id ?? null)
+          setSelectedTagOnly(existing.tags?.length && !existing.shift_type_id ? (existing.tags[0] ?? null) : null)
+          setSelectedLeaveId(null)
         }
         setNote(existing.note || '')
         setPositionId(existing.position_id ?? null)
@@ -66,6 +79,9 @@ export function ScheduleEditModal({
         setNote('')
         setPositionId(null)
         setSelectedTags([])
+        setSelectedShiftId(null)
+        setSelectedLeaveId(null)
+        setSelectedTagOnly(null)
         setCustomStart('08:00')
         setCustomEnd('16:00')
       }
@@ -84,57 +100,59 @@ export function ScheduleEditModal({
     )
   }
 
-  const handleSelectShift = (st: ShiftType) => {
-    onSave({
-      shift_type_id: st.id,
-      custom_start: null,
-      custom_end: null,
-      note,
-      attendance_type: 'work',
-      position_id: positionId,
-      tags: selectedTags,
-    })
-    onClose()
+  // 確認儲存（三個 tab 共用）
+  const handleConfirm = () => {
+    if (tab === 'leave' && selectedLeaveId) {
+      onSave({
+        shift_type_id: null,
+        custom_start: null,
+        custom_end: null,
+        note,
+        attendance_type: selectedLeaveId,
+        position_id: null,
+        tags: [],
+      })
+      onClose()
+    } else if (tab === 'preset' && selectedShiftId) {
+      onSave({
+        shift_type_id: selectedShiftId,
+        custom_start: null,
+        custom_end: null,
+        note,
+        attendance_type: 'work',
+        position_id: positionId,
+        tags: selectedTags,
+      })
+      onClose()
+    } else if (tab === 'preset' && selectedTagOnly) {
+      onSave({
+        shift_type_id: null,
+        custom_start: null,
+        custom_end: null,
+        note,
+        attendance_type: 'work',
+        position_id: positionId,
+        tags: [selectedTagOnly],
+      })
+      onClose()
+    } else if (tab === 'custom') {
+      onSave({
+        shift_type_id: null,
+        custom_start: customStart,
+        custom_end: customEnd,
+        note,
+        attendance_type: 'work',
+        position_id: positionId,
+        tags: selectedTags,
+      })
+      onClose()
+    }
   }
 
-  const handleSelectLeave = (leaveId: string) => {
-    onSave({
-      shift_type_id: null,
-      custom_start: null,
-      custom_end: null,
-      note,
-      attendance_type: leaveId,
-      position_id: null,
-      tags: [],
-    })
-    onClose()
-  }
-
-  const handleCustomSubmit = () => {
-    onSave({
-      shift_type_id: null,
-      custom_start: customStart,
-      custom_end: customEnd,
-      note,
-      attendance_type: 'work',
-      position_id: positionId,
-      tags: selectedTags,
-    })
-    onClose()
-  }
-
-  const handleSelectTag = (tag: string) => {
-    onSave({
-      shift_type_id: null,
-      custom_start: null,
-      custom_end: null,
-      note,
-      attendance_type: 'work',
-      position_id: positionId,
-      tags: [tag],
-    })
-    onClose()
-  }
+  const canConfirm =
+    (tab === 'leave' && selectedLeaveId !== null) ||
+    (tab === 'preset' && (selectedShiftId !== null || selectedTagOnly !== null)) ||
+    tab === 'custom'
 
   const handleRemove = () => {
     onRemove?.()
@@ -194,9 +212,9 @@ export function ScheduleEditModal({
                 shiftTypes.map((st) => (
                   <button
                     key={st.id}
-                    onClick={() => handleSelectShift(st)}
+                    onClick={() => { setSelectedShiftId(st.id); setSelectedTagOnly(null) }}
                     className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl border active:scale-[0.98] transition-transform ${
-                      existing?.shift_type_id === st.id && (existing?.attendance_type || 'work') === 'work'
+                      selectedShiftId === st.id
                         ? 'border-brand-lotus bg-brand-lotus/5'
                         : 'border-gray-100 bg-white'
                     }`}
@@ -224,10 +242,10 @@ export function ScheduleEditModal({
               {leaveTypes.map((lt) => (
                 <button
                   key={lt.id}
-                  onClick={() => handleSelectLeave(lt.id)}
+                  onClick={() => setSelectedLeaveId(lt.id)}
                   className={`px-2 py-2.5 rounded-lg text-xs font-medium text-center active:scale-[0.96] transition-transform border ${
-                    existing?.attendance_type === lt.id
-                      ? 'border-brand-lotus ring-1 ring-brand-lotus'
+                    selectedLeaveId === lt.id
+                      ? 'border-brand-lotus ring-2 ring-brand-lotus'
                       : 'border-transparent'
                   }`}
                   style={{ backgroundColor: lt.color, color: lt.textColor }}
@@ -256,9 +274,6 @@ export function ScheduleEditModal({
                   />
                 </div>
               </div>
-              <button onClick={handleCustomSubmit} className="btn-primary w-full !h-11">
-                確認
-              </button>
             </div>
           )}
 
@@ -271,9 +286,9 @@ export function ScheduleEditModal({
                   <button
                     key={tag}
                     type="button"
-                    onClick={() => handleSelectTag(tag)}
+                    onClick={() => { setSelectedTagOnly(tag); setSelectedShiftId(null) }}
                     className={`px-2 py-2.5 rounded-lg text-xs font-medium text-center cursor-pointer active:scale-[0.96] transition-transform border ${
-                      existing?.tags?.includes(tag) && !existing?.shift_type_id
+                      selectedTagOnly === tag
                         ? 'border-brand-lotus ring-1 ring-brand-lotus bg-brand-lotus/10 text-brand-lotus'
                         : 'border-gray-200 bg-gray-50 text-brand-mocha hover:bg-gray-100'
                     }`}
@@ -334,6 +349,15 @@ export function ScheduleEditModal({
               className="w-full h-10 rounded-lg border border-gray-200 bg-surface-input px-3 text-sm text-brand-oak outline-none focus:border-brand-lotus"
             />
           </div>
+
+          {/* 確認儲存 */}
+          <button
+            onClick={handleConfirm}
+            disabled={!canConfirm}
+            className="w-full py-3 rounded-xl bg-brand-lotus text-white text-sm font-semibold active:scale-[0.98] transition-transform disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            確認儲存
+          </button>
 
           {/* Remove */}
           {existing && onRemove && (
