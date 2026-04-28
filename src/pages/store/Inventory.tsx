@@ -414,23 +414,23 @@ export default function Inventory() {
           }
         }
 
-        // 2. Today's order quantity (order_sessions.date = selectedDate)
-        const { data: orderSessions } = await supabase!
-          .from('order_sessions')
+        // 2. Today's actual shipment quantity (央廚實際出貨量，含主動出貨，date = selectedDate)
+        const { data: shipmentSessions } = await supabase!
+          .from('shipment_sessions')
           .select('id')
           .eq('store_id', storeId)
           .eq('date', selectedDate)
 
         const orderQty: Record<string, number> = {}
-        if (orderSessions && orderSessions.length > 0) {
-          const osids = orderSessions.map(s => s.id)
-          const { data: orderItems } = await supabase!
-            .from('order_items')
-            .select('product_id, quantity')
-            .in('session_id', osids)
-          if (orderItems) {
-            orderItems.forEach(item => {
-              orderQty[item.product_id] = (orderQty[item.product_id] || 0) + (item.quantity || 0)
+        if (shipmentSessions && shipmentSessions.length > 0) {
+          const ssids = shipmentSessions.map(s => s.id)
+          const { data: shipmentItems } = await supabase!
+            .from('shipment_items')
+            .select('product_id, actual_qty')
+            .in('session_id', ssids)
+          if (shipmentItems) {
+            shipmentItems.forEach(item => {
+              orderQty[item.product_id] = (orderQty[item.product_id] || 0) + (item.actual_qty || 0)
             })
           }
         }
