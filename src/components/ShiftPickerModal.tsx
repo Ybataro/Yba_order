@@ -38,6 +38,9 @@ export function ShiftPickerModal({
   const [customEnd, setCustomEnd] = useState('16:00')
   const [note, setNote] = useState('')
   const [positionId, setPositionId] = useState<string | null>(null)
+  // 選取狀態（不立刻存，等按確認）
+  const [selectedShiftId, setSelectedShiftId] = useState<string | null>(null)
+  const [selectedLeaveId, setSelectedLeaveId] = useState<string | null>(null)
   const overlayRef = useRef<HTMLDivElement>(null)
 
   const leaveTypes = ATTENDANCE_TYPES.filter((t) => t.category !== 'work')
@@ -47,12 +50,18 @@ export function ShiftPickerModal({
       const at = current?.attendance_type || 'work'
       if (at !== 'work' && at !== 'late_early') {
         setMode('leave')
+        setSelectedLeaveId(at)
+        setSelectedShiftId(null)
       } else if (current?.custom_start && current?.custom_end && !current?.shift_type_id) {
         setMode('custom')
         setCustomStart(current.custom_start)
         setCustomEnd(current.custom_end)
+        setSelectedShiftId(null)
+        setSelectedLeaveId(null)
       } else {
         setMode('preset')
+        setSelectedShiftId(current?.shift_type_id ?? null)
+        setSelectedLeaveId(null)
       }
       setNote(current?.note || '')
       setPositionId(current?.position_id ?? null)
@@ -69,41 +78,44 @@ export function ShiftPickerModal({
     if (e.target === overlayRef.current) onClose()
   }
 
-  const handleSelectShift = (st: ShiftType) => {
-    onSelect({
-      shift_type_id: st.id,
-      custom_start: null,
-      custom_end: null,
-      note,
-      attendance_type: 'work',
-      position_id: positionId,
-    })
-    onClose()
+  const handleConfirm = () => {
+    if (mode === 'leave' && selectedLeaveId) {
+      onSelect({
+        shift_type_id: null,
+        custom_start: null,
+        custom_end: null,
+        note,
+        attendance_type: selectedLeaveId,
+        position_id: null,
+      })
+      onClose()
+    } else if (mode === 'preset' && selectedShiftId) {
+      onSelect({
+        shift_type_id: selectedShiftId,
+        custom_start: null,
+        custom_end: null,
+        note,
+        attendance_type: 'work',
+        position_id: positionId,
+      })
+      onClose()
+    } else if (mode === 'custom') {
+      onSelect({
+        shift_type_id: null,
+        custom_start: customStart,
+        custom_end: customEnd,
+        note,
+        attendance_type: 'work',
+        position_id: positionId,
+      })
+      onClose()
+    }
   }
 
-  const handleSelectLeave = (leaveId: string) => {
-    onSelect({
-      shift_type_id: null,
-      custom_start: null,
-      custom_end: null,
-      note,
-      attendance_type: leaveId,
-      position_id: null,
-    })
-    onClose()
-  }
-
-  const handleCustomSubmit = () => {
-    onSelect({
-      shift_type_id: null,
-      custom_start: customStart,
-      custom_end: customEnd,
-      note,
-      attendance_type: 'work',
-      position_id: positionId,
-    })
-    onClose()
-  }
+  const canConfirm =
+    (mode === 'leave' && selectedLeaveId !== null) ||
+    (mode === 'preset' && selectedShiftId !== null) ||
+    mode === 'custom'
 
   const handleRemove = () => {
     onRemove?.()
@@ -129,7 +141,7 @@ export function ShiftPickerModal({
         style={{ animation: 'slideUp 0.25s ease-out' }}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-gray-100">
+        <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-gray-100 shrink-0">
           <div>
             <h3 className="text-base font-semibold text-brand-oak">{staffName} · {shortDate}</h3>
             <p className="text-xs text-brand-lotus mt-0.5">選擇班次</p>
@@ -146,9 +158,7 @@ export function ShiftPickerModal({
             <button
               onClick={() => setMode('preset')}
               className={`flex-1 py-2 rounded-lg text-sm font-medium ${
-                mode === 'preset'
-                  ? 'bg-brand-lotus text-white'
-                  : 'bg-gray-100 text-brand-mocha'
+                mode === 'preset' ? 'bg-brand-lotus text-white' : 'bg-gray-100 text-brand-mocha'
               }`}
             >
               預設班次
@@ -156,9 +166,7 @@ export function ShiftPickerModal({
             <button
               onClick={() => setMode('leave')}
               className={`flex-1 py-2 rounded-lg text-sm font-medium ${
-                mode === 'leave'
-                  ? 'bg-brand-lotus text-white'
-                  : 'bg-gray-100 text-brand-mocha'
+                mode === 'leave' ? 'bg-brand-lotus text-white' : 'bg-gray-100 text-brand-mocha'
               }`}
             >
               假別
@@ -166,9 +174,7 @@ export function ShiftPickerModal({
             <button
               onClick={() => setMode('custom')}
               className={`flex-1 py-2 rounded-lg text-sm font-medium ${
-                mode === 'custom'
-                  ? 'bg-brand-lotus text-white'
-                  : 'bg-gray-100 text-brand-mocha'
+                mode === 'custom' ? 'bg-brand-lotus text-white' : 'bg-gray-100 text-brand-mocha'
               }`}
             >
               自訂時段
@@ -185,17 +191,14 @@ export function ShiftPickerModal({
                 shiftTypes.map((st) => (
                   <button
                     key={st.id}
-                    onClick={() => handleSelectShift(st)}
+                    onClick={() => setSelectedShiftId(st.id)}
                     className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl border active:scale-[0.98] transition-transform ${
-                      current?.shift_type_id === st.id
+                      selectedShiftId === st.id
                         ? 'border-brand-lotus bg-brand-lotus/5'
                         : 'border-gray-100 bg-white'
                     }`}
                   >
-                    <div
-                      className="w-3 h-3 rounded-full shrink-0"
-                      style={{ backgroundColor: st.color }}
-                    />
+                    <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: st.color }} />
                     <div className="flex-1 text-left">
                       <span className="text-sm font-medium text-brand-oak">{st.name}</span>
                     </div>
@@ -211,10 +214,10 @@ export function ShiftPickerModal({
               {leaveTypes.map((lt) => (
                 <button
                   key={lt.id}
-                  onClick={() => handleSelectLeave(lt.id)}
+                  onClick={() => setSelectedLeaveId(lt.id)}
                   className={`px-2 py-2.5 rounded-lg text-xs font-medium text-center active:scale-[0.96] transition-transform border ${
-                    current?.attendance_type === lt.id
-                      ? 'border-brand-lotus ring-1 ring-brand-lotus'
+                    selectedLeaveId === lt.id
+                      ? 'border-brand-lotus ring-2 ring-brand-lotus'
                       : 'border-transparent'
                   }`}
                   style={{ backgroundColor: lt.color, color: lt.textColor }}
@@ -243,12 +246,6 @@ export function ShiftPickerModal({
                   />
                 </div>
               </div>
-              <button
-                onClick={handleCustomSubmit}
-                className="btn-primary w-full !h-11"
-              >
-                確認
-              </button>
             </div>
           )}
 
@@ -280,6 +277,15 @@ export function ShiftPickerModal({
               className="w-full h-10 rounded-lg border border-gray-200 bg-surface-input px-3 text-sm text-brand-oak outline-none focus:border-brand-lotus"
             />
           </div>
+
+          {/* 確認儲存 */}
+          <button
+            onClick={handleConfirm}
+            disabled={!canConfirm}
+            className="w-full py-3 rounded-xl bg-brand-lotus text-white text-sm font-semibold active:scale-[0.98] transition-transform disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            確認儲存
+          </button>
 
           {/* 清除排班 */}
           {current && onRemove && (
