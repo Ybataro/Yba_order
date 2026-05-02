@@ -145,6 +145,13 @@ export default function ProductionStats() {
   // DB-driven zones
   const dbZones = useProductionZoneStore((s) => s.zones)
   const storeInitialized = useProductionZoneStore((s) => s.initialized)
+  const sugarTypes = useProductionZoneStore((s) => s.sugarTypes)
+
+  const sugarUnitMap = useMemo(() => {
+    const m: Record<string, string> = {}
+    for (const st of sugarTypes) m[st.name] = st.unit || 'g'
+    return m
+  }, [sugarTypes])
 
   const displayZones: DisplayZone[] = useMemo(() => {
     if (storeInitialized && dbZones.length > 0) {
@@ -654,7 +661,7 @@ export default function ProductionStats() {
                                 {subRows.map((row) => (
                                   <tr key={row.name} className="border-t border-gray-50">
                                     <td className="py-1.5 pr-2 text-brand-oak font-medium">
-                                      {row.name} <span className="text-brand-lotus">(g)</span>
+                                      {row.name} <span className="text-brand-lotus">({sugarUnitMap[row.name] ?? 'g'})</span>
                                     </td>
                                     <td className="py-1.5 px-1 text-center text-brand-mocha">{row.count}</td>
                                     <td className="py-1.5 px-1 text-center font-semibold text-brand-oak">{fmt(row.simpleAvg)}</td>
@@ -703,7 +710,7 @@ export default function ProductionStats() {
                                   if (row.unitAvg === null && row.weightedAvg === null) return null
                                   return (
                                     <tr key={row.name} className="border-t border-gray-50">
-                                      <td className="py-1.5 pr-2 text-brand-oak font-medium">{row.name} <span className="text-brand-lotus">(g)</span></td>
+                                      <td className="py-1.5 pr-2 text-brand-oak font-medium">{row.name} <span className="text-brand-lotus">({sugarUnitMap[row.name] ?? 'g'})</span></td>
                                       <td className="py-1.5 px-1 text-center font-semibold text-status-info">{row.unitAvg !== null ? fmt(row.unitAvg) : '-'}</td>
                                       <td className="py-1.5 px-1 text-center font-semibold text-brand-amber">{row.weightedAvg !== null ? fmt(row.weightedAvg) : '-'}</td>
                                     </tr>

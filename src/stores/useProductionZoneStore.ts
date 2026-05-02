@@ -110,7 +110,7 @@ export const useProductionZoneStore = create<ProductionZoneState>()((set, get) =
     const sugarTypes: SugarTypeDef[] = (sugarRes.data ?? []).map((s) => ({
       id: s.id,
       name: s.name,
-      unit: s.unit ?? 'g',
+      unit: s.unit ?? '',
       sort_order: s.sort_order ?? 0,
       is_active: s.is_active ?? true,
     }))
