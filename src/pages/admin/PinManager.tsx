@@ -53,6 +53,7 @@ const KITCHEN_PAGES = [
   { key: 'products',             label: '成品庫存' },
   { key: 'material-orders',      label: '原物料叫貨' },
   { key: 'production-schedule',  label: '生產排程建議' },
+  { key: 'production-log',       label: '每日生產紀錄' },
   { key: 'expense',              label: '雜支申報' },
   { key: 'expense-edit',         label: '雜支改刪（主管）' },
   { key: 'staff-schedule',       label: '排班表' },
