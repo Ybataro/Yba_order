@@ -87,13 +87,20 @@ export default function BossDashboard() {
   const [shipmentSessions, setShipmentSessions] = useState<ShipmentSession[]>([])
   const [inventorySessions, setInventorySessions] = useState<InventorySession[]>([])
   const [orderItems, setOrderItems] = useState<OrderItemRow[]>([])
+  const [partialErrors, setPartialErrors] = useState<string[]>([])
+  const [fatalError, setFatalError] = useState<string | null>(null)
+  const [reloadKey, setReloadKey] = useState(0)
 
   // Fetch all data
   useEffect(() => {
     if (!supabase) { setLoading(false); return }
 
     setLoading(true)
-    Promise.all([
+    setPartialErrors([])
+    setFatalError(null)
+
+    // Why: 改用 allSettled，任一查詢失敗不會拖垮整頁。partial errors 顯示但不擋使用。
+    Promise.allSettled([
       // A. Settlements (7 days)
       supabase
         .from('settlement_sessions')
@@ -122,15 +129,44 @@ export default function BossDashboard() {
         .select('session_id, product_id, quantity, order_sessions(store_id, date)')
         .gte('order_sessions.date', sevenDaysAgo)
         .lte('order_sessions.date', today),
-    ]).then(([settRes, orderRes, shipRes, invRes, orderItemRes]) => {
-      setSettlements((settRes.data as SettlementSession[] | null) || [])
-      setOrderSessions((orderRes.data as OrderSession[] | null) || [])
-      setShipmentSessions((shipRes.data as ShipmentSession[] | null) || [])
-      setInventorySessions((invRes.data as InventorySession[] | null) || [])
-      setOrderItems((orderItemRes.data as OrderItemRow[] | null)?.filter(i => i.order_sessions) || [])
+    ]).then((results) => {
+      const labels = ['結帳資料', '今日叫貨', '今日出貨', '盤點資料', '7天叫貨明細']
+      const errors: string[] = []
+
+      const extractData = <T,>(idx: number): T[] => {
+        const r = results[idx]
+        if (r.status === 'rejected') {
+          errors.push(`${labels[idx]}查詢失敗`)
+          console.error(`[BossDashboard] ${labels[idx]} rejected:`, r.reason)
+          return []
+        }
+        if (r.value.error) {
+          errors.push(`${labels[idx]}查詢失敗：${r.value.error.message}`)
+          console.error(`[BossDashboard] ${labels[idx]} error:`, r.value.error)
+          return []
+        }
+        return (r.value.data as T[] | null) || []
+      }
+
+      setSettlements(extractData<SettlementSession>(0))
+      setOrderSessions(extractData<OrderSession>(1))
+      setShipmentSessions(extractData<ShipmentSession>(2))
+      setInventorySessions(extractData<InventorySession>(3))
+      setOrderItems(extractData<OrderItemRow>(4).filter(i => i.order_sessions))
+      setPartialErrors(errors)
+
+      // 若所有查詢都失敗，視為 fatal
+      if (errors.length === labels.length) {
+        setFatalError('所有資料查詢都失敗，請檢查網路或稍後重試')
+      }
+      setLoading(false)
+    }).catch((err) => {
+      // 理論上 allSettled 不會 reject，但保險
+      console.error('[BossDashboard] unexpected error:', err)
+      setFatalError('資料載入發生未預期錯誤')
       setLoading(false)
     })
-  }, [today, yesterday, sevenDaysAgo])
+  }, [today, yesterday, sevenDaysAgo, reloadKey])
 
   // ===== Computed data =====
 
@@ -351,8 +387,38 @@ export default function BossDashboard() {
           <RefreshCw size={16} className="animate-spin" />
           載入中...
         </div>
+      ) : fatalError ? (
+        <div className="mx-4 my-8 p-6 bg-status-danger/10 border border-status-danger/30 rounded-card text-center">
+          <p className="text-status-danger font-medium mb-3">⚠️ {fatalError}</p>
+          <button
+            onClick={() => setReloadKey((k) => k + 1)}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-brand-mocha text-white rounded-btn text-sm active:scale-95 transition-transform"
+          >
+            <RefreshCw size={14} />
+            重新載入
+          </button>
+        </div>
       ) : (
         <>
+          {/* 部分查詢失敗的友善提示 */}
+          {partialErrors.length > 0 && (
+            <div className="mx-4 mt-4 p-3 bg-status-warning/10 border border-status-warning/30 rounded-card flex items-start gap-2">
+              <span className="text-status-warning text-base shrink-0">⚠️</span>
+              <div className="flex-1">
+                <p className="text-xs font-medium text-status-warning mb-1">部分資料載入失敗，顯示可能不完整</p>
+                <ul className="text-xs text-brand-lotus list-disc list-inside">
+                  {partialErrors.map((e, i) => <li key={i}>{e}</li>)}
+                </ul>
+              </div>
+              <button
+                onClick={() => setReloadKey((k) => k + 1)}
+                className="text-xs text-status-warning underline shrink-0"
+              >
+                重試
+              </button>
+            </div>
+          )}
+
           {/* ===== 1. 摘要卡片 ===== */}
           <SectionHeader title={viewDate === 'today' ? '今日摘要' : '昨日摘要'} icon="■" />
           <div className="bg-white">
