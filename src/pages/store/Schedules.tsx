@@ -144,7 +144,10 @@ export default function StoreSchedules() {
       setApproveNote('')
       loadManagerPending()
     } else {
-      showToast('核准失敗', 'error')
+      showToast('核准失敗，此單可能已被他人處理', 'error')
+      setApproveId(null)
+      setApproveNote('')
+      loadManagerPending()
     }
   }
 
@@ -161,7 +164,10 @@ export default function StoreSchedules() {
       setRejectReason('')
       loadManagerPending()
     } else {
-      showToast('駁回失敗', 'error')
+      showToast('駁回失敗，此單可能已被他人處理', 'error')
+      setRejectId(null)
+      setRejectReason('')
+      loadManagerPending()
     }
   }
 

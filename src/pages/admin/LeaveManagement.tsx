@@ -80,7 +80,11 @@ export default function LeaveManagement() {
       setApproveNote('')
       fetchPending()
     } else {
-      showToast('核准失敗', 'error')
+      // 失敗可能是樂觀鎖 trigger（此單已被他人處理）— 重撈最新狀態讓 UI 同步
+      showToast('核准失敗，此單可能已被他人處理', 'error')
+      setApproveId(null)
+      setApproveNote('')
+      fetchPending()
     }
   }
 
@@ -95,7 +99,10 @@ export default function LeaveManagement() {
       setRejectReason('')
       fetchPending()
     } else {
-      showToast('駁回失敗', 'error')
+      showToast('駁回失敗，此單可能已被他人處理', 'error')
+      setRejectId(null)
+      setRejectReason('')
+      fetchPending()
     }
   }
 

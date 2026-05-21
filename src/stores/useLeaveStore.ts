@@ -496,12 +496,19 @@ export const useLeaveStore = create<LeaveState>()((set, get) => ({
       updatePayload.manager_reviewed_at = now
     }
 
-    const { error } = await supabase
+    // 樂觀鎖：只允許從 pending 狀態更新（防止同時多人核准）
+    const { data: updated, error } = await supabase
       .from('leave_requests')
       .update(updatePayload)
       .eq('id', id)
+      .eq('status', 'pending')
+      .select('id')
 
     if (error) { console.error('第一主管核准失敗:', error.message); return false }
+    if (!updated || updated.length === 0) {
+      console.warn(`[approver1Approve] race detected: id=${id} 狀態已被他人變更`)
+      return false
+    }
 
     set((s) => ({
       requests: s.requests.map((r) =>
@@ -555,7 +562,8 @@ export const useLeaveStore = create<LeaveState>()((set, get) => ({
     if (!supabase) return false
     const now = new Date().toISOString()
 
-    const { error } = await supabase
+    // 樂觀鎖：只允許從 pending 駁回
+    const { data: updated, error } = await supabase
       .from('leave_requests')
       .update({
         status: 'rejected',
@@ -564,8 +572,14 @@ export const useLeaveStore = create<LeaveState>()((set, get) => ({
         reject_reason: reason,
       })
       .eq('id', id)
+      .eq('status', 'pending')
+      .select('id')
 
     if (error) { console.error('第一主管駁回失敗:', error.message); return false }
+    if (!updated || updated.length === 0) {
+      console.warn(`[approver1Reject] race detected: id=${id} 狀態已被他人變更`)
+      return false
+    }
 
     // 查員工資料，通知員工本人
     const { data: reqData } = await supabase
@@ -605,7 +619,8 @@ export const useLeaveStore = create<LeaveState>()((set, get) => ({
     if (!supabase) return false
     const now = new Date().toISOString()
 
-    const { error } = await supabase
+    // 樂觀鎖：只允許從 approver1_approved 升級到 manager_approved
+    const { data: updated, error } = await supabase
       .from('leave_requests')
       .update({
         status: 'manager_approved',
@@ -617,8 +632,14 @@ export const useLeaveStore = create<LeaveState>()((set, get) => ({
         manager_reviewed_at: now,
       })
       .eq('id', id)
+      .eq('status', 'approver1_approved')
+      .select('id')
 
     if (error) { console.error('第二主管核准失敗:', error.message); return false }
+    if (!updated || updated.length === 0) {
+      console.warn(`[approver2Approve] race detected: id=${id} 狀態已被他人變更`)
+      return false
+    }
 
     // 通知 admin（V2：從 user_pins 查；fallback：舊版 app_settings）
     const { data: reqData } = await supabase
@@ -676,7 +697,8 @@ export const useLeaveStore = create<LeaveState>()((set, get) => ({
     if (!supabase) return false
     const now = new Date().toISOString()
 
-    const { error } = await supabase
+    // 樂觀鎖：只允許從 approver1_approved 駁回
+    const { data: updated, error } = await supabase
       .from('leave_requests')
       .update({
         status: 'rejected',
@@ -685,8 +707,14 @@ export const useLeaveStore = create<LeaveState>()((set, get) => ({
         reject_reason: reason,
       })
       .eq('id', id)
+      .eq('status', 'approver1_approved')
+      .select('id')
 
     if (error) { console.error('第二主管駁回失敗:', error.message); return false }
+    if (!updated || updated.length === 0) {
+      console.warn(`[approver2Reject] race detected: id=${id} 狀態已被他人變更`)
+      return false
+    }
 
     const { data: reqData } = await supabase
       .from('leave_requests').select('*').eq('id', id).single()
@@ -727,8 +755,8 @@ export const useLeaveStore = create<LeaveState>()((set, get) => ({
     const req = get().requests.find((r) => r.id === id)
     if (!req) return false
 
-    // 1. 更新狀態
-    const { error } = await supabase
+    // 1. 更新狀態（樂觀鎖：只允許從 manager_approved 升到 approved）
+    const { data: updated, error } = await supabase
       .from('leave_requests')
       .update({
         status: 'approved',
@@ -737,8 +765,14 @@ export const useLeaveStore = create<LeaveState>()((set, get) => ({
         admin_approve_note: note,
       })
       .eq('id', id)
+      .eq('status', 'manager_approved')
+      .select('id')
 
     if (error) { console.error('後台核准失敗:', error.message); return false }
+    if (!updated || updated.length === 0) {
+      console.warn(`[approve] race detected: id=${id} 狀態已被他人變更`)
+      return false
+    }
 
     // 2. 寫入排班表
     const dates: string[] = []
@@ -839,7 +873,8 @@ export const useLeaveStore = create<LeaveState>()((set, get) => ({
     if (!supabase) return false
     const now = new Date().toISOString()
 
-    const { error } = await supabase
+    // 樂觀鎖：只允許從 manager_approved 駁回
+    const { data: updated, error } = await supabase
       .from('leave_requests')
       .update({
         status: 'rejected',
@@ -850,8 +885,14 @@ export const useLeaveStore = create<LeaveState>()((set, get) => ({
         reject_reason: reason,
       })
       .eq('id', id)
+      .eq('status', 'manager_approved')
+      .select('id')
 
     if (error) { console.error('後台駁回失敗:', error.message); return false }
+    if (!updated || updated.length === 0) {
+      console.warn(`[reject] race detected: id=${id} 狀態已被他人變更`)
+      return false
+    }
 
     const req = get().requests.find((r) => r.id === id)
     if (req) {
