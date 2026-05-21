@@ -38,6 +38,7 @@ export default function ExpenseManagement() {
   const [customEnd, setCustomEnd] = useState('')
   const [items, setItems] = useState<ExpenseRow[]>([])
   const [loading, setLoading] = useState(false)
+  const [fetchError, setFetchError] = useState<string | null>(null)
 
   const today = getTodayTW()
 
@@ -71,10 +72,23 @@ export default function ExpenseManagement() {
       query = query.eq('store_id', storeFilter)
     }
 
-    query.then(({ data }) => {
-      setItems(data || [])
-      setLoading(false)
-    })
+    query.then(
+      ({ data, error }) => {
+        if (error) {
+          console.error('[ExpenseManagement] 查詢失敗:', error.message)
+          setFetchError(error.message)
+          setItems([])
+        } else {
+          setItems((data as ExpenseRow[]) || [])
+        }
+        setLoading(false)
+      },
+      (err) => {
+        console.error('[ExpenseManagement] 網路錯誤:', err)
+        setFetchError('網路異常，請稍後重試')
+        setLoading(false)
+      }
+    )
   }, [startDate, endDate, storeFilter])
 
   const formatDateDisplay = (d: string) => {
@@ -232,6 +246,11 @@ export default function ExpenseManagement() {
       <SectionHeader title="雜支明細" icon="■" />
       {loading ? (
         <div className="flex items-center justify-center py-20 text-sm text-brand-lotus">載入中...</div>
+      ) : fetchError ? (
+        <div className="mx-4 my-8 p-4 bg-status-danger/10 border border-status-danger/30 rounded-card text-center">
+          <p className="text-status-danger text-sm font-medium mb-1">⚠️ 載入失敗</p>
+          <p className="text-xs text-brand-lotus">{fetchError}</p>
+        </div>
       ) : items.length === 0 ? (
         <div className="flex items-center justify-center py-20 text-sm text-brand-lotus">此期間無雜支紀錄</div>
       ) : (

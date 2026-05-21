@@ -269,26 +269,48 @@ export default function BossDashboard() {
 
     const productMap = new Map(products.map((p) => [p.id, p]))
 
-    const alerts: { storeId: string; storeName: string; productName: string; inventory: number; dailyAvg: number }[] = []
+    // severity: critical=完全沒貨、warning=低於日均、notice=低於日均2倍（但有貨）
+    type Severity = 'critical' | 'warning' | 'notice'
+    const alerts: { storeId: string; storeName: string; productName: string; unit: string; inventory: number; dailyAvg: number; severity: Severity }[] = []
 
     latestInventory.forEach((invQty, key) => {
       const [storeId, productId] = key.split('__')
       const totalOrdered = orderTotals.get(key) || 0
       const daysCount = orderDays.get(key)?.size || 7
       const dailyAvg = daysCount > 0 ? totalOrdered / daysCount : 0
-      if (dailyAvg > 0 && invQty < dailyAvg) {
-        const product = productMap.get(productId)
+      const product = productMap.get(productId)
+
+      // 三種警示條件：
+      // 1) critical：庫存=0 且 有過叫貨紀錄（停售品不算）
+      // 2) warning：庫存 < 日均（不夠撐一天）
+      // 3) 充足：庫存 >= 日均（不警示）
+      let severity: Severity | null = null
+      if (invQty <= 0 && dailyAvg > 0) {
+        severity = 'critical'
+      } else if (dailyAvg > 0 && invQty < dailyAvg) {
+        severity = 'warning'
+      }
+
+      if (severity) {
         alerts.push({
           storeId,
           storeName: getStoreName(storeId),
           productName: product?.name || productId,
+          unit: product?.unit || '',
           inventory: Math.round(invQty * 10) / 10,
           dailyAvg: Math.round(dailyAvg * 10) / 10,
+          severity,
         })
       }
     })
 
-    return alerts.sort((a, b) => a.storeName.localeCompare(b.storeName) || a.productName.localeCompare(b.productName))
+    // 排序：critical 在前 → warning → 同 severity 按店名再按品名
+    const severityRank = { critical: 0, warning: 1, notice: 2 }
+    return alerts.sort((a, b) => {
+      const sd = severityRank[a.severity] - severityRank[b.severity]
+      if (sd !== 0) return sd
+      return a.storeName.localeCompare(b.storeName) || a.productName.localeCompare(b.productName)
+    })
   }, [inventorySessions, orderItems, products, getStoreName])
 
   // Order / Shipment status per store
@@ -506,19 +528,24 @@ export default function BossDashboard() {
               <p className="px-4 py-3 text-sm text-status-success">各店庫存充足 ✓</p>
             ) : (
               <div className="divide-y divide-gray-50">
-                {inventoryAlerts.map((a, idx) => (
-                  <div key={idx} className="flex items-center justify-between px-4 py-2.5">
-                    <div>
-                      <span className="text-xs px-1.5 py-0.5 rounded bg-brand-mocha/10 text-brand-mocha mr-2">{a.storeName}</span>
-                      <span className="text-sm text-brand-oak">{a.productName}</span>
+                {inventoryAlerts.map((a, idx) => {
+                  // critical=完全沒貨 紅色＋⚠ 警示符；warning=不足 橘色
+                  const colorClass = a.severity === 'critical' ? 'text-status-danger' : 'text-status-warning'
+                  return (
+                    <div key={idx} className="flex items-center justify-between px-4 py-2.5">
+                      <div className="flex items-center min-w-0">
+                        <span className="text-xs px-1.5 py-0.5 rounded bg-brand-mocha/10 text-brand-mocha mr-2 shrink-0">{a.storeName}</span>
+                        {a.severity === 'critical' && <span className="text-status-danger mr-1 text-xs shrink-0">⚠</span>}
+                        <span className="text-sm text-brand-oak truncate">{a.productName}</span>
+                      </div>
+                      <div className="text-right text-xs text-brand-lotus shrink-0 ml-2">
+                        <span className={`${colorClass} font-num font-medium`}>{a.inventory}{a.unit}</span>
+                        <span className="mx-1">/</span>
+                        <span>日均 <span className="font-num">{a.dailyAvg}{a.unit}</span></span>
+                      </div>
                     </div>
-                    <div className="text-right text-xs text-brand-lotus">
-                      <span className="text-status-danger font-num">{a.inventory}</span>
-                      <span className="mx-1">/</span>
-                      <span>日均 <span className="font-num">{a.dailyAvg}</span></span>
-                    </div>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             )}
           </div>

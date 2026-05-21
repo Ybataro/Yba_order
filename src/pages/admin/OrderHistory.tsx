@@ -4,6 +4,7 @@ import { SectionHeader } from '@/components/SectionHeader'
 import { useStoreStore } from '@/stores/useStoreStore'
 import { useProductStore } from '@/stores/useProductStore'
 import { useMaterialStore } from '@/stores/useMaterialStore'
+import { useZoneStore } from '@/stores/useZoneStore'
 import { supabase } from '@/lib/supabase'
 import { getTodayTW } from '@/lib/session'
 import { ChevronDown, ChevronUp } from 'lucide-react'
@@ -61,6 +62,8 @@ export default function OrderHistory() {
   const productCategories = useProductStore((s) => s.categories)
   const materials = useMaterialStore((s) => s.items)
   const materialCategories = useMaterialStore((s) => s.categories)
+  const allZones = useZoneStore((s) => s.zones)
+  const zoneProducts = useZoneStore((s) => s.zoneProducts)
 
   const [orderType, setOrderType] = useState<OrderType>('store')
   const [viewMode, setViewMode] = useState<ViewMode>('detail')
@@ -71,6 +74,7 @@ export default function OrderHistory() {
 
   const [sessions, setSessions] = useState<OrderSession[]>([])
   const [loading, setLoading] = useState(false)
+  const [fetchError, setFetchError] = useState<string | null>(null)
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set())
 
   const today = getTodayTW()
@@ -92,8 +96,25 @@ export default function OrderHistory() {
   useEffect(() => {
     if (!supabase) return
     setLoading(true)
+    setFetchError(null)
     setSessions([])
     setExpandedIds(new Set())
+
+    const handleResult = ({ data, error }: { data: unknown; error: { message: string } | null }) => {
+      if (error) {
+        console.error('[OrderHistory] 查詢失敗:', error.message)
+        setFetchError(error.message)
+        setSessions([])
+      } else {
+        setSessions((data as OrderSession[]) || [])
+      }
+      setLoading(false)
+    }
+    const handleCatch = (err: unknown) => {
+      console.error('[OrderHistory] 網路錯誤:', err)
+      setFetchError('網路異常，請稍後重試')
+      setLoading(false)
+    }
 
     if (orderType === 'store') {
       let query = supabase
@@ -107,10 +128,7 @@ export default function OrderHistory() {
         query = query.eq('store_id', storeFilter)
       }
 
-      query.then(({ data }) => {
-        setSessions(data || [])
-        setLoading(false)
-      })
+      query.then(handleResult, handleCatch)
     } else {
       supabase
         .from('material_order_sessions')
@@ -118,10 +136,7 @@ export default function OrderHistory() {
         .gte('date', startDate)
         .lte('date', endDate)
         .order('date', { ascending: false })
-        .then(({ data }) => {
-          setSessions(data || [])
-          setLoading(false)
-        })
+        .then(handleResult, handleCatch)
     }
   }, [orderType, startDate, endDate, storeFilter])
 
@@ -134,13 +149,15 @@ export default function OrderHistory() {
     })
   }
 
-  // Product / Material lookup helpers
-  const getProductName = (id: string) => products.find((p) => p.id === id)?.name ?? id
-  const getProductUnit = (id: string) => products.find((p) => p.id === id)?.unit ?? ''
-  const getProductCategory = (id: string) => products.find((p) => p.id === id)?.category ?? '其他'
-  const getMaterialName = (id: string) => materials.find((m) => m.id === id)?.name ?? id
-  const getMaterialUnit = (id: string) => materials.find((m) => m.id === id)?.unit ?? ''
-  const getMaterialCategory = (id: string) => materials.find((m) => m.id === id)?.category ?? '其他'
+  // Product / Material lookup helpers — memoized Map 避免 N+1 find()
+  const productMap = useMemo(() => new Map(products.map((p) => [p.id, p])), [products])
+  const materialMap = useMemo(() => new Map(materials.map((m) => [m.id, m])), [materials])
+  const getProductName = (id: string) => productMap.get(id)?.name ?? id
+  const getProductUnit = (id: string) => productMap.get(id)?.unit ?? ''
+  const getProductCategory = (id: string) => productMap.get(id)?.category ?? '其他'
+  const getMaterialName = (id: string) => materialMap.get(id)?.name ?? id
+  const getMaterialUnit = (id: string) => materialMap.get(id)?.unit ?? ''
+  const getMaterialCategory = (id: string) => materialMap.get(id)?.category ?? '其他'
 
   // Stats computation
   const stats = useMemo(() => {
@@ -337,6 +354,11 @@ export default function OrderHistory() {
       {/* Content */}
       {loading ? (
         <div className="flex items-center justify-center py-20 text-sm text-brand-lotus">載入中...</div>
+      ) : fetchError ? (
+        <div className="mx-4 my-8 p-4 bg-status-danger/10 border border-status-danger/30 rounded-card text-center">
+          <p className="text-status-danger text-sm font-medium mb-1">⚠️ 載入失敗</p>
+          <p className="text-xs text-brand-lotus">{fetchError}</p>
+        </div>
       ) : viewMode === 'detail' ? (
         /* Detail view */
         <div>
@@ -387,33 +409,82 @@ export default function OrderHistory() {
                         <p className="text-xs text-brand-lotus py-2">無品項資料</p>
                       ) : (
                         <div className="border border-gray-100 rounded-lg overflow-hidden">
-                          {orderType === 'store'
-                            ? (filledItems as OrderItem[]).map((item, idx) => (
-                                <div
-                                  key={item.product_id}
-                                  className={`flex items-center justify-between px-3 py-2 ${
-                                    idx < filledItems.length - 1 ? 'border-b border-gray-50' : ''
-                                  }`}
-                                >
+                          {orderType === 'store' ? (() => {
+                            // 按 zone 分組顯示（門店叫貨）
+                            const storeItems = filledItems as OrderItem[]
+                            const itemMap = new Map(storeItems.map((i) => [i.product_id, i]))
+                            const storeZones = session.store_id
+                              ? allZones.filter((z) => z.storeId === session.store_id).sort((a, b) => a.sortOrder - b.sortOrder)
+                              : []
+                            // 每個 zone 內的品項
+                            const zoneGroups = storeZones.map((zone) => {
+                              const pidsInZone = zoneProducts
+                                .filter((zp) => zp.zoneId === zone.id)
+                                .sort((a, b) => a.sortOrder - b.sortOrder)
+                                .map((zp) => zp.productId)
+                              const itemsInZone = pidsInZone
+                                .map((pid) => itemMap.get(pid))
+                                .filter((i): i is OrderItem => !!i)
+                              return { zone, items: itemsInZone }
+                            }).filter((g) => g.items.length > 0)
+
+                            // 未歸入任何 zone 的孤兒品項
+                            const assignedPids = new Set(zoneGroups.flatMap((g) => g.items.map((i) => i.product_id)))
+                            const orphans = storeItems.filter((i) => !assignedPids.has(i.product_id))
+
+                            // 沒有 zone 設定（或全孤兒）就走平鋪
+                            if (zoneGroups.length === 0) {
+                              return storeItems.map((item, idx) => (
+                                <div key={item.product_id} className={`flex items-center justify-between px-3 py-2 ${idx < storeItems.length - 1 ? 'border-b border-gray-50' : ''}`}>
                                   <span className="text-sm text-brand-oak">{getProductName(item.product_id)}</span>
-                                  <span className="text-sm font-num text-brand-mocha">
-                                    {item.quantity} {getProductUnit(item.product_id)}
-                                  </span>
+                                  <span className="text-sm font-num text-brand-mocha">{item.quantity} {getProductUnit(item.product_id)}</span>
                                 </div>
                               ))
-                            : (filledItems as MaterialOrderItem[]).map((item, idx) => (
-                                <div
-                                  key={item.material_id}
-                                  className={`flex items-center justify-between px-3 py-2 ${
-                                    idx < filledItems.length - 1 ? 'border-b border-gray-50' : ''
-                                  }`}
-                                >
-                                  <span className="text-sm text-brand-oak">{getMaterialName(item.material_id)}</span>
-                                  <span className="text-sm font-num text-brand-mocha">
-                                    {item.quantity} {getMaterialUnit(item.material_id)}
-                                  </span>
-                                </div>
-                              ))}
+                            }
+
+                            return (
+                              <>
+                                {zoneGroups.map((g) => (
+                                  <div key={g.zone.id}>
+                                    <div className="px-3 py-1.5 bg-surface-section text-xs font-semibold text-brand-mocha">
+                                      {g.zone.zoneName}
+                                    </div>
+                                    {g.items.map((item, idx) => (
+                                      <div key={item.product_id} className={`flex items-center justify-between px-3 py-2 ${idx < g.items.length - 1 ? 'border-b border-gray-50' : ''}`}>
+                                        <span className="text-sm text-brand-oak">{getProductName(item.product_id)}</span>
+                                        <span className="text-sm font-num text-brand-mocha">{item.quantity} {getProductUnit(item.product_id)}</span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                ))}
+                                {orphans.length > 0 && (
+                                  <div>
+                                    <div className="px-3 py-1.5 bg-surface-section text-xs font-semibold text-brand-mocha">未分類</div>
+                                    {orphans.map((item, idx) => (
+                                      <div key={item.product_id} className={`flex items-center justify-between px-3 py-2 ${idx < orphans.length - 1 ? 'border-b border-gray-50' : ''}`}>
+                                        <span className="text-sm text-brand-oak">{getProductName(item.product_id)}</span>
+                                        <span className="text-sm font-num text-brand-mocha">{item.quantity} {getProductUnit(item.product_id)}</span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+                              </>
+                            )
+                          })() : (
+                            (filledItems as MaterialOrderItem[]).map((item, idx) => (
+                              <div
+                                key={item.material_id}
+                                className={`flex items-center justify-between px-3 py-2 ${
+                                  idx < filledItems.length - 1 ? 'border-b border-gray-50' : ''
+                                }`}
+                              >
+                                <span className="text-sm text-brand-oak">{getMaterialName(item.material_id)}</span>
+                                <span className="text-sm font-num text-brand-mocha">
+                                  {item.quantity} {getMaterialUnit(item.material_id)}
+                                </span>
+                              </div>
+                            ))
+                          )}
                         </div>
                       )}
 

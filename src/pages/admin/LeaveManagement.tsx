@@ -231,14 +231,18 @@ export default function LeaveManagement() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setRejectId(null)}>
           <div className="bg-white rounded-2xl w-[90%] max-w-sm p-5 shadow-xl" onClick={(e) => e.stopPropagation()}>
             <h3 className="text-base font-bold text-brand-oak mb-1">駁回請假</h3>
-            <p className="text-xs text-brand-lotus mb-3">請填寫駁回原因（必填）</p>
+            <p className="text-xs text-brand-lotus mb-3">請填寫駁回原因（必填，最多 500 字）</p>
             <textarea
               value={rejectReason}
-              onChange={(e) => setRejectReason(e.target.value)}
+              onChange={(e) => setRejectReason(e.target.value.slice(0, 500))}
               rows={3}
+              maxLength={500}
               placeholder="請輸入駁回原因"
-              className="w-full border rounded-lg px-3 py-2 text-sm mb-4 resize-none"
+              className="w-full border rounded-lg px-3 py-2 text-sm mb-1 resize-none"
             />
+            <p className={`text-xs text-right mb-3 ${rejectReason.length >= 500 ? 'text-status-danger' : 'text-brand-lotus'}`}>
+              {rejectReason.length} / 500
+            </p>
             <div className="flex gap-3">
               <button
                 onClick={() => setRejectId(null)}
