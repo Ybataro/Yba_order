@@ -201,7 +201,7 @@ export default function LeaveRequestModal({ open, onClose, staffId, staffName, s
               type="text"
               value={otherLeaveTypeName}
               onChange={(e) => setOtherLeaveTypeName(e.target.value)}
-              placeholder="請填寫假別名稱（例如：婚假、陪產假）"
+              placeholder="請填寫假別名稱（例如：陪產假、喪假）"
               className="w-full border rounded-lg px-3 py-2 text-sm"
             />
           </div>

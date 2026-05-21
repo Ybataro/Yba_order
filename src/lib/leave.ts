@@ -2,11 +2,13 @@
 
 // ── 假別清單 ──────────────────────────────────────────────
 export const TRACKED_LEAVE_TYPES = [
-  { id: 'annual_leave',   name: '特休',  defaultDays: 7,  requirePhoto: false },
-  { id: 'sick_leave',     name: '病假',  defaultDays: 30, requirePhoto: true  },
-  { id: 'personal_leave', name: '事假',  defaultDays: 14, requirePhoto: false },
-  { id: 'comp_leave',     name: '補休',  defaultDays: 0,  requirePhoto: false },
-  { id: 'other_leave',    name: '其他',  defaultDays: 0,  requirePhoto: false },
+  { id: 'annual_leave',   name: '特休',     defaultDays: 7,  requirePhoto: false },
+  { id: 'sick_leave',     name: '病假',     defaultDays: 30, requirePhoto: true  },
+  { id: 'personal_leave', name: '事假',     defaultDays: 14, requirePhoto: false },
+  { id: 'comp_leave',     name: '補休',     defaultDays: 0,  requirePhoto: false },
+  { id: 'public_holiday', name: '國定假日', defaultDays: 11, requirePhoto: false },
+  { id: 'marriage_leave', name: '婚假',     defaultDays: 8,  requirePhoto: false },
+  { id: 'other_leave',    name: '其他',     defaultDays: 0,  requirePhoto: false },
 ] as const
 
 // ── 時段 ──────────────────────────────────────────────────
