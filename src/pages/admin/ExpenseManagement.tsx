@@ -4,7 +4,7 @@ import { SectionHeader } from '@/components/SectionHeader'
 import { useStoreStore } from '@/stores/useStoreStore'
 import { supabase } from '@/lib/supabase'
 import { getTodayTW } from '@/lib/session'
-import { formatCurrency } from '@/lib/utils'
+import { formatCurrency, getMondayOfWeek } from '@/lib/utils'
 import { exportToExcel } from '@/lib/exportExcel'
 import { exportToPdf } from '@/lib/exportPdf'
 import ExportButtons from '@/components/ExportButtons'
@@ -22,13 +22,7 @@ interface ExpenseRow {
   created_at: string
 }
 
-function getMonday(dateStr: string): string {
-  const d = new Date(dateStr + 'T00:00:00')
-  const day = d.getDay()
-  const diff = day === 0 ? 6 : day - 1
-  d.setDate(d.getDate() - diff)
-  return d.toISOString().split('T')[0]
-}
+const getMonday = getMondayOfWeek
 
 function getFirstOfMonth(dateStr: string): string {
   return dateStr.slice(0, 8) + '01'

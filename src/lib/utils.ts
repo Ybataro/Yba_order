@@ -22,6 +22,23 @@ export function getTodayString(): string {
   return new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Taipei' })
 }
 
+// Why: 舊版 `new Date(dateStr + 'T00:00:00').toISOString().split('T')[0]` 會把
+// 本地時間轉成 UTC（偏移 -8 小時），導致日期整體早一天。改用 +08:00 明確標記
+// Asia/Taipei，並用 toLocaleDateString 而非 toISOString 取回字串。
+export function addDays(dateStr: string, days: number): string {
+  const d = new Date(dateStr + 'T00:00:00+08:00')
+  d.setDate(d.getDate() + days)
+  return d.toLocaleDateString('en-CA', { timeZone: 'Asia/Taipei' })
+}
+
+export function getMondayOfWeek(dateStr: string): string {
+  const d = new Date(dateStr + 'T00:00:00+08:00')
+  const day = d.getDay()
+  const diff = day === 0 ? 6 : day - 1
+  d.setDate(d.getDate() - diff)
+  return d.toLocaleDateString('en-CA', { timeZone: 'Asia/Taipei' })
+}
+
 const WEEKDAYS = ['日', '一', '二', '三', '四', '五', '六']
 
 export function getWeekday(date: string): string {

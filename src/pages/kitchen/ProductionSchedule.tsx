@@ -43,9 +43,9 @@ function getEffectiveYesterday(): string {
 }
 
 function getDateNDaysAhead(n: number): string {
-  const d = new Date(getTodayTW() + 'T00:00:00')
+  const d = new Date(getTodayTW() + 'T00:00:00+08:00')
   d.setDate(d.getDate() + n)
-  return d.toISOString().split('T')[0]
+  return d.toLocaleDateString('en-CA', { timeZone: 'Asia/Taipei' })
 }
 
 function formatShortDate(dateStr: string): string {

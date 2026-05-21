@@ -5,7 +5,7 @@ import { useStoreStore } from '@/stores/useStoreStore'
 import { useProductStore } from '@/stores/useProductStore'
 import { supabase } from '@/lib/supabase'
 import { getTodayTW, getYesterdayTW } from '@/lib/session'
-import { formatCurrency } from '@/lib/utils'
+import { formatCurrency, addDays } from '@/lib/utils'
 import { computeSession, type SettlementValue } from '@/lib/settlement'
 import { RefreshCw } from 'lucide-react'
 import { exportToExcel } from '@/lib/exportExcel'
@@ -59,9 +59,7 @@ interface OrderItemRow {
 // ---------- helpers ----------
 
 function getDateNDaysAgo(n: number): string {
-  const d = new Date(getTodayTW() + 'T00:00:00')
-  d.setDate(d.getDate() - n)
-  return d.toISOString().split('T')[0]
+  return addDays(getTodayTW(), -n)
 }
 
 function formatShortDate(dateStr: string): string {
