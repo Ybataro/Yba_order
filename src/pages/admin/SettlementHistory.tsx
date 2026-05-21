@@ -131,8 +131,10 @@ export default function SettlementHistory() {
       })
     })
 
-    const days = sessions.length
-    const avgRevenue = days > 0 ? Math.round(totalRevenue / days) : 0
+    // sessionCount = 結帳筆數（含多店多筆）；uniqueDays = 不同日期數量（避免多店同日重複算）
+    const sessionCount = sessions.length
+    const uniqueDays = new Set(sessions.map((s) => s.date)).size
+    const avgRevenue = uniqueDays > 0 ? Math.round(totalRevenue / uniqueDays) : 0
     const avgPrice = totalOrders > 0 ? Math.round(totalRevenue / totalOrders) : 0
 
     const paymentList = Object.entries(paymentTotals)
@@ -143,7 +145,7 @@ export default function SettlementHistory() {
       }))
       .sort((a, b) => b.amount - a.amount)
 
-    return { totalRevenue, totalOrders, days, avgRevenue, avgPrice, normalDays, abnormalDays, paymentList }
+    return { totalRevenue, totalOrders, sessionCount, uniqueDays, avgRevenue, avgPrice, normalDays, abnormalDays, paymentList }
   }, [sessions, viewMode])
 
   if (!supabase) {
@@ -440,7 +442,7 @@ export default function SettlementHistory() {
               <div className="bg-white">
                 <div className="flex items-center justify-between px-4 py-3 border-b border-gray-50">
                   <span className="text-sm text-brand-oak">結帳筆數</span>
-                  <span className="text-sm font-num text-brand-oak">{stats.days} 筆</span>
+                  <span className="text-sm font-num text-brand-oak">{stats.sessionCount} 筆（{stats.uniqueDays} 天）</span>
                 </div>
                 <div className="flex items-center justify-between px-4 py-3 border-b border-gray-50">
                   <span className="text-sm text-status-success">正常（差額 ±10 內）</span>

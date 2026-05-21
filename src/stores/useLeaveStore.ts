@@ -456,25 +456,16 @@ export const useLeaveStore = create<LeaveState>()((set, get) => ({
         console.error(`[remove] 🔴 排班清除失敗（請手動清 staff_id=${req.staff_id}，dates=${dates.join(',')}）:`, schedErr.message)
       }
 
-      // 3. 回滾餘額（失敗不致命，但要告警）
+      // 3. 回滾餘額（用原子 RPC）
       const year = new Date(req.start_date + 'T00:00:00').getFullYear()
-      const { data: balData, error: balQueryErr } = await supabase
-        .from('leave_balances')
-        .select('*')
-        .eq('staff_id', req.staff_id)
-        .eq('leave_type', req.leave_type)
-        .eq('year', year)
-        .maybeSingle()
-      if (balQueryErr) {
-        console.error(`[remove] 🔴 假別餘額查詢失敗（請手動回滾 staff_id=${req.staff_id}，type=${req.leave_type}，days=${req.leave_days}）:`, balQueryErr.message)
-      } else if (balData) {
-        const { error: balUpdateErr } = await supabase
-          .from('leave_balances')
-          .update({ used_days: Math.max(0, Number(balData.used_days) - req.leave_days) })
-          .eq('id', balData.id)
-        if (balUpdateErr) {
-          console.error(`[remove] 🔴 假別餘額回滾失敗（請手動 used_days -= ${req.leave_days}）:`, balUpdateErr.message)
-        }
+      const { error: balErr } = await supabase.rpc('decrement_leave_used', {
+        p_staff_id: req.staff_id,
+        p_leave_type: req.leave_type,
+        p_year: year,
+        p_days: req.leave_days,
+      })
+      if (balErr) {
+        console.error(`[remove] 🔴 假別餘額回滾失敗（請手動 used_days -= ${req.leave_days}）:`, balErr.message)
       }
     } else {
       // 非已核准狀態：只刪假單
@@ -861,45 +852,19 @@ export const useLeaveStore = create<LeaveState>()((set, get) => ({
       await rollbackStatus(reason)
     }
 
-    // 3. 更新假別餘額
+    // 3. 更新假別餘額（用原子 RPC，避免 race condition）
     const year = new Date(req.start_date + 'T00:00:00').getFullYear()
-    const { data: balData, error: balQueryError } = await supabase
-      .from('leave_balances')
-      .select('*')
-      .eq('staff_id', req.staff_id)
-      .eq('leave_type', req.leave_type)
-      .eq('year', year)
-      .maybeSingle()
-
-    if (balQueryError) {
-      await rollbackAll(`查詢假別餘額失敗：${balQueryError.message}`)
+    const def = (await import('@/lib/leave')).TRACKED_LEAVE_TYPES.find((t) => t.id === req.leave_type)
+    const { error: balError } = await supabase.rpc('increment_leave_used', {
+      p_staff_id: req.staff_id,
+      p_leave_type: req.leave_type,
+      p_year: year,
+      p_days: req.leave_days,
+      p_default_days: def?.defaultDays ?? 0,
+    })
+    if (balError) {
+      await rollbackAll(`扣假別餘額失敗：${balError.message}`)
       return false
-    }
-
-    if (balData) {
-      const { error: balUpdateError } = await supabase
-        .from('leave_balances')
-        .update({ used_days: Number(balData.used_days) + req.leave_days })
-        .eq('id', balData.id)
-      if (balUpdateError) {
-        await rollbackAll(`扣假別餘額失敗：${balUpdateError.message}`)
-        return false
-      }
-    } else {
-      const def = (await import('@/lib/leave')).TRACKED_LEAVE_TYPES.find((t) => t.id === req.leave_type)
-      const { error: balInsertError } = await supabase
-        .from('leave_balances')
-        .insert({
-          staff_id: req.staff_id,
-          leave_type: req.leave_type,
-          year,
-          total_days: def?.defaultDays ?? 0,
-          used_days: req.leave_days,
-        })
-      if (balInsertError) {
-        await rollbackAll(`新建假別餘額失敗：${balInsertError.message}`)
-        return false
-      }
     }
 
     // 4. 通知員工本人（若有 telegram_id）
