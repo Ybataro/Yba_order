@@ -423,23 +423,20 @@ export const useLeaveStore = create<LeaveState>()((set, get) => ({
     const req = get().requests.find((r) => r.id === id)
     if (!req) return false
 
-    // 已核准 → 先回滾餘額和排班
+    // 已核准 → 需要回滾餘額和排班
+    // 順序：先刪假單 → 再清排班 → 最後回滾餘額。若刪假單失敗，DB 至少保持一致。
     if (req.status === 'approved') {
-      const year = new Date(req.start_date + 'T00:00:00').getFullYear()
-      const { data: balData } = await supabase
-        .from('leave_balances')
-        .select('*')
-        .eq('staff_id', req.staff_id)
-        .eq('leave_type', req.leave_type)
-        .eq('year', year)
-        .single()
-      if (balData) {
-        await supabase
-          .from('leave_balances')
-          .update({ used_days: Math.max(0, Number(balData.used_days) - req.leave_days) })
-          .eq('id', balData.id)
+      // 1. 先刪假單
+      const { error: deleteErr } = await supabase
+        .from('leave_requests')
+        .delete()
+        .eq('id', id)
+      if (deleteErr) {
+        console.error('刪除請假申請失敗:', deleteErr.message)
+        return false
       }
 
+      // 2. 清排班（失敗不致命，但要告警）
       const dates: string[] = []
       const start = new Date(req.start_date + 'T00:00:00')
       const end   = new Date(req.end_date   + 'T00:00:00')
@@ -449,16 +446,41 @@ export const useLeaveStore = create<LeaveState>()((set, get) => ({
         const dy = String(d.getDate()).padStart(2, '0')
         dates.push(`${y}-${m}-${dy}`)
       }
-      await supabase
+      const { error: schedErr } = await supabase
         .from('schedules')
         .delete()
         .eq('staff_id', req.staff_id)
         .in('date', dates)
         .eq('attendance_type', req.leave_type)
-    }
+      if (schedErr) {
+        console.error(`[remove] 🔴 排班清除失敗（請手動清 staff_id=${req.staff_id}，dates=${dates.join(',')}）:`, schedErr.message)
+      }
 
-    const { error } = await supabase.from('leave_requests').delete().eq('id', id)
-    if (error) { console.error('刪除請假申請失敗:', error.message); return false }
+      // 3. 回滾餘額（失敗不致命，但要告警）
+      const year = new Date(req.start_date + 'T00:00:00').getFullYear()
+      const { data: balData, error: balQueryErr } = await supabase
+        .from('leave_balances')
+        .select('*')
+        .eq('staff_id', req.staff_id)
+        .eq('leave_type', req.leave_type)
+        .eq('year', year)
+        .maybeSingle()
+      if (balQueryErr) {
+        console.error(`[remove] 🔴 假別餘額查詢失敗（請手動回滾 staff_id=${req.staff_id}，type=${req.leave_type}，days=${req.leave_days}）:`, balQueryErr.message)
+      } else if (balData) {
+        const { error: balUpdateErr } = await supabase
+          .from('leave_balances')
+          .update({ used_days: Math.max(0, Number(balData.used_days) - req.leave_days) })
+          .eq('id', balData.id)
+        if (balUpdateErr) {
+          console.error(`[remove] 🔴 假別餘額回滾失敗（請手動 used_days -= ${req.leave_days}）:`, balUpdateErr.message)
+        }
+      }
+    } else {
+      // 非已核准狀態：只刪假單
+      const { error } = await supabase.from('leave_requests').delete().eq('id', id)
+      if (error) { console.error('刪除請假申請失敗:', error.message); return false }
+    }
 
     set((s) => ({ requests: s.requests.filter((r) => r.id !== id) }))
     return true
@@ -774,6 +796,25 @@ export const useLeaveStore = create<LeaveState>()((set, get) => ({
       return false
     }
 
+    // ── 回滾用：若後續步驟失敗，把 leave_requests.status 改回 manager_approved ──
+    // 在 closure 內補一次 supabase guard，繞過 TypeScript narrowing
+    const sb = supabase
+    const rollbackStatus = async (reason: string) => {
+      console.error(`[approve] 步驟失敗，回滾 status：${reason}`)
+      const { error: rollErr } = await sb
+        .from('leave_requests')
+        .update({
+          status: 'manager_approved',
+          reviewed_by: null,
+          reviewed_at: null,
+          admin_approve_note: '',
+        })
+        .eq('id', id)
+      if (rollErr) {
+        console.error(`[approve] 🔴 回滾失敗（資料可能不一致，請管理員手動檢查）：`, rollErr.message)
+      }
+    }
+
     // 2. 寫入排班表
     const dates: string[] = []
     const start = new Date(req.start_date + 'T00:00:00')
@@ -804,26 +845,49 @@ export const useLeaveStore = create<LeaveState>()((set, get) => ({
     const { error: schedError } = await supabase
       .from('schedules')
       .upsert(scheduleRecords, { onConflict: 'staff_id,date' })
-    if (schedError) console.error('寫入排班表失敗:', schedError.message)
+    if (schedError) {
+      await rollbackStatus(`寫入排班失敗：${schedError.message}`)
+      return false
+    }
+
+    // ── 排班寫成功後，後續步驟若失敗，回滾時要同時刪除剛寫的排班 ──
+    const rollbackAll = async (reason: string) => {
+      await sb
+        .from('schedules')
+        .delete()
+        .eq('staff_id', req.staff_id)
+        .in('date', dates)
+        .eq('attendance_type', req.leave_type)
+      await rollbackStatus(reason)
+    }
 
     // 3. 更新假別餘額
     const year = new Date(req.start_date + 'T00:00:00').getFullYear()
-    const { data: balData } = await supabase
+    const { data: balData, error: balQueryError } = await supabase
       .from('leave_balances')
       .select('*')
       .eq('staff_id', req.staff_id)
       .eq('leave_type', req.leave_type)
       .eq('year', year)
-      .single()
+      .maybeSingle()
+
+    if (balQueryError) {
+      await rollbackAll(`查詢假別餘額失敗：${balQueryError.message}`)
+      return false
+    }
 
     if (balData) {
-      await supabase
+      const { error: balUpdateError } = await supabase
         .from('leave_balances')
         .update({ used_days: Number(balData.used_days) + req.leave_days })
         .eq('id', balData.id)
+      if (balUpdateError) {
+        await rollbackAll(`扣假別餘額失敗：${balUpdateError.message}`)
+        return false
+      }
     } else {
       const def = (await import('@/lib/leave')).TRACKED_LEAVE_TYPES.find((t) => t.id === req.leave_type)
-      await supabase
+      const { error: balInsertError } = await supabase
         .from('leave_balances')
         .insert({
           staff_id: req.staff_id,
@@ -832,6 +896,10 @@ export const useLeaveStore = create<LeaveState>()((set, get) => ({
           total_days: def?.defaultDays ?? 0,
           used_days: req.leave_days,
         })
+      if (balInsertError) {
+        await rollbackAll(`新建假別餘額失敗：${balInsertError.message}`)
+        return false
+      }
     }
 
     // 4. 通知員工本人（若有 telegram_id）
