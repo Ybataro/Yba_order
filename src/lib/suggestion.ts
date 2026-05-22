@@ -6,7 +6,8 @@
  *    ※ Tier 0/0b 已按溫差分群，高溫大量不會被誤殺
  *    ※ Tier 0c（無天氣條件分群）使用較寬鬆係數 2.5 保護高溫需求
  *  - 覆蓋天獨立計算：週二+週三各自用對應 dow 的歷史資料
- * 舊函式（matchDaysV2、estimateDailyUsage）保留供 rollback 用
+ *
+ * 內部架構：matchDaysV3 → 命中 Tier 0/0b/0c 直接回；否則 fallback 至 matchDaysV2（Tier 1/2/3）
  */
 import { supabase } from '@/lib/supabase'
 import { getDayType } from '@/lib/holidays'
@@ -38,7 +39,6 @@ export interface SuggestionBreakdown {
   netDemand: number
   coverDays: number
   coverDetails: CoverDayDetail[]
-  restDayMultiplier: number
   safetyStockGap: number
   rawBeforeRound: number
   // V3 新增（選填，UI 可忽略，不破壞現有顯示邏輯）
@@ -778,8 +778,6 @@ export async function computeSuggestions(
     }
 
     const coverDays = coverDates.length
-    // 舊 restMul 相容值（用於 breakdown 顯示）
-    const restMul = coverDays
 
     products.forEach(p => {
       const ids = inventoryIdMap[p.id] || [p.id]
@@ -846,7 +844,6 @@ export async function computeSuggestions(
         netDemand: Math.round(netDemand * 10) / 10,
         coverDays,
         coverDetails,
-        restDayMultiplier: restMul,
         safetyStockGap: Math.round(safetyGap * 10) / 10,
         rawBeforeRound: Math.round(rawBeforeRound * 10) / 10,
         // V3 新增欄位
