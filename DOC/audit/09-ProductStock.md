@@ -367,10 +367,13 @@ const { error: rpcErr } = await supabase.rpc('sync_product_stock_entries', {
 
 ## 🛠️ 修改建議
 
-### M1（推薦，小改造）：S1 用 RPC `sync_product_stock_entries`
+### M1（✅ 已完成 2026-05-22）：S1 改用 `sync_product_stock_entries` RPC
 
-簡化 40 行 → 5 行，並與 Inventory.tsx 一致。
-**工時**：15-20 分鐘
+**實施結果**：
+- ProductStock.tsx:261-347 從 87 行 safe-mode → **38 行 RPC 呼叫**
+- 與 Inventory.tsx 邏輯一致（皆用 RPC）
+- 簡化 audit log（rpcOk 取代 upsertOk/deletedCount/verifyCount/mismatch）
+- Commit 隨後 prod deploy
 
 ### M2（業務溝通，不急）：S2 是否需要 product_stock audit_log
 
