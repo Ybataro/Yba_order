@@ -35,24 +35,73 @@ export default function Usage() {
         result[p.id] = { prevUsage: 0, discarded: 0, stock: 0, kitchenSupply: 0, total: 0 }
       })
 
-      // 1. 前日叫貨量 = 前日用量參考
-      const yesterday = new Date()
+      // bag_weight map (used by both today's 盤點 and 昨日用量計算)
+      const bagWeightMap: Record<string, number> = {}
+      storeProducts.forEach(p => { if (p.bag_weight) bagWeightMap[p.id] = p.bag_weight })
+
+      // 1. 前日用量 = 物料平衡公式（與 Inventory.tsx / Order.tsx 對齊 SSOT）
+      //    昨日 = today - 1，前日 = today - 2
+      //    公式：prev(today-2 庫存) + 出貨(today-1 actual_qty) - today(today-1 庫存) - 倒掉(today-1)
+      const yesterday = new Date(today + 'T00:00:00+08:00')
       yesterday.setDate(yesterday.getDate() - 1)
       const yesterdayStr = yesterday.toLocaleDateString('en-CA', { timeZone: 'Asia/Taipei' })
-      const prevOrderSid = `${storeId}_${yesterdayStr}`
 
-      const { data: prevItems } = await supabase!
-        .from('order_items')
-        .select('product_id, quantity')
-        .eq('session_id', prevOrderSid)
+      const dayBefore = new Date(today + 'T00:00:00+08:00')
+      dayBefore.setDate(dayBefore.getDate() - 2)
+      const dayBeforeStr = dayBefore.toLocaleDateString('en-CA', { timeZone: 'Asia/Taipei' })
 
-      if (prevItems) {
-        prevItems.forEach(item => {
-          if (result[item.product_id]) {
-            result[item.product_id].prevUsage = item.quantity || 0
-          }
+      const [prevInvSessRes, ydInvSessRes, ydShipSessRes] = await Promise.all([
+        supabase!.from('inventory_sessions').select('id').eq('store_id', storeId).eq('date', dayBeforeStr),
+        supabase!.from('inventory_sessions').select('id').eq('store_id', storeId).eq('date', yesterdayStr),
+        supabase!.from('shipment_sessions').select('id').eq('store_id', storeId).eq('date', yesterdayStr),
+      ])
+
+      const sumInvSession = async (sids: string[]) => {
+        const inv: Record<string, number> = {}
+        const disc: Record<string, number> = {}
+        if (!sids.length) return { inv, disc }
+        const { data } = await supabase!
+          .from('inventory_items')
+          .select('product_id, on_shelf, stock, discarded')
+          .in('session_id', sids)
+        data?.forEach(it => {
+          const bw = bagWeightMap[it.product_id]
+          const onShelfBags = bw ? (it.on_shelf || 0) / bw : (it.on_shelf || 0)
+          inv[it.product_id] = (inv[it.product_id] || 0) + onShelfBags + (it.stock || 0)
+          disc[it.product_id] = (disc[it.product_id] || 0) + (it.discarded || 0)
+        })
+        return { inv, disc }
+      }
+
+      const prevSids = (prevInvSessRes.data || []).map(s => s.id)
+      const ydSids = (ydInvSessRes.data || []).map(s => s.id)
+      const ydShipSids = (ydShipSessRes.data || []).map(s => s.id)
+
+      const [{ inv: prevInv }, { inv: ydInv, disc: ydDisc }] = await Promise.all([
+        sumInvSession(prevSids),
+        sumInvSession(ydSids),
+      ])
+
+      const ydShipQty: Record<string, number> = {}
+      if (ydShipSids.length > 0) {
+        const { data: shipItems } = await supabase!
+          .from('shipment_items')
+          .select('product_id, actual_qty')
+          .in('session_id', ydShipSids)
+        shipItems?.forEach(it => {
+          ydShipQty[it.product_id] = (ydShipQty[it.product_id] || 0) + (it.actual_qty || 0)
         })
       }
+
+      storeProducts.forEach(p => {
+        const prev = prevInv[p.id]
+        const ydToday = ydInv[p.id]
+        if (prev != null && ydToday != null) {
+          const ship = ydShipQty[p.id] || 0
+          const disc = ydDisc[p.id] || 0
+          result[p.id].prevUsage = Math.round((prev + ship - ydToday - disc) * 10) / 10
+        }
+      })
 
       // 2. 最新盤點：庫存(on_shelf+stock) + 倒掉量
       const { data: invSessions } = await supabase!
@@ -72,9 +121,6 @@ export default function Usage() {
           .in('session_id', latestSids)
 
         if (invItems) {
-          // bag_weight 品項的 on_shelf 是 g 數，需換算成袋數
-          const bagWeightMap: Record<string, number> = {}
-          storeProducts.forEach(p => { if (p.bag_weight) bagWeightMap[p.id] = p.bag_weight })
           invItems.forEach(item => {
             if (result[item.product_id]) {
               const bw = bagWeightMap[item.product_id]

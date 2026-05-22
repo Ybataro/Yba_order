@@ -112,26 +112,25 @@ export async function computeMonthlyPnL(
       })
     }
 
-    // 5b. Order cost: sum(quantity * our_cost) for this store's orders
-    // Orders use "隔日到貨" logic: order_sessions.date = 下單日
-    // We query orders whose date falls in the month
-    const { data: orderSessions } = await supabase
-      .from('order_sessions')
+    // 5b. Order cost: sum(actual_qty * our_cost) for this store's actual shipments
+    // SSOT: 央廚實際出貨量（含主動出貨/補出貨）才是真實成本，order_items 是「店長叫貨意圖」
+    // shipment_sessions.date = 出貨日
+    const { data: shipmentSessions } = await supabase
+      .from('shipment_sessions')
       .select('id')
       .eq('store_id', storeId)
       .gte('date', startDate)
       .lte('date', endDate)
 
-    if (orderSessions && orderSessions.length > 0) {
-      const sessionIds = orderSessions.map((s: { id: string }) => s.id)
-      const { data: orderItems } = await supabase
-        .from('order_items')
-        .select('product_id, quantity')
+    if (shipmentSessions && shipmentSessions.length > 0) {
+      const sessionIds = shipmentSessions.map((s: { id: string }) => s.id)
+      const { data: shipItems } = await supabase
+        .from('shipment_items')
+        .select('product_id, actual_qty')
         .in('session_id', sessionIds)
 
-      if (orderItems) {
-        // Fetch product costs
-        const productIds = [...new Set(orderItems.map((i: { product_id: string }) => i.product_id))]
+      if (shipItems) {
+        const productIds = [...new Set(shipItems.map((i: { product_id: string }) => i.product_id))]
         if (productIds.length > 0) {
           const { data: products } = await supabase
             .from('store_products')
@@ -143,9 +142,9 @@ export async function computeMonthlyPnL(
             costMap.set(p.id, p.our_cost || 0)
           })
 
-          orderItems.forEach((item: { product_id: string; quantity: number }) => {
+          shipItems.forEach((item: { product_id: string; actual_qty: number }) => {
             const cost = costMap.get(item.product_id) || 0
-            orderCostTotal += (item.quantity || 0) * cost
+            orderCostTotal += (item.actual_qty || 0) * cost
           })
         }
       }
