@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
 import { useParams, useSearchParams } from 'react-router-dom'
 import { TopNav } from '@/components/TopNav'
 import { NumericInput } from '@/components/NumericInput'
@@ -36,6 +36,7 @@ export default function Settlement() {
     return init
   })
   const [submitting, setSubmitting] = useState(false)
+  const submittingRef = useRef(false)  // 同步鎖防雙擊（避免 React batch 多次觸發）
   const [isEdit, setIsEdit] = useState(false)
   const [loading, setLoading] = useState(true)
   const [showSuccessModal, setShowSuccessModal] = useState(false)
@@ -119,49 +120,61 @@ export default function Settlement() {
 
   const handleSubmit = async () => {
     if (!storeId) return
+    // 同步鎖防雙擊（在 setSubmitting 寫入前 React 還沒 re-render）
+    if (submittingRef.current) return
+    submittingRef.current = true
 
     setSubmitting(true)
 
-    const session = {
-      id: sessionId,
-      store_id: storeId,
-      date: selectedDate,
-      submitted_by: staffId || null,
-      updated_at: new Date().toISOString(),
-    }
+    try {
+      const session = {
+        id: sessionId,
+        store_id: storeId,
+        date: selectedDate,
+        submitted_by: staffId || null,
+        updated_at: new Date().toISOString(),
+      }
 
-    const items = settlementFields
-      .filter(f => values[f.id] !== '')
-      .map(f => ({
-        session_id: sessionId,
-        field_id: f.id,
-        value: values[f.id],
-      }))
+      const items = settlementFields
+        .filter(f => values[f.id] !== '')
+        .map(f => ({
+          session_id: sessionId,
+          field_id: f.id,
+          value: values[f.id],
+        }))
 
-    const success = await submitWithOffline({
-      type: 'settlement',
-      storeId,
-      sessionId,
-      session,
-      items,
-      onConflict: 'session_id,field_id',
-      itemIdField: 'field_id',
-      onSuccess: () => {
+      const success = await submitWithOffline({
+        type: 'settlement',
+        storeId,
+        sessionId,
+        session,
+        items,
+        onConflict: 'session_id,field_id',
+        itemIdField: 'field_id',
+        onSuccess: () => {
+          setIsEdit(true)
+          logAudit('settlement_submit', storeId, sessionId, { itemCount: items.length })
+          setShowSuccessModal(true)
+          sendTelegramNotification(
+            `💰 門店結帳完成\n🏪 店家：${storeName}\n📅 日期：${selectedDate}`
+          )
+        },
+        onError: (msg) => showToast(msg, 'error'),
+      })
+
+      if (success && !navigator.onLine) {
         setIsEdit(true)
-        logAudit('settlement_submit', storeId, sessionId, { itemCount: items.length })
-        setShowSuccessModal(true)
-        sendTelegramNotification(
-          `💰 門店結帳完成\n🏪 店家：${storeName}\n📅 日期：${selectedDate}`
-        )
-      },
-      onError: (msg) => showToast(msg, 'error'),
-    })
-
-    if (success && !navigator.onLine) {
-      setIsEdit(true)
+      }
+    } catch (err) {
+      // 提交過程未預期異常（網路斷、Supabase 錯等）
+      showToast(err instanceof Error ? err.message : '提交過程發生異常，請重試', 'error')
+      const { sendCrashReport } = await import('@/lib/crashReport')
+      sendCrashReport({ type: 'settlement_submit_error', message: String(err), stack: (err as Error)?.stack })
+    } finally {
+      // 永遠解鎖（防按鈕鎖死）
+      setSubmitting(false)
+      submittingRef.current = false
     }
-
-    setSubmitting(false)
   }
 
   return (
@@ -259,9 +272,15 @@ export default function Settlement() {
           <div className="bg-white">
             <div className="flex items-center justify-between px-4 py-3">
               <span className="text-sm text-brand-oak">當日結帳差額</span>
-              <span className={`text-lg font-bold font-num ${computed.diff !== 0 ? 'text-status-danger' : 'text-status-success'}`}>
-                {formatCurrency(computed.diff)}
-              </span>
+              <div className="text-right">
+                {/* ±10 內視為正常找零誤差（與 admin SettlementHistory 一致）*/}
+                <span className={`text-lg font-bold font-num ${Math.abs(computed.diff) <= 10 ? 'text-status-success' : 'text-status-danger'}`}>
+                  {formatCurrency(computed.diff)}
+                </span>
+                {computed.diff !== 0 && Math.abs(computed.diff) <= 10 && (
+                  <p className="text-[10px] text-brand-lotus">誤差容忍範圍內</p>
+                )}
+              </div>
             </div>
           </div>
 
@@ -292,7 +311,7 @@ export default function Settlement() {
             </div>
             <div className="flex items-center justify-between px-4 py-2 mb-4 rounded-lg bg-surface-section">
               <span className="text-sm text-brand-oak">結帳差額</span>
-              <span className={`text-sm font-bold font-num ${computed.diff !== 0 ? 'text-status-danger' : 'text-status-success'}`}>{formatCurrency(computed.diff)}</span>
+              <span className={`text-sm font-bold font-num ${Math.abs(computed.diff) <= 10 ? 'text-status-success' : 'text-status-danger'}`}>{formatCurrency(computed.diff)}</span>
             </div>
             <button
               onClick={() => setShowSuccessModal(false)}

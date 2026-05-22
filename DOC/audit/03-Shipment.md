@@ -414,18 +414,27 @@ DB 結果：
 
 ## 🛠️ 修改建議
 
-### M1（**業務已決，可動工**）：S1 拆 `prepared` + `received` 欄位
+### M1（✅ **已完成 2026-05-22**）：S1 拆 `prepared` + `received` 欄位
 
-詳細步驟見 S1 段落（6 步驟，1-1.5h）。
+**實施結果**：
+- DB migration `20260522100000_shipment_items_add_prepared.sql` 已上 prod
+- Prod 遷移：2190 個 items（2115 個 prepared=true，100% 對齊歷史 received）
+- Shipment.tsx 改寫 prepared
+- Receive.tsx 讀取改用 prepared 顯示
+- Commit `d5f6406 deploy: 2026-05-22_16:13`
 
-**重點**：
-- DB migration 不破壞既有資料（`prepared = received` 複製過去）
-- 前端只動 Shipment.tsx 兩處（讀寫）
-- Receive.tsx 不動
+### M2（✅ **已完成 2026-05-22**）：S2 Receive.tsx 改造為「對帳檢視頁」
 
-### M2（**業務已決，需再選 4 方向**）：S2 Receive.tsx 廢用後處置
+**決定方向**：方案 A（保留檢視 + PDF 匯出 + 央廚回覆，移除「確認收貨」提交）
 
-待你回答 S2 段落的 A/B/C/D 方向後再動。
+**實施結果**：
+- Receive.tsx 移除 handleSubmit + 二次確認 dialog + 「差異備註」舊 textarea
+- **加回「備註」區塊**（送錯/漏品/破損用，無關「收貨」）含兩個按鈕：
+  - 「儲存備註」靜默存
+  - 「儲存並通知央廚」寫 DB + 推 Telegram（央廚群組 + YEN + ELLEN）
+- 加 DateNav 切日（可看歷史出貨明細）
+- 標題改「樂華店 出貨明細」
+- useNotifications.ts 通知文案改「央廚已出貨」+ 收貨差異區段加 RECEIVE_FLOW_ENABLED flag 暫停
 
 ### M3（效能優化，順手）：S3 並行載入
 
