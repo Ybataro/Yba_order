@@ -144,9 +144,10 @@ export default function Shipment() {
               } else {
                 aqData[store.id][item.product_id] = item.actual_qty > 0 ? String(item.actual_qty) : ''
               }
-              cfData[store.id][item.product_id] = item.received || false
+              // prepared = 央廚個別品項打勾（語意：「我準備好了」）
+              cfData[store.id][item.product_id] = item.prepared || false
 
-              // 收集未收到的品項
+              // 收集未收到的品項（門店有提交收貨但個別 item.received=false）
               if (shipSession.received_at && !item.received) {
                 const product = productMap.get(item.product_id)
                 if (product) {
@@ -338,16 +339,12 @@ export default function Shipment() {
       }
     })
 
-    // 從 DB 即時讀取門店是否已收貨確認
-    const { data: sessionData } = await supabase
-      .from('shipment_sessions').select('received_at').eq('id', sid).maybeSingle()
-    const storeHasConfirmed = !!sessionData?.received_at
-
-    // 央廚打勾 = confirmed state；門店已確認收貨 → 全部 received=true
+    // 央廚個別品項打勾 → 寫入 prepared
+    // received 欄位由門店端 Receive.tsx 維護（業務面廢用但欄位保留）
     const currentConfirmed = confirmed[activeStore] || {}
     const shipItemsWithReceived = shipItems.map(item => ({
       ...item,
-      received: storeHasConfirmed ? true : (currentConfirmed[item.product_id] || false),
+      prepared: currentConfirmed[item.product_id] || false,
     }))
 
     // 去重：同一 (session_id, product_id) 只保留最後一筆，避免 upsert 500 錯誤

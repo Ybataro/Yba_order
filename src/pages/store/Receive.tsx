@@ -1,8 +1,8 @@
 import { useState, useMemo, useEffect } from 'react'
 import { useParams, useSearchParams } from 'react-router-dom'
 import { TopNav } from '@/components/TopNav'
+import { DateNav } from '@/components/DateNav'
 import { SectionHeader } from '@/components/SectionHeader'
-import { BottomAction } from '@/components/BottomAction'
 import { useToast } from '@/components/Toast'
 import { useProductStore } from '@/stores/useProductStore'
 import { useStoreStore } from '@/stores/useStoreStore'
@@ -11,7 +11,8 @@ import { shipmentSessionId, getTodayTW } from '@/lib/session'
 import { logAudit } from '@/lib/auditLog'
 import { formatDualUnit } from '@/lib/utils'
 import { exportReceivePdf } from '@/lib/exportReceivePdf'
-import { CheckCircle, AlertTriangle, ArrowRight, RefreshCw, MessageSquare, Package, Truck, FileText } from 'lucide-react'
+import { sendTelegramNotification } from '@/lib/telegram'
+import { CheckCircle, AlertTriangle, ArrowRight, MessageSquare, Package, Truck, FileText, Send, Save } from 'lucide-react'
 
 interface ShipmentItem {
   productId: string
@@ -39,20 +40,23 @@ export default function Receive() {
   const productCategories = useProductStore((s) => s.categories)
 
   const today = getTodayTW()
-  const sessionId = shipmentSessionId(storeId || '', today)
+  const [selectedDate, setSelectedDate] = useState(today)
+  const sessionId = shipmentSessionId(storeId || '', selectedDate)
 
+  // 2026-05-22 業務改造：移除「提交收貨」流程
+  // 本頁改為「央廚出貨明細對帳檢視頁」，純查看 + PDF 匯出 + 央廚回覆顯示
+  // 保留：PDF 匯出、央廚回覆顯示、差異警示、✓ 勾選、receive_note 備註（可選通知央廚）
   const [shipmentItems, setShipmentItems] = useState<ShipmentItem[]>([])
   const [confirmed, setConfirmed] = useState<Record<string, boolean>>({})
-  const [note, setNote] = useState('')
-  const [submitting, setSubmitting] = useState(false)
-  const [showConfirmDialog, setShowConfirmDialog] = useState(false)
-  const [isEdit, setIsEdit] = useState(false)
   const [loading, setLoading] = useState(true)
   const [hasShipment, setHasShipment] = useState(false)
   const [kitchenReply, setKitchenReply] = useState('')
   const [kitchenReplyAt, setKitchenReplyAt] = useState<string | null>(null)
   const [kitchenReplyBy, setKitchenReplyBy] = useState<string | null>(null)
   const [exporting, setExporting] = useState(false)
+  // 備註（用於送錯/漏品/破損等記錄，可選通知央廚）
+  const [note, setNote] = useState('')
+  const [savingNote, setSavingNote] = useState<'save' | 'notify' | null>(null)
 
   // Load shipment data
   useEffect(() => {
@@ -74,7 +78,7 @@ export default function Receive() {
       }
 
       setHasShipment(true)
-      if (session.received_at) setIsEdit(true)
+      // 載入已存的備註（門店歷史填過的）
       if (session.receive_note) setNote(session.receive_note)
       if (session.kitchen_reply) {
         setKitchenReply(session.kitchen_reply)
@@ -111,7 +115,8 @@ export default function Receive() {
             box_unit: product.box_unit,
             box_ratio: product.box_ratio,
           })
-          loadedConfirmed[item.product_id] = item.received ?? false
+          // 顯示央廚側打勾的 prepared 狀態（純檢視，無 submit 寫回）
+          loadedConfirmed[item.product_id] = item.prepared ?? false
         })
 
         setShipmentItems(loaded)
@@ -122,7 +127,7 @@ export default function Receive() {
     }
 
     load()
-  }, [storeId, today, productsInitialized])
+  }, [storeId, selectedDate, productsInitialized])
 
   const regularItems = useMemo(() => shipmentItems.filter(i => !i.isExtra), [shipmentItems])
   const extraItems = useMemo(() => shipmentItems.filter(i => i.isExtra), [shipmentItems])
@@ -152,44 +157,62 @@ export default function Receive() {
   const confirmedCount = shipmentItems.filter(item => confirmed[item.productId]).length
   const diffCount = regularItems.filter(item => item.hasDiff).length
 
-  const handleSubmit = async () => {
-    if (!supabase || !storeId) {
-      showToast('收貨確認已提交！')
-      return
-    }
+  // 2026-05-22 業務改造：移除 handleSubmit（門店不再寫 received_at）
+  // 改為純檢視 + 可選備註（送錯/漏品/破損等記錄，可選通知央廚）
 
-    setSubmitting(true)
-
-    // Update session receive info
-    const { error: sessionErr } = await supabase
+  const saveNoteToDb = async (): Promise<boolean> => {
+    if (!supabase || !storeId) return false
+    const { error } = await supabase
       .from('shipment_sessions')
       .update({
-        receive_note: note,
-        received_at: new Date().toISOString(),
-        received_by: staffId || null,
+        receive_note: note.trim(),
+        received_by: staffId || null,  // 借用 received_by 欄位記錄填寫人
       })
       .eq('id', sessionId)
+    if (error) {
+      showToast('儲存失敗：' + error.message, 'error')
+      return false
+    }
+    logAudit('receive_note_save', storeId, sessionId, { hasNote: !!note.trim() })
+    return true
+  }
 
-    if (sessionErr) {
-      showToast('提交失敗：' + sessionErr.message, 'error')
-      setSubmitting(false)
+  const handleSaveNote = async () => {
+    if (!note.trim()) {
+      showToast('請先填寫備註', 'error')
       return
     }
+    setSavingNote('save')
+    const ok = await saveNoteToDb()
+    setSavingNote(null)
+    if (ok) showToast('備註已儲存')
+  }
 
-    // Update each item's received status — 提交收貨確認 = 全部已收到
-    // 差異品項透過備註和通知提醒，不影響 received 狀態
-    for (const item of shipmentItems) {
-      await supabase
-        .from('shipment_items')
-        .update({ received: true })
-        .eq('session_id', sessionId)
-        .eq('product_id', item.productId)
+  const handleSaveAndNotify = async () => {
+    if (!note.trim()) {
+      showToast('請先填寫備註', 'error')
+      return
     }
+    setSavingNote('notify')
+    const ok = await saveNoteToDb()
+    if (!ok) { setSavingNote(null); return }
 
-    setIsEdit(true)
-    setSubmitting(false)
-    logAudit('receive_submit', storeId, sessionId)
-    showToast(isEdit ? '收貨確認已更新！' : '收貨確認已提交！')
+    // 推送央廚群組 + admin（YEN + ELLEN）
+    const msg = [
+      '⚠️ <b>門店收貨備註</b>',
+      `🏪 店家：${storeName}`,
+      `📅 日期：${selectedDate}`,
+      `📝 內容：${note.trim()}`,
+      diffCount > 0 ? `⚠️ 央廚出貨有 ${diffCount} 項數量異動` : '',
+    ].filter(Boolean).join('\n')
+
+    sendTelegramNotification(msg, false)
+      .then((sent) => {
+        if (sent) showToast('已儲存並通知央廚')
+        else showToast('已儲存（通知央廚失敗，請重試）', 'error')
+      })
+      .catch(() => showToast('已儲存（通知央廚失敗）', 'error'))
+      .finally(() => setSavingNote(null))
   }
 
   const handleExportPdf = async () => {
@@ -197,7 +220,7 @@ export default function Receive() {
     try {
       await exportReceivePdf({
         storeName,
-        date: today,
+        date: selectedDate,
         items: shipmentItems.filter(i => !i.isExtra),
         extraItems: shipmentItems.filter(i => i.isExtra),
         categories: productCategories,
@@ -215,16 +238,12 @@ export default function Receive() {
 
   return (
     <div className="page-container">
-      <TopNav title={`${storeName} 收貨確認`} />
+      <TopNav title={`${storeName} 出貨明細`} />
 
-      {isEdit && (
-        <div className="flex items-center gap-1.5 px-4 py-1.5 bg-status-info/10 text-status-info text-xs">
-          <RefreshCw size={12} />
-          <span>已載入收貨確認紀錄，可修改後重新提交</span>
-        </div>
-      )}
+      {/* 日期切換（可看歷史出貨）*/}
+      <DateNav value={selectedDate} onChange={setSelectedDate} />
 
-      {!loading && hasShipment && !isEdit && (
+      {!loading && hasShipment && (
         <div className="flex items-center gap-1.5 px-4 py-2 bg-status-success/10 text-status-success text-sm font-medium">
           <Truck size={16} />
           <span>央廚已出貨</span>
@@ -413,41 +432,44 @@ export default function Receive() {
             </div>
           )}
 
-          {/* 差異備註 */}
-          <div className="px-4 py-3">
-            <label className="text-sm font-medium text-brand-oak block mb-1.5">差異備註（若有不符）</label>
-            <textarea value={note} onChange={e => setNote(e.target.value)} placeholder="例：芋泥球實際只收到2盒..."
-              className="w-full h-20 rounded-input p-3 text-sm outline-none border border-gray-200 focus:border-brand-lotus resize-none"
-              style={{ backgroundColor: 'var(--color-input-bg)' }} />
-          </div>
-
-          <BottomAction
-            label={submitting ? '提交中...' : isEdit ? '更新收貨確認' : '確認收貨完成'}
-            onClick={() => setShowConfirmDialog(true)}
-            variant="success"
-            icon={<CheckCircle size={18} />}
-            disabled={submitting}
-          />
-
-          {/* V2.0：收貨二次確認 Dialog */}
-          {showConfirmDialog && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-6">
-              <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-xl">
-                <p className="text-base font-bold text-brand-oak mb-2">確認收貨</p>
-                <p className="text-sm text-brand-lotus mb-5">確認後將<b>核銷全部品項</b>，且無法撤銷。確定嗎？</p>
-                <div className="flex gap-3">
-                  <button
-                    onClick={() => setShowConfirmDialog(false)}
-                    className="flex-1 py-2.5 rounded-xl border border-brand-silver text-sm text-brand-oak font-medium"
-                  >取消</button>
-                  <button
-                    onClick={() => { setShowConfirmDialog(false); handleSubmit() }}
-                    className="flex-1 py-2.5 rounded-xl bg-status-success text-white text-sm font-bold"
-                  >確認收貨</button>
-                </div>
-              </div>
+          {/* 備註區（若有送錯/漏品/破損請填寫；可選通知央廚）*/}
+          <div className="mx-4 mt-4 mb-6 p-3 rounded-card border border-gray-200 bg-white">
+            <label className="flex items-center gap-1.5 text-sm font-medium text-brand-oak mb-2">
+              <MessageSquare size={14} className="text-brand-mocha" />
+              備註
+              <span className="text-xs text-brand-lotus font-normal">（送錯/漏品/破損請填寫）</span>
+            </label>
+            <textarea
+              value={note}
+              onChange={(e) => setNote(e.target.value.slice(0, 500))}
+              rows={3}
+              maxLength={500}
+              placeholder="例：芋泥球實際只收到 2 盒、紙碗破損 1 個..."
+              className="w-full rounded-input p-3 text-sm outline-none border border-gray-200 focus:border-brand-lotus resize-none"
+              style={{ backgroundColor: 'var(--color-input-bg)' }}
+            />
+            <p className={`text-xs text-right mt-1 mb-3 ${note.length >= 500 ? 'text-status-danger' : 'text-brand-lotus'}`}>
+              {note.length} / 500
+            </p>
+            <div className="flex gap-2">
+              <button
+                onClick={handleSaveNote}
+                disabled={!!savingNote || !note.trim()}
+                className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-btn border border-brand-silver text-sm text-brand-oak font-medium active:scale-95 transition-transform disabled:opacity-50"
+              >
+                <Save size={14} />
+                {savingNote === 'save' ? '儲存中...' : '儲存備註'}
+              </button>
+              <button
+                onClick={handleSaveAndNotify}
+                disabled={!!savingNote || !note.trim()}
+                className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-btn bg-brand-mocha text-white text-sm font-bold active:scale-95 transition-transform disabled:opacity-50"
+              >
+                <Send size={14} />
+                {savingNote === 'notify' ? '通知中...' : '儲存並通知央廚'}
+              </button>
             </div>
-          )}
+          </div>
         </>
       )}
     </div>

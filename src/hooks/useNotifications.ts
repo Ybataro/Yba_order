@@ -241,54 +241,37 @@ export function useNotifications(
       }
     }
 
-    // ── 3. 出貨未收貨 ─────────────────────────────────
-    try {
-      let query = supabase
-        .from('shipment_sessions')
-        .select('id, store_id, date')
-        .not('confirmed_at', 'is', null)
-        .is('received_at', null)
+    // ── 3. 央廚已出貨（讓門店知道貨在路上，2026-05-22 改造後不再追蹤門店是否收貨）─
+    if (context === 'store' && storeId) {
+      try {
+        const { data: todayShipments } = await supabase
+          .from('shipment_sessions')
+          .select('id, store_id, date')
+          .eq('store_id', storeId)
+          .eq('date', today)
+          .not('confirmed_at', 'is', null)
 
-      if (context === 'store' && storeId) {
-        query = query.eq('store_id', storeId)
-      }
-
-      const { data: pendingShipments } = await query
-
-      if (pendingShipments && pendingShipments.length > 0) {
-        if (context === 'store' && storeId) {
+        if (todayShipments && todayShipments.length > 0) {
           results.push({
-            id: `shipment_pending_${storeId}_${pendingShipments[0].date}`,
+            id: `shipment_pending_${storeId}_${todayShipments[0].date}`,
             type: 'shipment_pending',
-            severity: 'warning',
-            icon: '🟡',
-            title: '出貨未收貨',
-            message: '央廚已出貨，請確認收貨',
+            severity: 'info',
+            icon: '🚚',
+            title: '央廚已出貨',
+            message: '可進入出貨明細查看',
             link: `/store/${storeId}/receive`,
           })
-        } else if (context === 'kitchen') {
-          const storeIds = [...new Set(pendingShipments.map((s) => s.store_id))]
-          const names = storeIds
-            .map((sid) => stores.find((s) => s.id === sid)?.name)
-            .filter(Boolean)
-            .join('、')
-
-          results.push({
-            id: `shipment_pending_kitchen_${today}`,
-            type: 'shipment_pending',
-            severity: 'warning',
-            icon: '🟡',
-            title: '出貨未收貨',
-            message: `${names} 尚未確認收貨`,
-          })
         }
+      } catch (err) {
+        console.error('[useNotifications] shipment_pending query error:', err)
       }
-    } catch (err) {
-      console.error('[useNotifications] shipment_pending query error:', err)
     }
 
     // ── 3b. 收貨差異（央廚端）─────────────────────────
-    if (context === 'kitchen') {
+    // 2026-05-22 業務改造後 received_at 不再被寫入 → 此區段實際上不會 trigger
+    // 暫保留代碼但加 disabled flag（未來若恢復門店收貨流程時可一鍵重啟）
+    const RECEIVE_FLOW_ENABLED = false
+    if (RECEIVE_FLOW_ENABLED && context === 'kitchen') {
       try {
         const { data: receivedSessions } = await supabase
           .from('shipment_sessions')
