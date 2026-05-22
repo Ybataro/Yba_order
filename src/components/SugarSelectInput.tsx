@@ -51,6 +51,9 @@ function isLegacyNumber(value: string): boolean {
 export function SugarSelectInput({ value, onChange, sugarTypes }: SugarSelectInputProps) {
   const sugarMap = useMemo(() => parseValue(value), [value])
   const legacy = isLegacyNumber(value)
+  // 動態取糖種單位作為「合計」與「舊資料」提示的顯示單位
+  // 若多種糖混用且 unit 不一致，以第一個糖種的 unit 為主（罕見情境）
+  const displayUnit = sugarTypes[0]?.unit || 'kg'
 
   const toggleSugar = (name: string) => {
     const newMap = { ...sugarMap }
@@ -84,7 +87,7 @@ export function SugarSelectInput({ value, onChange, sugarTypes }: SugarSelectInp
       {/* Legacy plain number hint */}
       {legacy && (
         <div className="text-xs text-amber-600 bg-amber-50 rounded px-2 py-1">
-          舊資料：{value} g（請重新選擇糖種）
+          舊資料：{value} {displayUnit}（請重新選擇糖種）
         </div>
       )}
 
@@ -105,7 +108,7 @@ export function SugarSelectInput({ value, onChange, sugarTypes }: SugarSelectInp
               <NumericInput
                 value={sugarMap[st.name] ?? ''}
                 onChange={(v) => updateAmount(st.name, v)}
-                unit={st.unit || 'g'}
+                unit={st.unit || 'kg'}
                 isFilled
                 className="input-prod"
               />
@@ -117,7 +120,7 @@ export function SugarSelectInput({ value, onChange, sugarTypes }: SugarSelectInp
       {/* Total */}
       {total > 0 && (
         <div className="text-xs text-brand-lotus text-right pt-1 border-t border-gray-200">
-          合計: <span className="font-semibold text-brand-oak">{total.toLocaleString()}</span> g
+          合計: <span className="font-semibold text-brand-oak">{total.toLocaleString()}</span> {displayUnit}
         </div>
       )}
     </div>

@@ -35,7 +35,7 @@ export const PRODUCTION_ZONES: ZoneDef[] = [
         key: 'taro_paste',
         name: '芋泥漿',
         fields: [
-          { key: 'sugar', label: '糖', type: 'numeric', unit: 'g' },
+          { key: 'sugar', label: '糖', type: 'numeric', unit: 'kg' },
           { key: 'water', label: '水', type: 'numeric', unit: 'ml' },
           { key: 'sweetness', label: '甜度', type: 'numeric', unit: '°' },
           { key: 'thickness', label: '稠度', type: 'numeric' },
@@ -46,8 +46,8 @@ export const PRODUCTION_ZONES: ZoneDef[] = [
         key: 'grass_jelly',
         name: '嫩仙草',
         fields: [
-          { key: 'dongcheng', label: '東城', type: 'numeric', unit: 'g' },
-          { key: 'zhuangyuan', label: '狀元', type: 'numeric', unit: 'g' },
+          { key: 'dongcheng', label: '東城', type: 'numeric', unit: 'kg' },
+          { key: 'zhuangyuan', label: '狀元', type: 'numeric', unit: 'kg' },
           { key: 'starch_water', label: '粉水', type: 'numeric', unit: 'ml' },
           { key: 'solidification', label: '凝固', type: 'numeric' },
           { key: 'bucket_count', label: '桶數', type: 'numeric', unit: '桶' },
@@ -57,10 +57,10 @@ export const PRODUCTION_ZONES: ZoneDef[] = [
         key: 'silver_ear_soup',
         name: '銀耳湯',
         fields: [
-          { key: 'sugar', label: '糖', type: 'numeric', unit: 'g' },
+          { key: 'sugar', label: '糖', type: 'numeric', unit: 'kg' },
           { key: 'water', label: '水', type: 'numeric', unit: 'ml' },
-          { key: 'red_date', label: '紅棗', type: 'numeric', unit: 'g' },
-          { key: 'goji', label: '枸杞', type: 'numeric', unit: 'g' },
+          { key: 'red_date', label: '紅棗', type: 'numeric', unit: 'kg' },
+          { key: 'goji', label: '枸杞', type: 'numeric', unit: 'kg' },
           { key: 'sweetness', label: '甜度', type: 'numeric', unit: '°' },
           { key: 'bucket_count', label: '桶數', type: 'numeric', unit: '桶' },
         ],
@@ -77,8 +77,8 @@ export const PRODUCTION_ZONES: ZoneDef[] = [
         key: 'tofu',
         name: '豆花',
         fields: [
-          { key: 'powder', label: '粉', type: 'numeric', unit: 'g' },
-          { key: 'gypsum', label: '石膏', type: 'numeric', unit: 'g' },
+          { key: 'powder', label: '粉', type: 'numeric', unit: 'kg' },
+          { key: 'gypsum', label: '石膏', type: 'numeric', unit: 'kg' },
           { key: 'water', label: '水', type: 'numeric', unit: 'ml' },
           { key: 'holes', label: '洞洞', type: 'numeric' },
           { key: 'bucket_count', label: '桶數', type: 'numeric', unit: '桶' },
@@ -88,7 +88,7 @@ export const PRODUCTION_ZONES: ZoneDef[] = [
         key: 'sesame_paste',
         name: '芝麻糊',
         fields: [
-          { key: 'sugar', label: '糖', type: 'numeric', unit: 'g' },
+          { key: 'sugar', label: '糖', type: 'numeric', unit: 'kg' },
           { key: 'water', label: '水', type: 'numeric', unit: 'ml' },
           { key: 'sweetness', label: '甜度', type: 'numeric', unit: '°' },
           { key: 'portion', label: '份量', type: 'numeric', unit: '份' },
@@ -98,7 +98,7 @@ export const PRODUCTION_ZONES: ZoneDef[] = [
         key: 'almond_tea',
         name: '杏仁茶',
         fields: [
-          { key: 'sugar', label: '糖', type: 'numeric', unit: 'g' },
+          { key: 'sugar', label: '糖', type: 'numeric', unit: 'kg' },
           { key: 'water', label: '水', type: 'numeric', unit: 'ml' },
           { key: 'sweetness', label: '甜度', type: 'numeric', unit: '°' },
           { key: 'portion', label: '份量', type: 'numeric', unit: '份' },
@@ -108,7 +108,7 @@ export const PRODUCTION_ZONES: ZoneDef[] = [
         key: 'taro_ball',
         name: '芋泥球',
         fields: [
-          { key: 'sugar', label: '糖', type: 'numeric', unit: 'g' },
+          { key: 'sugar', label: '糖', type: 'numeric', unit: 'kg' },
           { key: 'water', label: '水', type: 'numeric', unit: 'ml' },
           { key: 'sweetness', label: '甜度', type: 'numeric', unit: '°' },
           { key: 'box_count', label: '盒數', type: 'numeric', unit: '盒' },
@@ -126,7 +126,7 @@ export const PRODUCTION_ZONES: ZoneDef[] = [
         key: 'peanut',
         name: '花生',
         fields: [
-          { key: 'sugar', label: '糖', type: 'numeric', unit: 'g' },
+          { key: 'sugar', label: '糖', type: 'numeric', unit: 'kg' },
           { key: 'water', label: '水', type: 'numeric', unit: 'ml' },
           { key: 'sweetness', label: '甜度', type: 'numeric', unit: '°' },
           { key: 'box_count', label: '盒數', type: 'numeric', unit: '盒' },
@@ -136,7 +136,7 @@ export const PRODUCTION_ZONES: ZoneDef[] = [
         key: 'red_bean',
         name: '紅豆',
         fields: [
-          { key: 'sugar', label: '糖', type: 'numeric', unit: 'g' },
+          { key: 'sugar', label: '糖', type: 'numeric', unit: 'kg' },
           { key: 'water', label: '水', type: 'numeric', unit: 'ml' },
           { key: 'sweetness', label: '甜度', type: 'numeric', unit: '°' },
           { key: 'box_count', label: '盒數', type: 'numeric', unit: '盒' },
@@ -146,7 +146,7 @@ export const PRODUCTION_ZONES: ZoneDef[] = [
         key: 'mung_bean',
         name: '綠豆',
         fields: [
-          { key: 'sugar', label: '糖', type: 'numeric', unit: 'g' },
+          { key: 'sugar', label: '糖', type: 'numeric', unit: 'kg' },
           { key: 'water', label: '水', type: 'numeric', unit: 'ml' },
           { key: 'sweetness', label: '甜度', type: 'numeric', unit: '°' },
           { key: 'box_count', label: '盒數', type: 'numeric', unit: '盒' },
@@ -156,7 +156,7 @@ export const PRODUCTION_ZONES: ZoneDef[] = [
         key: 'barley',
         name: '小薏仁',
         fields: [
-          { key: 'sugar', label: '糖', type: 'numeric', unit: 'g' },
+          { key: 'sugar', label: '糖', type: 'numeric', unit: 'kg' },
           { key: 'water', label: '水', type: 'numeric', unit: 'ml' },
           { key: 'sweetness', label: '甜度', type: 'numeric', unit: '°' },
           { key: 'box_count', label: '盒數', type: 'numeric', unit: '盒' },
@@ -174,7 +174,7 @@ export const PRODUCTION_ZONES: ZoneDef[] = [
         key: 'peanut_ice',
         name: '花生冰',
         fields: [
-          { key: 'sugar', label: '糖', type: 'numeric', unit: 'g' },
+          { key: 'sugar', label: '糖', type: 'numeric', unit: 'kg' },
           { key: 'water', label: '水', type: 'numeric', unit: 'ml' },
           { key: 'sweetness', label: '甜度', type: 'numeric', unit: '°' },
           { key: 'box_count', label: '盒數', type: 'numeric', unit: '盒' },
@@ -185,7 +185,7 @@ export const PRODUCTION_ZONES: ZoneDef[] = [
         key: 'sesame_ice',
         name: '芝麻冰',
         fields: [
-          { key: 'sugar', label: '糖', type: 'numeric', unit: 'g' },
+          { key: 'sugar', label: '糖', type: 'numeric', unit: 'kg' },
           { key: 'water', label: '水', type: 'numeric', unit: 'ml' },
           { key: 'sweetness', label: '甜度', type: 'numeric', unit: '°' },
           { key: 'box_count', label: '盒數', type: 'numeric', unit: '盒' },
@@ -196,7 +196,7 @@ export const PRODUCTION_ZONES: ZoneDef[] = [
         key: 'strawberry_ice',
         name: '草莓冰',
         fields: [
-          { key: 'sugar', label: '糖', type: 'numeric', unit: 'g' },
+          { key: 'sugar', label: '糖', type: 'numeric', unit: 'kg' },
           { key: 'water', label: '水', type: 'numeric', unit: 'ml' },
           { key: 'sweetness', label: '甜度', type: 'numeric', unit: '°' },
           { key: 'box_count', label: '盒數', type: 'numeric', unit: '盒' },
@@ -215,7 +215,7 @@ export const PRODUCTION_ZONES: ZoneDef[] = [
         key: 'fried_syrup',
         name: '炒糖水',
         fields: [
-          { key: 'sugar', label: '糖', type: 'numeric', unit: 'g' },
+          { key: 'sugar', label: '糖', type: 'numeric', unit: 'kg' },
           { key: 'water', label: '水', type: 'numeric', unit: 'ml' },
           { key: 'sweetness', label: '甜度', type: 'numeric', unit: '°' },
           { key: 'portion', label: '份量', type: 'numeric', unit: '份' },
@@ -225,7 +225,7 @@ export const PRODUCTION_ZONES: ZoneDef[] = [
         key: 'tapioca_syrup',
         name: '粉圓糖水',
         fields: [
-          { key: 'sugar', label: '糖', type: 'numeric', unit: 'g' },
+          { key: 'sugar', label: '糖', type: 'numeric', unit: 'kg' },
           { key: 'water', label: '水', type: 'numeric', unit: 'ml' },
           { key: 'sweetness', label: '甜度', type: 'numeric', unit: '°' },
           { key: 'portion', label: '份量', type: 'numeric', unit: '份' },
@@ -235,7 +235,7 @@ export const PRODUCTION_ZONES: ZoneDef[] = [
         key: 'sugarcane_syrup',
         name: '蔗片糖水',
         fields: [
-          { key: 'sugar', label: '糖', type: 'numeric', unit: 'g' },
+          { key: 'sugar', label: '糖', type: 'numeric', unit: 'kg' },
           { key: 'water', label: '水', type: 'numeric', unit: 'ml' },
           { key: 'sweetness', label: '甜度', type: 'numeric', unit: '°' },
           { key: 'bucket_count', label: '桶數', type: 'numeric', unit: '桶' },

@@ -149,7 +149,7 @@ export default function ProductionStats() {
 
   const sugarUnitMap = useMemo(() => {
     const m: Record<string, string> = {}
-    for (const st of sugarTypes) m[st.name] = st.unit || 'g'
+    for (const st of sugarTypes) m[st.name] = st.unit || 'kg'
     return m
   }, [sugarTypes])
 
@@ -661,7 +661,7 @@ export default function ProductionStats() {
                                 {subRows.map((row) => (
                                   <tr key={row.name} className="border-t border-gray-50">
                                     <td className="py-1.5 pr-2 text-brand-oak font-medium">
-                                      {row.name} <span className="text-brand-lotus">({sugarUnitMap[row.name] ?? 'g'})</span>
+                                      {row.name} <span className="text-brand-lotus">({sugarUnitMap[row.name] ?? 'kg'})</span>
                                     </td>
                                     <td className="py-1.5 px-1 text-center text-brand-mocha">{row.count}</td>
                                     <td className="py-1.5 px-1 text-center font-semibold text-brand-oak">{fmt(row.simpleAvg)}</td>
@@ -671,7 +671,7 @@ export default function ProductionStats() {
                                 ))}
                                 {subRows.length > 1 && (
                                   <tr className="border-t-2 border-gray-200">
-                                    <td className="py-1.5 pr-2 text-brand-oak font-bold">{totalRow.name} <span className="text-brand-lotus font-medium">(g)</span></td>
+                                    <td className="py-1.5 pr-2 text-brand-oak font-bold">{totalRow.name} <span className="text-brand-lotus font-medium">({Object.values(sugarUnitMap)[0] ?? 'kg'})</span></td>
                                     <td className="py-1.5 px-1 text-center text-brand-mocha">{totalRow.count}</td>
                                     <td className="py-1.5 px-1 text-center font-bold text-brand-oak">{fmt(totalRow.simpleAvg)}</td>
                                     <td className="py-1.5 px-1 text-center text-brand-mocha">{fmt(totalRow.simpleMin)}</td>
@@ -710,7 +710,7 @@ export default function ProductionStats() {
                                   if (row.unitAvg === null && row.weightedAvg === null) return null
                                   return (
                                     <tr key={row.name} className="border-t border-gray-50">
-                                      <td className="py-1.5 pr-2 text-brand-oak font-medium">{row.name} <span className="text-brand-lotus">({sugarUnitMap[row.name] ?? 'g'})</span></td>
+                                      <td className="py-1.5 pr-2 text-brand-oak font-medium">{row.name} <span className="text-brand-lotus">({sugarUnitMap[row.name] ?? 'kg'})</span></td>
                                       <td className="py-1.5 px-1 text-center font-semibold text-status-info">{row.unitAvg !== null ? fmt(row.unitAvg) : '-'}</td>
                                       <td className="py-1.5 px-1 text-center font-semibold text-brand-amber">{row.weightedAvg !== null ? fmt(row.weightedAvg) : '-'}</td>
                                     </tr>
@@ -718,7 +718,7 @@ export default function ProductionStats() {
                                 })}
                                 {subRows.length > 1 && (totalRow.unitAvg !== null || totalRow.weightedAvg !== null) && (
                                   <tr className="border-t-2 border-gray-200">
-                                    <td className="py-1.5 pr-2 text-brand-oak font-bold">{totalRow.name} <span className="text-brand-lotus font-medium">(g)</span></td>
+                                    <td className="py-1.5 pr-2 text-brand-oak font-bold">{totalRow.name} <span className="text-brand-lotus font-medium">({Object.values(sugarUnitMap)[0] ?? 'kg'})</span></td>
                                     <td className="py-1.5 px-1 text-center font-bold text-status-info">{totalRow.unitAvg !== null ? fmt(totalRow.unitAvg) : '-'}</td>
                                     <td className="py-1.5 px-1 text-center font-bold text-brand-amber">{totalRow.weightedAvg !== null ? fmt(totalRow.weightedAvg) : '-'}</td>
                                   </tr>

@@ -436,10 +436,10 @@ function SugarTab() {
 
   const [editSugar, setEditSugar] = useState<SugarTypeDef | null>(null)
   const [isNew, setIsNew] = useState(false)
-  const [form, setForm] = useState({ name: '', unit: 'g' })
+  const [form, setForm] = useState({ name: '', unit: 'kg' })
 
   const openNew = () => {
-    setForm({ name: '', unit: 'g' })
+    setForm({ name: '', unit: 'kg' })
     setIsNew(true)
     setEditSugar({} as SugarTypeDef)
   }
@@ -458,13 +458,13 @@ function SugarTab() {
       addSugarType({
         id,
         name: form.name.trim(),
-        unit: form.unit.trim() || 'g',
+        unit: form.unit.trim() || 'kg',
         sort_order: sugarTypes.length,
         is_active: true,
       })
       showToast('已新增糖種')
     } else {
-      updateSugarType(editSugar!.id, { name: form.name.trim(), unit: form.unit.trim() || 'g' })
+      updateSugarType(editSugar!.id, { name: form.name.trim(), unit: form.unit.trim() || 'kg' })
       showToast('已更新糖種')
     }
     setEditSugar(null)

@@ -342,9 +342,10 @@ try {
 
 ## 🛠️ 修改建議
 
-### M1（順手做）：S1 主 load 加 try/catch + 加 fetchError state
+### M1（✅ 已完成 2026-05-22）：S1 主 load 加 try/catch + fetchError state
 
-預估 10 分鐘，套用 SettlementHistory 的 3 態 pattern（loading / error / data）。
+套用 Settlement 同 pattern：try/catch/finally + fetchError state + UI 紅框錯誤訊息。
+Commit 隨後 prod deploy。
 
 ### M2（文件補強）：S2 加註解
 
