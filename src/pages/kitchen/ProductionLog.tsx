@@ -226,18 +226,12 @@ export default function ProductionLog() {
         return
       }
 
-      // Delete-then-insert items
-      await supabase
-        .from('production_log_items')
-        .delete()
-        .eq('session_id', sessionId)
-
-      const insertItems: { session_id: string; item_key: string; field_key: string; field_value: string }[] = []
+      // 用 RPC 原子同步 items（取代 delete-then-insert 避免資料丟失）
+      const items: { item_key: string; field_key: string; field_value: string }[] = []
       Object.entries(zoneState.values).forEach(([itemKey, fields]) => {
         Object.entries(fields).forEach(([fieldKey, value]) => {
           if (value !== '') {
-            insertItems.push({
-              session_id: sessionId,
+            items.push({
               item_key: itemKey,
               field_key: fieldKey,
               field_value: value,
@@ -246,18 +240,20 @@ export default function ProductionLog() {
         })
       })
 
-      if (insertItems.length > 0) {
-        const { error: itemErr } = await supabase
-          .from('production_log_items')
-          .insert(insertItems)
+      const { error: rpcErr } = await supabase.rpc('sync_production_log_items', {
+        p_session_id: sessionId,
+        p_items: items,
+      })
 
-        if (itemErr) {
-          showToast('提交失敗：' + itemErr.message, 'error')
-          submittingRef.current = false
-          setSubmitting(false)
-          return
-        }
+      if (rpcErr) {
+        console.error('[ProductionLog] RPC sync error:', rpcErr)
+        showToast('提交失敗：' + rpcErr.message, 'error')
+        submittingRef.current = false
+        setSubmitting(false)
+        return
       }
+
+      const insertItems = items  // 保留變數名給後續 telegram 用
 
       // Mark as filled and edited
       setFilledZones((prev) => new Set(prev).add(activeZone))
