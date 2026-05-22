@@ -258,10 +258,9 @@ export default function ProductStock() {
       await supabase.from('product_stock_items').delete().eq('session_id', sessionId)
     }
 
-    // Save stock entries (到期日批次): upsert + 刪除多餘（安全模式）
-    // 避免 DELETE 成功但 INSERT 失敗導致到期日資料全部遺失
+    // Save stock entries (到期日批次): 用 RPC sync_product_stock_entries 原子同步
     // 合併同一 (product_id, expiry_date) 的數量，避免批次內重複 key 導致 23505 錯誤
-    const seMap = new Map<string, { session_id: string; product_id: string; expiry_date: string; quantity: number }>()
+    const seMap = new Map<string, { product_id: string; expiry_date: string; quantity: number }>()
     let seRawCount = 0
     const seMergedKeys: string[] = []
     const seSkipped: string[] = []
@@ -276,7 +275,6 @@ export default function ProductStock() {
             seMergedKeys.push(key)
           } else {
             seMap.set(key, {
-              session_id: sessionId,
               product_id: pid,
               expiry_date: e.expiryDate,
               quantity: parseFloat(e.quantity) || 0,
@@ -287,64 +285,28 @@ export default function ProductStock() {
         }
       })
     })
-    const seInserts = Array.from(seMap.values())
+    const seEntries = Array.from(seMap.values())
 
-    let seUpsertOk = false
-    let seDeletedCount = 0
-    let seVerifyCount = -1
-    let seErrorMsg = ''
+    const { error: rpcErr } = await supabase.rpc('sync_product_stock_entries', {
+      p_session_id: sessionId,
+      p_entries: seEntries,
+    })
 
-    if (seInserts.length > 0) {
-      const { error: upsertErr } = await supabase
-        .from('product_stock_entries')
-        .upsert(seInserts, { onConflict: 'session_id,product_id,expiry_date' })
-
-      if (upsertErr) {
-        seErrorMsg = `${upsertErr.code}|${upsertErr.message}`
-        console.error('[productStockEntries] upsert error:', upsertErr)
-        showToast('到期日資料儲存失敗，請重新提交', 'error')
-      } else {
-        seUpsertOk = true
-        // 刪除不在新列表中的舊行
-        const { data: existing } = await supabase
-          .from('product_stock_entries')
-          .select('id, product_id, expiry_date')
-          .eq('session_id', sessionId)
-        const newKeys = new Set(seInserts.map(i => `${i.product_id}|${i.expiry_date}`))
-        const toDelete = existing?.filter(e => !newKeys.has(`${e.product_id}|${e.expiry_date}`))?.map(e => e.id) || []
-        if (toDelete.length > 0) {
-          await supabase.from('product_stock_entries').delete().in('id', toDelete)
-        }
-        seDeletedCount = toDelete.length
-        // 驗證：讀回確認筆數正確
-        const { data: verifyRows } = await supabase
-          .from('product_stock_entries')
-          .select('id')
-          .eq('session_id', sessionId)
-        seVerifyCount = verifyRows?.length ?? -1
-        if (seVerifyCount !== seInserts.length) {
-          showToast(`到期日資料筆數異常（預期 ${seInserts.length}，實際 ${seVerifyCount}），請檢查後重新提交`, 'error')
-        }
-      }
-    } else {
-      // 無到期日資料 → 清空該 session 的所有 stock entries
-      seUpsertOk = true
-      await supabase.from('product_stock_entries').delete().eq('session_id', sessionId)
-    }
-
-    // Audit log：記錄 stock entries 完整診斷資訊
+    // Audit log：記錄 stock entries 診斷資訊（RPC 原子保證無中間狀態，簡化版）
     logAudit('product_stock_entries_save', 'kitchen', sessionId, {
       staffId: confirmBy,
       rawCount: seRawCount,
-      dedupCount: seInserts.length,
+      dedupCount: seEntries.length,
       mergedKeys: seMergedKeys.length > 0 ? seMergedKeys : undefined,
       skipped: seSkipped.length > 0 ? seSkipped : undefined,
-      upsertOk: seUpsertOk,
-      errorMsg: seErrorMsg || undefined,
-      deletedCount: seDeletedCount,
-      verifyCount: seVerifyCount,
-      mismatch: seVerifyCount !== -1 && seVerifyCount !== seInserts.length,
+      rpcOk: !rpcErr,
+      errorMsg: rpcErr ? `${rpcErr.code}|${rpcErr.message}` : undefined,
     })
+
+    if (rpcErr) {
+      console.error('[productStockEntries] RPC sync error:', rpcErr)
+      showToast('到期日資料儲存失敗，請重新提交', 'error')
+    }
 
     originalStockEntries.current = JSON.parse(JSON.stringify(stockEntries))
 

@@ -364,7 +364,13 @@ if (insertItems.length > 0) {
 
 ## 🛠️ 修改建議
 
-### M1（中優先）：S1 delete-then-insert 改 RPC 原子化
+### M1（✅ 已完成 2026-05-22）：S1 delete-then-insert 改 RPC 原子化
+
+**實施結果**：
+- Migration `20260522220000_rpc_sync_production_log_items.sql` 已上 prod
+- `sync_production_log_items(p_session_id, p_items)` RPC 仿 inventory pattern
+- ProductionLog.tsx:229-260 改用 `supabase.rpc()` 取代 delete-then-insert
+- 從此資料丟失風險消除（DELETE+INSERT 在 DB 單一 transaction 原子完成）
 
 仿 inventory 的 `sync_inventory_stock_entries` RPC 寫一個 `sync_production_log_items`：
 ```sql
