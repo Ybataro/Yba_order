@@ -293,18 +293,18 @@ export default function Order() {
           })
         }
 
-        // (D) 叫貨量
-        const { data: orderSessions } = await supabase!
-          .from('order_sessions').select('id')
+        // (D) 央廚實際出貨量（SSOT，含主動出貨；與 Inventory.tsx 對齊）
+        const { data: shipmentSessions } = await supabase!
+          .from('shipment_sessions').select('id')
           .eq('store_id', storeId).eq('date', usageDate)
 
         const orderQty: Record<string, number> = {}
-        if (orderSessions && orderSessions.length > 0) {
-          const { data: ordItems } = await supabase!
-            .from('order_items').select('product_id, quantity')
-            .in('session_id', orderSessions.map(s => s.id))
-          ordItems?.forEach(item => {
-            orderQty[item.product_id] = (orderQty[item.product_id] || 0) + (item.quantity || 0)
+        if (shipmentSessions && shipmentSessions.length > 0) {
+          const { data: shipItems } = await supabase!
+            .from('shipment_items').select('product_id, actual_qty')
+            .in('session_id', shipmentSessions.map(s => s.id))
+          shipItems?.forEach(item => {
+            orderQty[item.product_id] = (orderQty[item.product_id] || 0) + (item.actual_qty || 0)
           })
         }
 
