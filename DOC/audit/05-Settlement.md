@@ -396,15 +396,16 @@ const handleSubmit = async () => {
 
 ## 🛠️ 修改建議
 
-### M1（推薦，順手做）：S3 提交防鎖死 + 防雙擊
+### M1（✅ 已完成 2026-05-22）：S3 提交防鎖死 + 防雙擊
 - 套用 Inventory.tsx pattern（try/catch/finally + submittingRef）
-- 工時 10 分鐘
-- 風險低（純前端改造）
+- 加 crashReport
+- Commit `02b3679`
 
-### M2（業務優化，需確認 S1）：diff 顏色閾值改 ±10
+### M2（✅ 已完成 2026-05-22）：diff 顏色閾值改 ±10（與 admin 一致）
 
-如業務確認 ±10 合理 → 改 Settlement.tsx:262 + 順手把這個閾值抽成共用常數
-工時 15 分鐘
+- 「結算摘要」與「成功 modal」兩處 diff 顯示
+- `|diff| ≤ 10` 綠色（容忍）、`> 10` 紅色（異常）
+- 非 0 但 ≤10 加註「誤差容忍範圍內」
 
 ### M3（重構，中風險）：S2 公式統一
 

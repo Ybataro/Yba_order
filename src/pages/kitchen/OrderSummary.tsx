@@ -32,6 +32,7 @@ export default function OrderSummary() {
   const [storeNotes, setStoreNotes] = useState<Record<string, { freeText: string }>>({})
   const [productStock, setProductStock] = useState<Record<string, number>>({})
   const [loading, setLoading] = useState(true)
+  const [fetchError, setFetchError] = useState<string | null>(null)
   const [pdfLoading, setPdfLoading] = useState(false)
 
   // 門店盤點庫存查看
@@ -136,73 +137,84 @@ export default function OrderSummary() {
 
     const load = async () => {
       setLoading(true)
-      const ordersData: Record<string, Record<string, number>> = {}
-      const notesData: Record<string, { freeText: string }> = {}
+      setFetchError(null)
 
-      // 初始化
-      stores.forEach(store => {
-        ordersData[store.id] = {}
-        notesData[store.id] = { freeText: '' }
-      })
+      try {
+        const ordersData: Record<string, Record<string, number>> = {}
+        const notesData: Record<string, { freeText: string }> = {}
 
-      // 查今日各店 order_sessions + order_items
-      const { data: sessions } = await supabase!
-        .from('order_sessions')
-        .select('*, order_items(*)')
-        .eq('date', orderDate)
-
-      if (sessions) {
-        sessions.forEach(session => {
-          const sid = session.store_id
-          if (!sid) return
-
-          // 叫貨品項
-          const items = session.order_items || []
-          items.forEach((item: { product_id: string; quantity: number }) => {
-            ordersData[sid] = ordersData[sid] || {}
-            ordersData[sid][item.product_id] = (ordersData[sid][item.product_id] || 0) + item.quantity
-          })
-
-          // 備註
-          notesData[sid] = {
-            freeText: session.note || '',
-          }
+        // 初始化
+        stores.forEach(store => {
+          ordersData[store.id] = {}
+          notesData[store.id] = { freeText: '' }
         })
-      }
 
-      // 查最近一筆成品庫存盤點（含當日及之前，因週三/日休息無盤點）
-      const stockData: Record<string, number> = {}
-      const { data: latestSession } = await supabase!
-        .from('product_stock_sessions')
-        .select('id, date')
-        .lte('date', selectedDate)
-        .order('date', { ascending: false })
-        .limit(1)
-        .maybeSingle()
+        // 查今日各店 order_sessions + order_items
+        const { data: sessions, error: sessErr } = await supabase!
+          .from('order_sessions')
+          .select('*, order_items(*)')
+          .eq('date', orderDate)
+        if (sessErr) throw sessErr
 
-      if (latestSession) {
-        const { data: stockItems } = await supabase!
-          .from('product_stock_items')
-          .select('product_id, stock_qty')
-          .eq('session_id', latestSession.id)
+        if (sessions) {
+          sessions.forEach(session => {
+            const sid = session.store_id
+            if (!sid) return
 
-        if (stockItems) {
-          stockItems.forEach(item => {
-            if (item.stock_qty != null) {
-              stockData[item.product_id] = item.stock_qty
+            // 叫貨品項
+            const items = session.order_items || []
+            items.forEach((item: { product_id: string; quantity: number }) => {
+              ordersData[sid] = ordersData[sid] || {}
+              ordersData[sid][item.product_id] = (ordersData[sid][item.product_id] || 0) + item.quantity
+            })
+
+            // 備註
+            notesData[sid] = {
+              freeText: session.note || '',
             }
           })
         }
-      }
 
-      setStoreOrders(ordersData)
-      setStoreNotes(notesData)
-      setProductStock(stockData)
-      setLoading(false)
+        // 查最近一筆成品庫存盤點（含當日及之前，因週三/日休息無盤點）
+        const stockData: Record<string, number> = {}
+        const { data: latestSession, error: ssErr } = await supabase!
+          .from('product_stock_sessions')
+          .select('id, date')
+          .lte('date', selectedDate)
+          .order('date', { ascending: false })
+          .limit(1)
+          .maybeSingle()
+        if (ssErr) throw ssErr
+
+        if (latestSession) {
+          const { data: stockItems, error: siErr } = await supabase!
+            .from('product_stock_items')
+            .select('product_id, stock_qty')
+            .eq('session_id', latestSession.id)
+          if (siErr) throw siErr
+
+          if (stockItems) {
+            stockItems.forEach(item => {
+              if (item.stock_qty != null) {
+                stockData[item.product_id] = item.stock_qty
+              }
+            })
+          }
+        }
+
+        setStoreOrders(ordersData)
+        setStoreNotes(notesData)
+        setProductStock(stockData)
+      } catch (err) {
+        console.error('[OrderSummary] load failed:', err)
+        setFetchError(err instanceof Error ? err.message : '資料載入失敗')
+      } finally {
+        setLoading(false)
+      }
     }
 
     load()
-  }, [selectedDate, stores])
+  }, [selectedDate, stores, orderDate])
 
   const productsByCategory = useMemo(() => {
     const map = new Map<string, typeof storeProducts>()
@@ -305,6 +317,11 @@ export default function OrderSummary() {
 
       {loading ? (
         <div className="flex items-center justify-center py-20 text-sm text-brand-lotus">載入中...</div>
+      ) : fetchError ? (
+        <div className="mx-4 my-8 p-4 bg-status-danger/10 border border-status-danger/30 rounded-card text-center">
+          <p className="text-status-danger text-sm font-medium mb-1">⚠️ 載入失敗</p>
+          <p className="text-xs text-brand-lotus">{fetchError}</p>
+        </div>
       ) : (
       <>
       {/* 摘要 banner + PDF 按鈕 */}
