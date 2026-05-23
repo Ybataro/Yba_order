@@ -30,11 +30,9 @@ function parseValue(value: string): Record<string, string> {
 
 function serializeValue(map: Record<string, string>): string {
   if (Object.keys(map).length === 0) return ''
-  const out: Record<string, number> = {}
-  for (const [k, v] of Object.entries(map)) {
-    out[k] = Number(v) || 0
-  }
-  return JSON.stringify(out)
+  // 保留原始字串（含中間狀態如 "0."），避免 Number() 把「0.」變成 0 導致小數點被吃掉
+  // 讀取端會自己 parseFloat，所以存 string 也能正常運算
+  return JSON.stringify(map)
 }
 
 /** Check if value is a legacy plain number (not JSON) */

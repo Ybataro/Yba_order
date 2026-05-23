@@ -1,4 +1,3 @@
-// Day32: prevUsage linkedInventoryIds fix
 import { useState, useCallback, useMemo, useEffect, useRef } from 'react'
 import { useParams, useSearchParams } from 'react-router-dom'
 import { TopNav } from '@/components/TopNav'
@@ -286,15 +285,16 @@ export default function Inventory() {
           .eq('store_id', storeId)
           .eq('date', selectedDate)
 
+        const sums: Record<string, { takeout: number; delivery: number }> = {}
+        rows?.forEach((r) => {
+          const cur = sums[r.product_key] || { takeout: 0, delivery: 0 }
+          cur.takeout += r.takeout || 0
+          cur.delivery += r.delivery || 0
+          sums[r.product_key] = cur
+        })
         const merged: Record<string, FrozenEntry> = {}
-        if (rows) {
-          rows.forEach((r) => {
-            const prev = merged[r.product_key] || { takeout: '0', delivery: '0' }
-            merged[r.product_key] = {
-              takeout: String((parseInt(prev.takeout) || 0) + (r.takeout || 0)),
-              delivery: String((parseInt(prev.delivery) || 0) + (r.delivery || 0)),
-            }
-          })
+        for (const key of Object.keys(sums)) {
+          merged[key] = { takeout: String(sums[key].takeout), delivery: String(sums[key].delivery) }
         }
         setMergedFrozenData(merged)
       } catch {
@@ -531,27 +531,21 @@ export default function Inventory() {
     return found ? Math.round(sum * 100) / 100 : null
   }, [inventoryIdMap, isMergedView, mergedData, data, bagWeightMap])
 
-  // 計算關聯品項的前日用量加總
-  // 子品項（被 parent 的 linkedInventoryIds 包含）→ 反向查找 parent 的用量
+  // 計算關聯品項的前日用量
+  // 規則：
+  // - 自己有 prevUsage → 直接用
+  // - 自己沒有但有 linkedInventoryIds → 加總子品項
+  // - 子品項（無法獨立算出，例如蔗片冰(1)~(5)冰箱）→ 回傳 undefined 顯示 '-'
+  //   合計用量請看叫貨頁的聚合 parent（蔗片冰總/芋圓總/白玉總）
   const getLinkedPrevUsage = useCallback((productId: string): number | undefined => {
-    // 如果自身有數據就直接用
     if (prevUsage[productId] !== undefined) return prevUsage[productId]
-    // 嘗試用 inventoryIdMap（parent → children）加總
     const ids = inventoryIdMap[productId] || [productId]
     let sum = 0, found = false
     for (const id of ids) {
       if (prevUsage[id] !== undefined) { sum += prevUsage[id]; found = true }
     }
-    if (found) return Math.round(sum * 10) / 10
-    // 反向查找：如果此品項是某 parent 的子品項，取 parent 的用量
-    // Must use allProducts (not allZoneProducts) because parent may be order_only
-    for (const p of allProducts) {
-      if (p.linkedInventoryIds?.includes(productId) && prevUsage[p.id] !== undefined) {
-        return prevUsage[p.id]
-      }
-    }
-    return undefined
-  }, [inventoryIdMap, prevUsage, allProducts])
+    return found ? Math.round(sum * 10) / 10 : undefined
+  }, [inventoryIdMap, prevUsage])
 
   const updateField = useCallback((productId: string, field: keyof InventoryEntry, value: string) => {
     setData(prev => ({

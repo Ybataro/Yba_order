@@ -228,6 +228,8 @@ export default function OrderSummary() {
     Math.round(stores.reduce((sum, s) => sum + (storeOrders[s.id]?.[productId] || 0), 0) * 10) / 10
 
   // 取得品項庫存（聚合品項加總 linkedInventoryIds 的庫存）
+  // 註：linkedInventoryIds 原為門店端「樓層 1F/2F」設計；央廚成品庫存無樓層概念，
+  // 子 id 通常無紀錄→null→不影響加總。保留此邏輯供未來多倉庫場景複用。
   const getStock = useCallback((product: typeof storeProducts[0]): number | null => {
     const ids = product.linkedInventoryIds?.length
       ? product.linkedInventoryIds
