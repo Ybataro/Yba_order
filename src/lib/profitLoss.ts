@@ -5,6 +5,13 @@ export interface ExpenseItem {
   id: string
   label: string
   amount: number
+  // 以下供 UI 顯示「自動計算來源」與「是否被手動覆寫」
+  isAuto?: boolean
+  autoField?: string | null
+  rate?: number | null         // 此月生效的費率（如 0.30 表示 30%）
+  rawValue?: number            // 計算用的 raw 值（如 uberFee 原始營業額）
+  autoAmount?: number          // 自動算出的金額（未被 override 時 = amount）
+  overridden?: boolean         // true = 此月使用手動覆寫值
 }
 
 export interface PnLResult {
@@ -30,6 +37,13 @@ interface ExpenseCategory {
 interface MonthlyExpense {
   category_id: string
   amount: number
+  override_amount: number | null
+}
+
+interface RateHistoryRow {
+  category_id: string
+  effective_from: string
+  rate: number
 }
 
 const TAX_RESERVE_RATE = 0.15
@@ -55,17 +69,41 @@ export async function computeMonthlyPnL(
 
   if (!categories) return null
 
-  // 2. Fetch monthly manual expenses
+  // 2. Fetch monthly manual expenses（含自動覆寫）
   const { data: monthlyData } = await supabase
     .from('monthly_expenses')
-    .select('category_id, amount')
+    .select('category_id, amount, override_amount')
     .eq('store_id', storeId)
     .eq('year_month', yearMonth)
 
   const manualMap = new Map<string, number>()
+  const overrideMap = new Map<string, number>()
   ;(monthlyData || []).forEach((m: MonthlyExpense) => {
     manualMap.set(m.category_id, m.amount)
+    if (m.override_amount != null) overrideMap.set(m.category_id, m.override_amount)
   })
+
+  // 2b. Fetch effective rates for this month（費率歷史版本）
+  const autoCategoryIds = (categories as ExpenseCategory[])
+    .filter(c => c.is_auto && c.auto_rate != null)
+    .map(c => c.id)
+
+  const effectiveRateMap = new Map<string, number>()
+  if (autoCategoryIds.length > 0) {
+    const { data: rateRows } = await supabase
+      .from('expense_rate_history')
+      .select('category_id, effective_from, rate')
+      .in('category_id', autoCategoryIds)
+      .lte('effective_from', yearMonth)
+      .order('effective_from', { ascending: false })
+
+    ;(rateRows || []).forEach((r: RateHistoryRow) => {
+      // 同 category 多筆時，第一筆（最新生效）勝出
+      if (!effectiveRateMap.has(r.category_id)) {
+        effectiveRateMap.set(r.category_id, r.rate)
+      }
+    })
+  }
 
   // 3. Compute date range for the month
   const [year, month] = yearMonth.split('-').map(Number)
@@ -157,31 +195,38 @@ export async function computeMonthlyPnL(
 
   ;(categories as ExpenseCategory[]).forEach((cat) => {
     if (cat.is_auto) {
-      let amount = 0
+      // 此月份的有效費率（優先 history，否則 fallback 到 expense_categories.auto_rate）
+      const effectiveRate = effectiveRateMap.get(cat.id) ?? cat.auto_rate
+
+      let autoAmount = 0
+      let rawValue: number | undefined
       if (cat.auto_field === 'dailyExpense') {
-        amount = dailyExpenseTotal
+        autoAmount = dailyExpenseTotal
       } else if (cat.auto_field === 'orderCost') {
-        amount = Math.round(orderCostTotal)
-      } else if (cat.auto_field && cat.auto_rate != null) {
-        // Fee = raw value * rate (e.g., uberFee * 0.30 means the fee IS the raw uberFee value,
-        // but for posTotal * 0.05 = business tax)
-        const rawValue = settlementTotals[cat.auto_field] || 0
-        if (cat.auto_field === 'posTotal') {
-          // Business tax: posTotal * rate
-          amount = Math.round(rawValue * cat.auto_rate)
-        } else {
-          // Platform fees: the raw settlement value IS the fee amount already
-          // e.g., uberFee field already contains the delivery fee total
-          // But the plan says rate = 0.30 for Uber meaning revenue * 0.30
-          // Actually looking at settlement: uberFee = UBER訂單費用 (the order revenue from Uber)
-          // So the commission = uberFee * rate
-          amount = Math.round(rawValue * cat.auto_rate)
-        }
+        autoAmount = Math.round(orderCostTotal)
+      } else if (cat.auto_field && effectiveRate != null) {
+        rawValue = settlementTotals[cat.auto_field] || 0
+        autoAmount = Math.round(rawValue * effectiveRate)
       }
-      autoExpenses.push({ id: cat.id, label: cat.label, amount })
+
+      // 月度覆寫：手動值優先
+      const override = overrideMap.get(cat.id)
+      const finalAmount = override != null ? override : autoAmount
+
+      autoExpenses.push({
+        id: cat.id,
+        label: cat.label,
+        amount: finalAmount,
+        isAuto: true,
+        autoField: cat.auto_field,
+        rate: effectiveRate,
+        rawValue,
+        autoAmount,
+        overridden: override != null,
+      })
     } else {
       const amount = manualMap.get(cat.id) || 0
-      manualExpenses.push({ id: cat.id, label: cat.label, amount })
+      manualExpenses.push({ id: cat.id, label: cat.label, amount, isAuto: false })
     }
   })
 
@@ -255,5 +300,77 @@ export async function upsertMonthlyExpense(
       },
       { onConflict: 'store_id,year_month,category_id' },
     )
+  return !error
+}
+
+/**
+ * 設定自動類別的月度覆寫金額（傳 null = 清除覆寫，回到自動算）
+ */
+export async function setMonthlyOverride(
+  storeId: string,
+  yearMonth: string,
+  categoryId: string,
+  overrideAmount: number | null,
+): Promise<boolean> {
+  if (!supabase) return false
+  const { error } = await supabase
+    .from('monthly_expenses')
+    .upsert(
+      {
+        store_id: storeId,
+        year_month: yearMonth,
+        category_id: categoryId,
+        amount: 0, // 自動類別不用 amount，只用 override_amount
+        override_amount: overrideAmount,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: 'store_id,year_month,category_id' },
+    )
+  return !error
+}
+
+/**
+ * 新增/更新費率（生效起始月份）
+ * 同一 category + 同 effective_from 會被 upsert 取代
+ */
+export async function setExpenseRate(
+  categoryId: string,
+  effectiveFrom: string,
+  rate: number,
+  note: string = '',
+): Promise<boolean> {
+  if (!supabase) return false
+  const { error } = await supabase
+    .from('expense_rate_history')
+    .upsert(
+      { category_id: categoryId, effective_from: effectiveFrom, rate, note },
+      { onConflict: 'category_id,effective_from' },
+    )
+  return !error
+}
+
+/**
+ * 取得指定 category 的所有費率歷史（按 effective_from 由新到舊）
+ */
+export async function getRateHistory(categoryId: string): Promise<{ effective_from: string; rate: number; note: string }[]> {
+  if (!supabase) return []
+  const { data } = await supabase
+    .from('expense_rate_history')
+    .select('effective_from, rate, note')
+    .eq('category_id', categoryId)
+    .order('effective_from', { ascending: false })
+  return (data as { effective_from: string; rate: number; note: string }[] | null) || []
+}
+
+/**
+ * 刪除特定費率版本
+ */
+export async function deleteRateVersion(categoryId: string, effectiveFrom: string): Promise<boolean> {
+  if (!supabase) return false
+  const { error } = await supabase
+    .from('expense_rate_history')
+    .delete()
+    .eq('category_id', categoryId)
+    .eq('effective_from', effectiveFrom)
   return !error
 }

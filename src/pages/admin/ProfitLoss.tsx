@@ -13,9 +13,14 @@ import {
   computeMonthlyPnL,
   computeYearlyPnL,
   upsertMonthlyExpense,
+  setMonthlyOverride,
+  setExpenseRate,
+  getRateHistory,
+  deleteRateVersion,
   type PnLResult,
 } from '@/lib/profitLoss'
 import { ExpenseCategoryModal } from '@/components/ExpenseCategoryModal'
+import { useToast } from '@/components/Toast'
 
 type ViewMode = 'month' | 'year'
 type EntityId = string // 'lehua' | 'xingnan' | 'kitchen'
@@ -23,6 +28,7 @@ type EntityId = string // 'lehua' | 'xingnan' | 'kitchen'
 export default function ProfitLoss() {
   const stores = useStoreStore((s) => s.items)
   const getStoreName = useStoreStore((s) => s.getName)
+  const { showToast } = useToast()
 
   const today = getTodayTW()
   const currentYear = parseInt(today.slice(0, 4))
@@ -39,6 +45,14 @@ export default function ProfitLoss() {
   // Manual expense editing
   const [editValues, setEditValues] = useState<Record<string, string>>({})
   const [categoryModalOpen, setCategoryModalOpen] = useState(false)
+
+  // 自動費用展開（編輯費率/覆寫）
+  const [expandedAutoId, setExpandedAutoId] = useState<string | null>(null)
+  const [overrideInput, setOverrideInput] = useState<string>('')
+  const [rateHistory, setRateHistory] = useState<{ effective_from: string; rate: number; note: string }[]>([])
+  const [newRateEffectiveFrom, setNewRateEffectiveFrom] = useState<string>('')
+  const [newRatePercent, setNewRatePercent] = useState<string>('')
+  const [autoOpSaving, setAutoOpSaving] = useState(false)
 
   // Year view
   const [yearData, setYearData] = useState<{
@@ -110,6 +124,87 @@ export default function ProfitLoss() {
     const nm = m === 12 ? 1 : m + 1
     const ny = m === 12 ? y + 1 : y
     setYearMonth(`${ny}-${String(nm).padStart(2, '0')}`)
+  }
+
+  // ── 展開自動費用編輯面板 ──
+  const handleExpandAuto = async (item: NonNullable<PnLResult['autoExpenses']>[number]) => {
+    if (expandedAutoId === item.id) {
+      setExpandedAutoId(null)
+      return
+    }
+    setExpandedAutoId(item.id)
+    setOverrideInput(item.overridden ? String(item.amount) : '')
+    setNewRateEffectiveFrom(yearMonth)
+    setNewRatePercent('')
+    // 只有「比例型」自動費用才查費率歷史（orderCost / dailyExpense 沒費率）
+    if (item.rate != null) {
+      const history = await getRateHistory(item.id)
+      setRateHistory(history)
+    } else {
+      setRateHistory([])
+    }
+  }
+
+  // ── 儲存月度覆寫 ──
+  const handleSaveOverride = async (categoryId: string) => {
+    if (autoOpSaving) return
+    setAutoOpSaving(true)
+    try {
+      const raw = overrideInput.trim()
+      const amount = raw === '' ? null : parseInt(raw)
+      if (amount != null && (isNaN(amount) || amount < 0)) {
+        showToast('金額需為非負整數', 'error')
+        return
+      }
+      const ok = await setMonthlyOverride(entity, yearMonth, categoryId, amount)
+      if (!ok) { showToast('儲存失敗', 'error'); return }
+      showToast(amount == null ? '已清除覆寫，回到自動計算' : '已套用覆寫金額')
+      await fetchMonth()
+    } finally {
+      setAutoOpSaving(false)
+    }
+  }
+
+  // ── 新增費率版本 ──
+  const handleAddRate = async (categoryId: string) => {
+    if (autoOpSaving) return
+    const ymRe = /^\d{4}-\d{2}$/
+    if (!ymRe.test(newRateEffectiveFrom)) {
+      showToast('生效月份格式必須是 YYYY-MM', 'error'); return
+    }
+    const percent = parseFloat(newRatePercent)
+    if (isNaN(percent) || percent < 0 || percent > 100) {
+      showToast('費率需為 0~100 之間的數字（百分比）', 'error'); return
+    }
+    setAutoOpSaving(true)
+    try {
+      const ok = await setExpenseRate(categoryId, newRateEffectiveFrom, percent / 100)
+      if (!ok) { showToast('費率儲存失敗', 'error'); return }
+      showToast(`已設定 ${newRateEffectiveFrom} 起費率 ${percent}%`)
+      const history = await getRateHistory(categoryId)
+      setRateHistory(history)
+      setNewRatePercent('')
+      await fetchMonth()
+    } finally {
+      setAutoOpSaving(false)
+    }
+  }
+
+  // ── 刪除費率版本 ──
+  const handleDeleteRate = async (categoryId: string, effectiveFrom: string) => {
+    if (autoOpSaving) return
+    if (!confirm(`確定刪除 ${effectiveFrom} 生效的費率？\n刪除後此期間將回退到更舊的費率版本。`)) return
+    setAutoOpSaving(true)
+    try {
+      const ok = await deleteRateVersion(categoryId, effectiveFrom)
+      if (!ok) { showToast('刪除失敗', 'error'); return }
+      showToast('費率已刪除')
+      const history = await getRateHistory(categoryId)
+      setRateHistory(history)
+      await fetchMonth()
+    } finally {
+      setAutoOpSaving(false)
+    }
   }
 
   // ── Manual expense save on blur ──
@@ -346,17 +441,142 @@ export default function ProfitLoss() {
               <>
                 <SectionHeader title="自動計算費用" icon="■" />
                 <div className="bg-white">
-                  {pnl.autoExpenses.map((e, idx) => (
-                    <div
-                      key={e.id}
-                      className={`flex items-center justify-between px-4 py-2.5 ${
-                        idx < pnl.autoExpenses.length - 1 ? 'border-b border-gray-50' : ''
-                      }`}
-                    >
-                      <span className="text-sm text-brand-oak">{e.label}</span>
-                      <span className="text-sm font-num text-brand-oak">{formatCurrency(e.amount)}</span>
-                    </div>
-                  ))}
+                  {pnl.autoExpenses.map((e, idx) => {
+                    const isExpanded = expandedAutoId === e.id
+                    const isRateBased = e.rate != null // 有費率的（營業稅/Uber/panda/LinePay）才可改費率
+                    return (
+                      <div
+                        key={e.id}
+                        className={`${idx < pnl.autoExpenses.length - 1 ? 'border-b border-gray-50' : ''}`}
+                      >
+                        <button
+                          type="button"
+                          onClick={() => handleExpandAuto(e)}
+                          className="w-full flex items-center justify-between px-4 py-2.5 active:bg-gray-50"
+                        >
+                          <div className="flex items-center gap-2 min-w-0">
+                            <span className="text-sm text-brand-oak">{e.label}</span>
+                            {isRateBased && e.rate != null && (
+                              <span className="text-[11px] text-brand-lotus">
+                                {(e.rate * 100).toFixed(e.rate * 100 % 1 === 0 ? 0 : 1)}%
+                              </span>
+                            )}
+                            {e.overridden && (
+                              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-700">
+                                已覆寫
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className={`text-sm font-num ${e.overridden ? 'text-amber-700 font-semibold' : 'text-brand-oak'}`}>
+                              {formatCurrency(e.amount)}
+                            </span>
+                            <Settings size={14} className="text-brand-lotus/60 shrink-0" />
+                          </div>
+                        </button>
+
+                        {/* 展開：費率 + 覆寫 */}
+                        {isExpanded && (
+                          <div className="px-4 pb-3 pt-1 bg-gray-50 space-y-3">
+                            {/* 自動算的結果（透明顯示推算過程）*/}
+                            {isRateBased && e.rawValue != null && e.rate != null && (
+                              <div className="text-[11px] text-brand-lotus bg-white rounded-lg px-3 py-2 border border-gray-100">
+                                自動計算：{formatCurrency(e.rawValue)} × {(e.rate * 100).toFixed(e.rate * 100 % 1 === 0 ? 0 : 1)}% = <span className="font-semibold text-brand-oak">{formatCurrency(e.autoAmount || 0)}</span>
+                              </div>
+                            )}
+                            {!isRateBased && (
+                              <div className="text-[11px] text-brand-lotus bg-white rounded-lg px-3 py-2 border border-gray-100">
+                                自動加總：{formatCurrency(e.autoAmount || 0)}
+                              </div>
+                            )}
+
+                            {/* 覆寫金額 */}
+                            <div>
+                              <label className="text-[11px] text-brand-lotus block mb-1">此月實際金額（覆寫）</label>
+                              <div className="flex gap-2">
+                                <input
+                                  type="text"
+                                  inputMode="numeric"
+                                  value={overrideInput}
+                                  onChange={(ev) => {
+                                    const v = ev.target.value
+                                    if (v === '' || /^\d+$/.test(v)) setOverrideInput(v)
+                                  }}
+                                  placeholder={`空白 = 用自動值 ${formatCurrency(e.autoAmount || 0)}`}
+                                  className="flex-1 h-9 rounded-lg border border-gray-200 bg-white px-3 text-sm text-brand-oak font-num outline-none focus:border-brand-lotus"
+                                />
+                                <button
+                                  onClick={() => handleSaveOverride(e.id)}
+                                  disabled={autoOpSaving}
+                                  className="px-3 h-9 rounded-lg bg-brand-oak text-white text-xs font-medium active:opacity-80 disabled:opacity-50"
+                                >
+                                  {overrideInput.trim() === '' ? '清除覆寫' : '套用'}
+                                </button>
+                              </div>
+                            </div>
+
+                            {/* 費率歷史（只有比例型才顯示）*/}
+                            {isRateBased && (
+                              <div>
+                                <p className="text-[11px] text-brand-lotus mb-1">費率歷史</p>
+                                <div className="space-y-1">
+                                  {rateHistory.map((h) => (
+                                    <div key={h.effective_from} className="flex items-center justify-between bg-white rounded-lg px-3 py-1.5 border border-gray-100 text-xs">
+                                      <span className="text-brand-oak">
+                                        <span className="font-num">{h.effective_from}</span> 起 ·
+                                        <span className="font-semibold font-num ml-1">{(h.rate * 100).toFixed(h.rate * 100 % 1 === 0 ? 0 : 1)}%</span>
+                                      </span>
+                                      <button
+                                        onClick={() => handleDeleteRate(e.id, h.effective_from)}
+                                        disabled={autoOpSaving}
+                                        className="text-[11px] text-status-danger active:opacity-60 disabled:opacity-30"
+                                      >
+                                        刪除
+                                      </button>
+                                    </div>
+                                  ))}
+                                  {rateHistory.length === 0 && (
+                                    <p className="text-[11px] text-brand-lotus/60 italic text-center py-1">尚無費率歷史</p>
+                                  )}
+                                </div>
+
+                                {/* 新增費率版本 */}
+                                <div className="mt-2 flex gap-1.5">
+                                  <input
+                                    type="text"
+                                    value={newRateEffectiveFrom}
+                                    onChange={(ev) => setNewRateEffectiveFrom(ev.target.value)}
+                                    placeholder="2026-07"
+                                    className="w-24 h-8 rounded-lg border border-gray-200 bg-white px-2 text-xs text-brand-oak font-num outline-none focus:border-brand-lotus"
+                                  />
+                                  <span className="text-xs text-brand-lotus self-center">起</span>
+                                  <input
+                                    type="text"
+                                    inputMode="decimal"
+                                    value={newRatePercent}
+                                    onChange={(ev) => {
+                                      const v = ev.target.value
+                                      if (v === '' || /^\d*\.?\d*$/.test(v)) setNewRatePercent(v)
+                                    }}
+                                    placeholder="32"
+                                    className="w-20 h-8 rounded-lg border border-gray-200 bg-white px-2 text-xs text-brand-oak font-num outline-none focus:border-brand-lotus text-right"
+                                  />
+                                  <span className="text-xs text-brand-lotus self-center">%</span>
+                                  <button
+                                    onClick={() => handleAddRate(e.id)}
+                                    disabled={autoOpSaving}
+                                    className="flex-1 h-8 rounded-lg bg-brand-mocha text-white text-xs font-medium active:opacity-80 disabled:opacity-50"
+                                  >
+                                    新增費率
+                                  </button>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })}
                 </div>
               </>
             )}
