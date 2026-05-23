@@ -227,7 +227,7 @@ export default function Inventory() {
       const n = parseFloat(e.quantity)
       return acc + (isNaN(n) ? 0 : n)
     }, 0)
-    const sumStr = entries.length > 0 ? String(Math.round(sum * 10) / 10) : ''
+    const sumStr = entries.length > 0 ? String(Math.round(sum * 100) / 100) : ''
     setData(prev => ({
       ...prev,
       [productId]: {
@@ -354,11 +354,13 @@ export default function Inventory() {
                 discarded: item.discarded != null ? String(item.discarded) : '',
               }
             } else {
-              // Sum values
+              // Sum values（用 number 累加避免浮點尾巴，最後 round 到 2 位小數）
               const addNum = (a: string, b: number | null): string => {
                 if (b == null) return a
                 if (a === '') return String(b)
-                return String(parseFloat(a) + b)
+                const sum = parseFloat(a) + b
+                if (isNaN(sum)) return a
+                return String(Math.round(sum * 100) / 100)
               }
               merged[item.product_id] = {
                 onShelf: addNum(existing.onShelf, item.on_shelf),
@@ -1007,6 +1009,7 @@ export default function Inventory() {
                                   value={entry.discarded}
                                   onChange={(v) => updateField(product.id, 'discarded', v)}
                                   isFilled
+                                  integerOnly={product.integerOnly}
                                   className={entry.discarded && parseFloat(entry.discarded) > 0 ? '!text-status-danger' : ''}
                                   onNext={focusNext}
                                   data-inv=""

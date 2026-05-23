@@ -218,8 +218,8 @@ export function StockEntryPanel({ entries, onChange, onCollapse, unit, box_unit,
         <span className="text-xs text-brand-lotus mr-2">庫存合計:</span>
         <span className="text-sm font-bold text-brand-oak">
           {hasDual
-            ? formatDualUnit(Math.round(total * 10) / 10, unit || '', box_unit, box_ratio)
-            : Math.round(total * 10) / 10}
+            ? formatDualUnit(Math.round(total * 100) / 100, unit || '', box_unit, box_ratio)
+            : Math.round(total * 100) / 100}
         </span>
       </div>
     </div>
