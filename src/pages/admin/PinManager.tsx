@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { TopNav } from '@/components/TopNav'
 import { AdminModal, ModalField, ModalInput, ModalSelect } from '@/components/AdminModal'
 import { SectionHeader } from '@/components/SectionHeader'
@@ -156,22 +156,50 @@ export default function PinManager() {
   const [approverOrder, setApproverOrder] = useState<number>(1)
   const [approverTelegramId, setApproverTelegramId] = useState<string>('')
   const [approverSaving, setApproverSaving] = useState(false)
+  const [approverHelpOpen, setApproverHelpOpen] = useState(false)
 
   // ── 新增/編輯 Modal state ──
   const [formStaffId, setFormStaffId] = useState('')
   const [formRole, setFormRole] = useState('store')
   const [formPin, setFormPin] = useState('')
   const [formAllowedStores, setFormAllowedStores] = useState<string[]>([])
+  const [formSubmitting, setFormSubmitting] = useState(false)
+
+  // ── 全域寫入鎖（防雙擊 + 並發保護）──
+  const writingRef = useRef(false)
+  const guardedWrite = async (label: string, fn: () => Promise<void>) => {
+    if (writingRef.current) return
+    writingRef.current = true
+    try {
+      await fn()
+    } catch (err) {
+      console.error(`[PinManager] ${label} 失敗:`, err)
+      showToast(`${label}失敗：${(err as Error)?.message || '未知錯誤'}`, 'error')
+    } finally {
+      writingRef.current = false
+    }
+  }
 
   // ── 初始載入 ──────────────────────────────────────────────
+  const [loadError, setLoadError] = useState<string | null>(null)
   useEffect(() => {
     if (!supabase) { setLoading(false); return }
-    Promise.all([
+    Promise.allSettled([
       supabase.from('user_pins').select('*').order('role'),
       supabase.from('staff').select('id, name, group_id, sort_order, telegram_id').order('sort_order'),
-    ]).then(([pinRes, staffRes]) => {
-      setPins((pinRes.data as UserPin[] | null) || [])
-      setAllStaffRows((staffRes.data as StaffRow[] | null) || [])
+    ]).then((results) => {
+      const errs: string[] = []
+      if (results[0].status === 'fulfilled') {
+        setPins((results[0].value.data as UserPin[] | null) || [])
+      } else {
+        errs.push('PIN 資料載入失敗')
+      }
+      if (results[1].status === 'fulfilled') {
+        setAllStaffRows((results[1].value.data as StaffRow[] | null) || [])
+      } else {
+        errs.push('員工資料載入失敗')
+      }
+      setLoadError(errs.length > 0 ? errs.join('；') : null)
       setLoading(false)
     })
   }, [])
@@ -202,10 +230,22 @@ export default function PinManager() {
       list.push(s)
       m.set(key, list)
     }
+    // 群組內排序：未設定 PIN 的置頂（紅色提醒）→ 啟用 → 停用
+    for (const [key, list] of m.entries()) {
+      list.sort((a, b) => {
+        const pa = pinMap.get(a.id)
+        const pb = pinMap.get(b.id)
+        const rankA = !pa ? 0 : pa.is_active ? 1 : 2
+        const rankB = !pb ? 0 : pb.is_active ? 1 : 2
+        if (rankA !== rankB) return rankA - rankB
+        return a.sort_order - b.sort_order
+      })
+      m.set(key, list)
+    }
     return Array.from(m.entries()).sort(
       (a, b) => (GROUP_ORDER[a[0]] ?? 99) - (GROUP_ORDER[b[0]] ?? 99)
     )
-  }, [allStaffRows])
+  }, [allStaffRows, pinMap])
 
   const allStaffOptions = useMemo(() => [
     ...adminStaff.map((s) => ({ id: s.id, name: s.name, group: '管理者' })),
@@ -273,143 +313,153 @@ export default function PinManager() {
     if (!editing && !formPin) { showToast('請輸入 PIN 碼', 'error'); return }
     if (formPin && formPin.length !== 4) { showToast('PIN 碼必須是 4 位數字', 'error'); return }
     if (formPin && !/^\d{4}$/.test(formPin)) { showToast('PIN 碼只能是數字', 'error'); return }
+    if (formSubmitting) return
 
-    const pinData: Record<string, unknown> = {
-      id: editing?.id || `pin_${formStaffId}`,
-      staff_id: formStaffId,
-      role: formRole,
-      allowed_stores: formAllowedStores,
-      updated_at: new Date().toISOString(),
-    }
-    if (formPin) pinData.pin_hash = await hashPin(formPin)
-    if (!editing) {
-      pinData.created_at = new Date().toISOString()
-      pinData.is_active = true
-    }
+    setFormSubmitting(true)
+    await guardedWrite(editing ? 'PIN 更新' : 'PIN 新增', async () => {
+      const pinData: Record<string, unknown> = {
+        id: editing?.id || `pin_${formStaffId}`,
+        staff_id: formStaffId,
+        role: formRole,
+        allowed_stores: formAllowedStores,
+        updated_at: new Date().toISOString(),
+      }
+      if (formPin) pinData.pin_hash = await hashPin(formPin)
+      if (!editing) {
+        pinData.created_at = new Date().toISOString()
+        pinData.is_active = true
+      }
 
-    const { error } = await supabase.from('user_pins').upsert(pinData, { onConflict: 'id' })
-    if (error) { showToast('儲存失敗：' + error.message, 'error'); return }
-    await refreshPins()
-    setModalOpen(false)
-    showToast(editing ? 'PIN 已更新' : 'PIN 已新增')
+      const { error } = await supabase!.from('user_pins').upsert(pinData, { onConflict: 'id' })
+      if (error) throw error
+      await refreshPins()
+      setModalOpen(false)
+      showToast(editing ? 'PIN 已更新' : 'PIN 已新增')
+    })
+    setFormSubmitting(false)
   }
 
   // ── Toggle：帳號狀態 ─────────────────────────────────────
-  const toggleActive = async (pin: UserPin) => {
+  const toggleActive = (pin: UserPin) => guardedWrite('帳號狀態更新', async () => {
     if (!supabase) return
     const { error } = await supabase
       .from('user_pins')
       .update({ is_active: !pin.is_active, updated_at: new Date().toISOString() })
       .eq('id', pin.id)
-    if (error) { showToast('更新失敗', 'error'); return }
+    if (error) throw error
     setPins((prev) => prev.map((p) => p.id === pin.id ? { ...p, is_active: !p.is_active } : p))
     showToast(pin.is_active ? '已停用' : '已啟用')
-  }
+  })
 
   // ── Toggle：排班管理 ─────────────────────────────────────
-  const toggleCanSchedule = async (pin: UserPin) => {
+  const toggleCanSchedule = (pin: UserPin) => guardedWrite('排班權限更新', async () => {
     if (!supabase) return
     const { error } = await supabase
       .from('user_pins')
       .update({ can_schedule: !pin.can_schedule, updated_at: new Date().toISOString() })
       .eq('id', pin.id)
-    if (error) { showToast('更新失敗', 'error'); return }
+    if (error) throw error
     setPins((prev) => prev.map((p) => p.id === pin.id ? { ...p, can_schedule: !p.can_schedule } : p))
     showToast(pin.can_schedule ? '已取消排班權限' : '已授予排班權限')
-  }
+  })
 
   // ── Toggle：班次詳情可見 ─────────────────────────────────
-  const toggleCanPopup = async (pin: UserPin) => {
+  const toggleCanPopup = (pin: UserPin) => guardedWrite('班次詳情權限更新', async () => {
     if (!supabase) return
     const { error } = await supabase
       .from('user_pins')
       .update({ can_popup: !pin.can_popup, updated_at: new Date().toISOString() })
       .eq('id', pin.id)
-    if (error) { showToast('更新失敗', 'error'); return }
+    if (error) throw error
     setPins((prev) => prev.map((p) => p.id === pin.id ? { ...p, can_popup: !p.can_popup } : p))
     showToast(pin.can_popup ? '已隱藏班次詳情' : '已開放班次詳情')
-  }
+  })
 
   // ── 儲存頁面權限 ─────────────────────────────────────────
   const saveAllowedPages = async (pin: UserPin) => {
-    if (!supabase) return
+    if (pagePanelSaving) return
     setPagePanelSaving(true)
-    const { error } = await supabase
-      .from('user_pins')
-      .update({ allowed_pages: pagePanelPages, updated_at: new Date().toISOString() })
-      .eq('id', pin.id)
+    await guardedWrite('頁面權限儲存', async () => {
+      if (!supabase) return
+      const { error } = await supabase
+        .from('user_pins')
+        .update({ allowed_pages: pagePanelPages, updated_at: new Date().toISOString() })
+        .eq('id', pin.id)
+      if (error) throw error
+      setPins((prev) => prev.map((p) => p.id === pin.id ? { ...p, allowed_pages: pagePanelPages } : p))
+      showToast('頁面權限已更新')
+    })
     setPagePanelSaving(false)
-    if (error) { showToast('儲存失敗', 'error'); return }
-    setPins((prev) => prev.map((p) => p.id === pin.id ? { ...p, allowed_pages: pagePanelPages } : p))
-    showToast('頁面權限已更新')
   }
 
   // ── 儲存假單主管設定 ─────────────────────────────────────
   const saveApproverSettings = async (pin: UserPin) => {
-    if (!supabase) return
+    if (approverSaving) return
     setApproverSaving(true)
+    await guardedWrite('假單主管設定儲存', async () => {
+      if (!supabase) return
+      // 1. 更新 user_pins
+      const { error: pinErr } = await supabase
+        .from('user_pins')
+        .update({
+          is_leave_approver: true,
+          leave_approver_scope: approverScope,
+          leave_approver_order: approverOrder,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', pin.id)
+      if (pinErr) throw pinErr
 
-    // 1. 更新 user_pins
-    const { error: pinErr } = await supabase
-      .from('user_pins')
-      .update({
-        is_leave_approver: true,
-        leave_approver_scope: approverScope,
-        leave_approver_order: approverOrder,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', pin.id)
+      // 2. 同步寫入 staff.telegram_id
+      const { error: staffErr } = await supabase
+        .from('staff')
+        .update({ telegram_id: approverTelegramId.trim() || null })
+        .eq('id', pin.staff_id)
+      if (staffErr) throw new Error('Telegram ID 儲存失敗：' + staffErr.message)
 
-    if (pinErr) {
-      showToast('主管設定儲存失敗', 'error')
-      setApproverSaving(false)
-      return
-    }
+      // 3. 清除 V2 主管快取，讓下次送假重新查
+      clearLeaveApproverCache()
 
-    // 2. 同步寫入 staff.telegram_id
-    const { error: staffErr } = await supabase
-      .from('staff')
-      .update({ telegram_id: approverTelegramId.trim() || null })
-      .eq('id', pin.staff_id)
-
-    if (staffErr) {
-      showToast('Telegram ID 儲存失敗', 'error')
-      setApproverSaving(false)
-      return
-    }
-
-    // 3. 清除 V2 主管快取，讓下次送假重新查
-    clearLeaveApproverCache()
-
-    await Promise.all([refreshPins(), refreshStaff()])
+      await Promise.all([refreshPins(), refreshStaff()])
+      setApproverEditing(false)
+      showToast('假單主管設定已儲存')
+    })
     setApproverSaving(false)
-    setApproverEditing(false)
-    showToast('假單主管設定已儲存')
   }
 
   // ── 關閉假單主管設定 ─────────────────────────────────────
   const removeApproverSettings = async (pin: UserPin) => {
-    if (!supabase) return
-    if (!confirm(`確定要取消 ${staffRowMap.get(pin.staff_id)?.name || pin.staff_id} 的假單主管設定嗎？`)) return
+    if (approverSaving) return
+    if (!confirm(`確定要取消 ${staffRowMap.get(pin.staff_id)?.name || pin.staff_id} 的假單主管設定嗎？\n（會同時清空 Telegram ID）`)) return
 
     setApproverSaving(true)
-    const { error } = await supabase
-      .from('user_pins')
-      .update({
-        is_leave_approver: false,
-        leave_approver_scope: null,
-        leave_approver_order: 1,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', pin.id)
+    await guardedWrite('取消主管設定', async () => {
+      if (!supabase) return
+      // 1. 清 user_pins 主管設定
+      const { error: pinErr } = await supabase
+        .from('user_pins')
+        .update({
+          is_leave_approver: false,
+          leave_approver_scope: null,
+          leave_approver_order: 1,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', pin.id)
+      if (pinErr) throw pinErr
 
-    if (error) { showToast('取消設定失敗', 'error'); setApproverSaving(false); return }
+      // 2. A2 — 同步清空 staff.telegram_id（不再是主管就不需要接收通知）
+      const { error: staffErr } = await supabase
+        .from('staff')
+        .update({ telegram_id: null })
+        .eq('id', pin.staff_id)
+      if (staffErr) throw new Error('Telegram ID 清空失敗：' + staffErr.message)
 
-    clearLeaveApproverCache()
-    await refreshPins()
+      clearLeaveApproverCache()
+      await Promise.all([refreshPins(), refreshStaff()])
+      setApproverEditing(false)
+      showToast('已取消假單主管設定')
+    })
     setApproverSaving(false)
-    setApproverEditing(false)
-    showToast('已取消假單主管設定')
   }
 
   const getPageContext = (pin: UserPin): 'store' | 'kitchen' =>
@@ -445,10 +495,18 @@ export default function PinManager() {
         </div>
       ) : (
         <>
-          {grouped.map(([groupId, staffRows]) => (
+          {loadError && (
+            <div className="mx-4 mb-2 mt-2 px-3 py-2 rounded-lg bg-status-warning/10 border border-status-warning/30 text-xs text-status-warning">
+              ⚠️ {loadError}（顯示為部分資料，請重新整理）
+            </div>
+          )}
+          {grouped.map(([groupId, staffRows]) => {
+            const setCount = staffRows.filter(s => pinMap.has(s.id)).length
+            const unsetCount = staffRows.length - setCount
+            return (
             <div key={groupId}>
               <SectionHeader
-                title={`${groupLabels[groupId] || groupId} (${staffRows.length})`}
+                title={`${groupLabels[groupId] || groupId}（${setCount}/${staffRows.length} 已設定${unsetCount > 0 ? `・${unsetCount} 待設定` : ''}）`}
                 icon="■"
               />
               <div className="space-y-2 px-4 pb-2">
@@ -461,7 +519,9 @@ export default function PinManager() {
                     <div
                       key={staff.id}
                       className={`rounded-xl border transition-colors ${
-                        isInactive
+                        !pin
+                          ? 'bg-white border-status-danger/30'
+                          : isInactive
                           ? 'bg-gray-50 border-gray-200 opacity-60'
                           : 'bg-white border-gray-100'
                       }`}
@@ -478,14 +538,12 @@ export default function PinManager() {
                           </p>
                           {pin ? (
                             <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
-                              {/* 啟用狀態 */}
-                              <span className={`inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[11px] font-medium ${
-                                pin.is_active
-                                  ? 'bg-green-50 text-green-700'
-                                  : 'bg-gray-100 text-gray-500'
-                              }`}>
-                                {pin.is_active ? '🟢 啟用' : '⚫ 停用'}
-                              </span>
+                              {/* 停用標籤（啟用狀態用整列灰階表示，不再顯示 tag）*/}
+                              {!pin.is_active && (
+                                <span className="inline-flex px-2 py-0.5 rounded-full text-[11px] font-medium bg-gray-100 text-gray-500">
+                                  停用
+                                </span>
+                              )}
 
                               {/* 授權門市 */}
                               {pin.allowed_stores?.length > 0 && (
@@ -496,40 +554,37 @@ export default function PinManager() {
                                 </span>
                               )}
 
-                              {/* 頁面權限 */}
-                              {pin.role !== 'admin' && (
-                                <span className={`inline-flex px-2 py-0.5 rounded-full text-[11px] font-medium ${
-                                  pin.allowed_pages
-                                    ? 'bg-amber-50 text-amber-700'
-                                    : 'bg-gray-50 text-gray-500'
-                                }`}>
-                                  {pin.allowed_pages ? `自訂 ${pin.allowed_pages.length} 頁` : '全部頁面'}
+                              {/* 頁面權限 — 只在「自訂」時顯示（全部頁面是預設值，不需 tag）*/}
+                              {pin.role !== 'admin' && pin.allowed_pages && (
+                                <span className="inline-flex px-2 py-0.5 rounded-full text-[11px] font-medium bg-amber-50 text-amber-700">
+                                  自訂 {pin.allowed_pages.length} 頁
                                 </span>
                               )}
 
-                              {/* 排班 */}
+                              {/* 排班 + 詳情合併顯示，去除 emoji */}
                               {pin.role !== 'admin' && pin.can_schedule && (
-                                <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[11px] font-medium bg-purple-50 text-purple-700">
-                                  📅 排班
+                                <span className="inline-flex px-2 py-0.5 rounded-full text-[11px] font-medium bg-purple-50 text-purple-700">
+                                  排班
                                 </span>
                               )}
-
-                              {/* 詳情 */}
                               {pin.role !== 'admin' && pin.can_popup && (
-                                <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[11px] font-medium bg-sky-50 text-sky-700">
-                                  👁 詳情
+                                <span className="inline-flex px-2 py-0.5 rounded-full text-[11px] font-medium bg-sky-50 text-sky-700">
+                                  班次詳情
                                 </span>
                               )}
 
                               {/* 假單主管 */}
                               {pin.is_leave_approver && pin.leave_approver_scope && (
-                                <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[11px] font-medium bg-rose-50 text-rose-700">
-                                  🔏 主管 {APPROVER_SCOPE_OPTIONS.find((o) => o.value === pin.leave_approver_scope)?.label || pin.leave_approver_scope}-{pin.leave_approver_order}
+                                <span className="inline-flex px-2 py-0.5 rounded-full text-[11px] font-medium bg-rose-50 text-rose-700">
+                                  主管 {APPROVER_SCOPE_OPTIONS.find((o) => o.value === pin.leave_approver_scope)?.label || pin.leave_approver_scope}・{pin.leave_approver_order === 1 ? '一' : '二'}
                                 </span>
                               )}
                             </div>
                           ) : (
-                            <p className="text-[11px] text-status-danger/70 mt-1">未設定 PIN</p>
+                            <p className="text-[11px] font-medium text-status-danger mt-1 flex items-center gap-1">
+                              <span className="w-1.5 h-1.5 rounded-full bg-status-danger inline-block" />
+                              未設定 PIN
+                            </p>
                           )}
                         </div>
 
@@ -740,16 +795,27 @@ export default function PinManager() {
                           {/* ════ Tab 3：假單主管 ════ */}
                           {cardTab === 'leave_approver' && (
                             <div className="space-y-4">
-                              {/* 說明卡片 */}
-                              <div className="bg-amber-50 rounded-xl px-3 py-2.5 border border-amber-100">
-                                <p className="text-xs font-semibold text-amber-700 mb-1">假單主管說明</p>
-                                <ul className="text-[11px] text-amber-600 space-y-0.5 list-disc list-inside">
-                                  <li>每個群組須設定「第一主管」與「第二主管」各一人</li>
-                                  <li>兩位主管都設定後，員工才能送出假單</li>
-                                  <li>送假時兩位主管同時收到通知</li>
-                                  <li>Telegram ID 用於接收請假推播通知</li>
-                                </ul>
-                              </div>
+                              {/* 說明卡片（預設摺疊）*/}
+                              <button
+                                type="button"
+                                onClick={() => setApproverHelpOpen(v => !v)}
+                                className="w-full bg-amber-50 rounded-xl px-3 py-2 border border-amber-100 flex items-center justify-between"
+                              >
+                                <p className="text-xs font-semibold text-amber-700">假單主管說明</p>
+                                {approverHelpOpen
+                                  ? <ChevronUp size={14} className="text-amber-600" />
+                                  : <ChevronDown size={14} className="text-amber-600" />}
+                              </button>
+                              {approverHelpOpen && (
+                                <div className="bg-amber-50/60 rounded-xl px-3 py-2.5 border border-amber-100 -mt-3">
+                                  <ul className="text-[11px] text-amber-600 space-y-0.5 list-disc list-inside">
+                                    <li>每個群組須設定「第一主管」與「第二主管」各一人</li>
+                                    <li>兩位主管都設定後，員工才能送出假單</li>
+                                    <li>送假時兩位主管同時收到通知</li>
+                                    <li>Telegram ID 用於接收請假推播通知</li>
+                                  </ul>
+                                </div>
+                              )}
 
                               {/* 目前狀態 */}
                               {!approverEditing ? (
@@ -906,7 +972,7 @@ export default function PinManager() {
                 })}
               </div>
             </div>
-          ))}
+          )})}
         </>
       )}
 
@@ -924,6 +990,7 @@ export default function PinManager() {
         onClose={() => setModalOpen(false)}
         title={editing ? '編輯 PIN' : '新增 PIN'}
         onSubmit={handleSubmit}
+        submitting={formSubmitting}
       >
         <ModalField label="人員">
           <ModalSelect
