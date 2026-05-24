@@ -35,11 +35,16 @@ export default function ItemSortManager() {
   const [selectedCat, setSelectedCat] = useState<string | null>(null)
   const [sortData, setSortData] = useState<SortRow[]>([])
   const [loading, setLoading] = useState(false)
+  const [kitchenScope, setKitchenScope] = useState<'material' | 'product'>('material')
 
   const isKitchen = selectedStore === 'kitchen'
-  const scope = isKitchen ? 'material' : 'product'
-  const categories = isKitchen ? materialCategories : productCategories
-  const items = isKitchen ? materials : products
+  const scope = isKitchen ? kitchenScope : 'product'
+  const categories = isKitchen
+    ? (kitchenScope === 'material' ? materialCategories : productCategories)
+    : productCategories
+  const items = isKitchen
+    ? (kitchenScope === 'material' ? materials : products)
+    : products
 
   // Load sort data
   const loadSortData = useCallback(async () => {
@@ -169,12 +174,36 @@ export default function ItemSortManager() {
         ))}
       </div>
 
-      {/* Scope indicator */}
-      <div className="px-4 pb-2">
-        <span className="text-xs text-brand-lotus">
-          排序範圍：{isKitchen ? '原物料' : '門店品項'}
-        </span>
-      </div>
+      {/* Scope indicator + 央廚 scope 切換 */}
+      {isKitchen ? (
+        <div className="px-4 pb-2 flex items-center gap-2">
+          <span className="text-xs text-brand-lotus shrink-0">排序範圍：</span>
+          <button
+            onClick={() => setKitchenScope('material')}
+            className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+              kitchenScope === 'material'
+                ? 'bg-brand-mocha text-white'
+                : 'bg-surface-section text-brand-mocha'
+            }`}
+          >
+            原物料
+          </button>
+          <button
+            onClick={() => setKitchenScope('product')}
+            className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+              kitchenScope === 'product'
+                ? 'bg-brand-mocha text-white'
+                : 'bg-surface-section text-brand-mocha'
+            }`}
+          >
+            成品庫存盤點
+          </button>
+        </div>
+      ) : (
+        <div className="px-4 pb-2">
+          <span className="text-xs text-brand-lotus">排序範圍：門店品項</span>
+        </div>
+      )}
 
       {/* Tab: category / item */}
       <div className="px-4 pb-3 flex gap-2">
