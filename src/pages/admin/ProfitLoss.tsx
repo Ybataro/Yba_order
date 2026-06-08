@@ -8,11 +8,12 @@ import { formatCurrency } from '@/lib/utils'
 import { exportToExcel } from '@/lib/exportExcel'
 import { exportToPdf } from '@/lib/exportPdf'
 import ExportButtons from '@/components/ExportButtons'
-import { ChevronLeft, ChevronRight, Settings } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Settings, StickyNote } from 'lucide-react'
 import {
   computeMonthlyPnL,
   computeYearlyPnL,
   upsertMonthlyExpense,
+  upsertMonthlyExpenseNote,
   setMonthlyOverride,
   setExpenseRate,
   getRateHistory,
@@ -46,6 +47,11 @@ export default function ProfitLoss() {
   const [editValues, setEditValues] = useState<Record<string, string>>({})
   const [categoryModalOpen, setCategoryModalOpen] = useState(false)
 
+  // 手動費用備註展開狀態
+  const [expandedNoteId, setExpandedNoteId] = useState<string | null>(null)
+  const [noteInput, setNoteInput] = useState('')
+  const [noteSaving, setNoteSaving] = useState(false)
+
   // 自動費用展開（編輯費率/覆寫）
   const [expandedAutoId, setExpandedAutoId] = useState<string | null>(null)
   const [overrideInput, setOverrideInput] = useState<string>('')
@@ -63,9 +69,53 @@ export default function ProfitLoss() {
   // Cumulative surplus
   const [cumulativeSurplus, setCumulativeSurplus] = useState<number>(0)
 
-  const isKitchen = entity === 'kitchen'
+  // 總覽：三方數字
+  const [overviewMonth, setOverviewMonth] = useState<{
+    lehua: { revenue: number; surplus: number } | null
+    xingnan: { revenue: number; surplus: number } | null
+    kitchen: { cost: number } | null
+  } | null>(null)
+  const [overviewYear, setOverviewYear] = useState<{
+    lehua: { revenue: number; surplus: number } | null
+    xingnan: { revenue: number; surplus: number } | null
+    kitchen: { cost: number } | null
+  } | null>(null)
 
-  const entityName = isKitchen ? '央廚' : getStoreName(entity)
+  const isKitchen = entity === 'kitchen'
+  const isOverview = entity === 'overview'
+
+  const entityName = isOverview ? '總覽' : isKitchen ? '央廚' : getStoreName(entity)
+
+  // ── Fetch overview (三方加總) ──
+  const fetchOverviewMonth = useCallback(async () => {
+    setLoading(true)
+    const [lh, xn, kc] = await Promise.all([
+      computeMonthlyPnL('lehua', yearMonth),
+      computeMonthlyPnL('xingnan', yearMonth),
+      computeMonthlyPnL('kitchen', yearMonth),
+    ])
+    setOverviewMonth({
+      lehua: lh ? { revenue: lh.revenue, surplus: lh.surplus } : null,
+      xingnan: xn ? { revenue: xn.revenue, surplus: xn.surplus } : null,
+      kitchen: kc ? { cost: kc.totalExpense } : null,
+    })
+    setLoading(false)
+  }, [yearMonth])
+
+  const fetchOverviewYear = useCallback(async () => {
+    setLoading(true)
+    const [lh, xn, kc] = await Promise.all([
+      computeYearlyPnL('lehua', year),
+      computeYearlyPnL('xingnan', year),
+      computeYearlyPnL('kitchen', year),
+    ])
+    setOverviewYear({
+      lehua: lh ? { revenue: lh.totals.revenue, surplus: lh.totals.surplus } : null,
+      xingnan: xn ? { revenue: xn.totals.revenue, surplus: xn.totals.surplus } : null,
+      kitchen: kc ? { cost: kc.totals.totalExpense } : null,
+    })
+    setLoading(false)
+  }, [year])
 
   // ── Fetch month data ──
   const fetchMonth = useCallback(async () => {
@@ -108,9 +158,14 @@ export default function ProfitLoss() {
   }, [entity, year])
 
   useEffect(() => {
-    if (viewMode === 'month') fetchMonth()
-    else fetchYear()
-  }, [viewMode, fetchMonth, fetchYear])
+    if (isOverview) {
+      if (viewMode === 'month') fetchOverviewMonth()
+      else fetchOverviewYear()
+    } else {
+      if (viewMode === 'month') fetchMonth()
+      else fetchYear()
+    }
+  }, [viewMode, isOverview, fetchMonth, fetchYear, fetchOverviewMonth, fetchOverviewYear])
 
   // ── Month navigation ──
   const prevMonth = () => {
@@ -207,6 +262,37 @@ export default function ProfitLoss() {
     }
   }
 
+  // ── 手動費用備註 ──
+  const handleToggleNote = (item: { id: string; note?: string }) => {
+    if (expandedNoteId === item.id) {
+      setExpandedNoteId(null)
+      return
+    }
+    setExpandedNoteId(item.id)
+    setNoteInput(item.note || '')
+  }
+
+  const handleSaveNote = async (categoryId: string) => {
+    if (noteSaving) return
+    setNoteSaving(true)
+    try {
+      const ok = await upsertMonthlyExpenseNote(entity, yearMonth, categoryId, noteInput.trim())
+      if (!ok) { showToast('備註儲存失敗', 'error'); return }
+      showToast(noteInput.trim() === '' ? '已清除備註' : '已儲存備註')
+      // 更新 pnl 本地狀態
+      if (pnl) {
+        const updated = { ...pnl }
+        updated.manualExpenses = updated.manualExpenses.map((e) =>
+          e.id === categoryId ? { ...e, note: noteInput.trim() } : e,
+        )
+        setPnl(updated)
+      }
+      setExpandedNoteId(null)
+    } finally {
+      setNoteSaving(false)
+    }
+  }
+
   // ── Manual expense save on blur ──
   const handleBlur = async (categoryId: string) => {
     const raw = editValues[categoryId] || ''
@@ -222,8 +308,6 @@ export default function ProfitLoss() {
         updated.autoExpenses.reduce((s, e) => s + e.amount, 0) +
         updated.manualExpenses.reduce((s, e) => s + e.amount, 0)
       updated.surplus = updated.revenue - updated.totalExpense
-      updated.taxReserve = updated.surplus > 0 ? Math.round(updated.surplus * 0.15) : 0
-      updated.netSurplus = updated.surplus - updated.taxReserve
       setPnl(updated)
     }
   }
@@ -245,10 +329,8 @@ export default function ProfitLoss() {
     pnl.manualExpenses.forEach((e) => rows.push({ '項目': e.label, '金額': e.amount }))
     rows.push({ '項目': '---', '金額': '---' })
     rows.push({ '項目': '總費用', '金額': pnl.totalExpense })
-    rows.push({ '項目': '餘額', '金額': pnl.surplus })
     if (!isKitchen) {
-      rows.push({ '項目': '預扣15%', '金額': pnl.taxReserve })
-      rows.push({ '項目': '總盈餘', '金額': pnl.netSurplus })
+      rows.push({ '項目': '總盈餘', '金額': pnl.surplus })
     }
     exportToExcel({
       data: rows,
@@ -265,9 +347,7 @@ export default function ProfitLoss() {
     pnl.manualExpenses.forEach((e) => rows.push({ item: e.label, amount: e.amount }))
     rows.push({ item: '總費用', amount: pnl.totalExpense })
     if (!isKitchen) {
-      rows.push({ item: '餘額', amount: pnl.surplus })
-      rows.push({ item: '預扣15%', amount: pnl.taxReserve })
-      rows.push({ item: '總盈餘', amount: pnl.netSurplus })
+      rows.push({ item: '總盈餘', amount: pnl.surplus })
     }
     exportToPdf({
       title: `${entityName} — ${monthLabel} 盈餘統計`,
@@ -368,6 +448,16 @@ export default function ProfitLoss() {
           >
             央廚
           </button>
+          <button
+            onClick={() => setEntity('overview')}
+            className={`flex-1 py-1.5 rounded-full text-xs font-medium transition-colors ${
+              entity === 'overview'
+                ? 'bg-brand-mocha text-white shadow-sm'
+                : 'bg-gray-100 text-brand-lotus active:bg-gray-200'
+            }`}
+          >
+            總覽
+          </button>
         </div>
 
         <div className="border-t border-gray-100" />
@@ -414,6 +504,64 @@ export default function ProfitLoss() {
 
       {loading ? (
         <div className="flex items-center justify-center py-20 text-sm text-brand-lotus">計算中...</div>
+      ) : isOverview ? (
+        /* ─── Overview view ─── */
+        (() => {
+          const data = viewMode === 'month' ? overviewMonth : overviewYear
+          if (!data) {
+            return <div className="flex items-center justify-center py-20 text-sm text-brand-lotus">無資料</div>
+          }
+          const lehuaSurplus = data.lehua?.surplus || 0
+          const xingnanSurplus = data.xingnan?.surplus || 0
+          const kitchenCost = data.kitchen?.cost || 0
+          const totalNet = lehuaSurplus + xingnanSurplus - kitchenCost
+          const periodLabel = viewMode === 'month' ? monthLabel : `${year}年`
+          return (
+            <>
+              {/* 總盈餘大卡 */}
+              <div className="mx-4 mb-3 rounded-xl bg-white border border-gray-100 shadow-sm overflow-hidden">
+                <div className="px-4 pt-3 pb-3">
+                  <p className="text-xs text-brand-lotus mb-1">{periodLabel} 總盈餘（樂華 + 興南 − 央廚）</p>
+                  <p className={`text-3xl font-bold font-num ${totalNet >= 0 ? 'text-status-success' : 'text-status-danger'}`}>
+                    {formatCurrency(totalNet)}
+                  </p>
+                </div>
+              </div>
+
+              <SectionHeader title="三方明細" icon="■" />
+              <div className="bg-white">
+                <div className="flex items-center justify-between px-4 py-3 border-b border-gray-50">
+                  <div>
+                    <p className="text-sm font-semibold text-brand-oak">樂華店</p>
+                    <p className="text-[11px] text-brand-lotus mt-0.5">營收 {formatCurrency(data.lehua?.revenue || 0)}</p>
+                  </div>
+                  <span className={`text-base font-bold font-num ${lehuaSurplus >= 0 ? 'text-status-success' : 'text-status-danger'}`}>
+                    {formatCurrency(lehuaSurplus)}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between px-4 py-3 border-b border-gray-50">
+                  <div>
+                    <p className="text-sm font-semibold text-brand-oak">興南店</p>
+                    <p className="text-[11px] text-brand-lotus mt-0.5">營收 {formatCurrency(data.xingnan?.revenue || 0)}</p>
+                  </div>
+                  <span className={`text-base font-bold font-num ${xingnanSurplus >= 0 ? 'text-status-success' : 'text-status-danger'}`}>
+                    {formatCurrency(xingnanSurplus)}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between px-4 py-3">
+                  <div>
+                    <p className="text-sm font-semibold text-brand-oak">央廚</p>
+                    <p className="text-[11px] text-brand-lotus mt-0.5">成本（從總盈餘扣除）</p>
+                  </div>
+                  <span className="text-base font-bold font-num text-status-danger">
+                    −{formatCurrency(kitchenCost)}
+                  </span>
+                </div>
+              </div>
+              <div className="h-6" />
+            </>
+          )
+        })()
       ) : viewMode === 'month' ? (
         /* ─── Month view ─── */
         pnl ? (
@@ -592,34 +740,76 @@ export default function ProfitLoss() {
               </button>
             </div>
             <div className="bg-white">
-              {pnl.manualExpenses.map((e, idx) => (
+              {pnl.manualExpenses.map((e, idx) => {
+                const noteExpanded = expandedNoteId === e.id
+                const hasNote = !!(e.note && e.note.trim())
+                return (
                 <div
                   key={e.id}
-                  className={`flex items-center justify-between px-4 py-2 ${
+                  className={`${
                     idx < pnl.manualExpenses.length - 1 ? 'border-b border-gray-50' : ''
                   }`}
                 >
-                  <span className="text-sm text-brand-oak">{e.label}</span>
-                  <div className="flex items-center gap-1">
-                    <input
-                      type="text"
-                      inputMode="numeric"
-                      value={editValues[e.id] ?? ''}
-                      onChange={(ev) => {
-                        const v = ev.target.value
-                        if (v === '' || /^\d+$/.test(v)) {
-                          setEditValues((prev) => ({ ...prev, [e.id]: v }))
-                        }
-                      }}
-                      onBlur={() => handleBlur(e.id)}
-                      onFocus={(ev) => ev.target.select()}
-                      placeholder="0"
-                      className="w-28 h-8 rounded-lg border border-gray-200 bg-surface-input px-2 text-sm text-brand-oak text-right outline-none focus:border-brand-lotus font-num"
-                    />
-                    <span className="text-xs text-brand-lotus">元</span>
+                  <div className="flex items-center justify-between px-4 py-2">
+                    <button
+                      type="button"
+                      onClick={() => handleToggleNote(e)}
+                      className="flex items-center gap-1.5 min-w-0 active:opacity-70"
+                    >
+                      <span className="text-sm text-brand-oak">{e.label}</span>
+                      <StickyNote
+                        size={14}
+                        className={hasNote ? 'text-amber-600' : 'text-brand-lotus/40'}
+                      />
+                      {hasNote && (
+                        <span className="text-[11px] text-amber-700 truncate max-w-[140px]">
+                          {e.note}
+                        </span>
+                      )}
+                    </button>
+                    <div className="flex items-center gap-1">
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        value={editValues[e.id] ?? ''}
+                        onChange={(ev) => {
+                          const v = ev.target.value
+                          if (v === '' || /^\d+$/.test(v)) {
+                            setEditValues((prev) => ({ ...prev, [e.id]: v }))
+                          }
+                        }}
+                        onBlur={() => handleBlur(e.id)}
+                        onFocus={(ev) => ev.target.select()}
+                        placeholder="0"
+                        className="w-28 h-8 rounded-lg border border-gray-200 bg-surface-input px-2 text-sm text-brand-oak text-right outline-none focus:border-brand-lotus font-num"
+                      />
+                      <span className="text-xs text-brand-lotus">元</span>
+                    </div>
                   </div>
+                  {noteExpanded && (
+                    <div className="px-4 pb-3 pt-1 bg-gray-50">
+                      <label className="text-[11px] text-brand-lotus block mb-1">備註</label>
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={noteInput}
+                          onChange={(ev) => setNoteInput(ev.target.value)}
+                          placeholder="輸入備註（例：5/15 添購餐盤一批）"
+                          className="flex-1 h-9 rounded-lg border border-gray-200 bg-white px-3 text-sm text-brand-oak outline-none focus:border-brand-lotus"
+                        />
+                        <button
+                          onClick={() => handleSaveNote(e.id)}
+                          disabled={noteSaving}
+                          className="px-3 h-9 rounded-lg bg-brand-oak text-white text-xs font-medium active:opacity-80 disabled:opacity-50"
+                        >
+                          {noteInput.trim() === '' ? '清除' : '儲存'}
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
-              ))}
+                )
+              })}
             </div>
 
             {/* Settlement */}
@@ -636,20 +826,10 @@ export default function ProfitLoss() {
 
               {!isKitchen && (
                 <>
-                  <div className="flex items-center justify-between px-4 py-2.5 border-b border-gray-50">
-                    <span className="text-sm text-brand-oak">餘額</span>
-                    <span className={`text-sm font-bold font-num ${pnl.surplus >= 0 ? 'text-status-success' : 'text-status-danger'}`}>
-                      {formatCurrency(pnl.surplus)}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between px-4 py-2.5 border-b border-gray-50">
-                    <span className="text-sm text-brand-oak">預扣15%</span>
-                    <span className="text-sm font-num text-brand-oak">{formatCurrency(pnl.taxReserve)}</span>
-                  </div>
-                  <div className={`flex items-center justify-between px-4 py-3 ${pnl.netSurplus >= 0 ? 'bg-status-success/10' : 'bg-status-danger/10'}`}>
+                  <div className={`flex items-center justify-between px-4 py-3 ${pnl.surplus >= 0 ? 'bg-status-success/10' : 'bg-status-danger/10'}`}>
                     <span className="text-sm font-bold text-brand-oak">總盈餘</span>
-                    <span className={`text-base font-bold font-num ${pnl.netSurplus >= 0 ? 'text-status-success' : 'text-status-danger'}`}>
-                      {formatCurrency(pnl.netSurplus)}
+                    <span className={`text-base font-bold font-num ${pnl.surplus >= 0 ? 'text-status-success' : 'text-status-danger'}`}>
+                      {formatCurrency(pnl.surplus)}
                     </span>
                   </div>
                   <div className="flex items-center justify-between px-4 py-2.5">
@@ -758,7 +938,7 @@ export default function ProfitLoss() {
       <ExpenseCategoryModal
         open={categoryModalOpen}
         onClose={() => setCategoryModalOpen(false)}
-        storeId={isKitchen ? 'kitchen' : 'store'}
+        storeId={entity as 'lehua' | 'xingnan' | 'kitchen'}
         onSaved={() => { if (viewMode === 'month') fetchMonth() }}
       />
     </div>

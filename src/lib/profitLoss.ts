@@ -5,6 +5,7 @@ export interface ExpenseItem {
   id: string
   label: string
   amount: number
+  note?: string                // 手動費用備註（讀 monthly_expenses.note）
   // 以下供 UI 顯示「自動計算來源」與「是否被手動覆寫」
   isAuto?: boolean
   autoField?: string | null
@@ -38,6 +39,7 @@ interface MonthlyExpense {
   category_id: string
   amount: number
   override_amount: number | null
+  note: string | null
 }
 
 interface RateHistoryRow {
@@ -58,29 +60,30 @@ export async function computeMonthlyPnL(
   if (!supabase) return null
 
   const isKitchen = storeId === 'kitchen'
-  const categoryStoreId = isKitchen ? 'kitchen' : 'store'
 
-  // 1. Fetch expense categories
+  // 一店一份分類：lehua / xingnan / kitchen 各自獨立
   const { data: categories } = await supabase
     .from('expense_categories')
     .select('*')
-    .eq('store_id', categoryStoreId)
+    .eq('store_id', storeId)
     .order('sort_order')
 
   if (!categories) return null
 
-  // 2. Fetch monthly manual expenses（含自動覆寫）
+  // 2. Fetch monthly manual expenses（含自動覆寫 + 備註）
   const { data: monthlyData } = await supabase
     .from('monthly_expenses')
-    .select('category_id, amount, override_amount')
+    .select('category_id, amount, override_amount, note')
     .eq('store_id', storeId)
     .eq('year_month', yearMonth)
 
   const manualMap = new Map<string, number>()
   const overrideMap = new Map<string, number>()
+  const noteMap = new Map<string, string>()
   ;(monthlyData || []).forEach((m: MonthlyExpense) => {
     manualMap.set(m.category_id, m.amount)
     if (m.override_amount != null) overrideMap.set(m.category_id, m.override_amount)
+    if (m.note) noteMap.set(m.category_id, m.note)
   })
 
   // 2b. Fetch effective rates for this month（費率歷史版本）
@@ -226,7 +229,8 @@ export async function computeMonthlyPnL(
       })
     } else {
       const amount = manualMap.get(cat.id) || 0
-      manualExpenses.push({ id: cat.id, label: cat.label, amount, isAuto: false })
+      const note = noteMap.get(cat.id) || ''
+      manualExpenses.push({ id: cat.id, label: cat.label, amount, note, isAuto: false })
     }
   })
 
@@ -296,6 +300,41 @@ export async function upsertMonthlyExpense(
         year_month: yearMonth,
         category_id: categoryId,
         amount,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: 'store_id,year_month,category_id' },
+    )
+  return !error
+}
+
+/**
+ * 更新手動費用的備註（不動 amount）。空字串 = 清除備註。
+ */
+export async function upsertMonthlyExpenseNote(
+  storeId: string,
+  yearMonth: string,
+  categoryId: string,
+  note: string,
+): Promise<boolean> {
+  if (!supabase) return false
+  // 先查既有 amount 避免覆蓋為 0
+  const { data: existing } = await supabase
+    .from('monthly_expenses')
+    .select('amount')
+    .eq('store_id', storeId)
+    .eq('year_month', yearMonth)
+    .eq('category_id', categoryId)
+    .maybeSingle()
+  const amount = existing?.amount ?? 0
+  const { error } = await supabase
+    .from('monthly_expenses')
+    .upsert(
+      {
+        store_id: storeId,
+        year_month: yearMonth,
+        category_id: categoryId,
+        amount,
+        note,
         updated_at: new Date().toISOString(),
       },
       { onConflict: 'store_id,year_month,category_id' },

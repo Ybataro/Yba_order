@@ -11,7 +11,7 @@ interface Category {
 interface Props {
   open: boolean
   onClose: () => void
-  storeId: 'store' | 'kitchen'
+  storeId: 'lehua' | 'xingnan' | 'kitchen'
   onSaved: () => void
 }
 
@@ -58,7 +58,7 @@ export function ExpenseCategoryModal({ open, onClose, storeId, onSaved }: Props)
   // ── Add ──
   const handleAdd = async () => {
     if (!supabase) return
-    const prefix = storeId === 'kitchen' ? 'k' : 's'
+    const prefix = storeId === 'kitchen' ? 'k' : storeId === 'xingnan' ? 'x' : 's'
     const newId = `${prefix}_custom_${Date.now()}`
     const maxSort = items.length > 0 ? Math.max(...items.map((i) => i.sort_order)) : 0
     const newItem: Category = { id: newId, label: '新費用項目', sort_order: maxSort + 1 }
