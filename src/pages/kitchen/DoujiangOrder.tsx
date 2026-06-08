@@ -252,8 +252,10 @@ export default function DoujiangOrder() {
               >
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold text-brand-oak">{formatDate(o.order_date)}</p>
-                  <p className="text-[11px] text-brand-lotus mt-0.5">
-                    微糖 {o.weitang_actual_ordered || o.weitang_recommended} ・ 無糖 {o.wutang_actual_ordered || o.wutang_recommended}
+                  <p className="text-base text-brand-oak mt-1 font-num">
+                    微糖 <span className="font-bold">{o.weitang_actual_ordered || o.weitang_recommended}</span>
+                    <span className="text-brand-lotus mx-1.5">・</span>
+                    無糖 <span className="font-bold">{o.wutang_actual_ordered || o.wutang_recommended}</span>
                   </p>
                 </div>
                 <span className={`text-[11px] px-2 py-0.5 rounded-full ${o.status === 'sent' ? 'bg-green-50 text-green-700' : 'bg-amber-50 text-amber-700'}`}>
