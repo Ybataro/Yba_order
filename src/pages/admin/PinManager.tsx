@@ -147,6 +147,9 @@ export default function PinManager() {
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [cardTab, setCardTab] = useState<CardTab>('account')
 
+  // 已離職區塊：哪些群組展開
+  const [expandedRetiredGroups, setExpandedRetiredGroups] = useState<Set<string>>(new Set())
+
   // ── 帳號設定 Tab：頁面權限 panel state ──
   const [pagePanelPages, setPagePanelPages] = useState<string[] | null>(null)
   const [pagePanelSaving, setPagePanelSaving] = useState(false)
@@ -531,16 +534,27 @@ export default function PinManager() {
             </div>
           )}
           {grouped.map(([groupId, staffRows]) => {
-            const setCount = staffRows.filter(s => pinMap.has(s.id)).length
-            const unsetCount = staffRows.length - setCount
+            // 拆分：在職 vs 離職。已離職不計入 setCount/unsetCount，避免 header 數字虛胖
+            const activeRows = staffRows.filter(s => s.is_active)
+            const retiredRows = staffRows.filter(s => !s.is_active)
+            const setCount = activeRows.filter(s => pinMap.has(s.id)).length
+            const unsetCount = activeRows.length - setCount
+            const retiredExpanded = expandedRetiredGroups.has(groupId)
+            const toggleRetired = () => {
+              setExpandedRetiredGroups((prev) => {
+                const next = new Set(prev)
+                if (next.has(groupId)) next.delete(groupId); else next.add(groupId)
+                return next
+              })
+            }
             return (
             <div key={groupId}>
               <SectionHeader
-                title={`${groupLabels[groupId] || groupId}（${setCount}/${staffRows.length} 已設定${unsetCount > 0 ? `・${unsetCount} 待設定` : ''}）`}
+                title={`${groupLabels[groupId] || groupId}（${setCount}/${activeRows.length} 已設定${unsetCount > 0 ? `・${unsetCount} 待設定` : ''}${retiredRows.length > 0 ? `・${retiredRows.length} 已離職` : ''}）`}
                 icon="■"
               />
               <div className="space-y-2 px-4 pb-2">
-                {staffRows.map((staff) => {
+                {(retiredExpanded ? staffRows : activeRows).map((staff) => {
                   const pin       = pinMap.get(staff.id)
                   const isExpanded = expandedId === staff.id
                   const isInactive = pin && !pin.is_active
@@ -1023,6 +1037,26 @@ export default function PinManager() {
                     </div>
                   )
                 })}
+                {/* 已離職折疊鈕（只在有離職員工時顯示）*/}
+                {retiredRows.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={toggleRetired}
+                    className="w-full flex items-center justify-center gap-1.5 py-2 mt-1 text-xs text-brand-lotus hover:text-brand-mocha transition-colors"
+                  >
+                    {retiredExpanded ? (
+                      <>
+                        <ChevronUp className="w-3.5 h-3.5" />
+                        收合已離職 {retiredRows.length} 人
+                      </>
+                    ) : (
+                      <>
+                        <ChevronDown className="w-3.5 h-3.5" />
+                        顯示已離職 {retiredRows.length} 人
+                      </>
+                    )}
+                  </button>
+                )}
               </div>
             </div>
           )})}
