@@ -20,6 +20,9 @@ import { buildSortedByCategory } from '@/lib/sortByStore'
 import { NumericInput } from '@/components/NumericInput'
 import { useKitchenRealtimeStock } from '@/hooks/useKitchenRealtimeStock'
 
+// 倒掉欄位適用品項（豆漿叫貨公式用：p019 微糖、p020 無糖）
+const DISCARDED_PRODUCT_IDS = new Set(['p019', 'p020'])
+
 export default function ProductStock() {
   const { showToast } = useToast()
   const allProducts = useProductStore((s) => s.items)
@@ -58,6 +61,9 @@ export default function ProductStock() {
     return init
   })
 
+  // 倒掉欄位（目前只用於豆漿叫貨公式：p019 微糖、p020 無糖）
+  const [discarded, setDiscarded] = useState<Record<string, string>>({})
+
   const [submitting, setSubmitting] = useState(false)
   const submittingRef = useRef(false)
   const [isEdit, setIsEdit] = useState(false)
@@ -81,6 +87,7 @@ export default function ProductStock() {
     setStockEntries({})
     originalStockEntries.current = {}
     setExpandedStockId(null)
+    setDiscarded({})
 
     const load = async () => {
       try {
@@ -101,11 +108,16 @@ export default function ProductStock() {
 
         if (items && items.length > 0) {
           const loadedStock: Record<string, string> = {}
+          const loadedDiscarded: Record<string, string> = {}
           storeProducts.forEach(p => { loadedStock[p.id] = '' })
           items.forEach(item => {
             loadedStock[item.product_id] = item.stock_qty != null ? String(item.stock_qty) : ''
+            if (DISCARDED_PRODUCT_IDS.has(item.product_id) && item.discarded != null && Number(item.discarded) > 0) {
+              loadedDiscarded[item.product_id] = String(item.discarded)
+            }
           })
           setStock(loadedStock)
+          setDiscarded(loadedDiscarded)
         }
 
         // Load stock entries (到期日批次)
@@ -225,11 +237,14 @@ export default function ProductStock() {
 
     // Save stock items: upsert + 刪除多餘（安全模式）
     const items = storeProducts
-      .filter(p => stock[p.id] !== '')
+      .filter(p => stock[p.id] !== '' || (DISCARDED_PRODUCT_IDS.has(p.id) && discarded[p.id]))
       .map(p => ({
         session_id: sessionId,
         product_id: p.id,
-        stock_qty: parseFloat(stock[p.id]),
+        stock_qty: stock[p.id] !== '' ? parseFloat(stock[p.id]) : 0,
+        discarded: DISCARDED_PRODUCT_IDS.has(p.id) && discarded[p.id]
+          ? parseFloat(discarded[p.id]) || 0
+          : 0,
       }))
 
     if (items.length > 0) {
@@ -444,10 +459,11 @@ export default function ProductStock() {
                 {products.map((product, idx) => {
                   const hasStockEntries = (stockEntries[product.id]?.length ?? 0) > 0
                   const isExpanded = expandedStockId === product.id
+                  const hasDiscarded = DISCARDED_PRODUCT_IDS.has(product.id)
 
                   return (
                     <div key={product.id}>
-                      <div className={`flex items-center justify-between px-4 py-2.5 ${idx < products.length - 1 && !isExpanded ? 'border-b border-gray-50' : ''}`}>
+                      <div className={`flex items-center justify-between px-4 py-2.5 ${idx < products.length - 1 && !isExpanded && !hasDiscarded ? 'border-b border-gray-50' : ''}`}>
                         <div className="flex-1 min-w-0">
                           <span className="text-sm font-medium text-brand-oak">{product.name}</span>
                           {product.shelfLifeDays && <span className="text-[10px] text-brand-lotus ml-1">期效{product.shelfLifeDays}</span>}
@@ -514,6 +530,19 @@ export default function ProductStock() {
                           box_ratio={product.box_ratio}
                           integerOnly={product.integerOnly}
                         />
+                      )}
+                      {/* 豆漿專用：倒掉欄位（供豆漿叫貨公式計算過期損耗）*/}
+                      {hasDiscarded && (
+                        <div className={`flex items-center justify-between px-4 pl-8 py-1.5 bg-amber-50/30 ${idx < products.length - 1 ? 'border-b border-gray-50' : ''}`}>
+                          <span className="text-xs text-amber-700">↳ 倒掉</span>
+                          <div className="w-[70px]">
+                            <NumericInput
+                              value={discarded[product.id] || ''}
+                              onChange={(v) => setDiscarded(prev => ({ ...prev, [product.id]: v }))}
+                              isFilled
+                            />
+                          </div>
+                        </div>
                       )}
                       {isExpanded && idx < products.length - 1 && (
                         <div className="border-b border-gray-50" />

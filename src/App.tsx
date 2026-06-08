@@ -25,6 +25,8 @@ const Shipment = lazy(() => import('@/pages/kitchen/Shipment'))
 const MaterialStock = lazy(() => import('@/pages/kitchen/MaterialStock'))
 const ProductStock = lazy(() => import('@/pages/kitchen/ProductStock'))
 const MaterialOrder = lazy(() => import('@/pages/kitchen/MaterialOrder'))
+const OrdersHub = lazy(() => import('@/pages/kitchen/OrdersHub'))
+const DoujiangOrder = lazy(() => import('@/pages/kitchen/DoujiangOrder'))
 const ProductionSchedule = lazy(() => import('@/pages/kitchen/ProductionSchedule'))
 const KitchenDailyExpense = lazy(() => import('@/pages/kitchen/DailyExpense'))
 const ProductionLog = lazy(() => import('@/pages/kitchen/ProductionLog'))
@@ -149,7 +151,9 @@ function App() {
                 <Route path="/kitchen/shipments" element={<Shipment />} />
                 <Route path="/kitchen/materials" element={<MaterialStock />} />
                 <Route path="/kitchen/products" element={<ProductStock />} />
+                <Route path="/kitchen/orders-hub" element={<OrdersHub />} />
                 <Route path="/kitchen/material-orders" element={<MaterialOrder />} />
+                <Route path="/kitchen/doujiang-order" element={<DoujiangOrder />} />
                 <Route path="/kitchen/schedule" element={<ProductionSchedule />} />
                 <Route path="/kitchen/staff-schedule" element={<KitchenSchedules />} />
                 <Route path="/kitchen/expense" element={<KitchenDailyExpense />} />

@@ -15,7 +15,8 @@ const menuItems = [
   { key: 'shipments', icon: Truck, label: '出貨表', desc: '記錄各店出貨品項', path: '/kitchen/shipments', color: 'bg-brand-camel' },
   { key: 'materials', icon: Package, label: '原物料庫存', desc: '盤點原物料並叫貨', path: '/kitchen/materials', color: 'bg-brand-lotus' },
   { key: 'products', icon: Box, label: '成品庫存', desc: '盤點成品與半成品', path: '/kitchen/products', color: 'bg-brand-blush' },
-  { key: 'material-orders', icon: ShoppingCart, label: '原物料叫貨', desc: '向供應商訂購原物料', path: '/kitchen/material-orders', color: 'bg-brand-silver' },
+  // material-orders 改名為「叫貨表」入口，指向 /kitchen/orders-hub（內含原物料 + 店內豆漿）
+  { key: 'material-orders', icon: ShoppingCart, label: '叫貨表', desc: '原物料 / 店內豆漿叫貨', path: '/kitchen/orders-hub', color: 'bg-brand-silver' },
   { key: 'production-schedule', icon: CalendarClock, label: '生產排程建議', desc: '今日/明日生產量與本週概覽', path: '/kitchen/schedule', color: 'bg-brand-oak' },
   { key: 'production-log', icon: ClipboardCheck, label: '每日生產紀錄', desc: '記錄各區每日生產數據', path: '/kitchen/production-log', color: 'bg-brand-blush' },
   { key: 'expense', icon: Receipt, label: '雜支申報', desc: '記錄日常雜支費用', path: '/kitchen/expense', color: 'bg-brand-camel' },
