@@ -196,14 +196,17 @@ export async function autoFillDoujiangOrder(orderDate: string): Promise<AutoFill
   const prev = (prevOrders && prevOrders[0]) as DoujiangOrderRow | undefined
   const isFirstOrder = !prev
 
-  const weitangOrderStock = (lehuaStock[DOUJIANG_WEITANG_ID] || 0) + (xingnanStock[DOUJIANG_WEITANG_ID] || 0) + (kitchenStock[DOUJIANG_WEITANG_ID] || 0)
-  const weitangDiscarded = (lehuaDisc[DOUJIANG_WEITANG_ID] || 0) + (xingnanDisc[DOUJIANG_WEITANG_ID] || 0) + (kitchenDisc[DOUJIANG_WEITANG_ID] || 0)
+  // 浮點精度防護：所有加總都 round 到 2 位
+  const round2 = (n: number) => Math.round(n * 100) / 100
+
+  const weitangOrderStock = round2((lehuaStock[DOUJIANG_WEITANG_ID] || 0) + (xingnanStock[DOUJIANG_WEITANG_ID] || 0) + (kitchenStock[DOUJIANG_WEITANG_ID] || 0))
+  const weitangDiscarded = round2((lehuaDisc[DOUJIANG_WEITANG_ID] || 0) + (xingnanDisc[DOUJIANG_WEITANG_ID] || 0) + (kitchenDisc[DOUJIANG_WEITANG_ID] || 0))
   const weitangPrevStock = prev?.weitang_order_stock || 0
   const weitangPrevReceived = shipSum[DOUJIANG_WEITANG_ID] || 0
   const weitangCalc = computeDoujiangVariant(weitangPrevStock, weitangPrevReceived, weitangOrderStock, weitangDiscarded)
 
-  const wutangOrderStock = (lehuaStock[DOUJIANG_WUTANG_ID] || 0) + (xingnanStock[DOUJIANG_WUTANG_ID] || 0) + (kitchenStock[DOUJIANG_WUTANG_ID] || 0)
-  const wutangDiscarded = (lehuaDisc[DOUJIANG_WUTANG_ID] || 0) + (xingnanDisc[DOUJIANG_WUTANG_ID] || 0) + (kitchenDisc[DOUJIANG_WUTANG_ID] || 0)
+  const wutangOrderStock = round2((lehuaStock[DOUJIANG_WUTANG_ID] || 0) + (xingnanStock[DOUJIANG_WUTANG_ID] || 0) + (kitchenStock[DOUJIANG_WUTANG_ID] || 0))
+  const wutangDiscarded = round2((lehuaDisc[DOUJIANG_WUTANG_ID] || 0) + (xingnanDisc[DOUJIANG_WUTANG_ID] || 0) + (kitchenDisc[DOUJIANG_WUTANG_ID] || 0))
   const wutangPrevStock = prev?.wutang_order_stock || 0
   const wutangPrevReceived = shipSum[DOUJIANG_WUTANG_ID] || 0
   const wutangCalc = computeDoujiangVariant(wutangPrevStock, wutangPrevReceived, wutangOrderStock, wutangDiscarded)
