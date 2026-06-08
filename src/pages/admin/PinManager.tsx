@@ -33,6 +33,7 @@ interface StaffRow {
   group_id: string
   sort_order: number
   telegram_id: string | null
+  is_active: boolean
 }
 
 // ── 頁面權限定義 ─────────────────────────────────────────────
@@ -186,7 +187,7 @@ export default function PinManager() {
     if (!supabase) { setLoading(false); return }
     Promise.allSettled([
       supabase.from('user_pins').select('*').order('role'),
-      supabase.from('staff').select('id, name, group_id, sort_order, telegram_id').order('sort_order'),
+      supabase.from('staff').select('id, name, group_id, sort_order, telegram_id, is_active').order('sort_order'),
     ]).then((results) => {
       const errs: string[] = []
       if (results[0].status === 'fulfilled') {
@@ -230,13 +231,13 @@ export default function PinManager() {
       list.push(s)
       m.set(key, list)
     }
-    // 群組內排序：未設定 PIN 的置頂（紅色提醒）→ 啟用 → 停用
+    // 群組內排序：未設定 PIN 的置頂（紅色提醒）→ 啟用 → 停用 → 離職
     for (const [key, list] of m.entries()) {
       list.sort((a, b) => {
         const pa = pinMap.get(a.id)
         const pb = pinMap.get(b.id)
-        const rankA = !pa ? 0 : pa.is_active ? 1 : 2
-        const rankB = !pb ? 0 : pb.is_active ? 1 : 2
+        const rankA = !a.is_active ? 3 : !pa ? 0 : pa.is_active ? 1 : 2
+        const rankB = !b.is_active ? 3 : !pb ? 0 : pb.is_active ? 1 : 2
         if (rankA !== rankB) return rankA - rankB
         return a.sort_order - b.sort_order
       })
@@ -340,15 +341,44 @@ export default function PinManager() {
   }
 
   // ── Toggle：帳號狀態 ─────────────────────────────────────
+  // 啟用 PIN 時若該員工先前被標記為離職，自動回復 staff.is_active=true，讓登入畫面重新出現
   const toggleActive = (pin: UserPin) => guardedWrite('帳號狀態更新', async () => {
     if (!supabase) return
+    const nextActive = !pin.is_active
     const { error } = await supabase
       .from('user_pins')
-      .update({ is_active: !pin.is_active, updated_at: new Date().toISOString() })
+      .update({ is_active: nextActive, updated_at: new Date().toISOString() })
       .eq('id', pin.id)
     if (error) throw error
-    setPins((prev) => prev.map((p) => p.id === pin.id ? { ...p, is_active: !p.is_active } : p))
+
+    if (nextActive) {
+      const staffRow = staffRowMap.get(pin.staff_id)
+      if (staffRow && !staffRow.is_active) {
+        const { error: staffErr } = await supabase
+          .from('staff')
+          .update({ is_active: true })
+          .eq('id', pin.staff_id)
+        if (staffErr) throw staffErr
+        setAllStaffRows((prev) => prev.map((s) => s.id === pin.staff_id ? { ...s, is_active: true } : s))
+      }
+    }
+
+    setPins((prev) => prev.map((p) => p.id === pin.id ? { ...p, is_active: nextActive } : p))
     showToast(pin.is_active ? '已停用' : '已啟用')
+  })
+
+  // ── 設為離職：staff.is_active=false，登入畫面隱藏 ─────────
+  // 只在 PIN 已停用時提供，避免「啟用又離職」的矛盾狀態
+  const setRetired = (staffRow: StaffRow) => guardedWrite('設為離職', async () => {
+    if (!supabase) return
+    if (!confirm(`確定將「${staffRow.name}」設為離職？\n\n離職後將從登入畫面消失，但歷史排班/出貨/請假紀錄會保留。\n如需復職，重新「啟用」PIN 即可。`)) return
+    const { error } = await supabase
+      .from('staff')
+      .update({ is_active: false })
+      .eq('id', staffRow.id)
+    if (error) throw error
+    setAllStaffRows((prev) => prev.map((s) => s.id === staffRow.id ? { ...s, is_active: false } : s))
+    showToast(`已將「${staffRow.name}」設為離職`)
   })
 
   // ── Toggle：排班管理 ─────────────────────────────────────
@@ -538,8 +568,14 @@ export default function PinManager() {
                           </p>
                           {pin ? (
                             <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
+                              {/* 離職標籤（優先於停用，因為離職一定也停用）*/}
+                              {!staff.is_active && (
+                                <span className="inline-flex px-2 py-0.5 rounded-full text-[11px] font-medium bg-gray-200 text-gray-600">
+                                  已離職
+                                </span>
+                              )}
                               {/* 停用標籤（啟用狀態用整列灰階表示，不再顯示 tag）*/}
-                              {!pin.is_active && (
+                              {staff.is_active && !pin.is_active && (
                                 <span className="inline-flex px-2 py-0.5 rounded-full text-[11px] font-medium bg-gray-100 text-gray-500">
                                   停用
                                 </span>
@@ -669,6 +705,23 @@ export default function PinManager() {
                               >
                                 修改 PIN 碼
                               </button>
+
+                              {/* 設為離職：停用狀態下且尚未離職才顯示 */}
+                              {!pin.is_active && staff.is_active && (
+                                <button
+                                  onClick={() => setRetired(staff)}
+                                  className="w-full mt-2 py-2.5 rounded-xl text-sm font-medium text-status-danger bg-rose-50 border border-rose-200 active:bg-rose-100 transition-colors"
+                                >
+                                  設為離職（從登入畫面隱藏）
+                                </button>
+                              )}
+
+                              {/* 已離職提示 */}
+                              {!staff.is_active && (
+                                <div className="mt-2 px-3 py-2 rounded-xl bg-gray-50 border border-gray-200 text-xs text-brand-mocha">
+                                  此員工已離職，登入畫面不顯示。如需復職，請啟用上方「帳號狀態」開關。
+                                </div>
+                              )}
                             </div>
                           )}
 

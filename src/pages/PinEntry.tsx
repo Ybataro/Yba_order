@@ -57,7 +57,7 @@ export default function PinEntry({ onSuccess }: PinEntryProps) {
     if (!supabase) return
 
     Promise.all([
-      supabase.from('staff').select('id, name, group_id, sort_order').order('sort_order'),
+      supabase.from('staff').select('id, name, group_id, sort_order').eq('is_active', true).order('sort_order'),
       supabase.from('user_pins').select('id, staff_id, role, allowed_stores').eq('is_active', true),
     ]).then(([staffRes, pinRes]) => {
       const staffData = staffRes.data || []
