@@ -754,8 +754,14 @@ export default function Order() {
                             </div>
                           )}
                           <div className="flex justify-between">
-                            <span>中位用量{bd.v4SampleSize ? `（${bd.v4SampleSize} 筆）` : ''}</span>
-                            <span className="font-num">{bd.avgUsage} {product.unit}/天</span>
+                            <span>
+                              {bd.isExactDayOfWeek ? '同星期幾中位叫貨量' : '中位用量'}
+                              {bd.v4SampleSize ? `（${bd.v4SampleSize} 筆）` : ''}
+                            </span>
+                            <span className="font-num">
+                              {bd.avgUsage} {product.unit}
+                              {bd.isExactDayOfWeek ? `（涵蓋 ${bd.coverDays} 天）` : '/天'}
+                            </span>
                           </div>
                           {/* 覆蓋天數明細 */}
                           <div className="flex justify-between">
