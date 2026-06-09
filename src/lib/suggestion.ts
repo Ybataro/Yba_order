@@ -164,6 +164,23 @@ export function calcMedianUsage(matched: MatchedDay[], iqrCoeff = 1.5): number {
   return Math.round(median * 10) / 10
 }
 
+/**
+ * V4.1: 計算 p70 百分位用量（不缺貨偏好）
+ * 業務原則：寧可剩一點也不要缺貨，採 70 百分位（30% 的高量日不會缺）
+ * 線性內插：idx = 0.7 × (n−1)，落在 sorted[lo] 與 sorted[hi] 之間
+ */
+export function calcP70Usage(matched: MatchedDay[]): number {
+  if (matched.length === 0) return 0
+  if (matched.length === 1) return matched[0].usage
+  const sorted = matched.map(m => m.usage).sort((a, b) => a - b)
+  const idx = 0.7 * (sorted.length - 1)
+  const lo = Math.floor(idx)
+  const hi = Math.ceil(idx)
+  const frac = idx - lo
+  const val = sorted[lo] * (1 - frac) + sorted[hi] * frac
+  return Math.round(val * 10) / 10
+}
+
 /** 央廚休息日：週三(3) 或 週日(0) */
 export function isKitchenRestDay(dateStr: string): boolean {
   const dow = new Date(dateStr + 'T00:00:00+08:00').getDay()
@@ -939,8 +956,9 @@ export async function computeSuggestions(
         dailyUsages, weatherMap, p.id, revenueMap, targetRevenue,
       )
 
-      // V4：直接取中位數（DOW 分群後樣本同質性高，不需 IQR）
-      const medianUsage = matched.length > 0 ? calcMedianUsage(matched, 1.5) : 0
+      // V4.1: 改用 p70（不缺貨偏好）
+      // 業務原則：店長不會等用完才叫，傾向預留 30% 高量日緩衝
+      const medianUsage = matched.length > 0 ? calcP70Usage(matched) : 0
       const avgUsage = medianUsage
 
       // 🔴 V4 修正：同 dow 歷史的 actual_qty 已內含「當次叫貨涵蓋多天的總量」
@@ -976,9 +994,11 @@ export async function computeSuggestions(
       const parsedBase = parseBaseStock(p.baseStock)
       const safetyGap = Math.max(0, parsedBase - currentStock)
 
-      // V4: 淨需求 = 總需求 − 現有庫存（不能負）
-      // 建議量 = max(淨需求, 安全庫存缺口)
-      const netDemand = Math.max(0, totalDemand - currentStock)
+      // V4.1: 軟扣 50% 庫存（業務角度：店長不會等用完才叫，會保留部分庫存）
+      // 例：芋泥漿 p70=8、庫存 5.5 → 8 − 5.5×0.5 = 5.25 ≈ 5（接近實叫 7）
+      // 例：紅豆 p70=3、庫存 0.8 → 3 − 0.4 = 2.6 ≈ 3（接近實叫 3）
+      const STOCK_DEDUCT_RATIO = 0.5
+      const netDemand = Math.max(0, totalDemand - currentStock * STOCK_DEDUCT_RATIO)
       const rawBeforeRound = Math.max(netDemand, safetyGap)
       const unit = getRoundUnit(p.name)
       suggested[p.id] = roundToUnit(rawBeforeRound, unit)
