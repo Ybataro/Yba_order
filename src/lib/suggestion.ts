@@ -943,11 +943,20 @@ export async function computeSuggestions(
       const medianUsage = matched.length > 0 ? calcMedianUsage(matched, 1.5) : 0
       const avgUsage = medianUsage
 
-      // V4：覆蓋天各自用對應 dow 估算（央廚休 fallback 到前一天 dow）
+      // 🔴 V4 修正：同 dow 歷史的 actual_qty 已內含「當次叫貨涵蓋多天的總量」
+      // 例：樂華週二歷史 10 盒 = 涵蓋週二+週三 2 天總量
+      // 所以 T1/T2（dow 匹配）命中時，totalDemand = medianUsage（不乘 coverDays）
+      // T3/T4（dayType 維度）命中時，dayType 維度沒分覆蓋差異 → 仍用 coverDays 加總
+      const isDOWMatch = rawMatchLevel === 1 || rawMatchLevel === 2
+
+      // coverDetails 用於 UI 顯示（給用戶看覆蓋哪幾天）
       const coverDetails: CoverDayDetail[] = coverDates.map(date => {
         const dayType = getDayType(date)
         const dow = getDOW(date)
-        const estUsage = estimateDailyUsageV4(dayType, dow, date, dailyUsages, weatherMap, p.id, revenueMap, targetRevenue)
+        const estUsage = isDOWMatch
+          // DOW 匹配：把總量平均分到覆蓋天顯示（純展示用）
+          ? medianUsage / coverDates.length
+          : estimateDailyUsageV4(dayType, dow, date, dailyUsages, weatherMap, p.id, revenueMap, targetRevenue)
         return {
           date,
           dayType,
@@ -955,8 +964,10 @@ export async function computeSuggestions(
         }
       })
 
-      // 需求量 = 覆蓋期間各天用量加總
-      const totalDemand = coverDetails.reduce((sum, d) => sum + d.estimatedUsage, 0)
+      // 需求量：DOW 命中 → 直接用 medianUsage；非 DOW → 加總各覆蓋天估算
+      const totalDemand = isDOWMatch
+        ? medianUsage
+        : coverDetails.reduce((sum, d) => sum + d.estimatedUsage, 0)
 
       // 現有庫存（V4: 從淨需求中扣除避免庫存堆積）
       const currentStock = getLinkedSum(stock, ids) || 0
