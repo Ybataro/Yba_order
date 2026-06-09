@@ -707,7 +707,18 @@ export default function Order() {
                     </div>
                     {expandedSuggestionId === product.id && suggestionBreakdown[product.id] && (() => {
                       const bd = suggestionBreakdown[product.id]
-                      const tierLabel = bd.matchLevel === 1 ? 'Tier 1（嚴格匹配）' : bd.matchLevel === 2 ? 'Tier 2（放寬匹配）' : 'Tier 3（近期平均）'
+                      // V4 tier 標籤對照
+                      const v4TierMap: Record<string, string> = {
+                        'T1-dow+season': 'T1 同星期幾+同季節',
+                        'T2-dow': 'T2 同星期幾',
+                        'T3-dayType+season': 'T3 同日類型+季節',
+                        'T4-dayType-recent14': 'T4 近期 14 天',
+                        'T4-all-recent14': 'T4 全部近期',
+                        'T4-empty': 'T4 無資料',
+                      }
+                      const tierLabel = bd.v4TierLabel
+                        ? (v4TierMap[bd.v4TierLabel] || bd.v4TierLabel)
+                        : (bd.matchLevel === 1 ? 'Tier 1（嚴格匹配）' : bd.matchLevel === 2 ? 'Tier 2（放寬匹配）' : 'Tier 3（近期平均）')
                       const dayTypeLabel = bd.targetDayType === 'holiday' ? '假日' : bd.targetDayType === 'weekend' ? '週末' : '平日'
                       const rainLabel = bd.targetRainBucket === 'none' ? '無雨' : bd.targetRainBucket === 'light' ? '小雨' : bd.targetRainBucket === 'heavy' ? '大雨' : '-'
                       const seasonLabel = bd.targetSeason === 'cool' ? '秋冬' : '春夏'
@@ -743,7 +754,7 @@ export default function Order() {
                             </div>
                           )}
                           <div className="flex justify-between">
-                            <span>加權平均用量</span>
+                            <span>中位用量{bd.v4SampleSize ? `（${bd.v4SampleSize} 筆）` : ''}</span>
                             <span className="font-num">{bd.avgUsage} {product.unit}/天</span>
                           </div>
                           {/* 覆蓋天數明細 */}
