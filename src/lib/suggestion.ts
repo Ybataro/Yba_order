@@ -45,7 +45,10 @@ export interface SuggestionBreakdown {
   targetDOW?: number              // 目標日星期幾（0=日,1=一,...,6=六）
   isExactDayOfWeek?: boolean      // true = 命中 Tier 0（同星期幾匹配）
   medianUsage?: number            // 中位數用量（供 debug）
-  rawMatchLevel?: 0 | 1 | 2 | 3  // 真實 Tier（含 Tier 0）
+  rawMatchLevel?: 0 | 1 | 2 | 3 | 4  // 真實 Tier（含 V4 Tier 4）
+  // V4 新增
+  v4TierLabel?: string            // V4 命中的 Tier 標籤（T1-dow+season / T2-dow / T3 / T4）
+  v4SampleSize?: number           // V4 命中的樣本數
 }
 
 interface WeatherDay {
@@ -691,11 +694,158 @@ function matchDaysV3(
   return { ...v2result, rawMatchLevel: v2result.matchLevel, iqrCoeff: 1.5 }
 }
 
+// ── V4 核心：DOW 為主軟分群（2026-06-09 上線）──
+// 基於 prod 真實資料 audit：
+//   - DOW 是強訊號（樂華花生週六 4 vs 週一 2、芋圓週六 30 vs 平日 23）
+//   - 溫度 30°C 是分水嶺（花生 2 → 4、蔗片冰 16 → 24）
+//   - 雨量訊號弱（蔗片冰雨天反而微增）
+// 設計：DOW + season 為主分群（軟條件），溫度雨量做加減分而非硬 filter
+
+type TempBin = 'cool' | 'mid' | 'warm' | 'hot' // <25 / 25-29 / 30-32 / 33+
+
+function getTempBin(temp: number): TempBin {
+  if (temp < 25) return 'cool'
+  if (temp < 30) return 'mid'
+  if (temp < 33) return 'warm'
+  return 'hot'
+}
+
+/** 溫度區段相似度加分：同段 +20、相鄰 +10、跨2段 -5、其餘 0 */
+function tempBinScore(histBin: TempBin, targetBin: TempBin): number {
+  const order: TempBin[] = ['cool', 'mid', 'warm', 'hot']
+  const diff = Math.abs(order.indexOf(histBin) - order.indexOf(targetBin))
+  if (diff === 0) return 20
+  if (diff === 1) return 10
+  if (diff === 2) return 0
+  return -5
+}
+
 /**
- * estimateDailyUsageV3：覆蓋天各自用對應 dow 的歷史資料（V3 新函式）
- * 不帶天氣（未來幾天無預報），直接走 Tier 0c 或 Tier 3 兜底
+ * matchDaysV4：DOW 為主軟分群匹配（V4 新函式）
+ * Tier 設計：
+ *   T1: dow + season + ≥4 筆（主軸）
+ *   T2: dow + 不分季節 + ≥4 筆（跨季 fallback）
+ *   T3: dayType + season + ≥4 筆（樣本實在不夠）
+ *   T4: dayType + 最近 14 天（最後兜底）
+ *
+ * 溫度雨量都做加分，不當 filter
  */
-function estimateDailyUsageV3(
+function matchDaysV4(
+  targetDayType: 'holiday' | 'weekend' | 'weekday',
+  targetDOW: number,
+  targetTemp: number | null,
+  targetRainBucket: RainBucket | null,
+  targetSeason: 'cool' | 'warm',
+  targetSchoolBreak: boolean,
+  targetDateStr: string,
+  dailyUsages: DailyUsage[],
+  weatherMap: Map<string, WeatherDay>,
+  productId: string,
+  revenueMap: Map<string, number>,
+  targetRevenue: number | null,
+): { matchLevel: 1 | 2 | 3; matched: MatchedDay[]; rawMatchLevel: 1 | 2 | 3 | 4; tierLabel: string } {
+
+  const daysWithUsage = dailyUsages.filter(d => d.usage[productId] != null && d.usage[productId] > 0)
+  if (daysWithUsage.length === 0) {
+    return { matchLevel: 3, matched: [], rawMatchLevel: 4, tierLabel: 'T4-empty' }
+  }
+
+  const targetBin: TempBin | null = targetTemp != null ? getTempBin(targetTemp) : null
+
+  const buildScore = (d: DailyUsage, baseScore: number): MatchedDay => {
+    let score = baseScore * getRecencyWeight(d.date, targetDateStr)
+    const w = weatherMap.get(d.date)
+    if (w && targetBin) {
+      score += tempBinScore(getTempBin(w.tempHigh), targetBin)
+    }
+    if (w && targetRainBucket) {
+      if (getRainBucketFromProb(w.rainProb) === targetRainBucket) score += 5
+    }
+    if (targetSchoolBreak && isSchoolBreak(d.date)) score += 5
+    if (!targetSchoolBreak && !isSchoolBreak(d.date)) score += 3
+    score += revenueBonus(d.date, targetRevenue, revenueMap)
+    return { date: d.date, score, usage: d.usage[productId] }
+  }
+
+  // T1: dow + season ≥4
+  const t1 = daysWithUsage
+    .filter(d => getDOW(d.date) === targetDOW && getSeason(d.date) === targetSeason)
+    .map(d => buildScore(d, 100))
+  if (t1.length >= 4) {
+    return { matchLevel: 1, matched: t1, rawMatchLevel: 1, tierLabel: 'T1-dow+season' }
+  }
+
+  // T2: dow（不分季節）≥4
+  const t2 = daysWithUsage
+    .filter(d => getDOW(d.date) === targetDOW)
+    .map(d => buildScore(d, 70))
+  if (t2.length >= 4) {
+    return { matchLevel: 1, matched: t2, rawMatchLevel: 2, tierLabel: 'T2-dow' }
+  }
+
+  // T3: dayType + season ≥4
+  const t3 = daysWithUsage
+    .filter(d => getDayType(d.date) === targetDayType && getSeason(d.date) === targetSeason)
+    .map(d => buildScore(d, 40))
+  if (t3.length >= 4) {
+    return { matchLevel: 2, matched: t3, rawMatchLevel: 3, tierLabel: 'T3-dayType+season' }
+  }
+
+  // T4: dayType + 最近 14 天（最後兜底）
+  const t4Recent = daysWithUsage
+    .filter(d => getDayType(d.date) === targetDayType)
+    .slice(-14)
+  if (t4Recent.length >= 2) {
+    return { matchLevel: 3, matched: t4Recent.map(d => buildScore(d, 20)), rawMatchLevel: 4, tierLabel: 'T4-dayType-recent14' }
+  }
+
+  // 真的什麼都沒有：用全部資料最近 14 天
+  return {
+    matchLevel: 3,
+    matched: daysWithUsage.slice(-14).map(d => buildScore(d, 10)),
+    rawMatchLevel: 4,
+    tierLabel: 'T4-all-recent14',
+  }
+}
+
+/**
+ * estimateDailyUsageV4：覆蓋天各自用對應 dow 估算
+ * 業務真相：央廚週三/週日休 → 該天無 shipment 歷史
+ * Fallback：若 dow=3 樣本不足，用週二中位數（前一日叫的貨涵蓋週三）
+ *          若 dow=0 樣本不足，用週六中位數
+ */
+function estimateDailyUsageV4(
+  dayType: 'holiday' | 'weekend' | 'weekday',
+  dow: number,
+  dateStr: string,
+  dailyUsages: DailyUsage[],
+  weatherMap: Map<string, WeatherDay>,
+  productId: string,
+  revenueMap: Map<string, number>,
+  targetRevenue: number | null,
+): number {
+  const season = getSeason(dateStr)
+  const schoolBreak = isSchoolBreak(dateStr)
+
+  // 央廚休前一天替代：週三 → 週二歷史；週日 → 週六歷史
+  // 業務邏輯：週三店有營業但用週二叫的貨；週日同理
+  const useDOW = dow === 3 ? 2 : dow === 0 ? 6 : dow
+
+  const { matched } = matchDaysV4(
+    dayType, useDOW,
+    null, null, // 覆蓋天不帶天氣（未來預報不可靠）
+    season, schoolBreak, dateStr,
+    dailyUsages, weatherMap, productId, revenueMap, targetRevenue,
+  )
+  if (matched.length === 0) return 0
+  return calcMedianUsage(matched, 1.5)
+}
+
+/**
+ * estimateDailyUsageV3：V3 覆蓋天估算（已被 V4 取代，保留供 rollback）
+ * rollback: 改回 computeSuggestions 呼叫此函式 + matchDaysV3 + iqrCoeff
+ */
+export function estimateDailyUsageV3(
   dayType: 'holiday' | 'weekend' | 'weekday',
   dow: number,
   dateStr: string,
@@ -782,22 +932,22 @@ export async function computeSuggestions(
     products.forEach(p => {
       const ids = inventoryIdMap[p.id] || [p.id]
 
-      // V3：用 matchDaysV3 匹配（同星期幾優先）
-      const { matchLevel, matched, rawMatchLevel, iqrCoeff } = matchDaysV3(
+      // V4：DOW 為主軟分群匹配（取代 V3 嚴格匹配）
+      const { matchLevel, matched, rawMatchLevel, tierLabel } = matchDaysV4(
         targetDayType, targetDOW, targetTemp, targetRainBucket,
         targetSeason, targetSchoolBreak, selectedDate,
         dailyUsages, weatherMap, p.id, revenueMap, targetRevenue,
       )
 
-      // V3：IQR 中位數取代加權平均
-      const medianUsage = matched.length > 0 ? calcMedianUsage(matched, iqrCoeff) : 0
+      // V4：直接取中位數（DOW 分群後樣本同質性高，不需 IQR）
+      const medianUsage = matched.length > 0 ? calcMedianUsage(matched, 1.5) : 0
       const avgUsage = medianUsage
 
-      // V3：覆蓋天數各天獨立計算——各用自己的 dow 歷史
+      // V4：覆蓋天各自用對應 dow 估算（央廚休 fallback 到前一天 dow）
       const coverDetails: CoverDayDetail[] = coverDates.map(date => {
         const dayType = getDayType(date)
         const dow = getDOW(date)
-        const estUsage = estimateDailyUsageV3(dayType, dow, date, dailyUsages, weatherMap, p.id, revenueMap, targetRevenue)
+        const estUsage = estimateDailyUsageV4(dayType, dow, date, dailyUsages, weatherMap, p.id, revenueMap, targetRevenue)
         return {
           date,
           dayType,
@@ -805,19 +955,19 @@ export async function computeSuggestions(
         }
       })
 
-      // 需求量 = 覆蓋期間各天用量加總（鮮食每天需要新鮮補貨，不因庫存扣減）
+      // 需求量 = 覆蓋期間各天用量加總
       const totalDemand = coverDetails.reduce((sum, d) => sum + d.estimatedUsage, 0)
 
-      // 現有庫存（供 breakdown 顯示參考）
+      // 現有庫存（V4: 從淨需求中扣除避免庫存堆積）
       const currentStock = getLinkedSum(stock, ids) || 0
 
       // 安全庫存缺口
       const parsedBase = parseBaseStock(p.baseStock)
       const safetyGap = Math.max(0, parsedBase - currentStock)
 
-      // 建議量 = max(每日需求 × 覆蓋天數, 安全庫存缺口)
-      // 鮮食叫貨不扣庫存，因為每天都需要新鮮補貨維持品質
-      const netDemand = totalDemand
+      // V4: 淨需求 = 總需求 − 現有庫存（不能負）
+      // 建議量 = max(淨需求, 安全庫存缺口)
+      const netDemand = Math.max(0, totalDemand - currentStock)
       const rawBeforeRound = Math.max(netDemand, safetyGap)
       const unit = getRoundUnit(p.name)
       suggested[p.id] = roundToUnit(rawBeforeRound, unit)
@@ -848,9 +998,12 @@ export async function computeSuggestions(
         rawBeforeRound: Math.round(rawBeforeRound * 10) / 10,
         // V3 新增欄位
         targetDOW,
-        isExactDayOfWeek: rawMatchLevel === 0,
+        isExactDayOfWeek: rawMatchLevel === 1 || rawMatchLevel === 2, // V4 T1/T2 都是 dow 匹配
         medianUsage: Math.round(medianUsage * 10) / 10,
         rawMatchLevel,
+        // V4 新增欄位
+        v4TierLabel: tierLabel,
+        v4SampleSize: matched.length,
       }
     })
   } catch (err) {
