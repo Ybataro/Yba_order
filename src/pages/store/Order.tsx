@@ -379,15 +379,38 @@ export default function Order() {
 
       if (!latestSession) return
 
-      const { data } = await supabase!
-        .from('product_stock_items')
-        .select('product_id, stock_qty')
-        .eq('session_id', latestSession.id)
+      const [stockRes, shipRes] = await Promise.all([
+        supabase!
+          .from('product_stock_items')
+          .select('product_id, stock_qty')
+          .eq('session_id', latestSession.id),
+        // 盤點日之後到 selectedDate 之間所有出貨（兩店都扣，因為是央廚整體庫存）
+        supabase!
+          .from('shipment_sessions')
+          .select('id')
+          .gt('date', latestSession.date)
+          .lte('date', selectedDate),
+      ])
 
       const m: Record<string, number> = {}
-      data?.forEach(item => {
+      stockRes.data?.forEach(item => {
         m[item.product_id] = (m[item.product_id] || 0) + (item.stock_qty || 0)
       })
+
+      if (shipRes.data && shipRes.data.length > 0) {
+        const sessionIds = shipRes.data.map((s: { id: string }) => s.id)
+        const { data: shipItems } = await supabase!
+          .from('shipment_items')
+          .select('product_id, actual_qty')
+          .in('session_id', sessionIds)
+
+        shipItems?.forEach(item => {
+          if ((item.actual_qty || 0) > 0) {
+            m[item.product_id] = (m[item.product_id] || 0) - item.actual_qty
+          }
+        })
+      }
+
       setKitchenStock(m)
     }
 
