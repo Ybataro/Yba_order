@@ -151,17 +151,7 @@ export async function autoFillDoujiangOrder(orderDate: string): Promise<AutoFill
   const xingnanStock = sumStoreTotal(xingnanInvRes.data)
   const kitchenStock = sumByProduct(kitchenStockRes.data, 'product_id', 'stock_qty')
 
-  // 2. 上週進貨（shipment_items.actual_qty 合計）
-  const { data: shipData } = await supabase
-    .from('shipment_items')
-    .select('product_id, actual_qty, shipment_sessions!inner(date)')
-    .in('product_id', ids)
-    .gte('shipment_sessions.date', prevWeekFrom)
-    .lte('shipment_sessions.date', prevWeekTo)
-
-  const shipSum = sumByProduct(shipData, 'product_id', 'actual_qty')
-
-  // 3. 過期損耗（樂華 / 興南 inventory.discarded + 央廚 product_stock.discarded）
+  // 2. 過期損耗（樂華 / 興南 inventory.discarded + 央廚 product_stock.discarded）
   const [lehuaDiscRes, xingnanDiscRes, kitchenDiscRes] = await Promise.all([
     supabase.from('inventory_items')
       .select('product_id, discarded, inventory_sessions!inner(store_id, date)')
@@ -185,7 +175,7 @@ export async function autoFillDoujiangOrder(orderDate: string): Promise<AutoFill
   const xingnanDisc = sumByProduct(xingnanDiscRes.data, 'product_id', 'discarded')
   const kitchenDisc = sumByProduct(kitchenDiscRes.data, 'product_id', 'discarded')
 
-  // 4. 上一筆 doujiang_orders → 上週庫存 + 前次進貨
+  // 3. 上一筆 doujiang_orders → 上週庫存（訂貨日庫存）+ 前次進貨（上一筆本週訂貨量）
   const { data: prevOrders } = await supabase
     .from('doujiang_orders')
     .select('*')
@@ -202,13 +192,15 @@ export async function autoFillDoujiangOrder(orderDate: string): Promise<AutoFill
   const weitangOrderStock = round2((lehuaStock[DOUJIANG_WEITANG_ID] || 0) + (xingnanStock[DOUJIANG_WEITANG_ID] || 0) + (kitchenStock[DOUJIANG_WEITANG_ID] || 0))
   const weitangDiscarded = round2((lehuaDisc[DOUJIANG_WEITANG_ID] || 0) + (xingnanDisc[DOUJIANG_WEITANG_ID] || 0) + (kitchenDisc[DOUJIANG_WEITANG_ID] || 0))
   const weitangPrevStock = prev?.weitang_order_stock || 0
-  const weitangPrevReceived = shipSum[DOUJIANG_WEITANG_ID] || 0
+  // 前次進貨 = 上一筆「本週訂貨量」（向供應商下單，即上週進到央廚的量）
+  const weitangPrevReceived = prev?.weitang_actual_ordered || 0
   const weitangCalc = computeDoujiangVariant(weitangPrevStock, weitangPrevReceived, weitangOrderStock, weitangDiscarded)
 
   const wutangOrderStock = round2((lehuaStock[DOUJIANG_WUTANG_ID] || 0) + (xingnanStock[DOUJIANG_WUTANG_ID] || 0) + (kitchenStock[DOUJIANG_WUTANG_ID] || 0))
   const wutangDiscarded = round2((lehuaDisc[DOUJIANG_WUTANG_ID] || 0) + (xingnanDisc[DOUJIANG_WUTANG_ID] || 0) + (kitchenDisc[DOUJIANG_WUTANG_ID] || 0))
   const wutangPrevStock = prev?.wutang_order_stock || 0
-  const wutangPrevReceived = shipSum[DOUJIANG_WUTANG_ID] || 0
+  // 前次進貨 = 上一筆「本週訂貨量」（向供應商下單，即上週進到央廚的量）
+  const wutangPrevReceived = prev?.wutang_actual_ordered || 0
   const wutangCalc = computeDoujiangVariant(wutangPrevStock, wutangPrevReceived, wutangOrderStock, wutangDiscarded)
 
   return {
