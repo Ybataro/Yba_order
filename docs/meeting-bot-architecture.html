@@ -1,0 +1,426 @@
+<title>社區會議記錄 Bot · 系統架構</title>
+<style>
+  :root {
+    --ink: #1a1815;
+    --ink-soft: #3d3934;
+    --paper: #f7f4ef;
+    --paper-raised: #fffdf9;
+    --line: #d9d2c7;
+    --line-strong: #b8ae9e;
+    --seal: #b03a2e;
+    --seal-soft: #c65a4a;
+    --muted: #7a736a;
+    --ok: #4a7a4f;
+    --warn: #b07d2e;
+    --neutral-bias: #8a8377;
+    --mono: "SF Mono", "JetBrains Mono", "Roboto Mono", ui-monospace, Menlo, Consolas, monospace;
+    --sans: "Noto Sans TC", -apple-system, "Segoe UI", system-ui, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ink: #ece7de;
+      --ink-soft: #c4bdb0;
+      --paper: #1b1917;
+      --paper-raised: #24211d;
+      --line: #383430;
+      --line-strong: #4d4842;
+      --seal: #d8695a;
+      --seal-soft: #e08375;
+      --muted: #8f877b;
+      --ok: #7aa87f;
+      --warn: #cca055;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ink: #ece7de; --ink-soft: #c4bdb0; --paper: #1b1917; --paper-raised: #24211d;
+    --line: #383430; --line-strong: #4d4842; --seal: #d8695a; --seal-soft: #e08375;
+    --muted: #8f877b; --ok: #7aa87f; --warn: #cca055;
+  }
+  :root[data-theme="light"] {
+    --ink: #1a1815; --ink-soft: #3d3934; --paper: #f7f4ef; --paper-raised: #fffdf9;
+    --line: #d9d2c7; --line-strong: #b8ae9e; --seal: #b03a2e; --seal-soft: #c65a4a;
+    --muted: #7a736a; --ok: #4a7a4f; --warn: #b07d2e;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--sans);
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap {
+    max-width: 820px;
+    margin: 0 auto;
+    padding: clamp(2rem, 5vw, 4.5rem) clamp(1.1rem, 4vw, 2.5rem) 5rem;
+  }
+
+  /* ---- masthead ---- */
+  .masthead {
+    border-bottom: 2px solid var(--ink);
+    padding-bottom: 1.4rem;
+    margin-bottom: 2.6rem;
+  }
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--seal);
+    margin: 0 0 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+  }
+  .eyebrow::before {
+    content: "";
+    width: 26px; height: 1px;
+    background: var(--seal);
+  }
+  h1 {
+    font-size: clamp(1.9rem, 5.5vw, 3rem);
+    line-height: 1.08;
+    letter-spacing: -0.02em;
+    margin: 0 0 0.5rem;
+    text-wrap: balance;
+    font-weight: 800;
+  }
+  .sub {
+    color: var(--muted);
+    font-size: 0.98rem;
+    margin: 0;
+    max-width: 60ch;
+  }
+  .stamp {
+    float: right;
+    margin: 0.2rem 0 0 1rem;
+    border: 1.5px solid var(--seal);
+    color: var(--seal);
+    border-radius: 6px;
+    font-family: var(--mono);
+    font-size: 0.66rem;
+    letter-spacing: 0.12em;
+    padding: 0.4rem 0.6rem;
+    text-align: center;
+    transform: rotate(3deg);
+    line-height: 1.4;
+    opacity: 0.9;
+  }
+
+  h2 {
+    font-size: 1.28rem;
+    letter-spacing: -0.01em;
+    margin: 3.4rem 0 0.4rem;
+    display: flex;
+    align-items: baseline;
+    gap: 0.7rem;
+  }
+  h2 .num {
+    font-family: var(--mono);
+    font-size: 0.8rem;
+    color: var(--seal);
+    font-weight: 500;
+  }
+  .lede {
+    color: var(--muted);
+    margin: 0 0 1.6rem;
+    font-size: 0.95rem;
+  }
+
+  /* ---- data flow pipeline ---- */
+  .flow {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    margin: 1.6rem 0 0.5rem;
+  }
+  .node {
+    background: var(--paper-raised);
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--ink-soft);
+    border-radius: 10px;
+    padding: 1rem 1.2rem;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0.15rem 1rem;
+    align-items: center;
+  }
+  .node.seal-node { border-left-color: var(--seal); }
+  .node.ok-node { border-left-color: var(--ok); }
+  .node.warn-node { border-left-color: var(--warn); }
+  .node .step {
+    grid-row: span 2;
+    font-family: var(--mono);
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--muted);
+    width: 2.2rem;
+  }
+  .node .title { font-weight: 700; font-size: 1.02rem; }
+  .node .desc { color: var(--muted); font-size: 0.88rem; grid-column: 2; }
+  .node .tag {
+    grid-column: 2;
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.05em;
+    margin-top: 0.35rem;
+    display: inline-flex;
+    width: fit-content;
+    padding: 0.15rem 0.5rem;
+    border-radius: 5px;
+    background: color-mix(in srgb, var(--seal) 12%, transparent);
+    color: var(--seal);
+  }
+  .tag.ok { background: color-mix(in srgb, var(--ok) 15%, transparent); color: var(--ok); }
+  .tag.warn { background: color-mix(in srgb, var(--warn) 16%, transparent); color: var(--warn); }
+  .connector {
+    width: 2px;
+    height: 22px;
+    background: var(--line-strong);
+    margin-left: calc(1.2rem + 1.1rem);
+    position: relative;
+  }
+  .connector::after {
+    content: "▼";
+    position: absolute;
+    bottom: -4px; left: -5px;
+    font-size: 0.6rem;
+    color: var(--line-strong);
+  }
+
+  /* ---- callout ---- */
+  .callout {
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--seal);
+    background: color-mix(in srgb, var(--seal) 5%, var(--paper-raised));
+    border-radius: 10px;
+    padding: 1.1rem 1.3rem;
+    margin: 1.8rem 0;
+  }
+  .callout .k {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--seal);
+    margin: 0 0 0.5rem;
+  }
+  .callout p { margin: 0; font-size: 0.93rem; }
+
+  /* ---- cost table ---- */
+  .table-scroll { overflow-x: auto; margin: 1.4rem 0; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.92rem;
+    min-width: 440px;
+  }
+  th, td {
+    text-align: left;
+    padding: 0.7rem 0.9rem;
+    border-bottom: 1px solid var(--line);
+  }
+  th {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    border-bottom: 1.5px solid var(--line-strong);
+    font-weight: 500;
+  }
+  td.num { font-variant-numeric: tabular-nums; font-family: var(--mono); text-align: right; }
+  tr:last-child td { border-bottom: none; }
+  tfoot td {
+    border-top: 1.5px solid var(--ink);
+    font-weight: 700;
+  }
+
+  /* ---- checklist ---- */
+  .steps { list-style: none; padding: 0; margin: 1.4rem 0; counter-reset: s; }
+  .steps li {
+    counter-increment: s;
+    position: relative;
+    padding: 0.9rem 0 0.9rem 3.2rem;
+    border-bottom: 1px dashed var(--line);
+  }
+  .steps li:last-child { border-bottom: none; }
+  .steps li::before {
+    content: counter(s, decimal-leading-zero);
+    position: absolute;
+    left: 0; top: 0.85rem;
+    font-family: var(--mono);
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--paper);
+    background: var(--ink);
+    width: 2.1rem; height: 2.1rem;
+    border-radius: 7px;
+    display: grid;
+    place-items: center;
+  }
+  .steps li.you::before { background: var(--seal); }
+  .steps .who {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 0.12rem 0.45rem;
+    border-radius: 4px;
+    margin-left: 0.5rem;
+    vertical-align: 0.1em;
+  }
+  .who.you-tag { background: color-mix(in srgb, var(--seal) 15%, transparent); color: var(--seal); }
+  .who.me-tag { background: color-mix(in srgb, var(--ink) 10%, transparent); color: var(--ink-soft); }
+  .steps .st { font-weight: 650; font-size: 1rem; }
+  .steps .sd { color: var(--muted); font-size: 0.88rem; margin-top: 0.15rem; }
+
+  .divider { height: 1px; background: var(--line); margin: 3rem 0 0; border: none; }
+
+  .foot {
+    margin-top: 2.5rem;
+    font-family: var(--mono);
+    font-size: 0.74rem;
+    color: var(--muted);
+    letter-spacing: 0.04em;
+  }
+  strong.hl { color: var(--seal); font-weight: 700; }
+  code {
+    font-family: var(--mono);
+    font-size: 0.85em;
+    background: color-mix(in srgb, var(--ink) 8%, transparent);
+    padding: 0.1em 0.4em;
+    border-radius: 4px;
+  }
+</style>
+
+<div class="wrap">
+  <header class="masthead">
+    <div class="stamp">驗證<br>通過<br>2026·07</div>
+    <p class="eyebrow">系統架構提案 · 內部確認文件</p>
+    <h1>社區會議記錄 Bot</h1>
+    <p class="sub">LINE 語音會議 → 雅婷台語辨識 → Claude 精簡整理 → 回傳社區群組。所有未知數已用真實素材驗證，本文供逐項確認後開工。</p>
+  </header>
+
+  <section>
+    <h2><span class="num">01</span>資料流 · 一場會議走過的路</h2>
+    <p class="lede">五個環節，從按下錄音到會議記錄貼回群組。每個環節都標了它現在的狀態。</p>
+
+    <div class="flow">
+      <div class="node warn-node">
+        <span class="step">A</span>
+        <span class="title">開會 · 本地錄音</span>
+        <span class="desc">LINE 通話開會時，一支手機／電腦錄整場音檔。LINE 通話聲音 Bot 拿不到，所以自己錄。</span>
+        <span class="tag warn">限制 · 需人工錄音</span>
+      </div>
+      <div class="connector"></div>
+
+      <div class="node seal-node">
+        <span class="step">B</span>
+        <span class="title">上傳 · LINE Bot 收件</span>
+        <span class="desc">會後把音檔傳進社區 LINE 群組並 @Bot。Bot 收到音檔，觸發後端處理。</span>
+        <span class="tag">入口 · LINE Messaging API</span>
+      </div>
+      <div class="connector"></div>
+
+      <div class="node ok-node">
+        <span class="step">C</span>
+        <span class="title">辨識 · 雅婷 ASR API</span>
+        <span class="desc">後端把音檔送雅婷。台語→繁中逐字稿，並自動分好語者 1／2／3。這兩關雅婷全包。</span>
+        <span class="tag ok">已驗證 · 14.5 分鐘真實會議</span>
+      </div>
+      <div class="connector"></div>
+
+      <div class="node ok-node">
+        <span class="step">D</span>
+        <span class="title">整理 · Claude API</span>
+        <span class="desc">逐字稿丟給 Claude，濃縮成「議題／決議事項／負責人／共識」的精簡會議記錄。</span>
+        <span class="tag ok">已驗證 · 效果見附件</span>
+      </div>
+      <div class="connector"></div>
+
+      <div class="node seal-node">
+        <span class="step">E</span>
+        <span class="title">回傳 · 貼回 LINE 群組</span>
+        <span class="desc">Bot 把整理好的會議記錄推播回社區群組，大家直接讀。一場會只用 1 則推播額度。</span>
+        <span class="tag">輸出 · LINE Push Message</span>
+      </div>
+    </div>
+  </section>
+
+  <div class="callout">
+    <p class="k">🛡 架構隔離原則</p>
+    <p>這套 Bot 會跟你現有的 <strong>Yba_order 叫貨系統共用同一台 VPS（5.104.87.209）</strong>，但<strong class="hl">完全獨立部署</strong>：獨立 Docker 容器、獨立網域、獨立資料。<strong>絕不碰</strong> yba-order 的容器、資料庫或 Nginx 設定。你的正式叫貨系統一行都不會動到。</p>
+  </div>
+
+  <section>
+    <h2><span class="num">02</span>成本 · 一個月大概花多少</h2>
+    <p class="lede">最貴的是雅婷辨識，但便宜到可以忽略。前幾個月靠免費額度＝零元。</p>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr><th>環節</th><th>計費方式</th><th style="text-align:right">一場會 ·15分</th><th style="text-align:right">月 ·10場</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>雅婷 ASR（音檔辨識）</td><td>NT$144 / 小時</td><td class="num">≈ 36</td><td class="num">≈ 360</td></tr>
+          <tr><td>Claude API（整理）</td><td>依 token，極低</td><td class="num">1–3</td><td class="num">≈ 20</td></tr>
+          <tr><td>LINE Bot</td><td>200 則推播 / 月免費</td><td class="num">0</td><td class="num">0</td></tr>
+          <tr><td>VPS 主機</td><td>複用現有，不加購</td><td class="num">0</td><td class="num">0</td></tr>
+        </tbody>
+        <tfoot>
+          <tr><td>合計（未稅）</td><td>雅婷送 NT$1,000 額度</td><td class="num">≈ 37</td><td class="num">≈ 380</td></tr>
+        </tfoot>
+      </table>
+    </div>
+    <div class="callout">
+      <p class="k">💰 白話</p>
+      <p>一場會約 <strong class="hl">37 元</strong>（不到一杯飲料）。雅婷免費送的 <strong>1,000 元</strong>，夠你們測試＋正式用<strong>兩三個月</strong>才要開始付費。</p>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="num">03</span>開工步驟 · 誰做什麼</h2>
+    <p class="lede"><span style="color:var(--seal);font-weight:700">紅色</span>是只有你能做的（要你的帳號／金鑰）；<span style="color:var(--ink-soft);font-weight:700">黑色</span>是我來寫程式。照順序走。</p>
+
+    <ol class="steps">
+      <li class="you">
+        <span class="st">申請雅婷 API 金鑰<span class="who you-tag">你 · 5 分鐘</span></span>
+        <div class="sd">到 <code>developer.yating.tw</code> 用 Google 登入 → 建一組 API Key → 給我。程式一定要它才能跑。</div>
+      </li>
+      <li class="you">
+        <span class="st">建立 LINE 官方帳號 + Messaging API<span class="who you-tag">你 · 10 分鐘</span></span>
+        <div class="sd">LINE Developers 後台建 Channel，拿 <code>Channel Access Token</code> 與 <code>Channel Secret</code>，把 Bot 加進社區群組。</div>
+      </li>
+      <li>
+        <span class="st">搭後端服務<span class="who me-tag">我 · 寫程式</span></span>
+        <div class="sd">一支輕量後端：收 LINE 音檔 → 呼叫雅婷 → 呼叫 Claude → 回推 LINE。放進 VPS 獨立容器。</div>
+      </li>
+      <li>
+        <span class="st">設定雅婷／Claude／LINE 三方串接<span class="who me-tag">我 · 寫程式</span></span>
+        <div class="sd">金鑰進 <code>.env</code>（不外洩），串好三段 API，處理音檔格式轉換與非同步等待辨識結果。</div>
+      </li>
+      <li>
+        <span class="st">調 Claude 整理提示詞（會議記錄格式）<span class="who me-tag">我 · 可調</span></span>
+        <div class="sd">定義輸出格式：議題／決議事項／待辦／負責人。你看過樣式後可微調到你要的樣子。</div>
+      </li>
+      <li>
+        <span class="st">部署到 VPS 獨立容器<span class="who me-tag">我 · 部署</span></span>
+        <div class="sd">獨立 Docker + 子網域（如 <code>meeting.yen-design.com</code>），設 LINE Webhook。完全不動 yba-order。</div>
+      </li>
+      <li class="you">
+        <span class="st">真實會議實測 + 驗收<span class="who you-tag">你 + 我</span></span>
+        <div class="sd">下次開會錄音跑一輪完整流程，確認會議記錄品質，微調後正式上線。</div>
+      </li>
+    </ol>
+  </section>
+
+  <div class="callout">
+    <p class="k">⚑ 動工前唯一等待項</p>
+    <p>整條流程的第一顆螺絲是 <strong class="hl">步驟 01：雅婷 API 金鑰</strong>。拿到它，步驟 03 起我就能一路做到部署。在那之前，我可以先把後端骨架寫好等金鑰。</p>
+  </div>
+
+  <hr class="divider" />
+  <p class="foot">狀態全綠 · 台語辨識／分語者／AI整理／API可申請／成本 皆已用真實素材驗證 · 待你決定開工</p>
+</div>
