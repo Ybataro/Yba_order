@@ -477,12 +477,14 @@ export const useLeaveStore = create<LeaveState>()((set, get) => ({
     return true
   },
 
-  // ── approver1Approve（第一主管核准）─────────────────────
+  // ── approver1Approve（主管核准 — 無順序雙簽）──────────────
+  // 央廚兩位主管同級、不分先後：誰先簽就佔 approver1 欄位，後簽的佔 approver2。
+  // 兩人都簽完才轉 manager_approved 給老闆。單主管單位（樂華/興南）行為不變。
   approver1Approve: async (id, approverId, note) => {
     if (!supabase) return false
     const now = new Date().toISOString()
 
-    // 取得此假單資料，從 staff.group_id 推算 scope，判斷是否有第二主管
+    // 取得此假單資料，從 staff.group_id 推算 scope，判斷此單位有幾位主管
     const { data: reqData } = await supabase
       .from('leave_requests').select('*').eq('id', id).single()
     if (!reqData) return false
@@ -492,18 +494,20 @@ export const useLeaveStore = create<LeaveState>()((set, get) => ({
       .from('staff').select('group_id').eq('id', req.staff_id).single()
     const scope = (staffRow?.group_id as string | null) ?? ''
     const approverStatus = await checkLeaveApproversReady(scope)
-    // 有第二主管 → approver1_approved；無第二主管 → 直接跳 manager_approved
-    const nextStatus = approverStatus.approver2Count >= 1
-      ? 'approver1_approved'
+    const totalApprovers = approverStatus.approver1Count + approverStatus.approver2Count
+
+    // 本人是否為「第二個簽的人」：已有他人簽過 approver1 才算
+    const isSecondSigner = !!req.approver1_id && req.approver1_id !== approverId
+    // 需要兩人簽的單位，且本人是後簽者 → 收單給老闆；否則維持等待另一位
+    const nextStatus = (totalApprovers >= 2 && !isSecondSigner)
+      ? 'pending'
       : 'manager_approved'
 
-    const updatePayload: Record<string, unknown> = {
-      status: nextStatus,
-      approver1_id: approverId,
-      approver1_at: now,
-      approver1_note: note,
-    }
-    // 無第二主管時同步寫向後相容欄位
+    const updatePayload: Record<string, unknown> = isSecondSigner
+      ? { status: nextStatus, approver2_id: approverId, approver2_at: now, approver2_note: note }
+      : { status: nextStatus, approver1_id: approverId, approver1_at: now, approver1_note: note }
+
+    // 收單時同步寫向後相容欄位
     if (nextStatus === 'manager_approved') {
       updatePayload.manager_reviewed_by = approverId
       updatePayload.manager_reviewed_at = now
@@ -517,7 +521,7 @@ export const useLeaveStore = create<LeaveState>()((set, get) => ({
       .eq('status', 'pending')
       .select('id')
 
-    if (error) { console.error('第一主管核准失敗:', error.message); return false }
+    if (error) { console.error('主管核准失敗:', error.message); return false }
     if (!updated || updated.length === 0) {
       console.warn(`[approver1Approve] race detected: id=${id} 狀態已被他人變更`)
       return false
@@ -528,14 +532,14 @@ export const useLeaveStore = create<LeaveState>()((set, get) => ({
         r.id === id ? {
           ...r,
           status: nextStatus as LeaveRequest['status'],
-          approver1_id: approverId,
-          approver1_at: now,
-          approver1_note: note,
+          ...(isSecondSigner
+            ? { approver2_id: approverId, approver2_at: now, approver2_note: note }
+            : { approver1_id: approverId, approver1_at: now, approver1_note: note }),
         } : r
       ),
     }))
 
-    // 無第二主管時，直接通知 admin 進行最終審核
+    // 兩人都簽完（或單主管單位）→ 通知 admin 進行最終審核
     if (nextStatus === 'manager_approved') {
       const { data: staffData } = await supabase
         .from('staff').select('name').eq('id', req.staff_id).single()
@@ -562,11 +566,41 @@ export const useLeaveStore = create<LeaveState>()((set, get) => ({
           req.reason ? `💬 事由：${req.reason}` : '',
           note ? `📌 主管備注：${note}` : '',
         ].filter(Boolean).join('\n'), targets)
-          .catch((err) => console.error('[第一主管單簽通知admin] 錯誤:', err))
+          .catch((err) => console.error('[主管核准通知admin] 錯誤:', err))
+      }
+    } else {
+      // 第一位主管簽完，仍等另一位 → 提醒尚未簽核的那位主管
+      const { data: staffData } = await supabase
+        .from('staff').select('name').eq('id', req.staff_id).single()
+      const staffName = staffData?.name || req.staff_id
+      const { data: signerData } = await supabase
+        .from('staff').select('name').eq('id', approverId).single()
+      const signerName = signerData?.name || approverId
+
+      // 該單位全部主管的 chat_id，扣掉剛簽完的這位
+      const allChatIds = await getLeaveApproverChatIds(scope)
+      const { data: signerTg } = await supabase
+        .from('staff').select('telegram_id').eq('id', approverId).single()
+      const signerChatId = (signerTg?.telegram_id as string | null) ?? ''
+      const remaining = allChatIds.filter((cid) => cid !== signerChatId)
+
+      if (remaining.length > 0) {
+        const dateRange = req.start_date === req.end_date
+          ? req.start_date
+          : `${req.start_date} ~ ${req.end_date}`
+        sendTelegramToTargets([
+          '📋 <b>請假申請（尚缺你的簽核）</b>',
+          `👤 員工：${staffName}`,
+          `📅 日期：${dateRange}（${req.leave_days}天）`,
+          `📝 假別：${getLeaveTypeName(req.leave_type)}`,
+          `✅ ${signerName} 已核准，等待你簽核後送交老闆`,
+          note ? `📌 ${signerName} 備注：${note}` : '',
+        ].filter(Boolean).join('\n'), remaining)
+          .catch((err) => console.error('[提醒另一位主管] 錯誤:', err))
       }
     }
 
-    console.log(`[approver1Approve] id=${id} by=${approverId} nextStatus=${nextStatus}`)
+    console.log(`[approver1Approve] id=${id} by=${approverId} isSecondSigner=${isSecondSigner} nextStatus=${nextStatus}`)
     return true
   },
 

@@ -16,6 +16,7 @@ import { FileText, Printer, CalendarDays, LayoutGrid, CalendarOff } from 'lucide
 import LeaveRequestModal from '@/components/LeaveRequestModal'
 import LeaveRequestCard from '@/components/LeaveRequestCard'
 import { useLeaveStore } from '@/stores/useLeaveStore'
+import { isLeaveObserver } from '@/lib/leave'
 import type { LeaveRequest } from '@/lib/leave'
 import type { Schedule } from '@/lib/schedule'
 
@@ -61,12 +62,10 @@ export default function KitchenSchedules() {
     remove: removeLeave,
     approver1Approve,
     approver1Reject,
-    approver2Approve,
-    approver2Reject,
     submitPhoto,
   } = useLeaveStore()
 
-  // 本人的主管層級（第一或第二主管）
+  // 本人是否為此單位的請假主管（無順序雙簽，order 僅用於判斷有無權限）
   const [approverOrder, setApproverOrder] = useState<1 | 2 | null>(null)
 
   useEffect(() => {
@@ -86,8 +85,14 @@ export default function KitchenSchedules() {
       })
   }, [session?.staffId])
 
+  // 觀察者（老闆/隱藏帳號）：看得到全部請假，但沒有簽核按鈕
+  const isObserver = isLeaveObserver(session?.staffId, session?.role)
+
   // 主管待審核 — 獨立 local state
   const [pendingForManager, setPendingForManager] = useState<LeaveRequest[]>([])
+  // 觀察者用：該單位所有請假（含已核准/已駁回）
+  const [allUnitLeave, setAllUnitLeave] = useState<LeaveRequest[]>([])
+  const [showLeaveHistory, setShowLeaveHistory] = useState(false)
 
   // 審核 Modal state
   const [approveId, setApproveId] = useState<string | null>(null)
@@ -110,33 +115,50 @@ export default function KitchenSchedules() {
   }, [session?.staffId, fetchMyLeave])
 
   // 主管抓待審核（依層級決定查哪種 status）
+  // 無順序雙簽：一律查 pending，再濾掉「自己已經簽過」的單
   const loadManagerPending = useCallback(async () => {
     if (!canSchedule || !supabase || staffIds.length === 0 || approverOrder === null) return
-    const statusFilter = approverOrder === 1 ? 'pending' : 'approver1_approved'
+    const session = getSession()
     const { data } = await supabase
       .from('leave_requests')
       .select('*')
-      .eq('status', statusFilter)
+      .eq('status', 'pending')
       .in('staff_id', staffIds)
       .order('created_at', { ascending: false })
-    setPendingForManager((data as LeaveRequest[] | null) ?? [])
+    const rows = (data as LeaveRequest[] | null) ?? []
+    setPendingForManager(rows.filter((r) => r.approver1_id !== session?.staffId))
   }, [canSchedule, staffIds, approverOrder])
 
   useEffect(() => {
     loadManagerPending()
   }, [loadManagerPending])
 
+  // 觀察者：撈該單位所有請假（不分狀態）
+  const staffKey = staffIds.join(',')
+  useEffect(() => {
+    if (!isObserver || !supabase || staffKey === '') return
+    let cancelled = false
+    ;(async () => {
+      const { data } = await supabase!
+        .from('leave_requests')
+        .select('*')
+        .in('staff_id', staffKey.split(','))
+        .order('created_at', { ascending: false })
+      if (!cancelled) setAllUnitLeave((data as LeaveRequest[] | null) ?? [])
+    })()
+    return () => { cancelled = true }
+  }, [isObserver, staffKey])
+
   // ── 審核操作 ────────────────────────────────────────────────
 
   const handleApproveConfirm = async () => {
     if (!approveId || !session || !approveNote.trim()) return
     setActionSubmitting(true)
-    const ok = approverOrder === 1
-      ? await approver1Approve(approveId, session.staffId, approveNote.trim())
-      : await approver2Approve(approveId, session.staffId, approveNote.trim())
+    // 無順序雙簽：一律走同一條路徑，由 store 判斷本人是先簽或後簽
+    const ok = await approver1Approve(approveId, session.staffId, approveNote.trim())
     setActionSubmitting(false)
     if (ok) {
-      showToast(approverOrder === 1 ? '已核准，轉第二主管審核' : '已核准，轉後台審核')
+      showToast('已核准')
       setApproveId(null)
       setApproveNote('')
       loadManagerPending()
@@ -151,9 +173,8 @@ export default function KitchenSchedules() {
   const handleRejectConfirm = async () => {
     if (!rejectId || !session || !rejectReason.trim()) return
     setActionSubmitting(true)
-    const ok = approverOrder === 1
-      ? await approver1Reject(rejectId, session.staffId, rejectReason.trim())
-      : await approver2Reject(rejectId, session.staffId, rejectReason.trim())
+    // 任一主管駁回即整單駁回
+    const ok = await approver1Reject(rejectId, session.staffId, rejectReason.trim())
     setActionSubmitting(false)
     if (ok) {
       showToast('已駁回')
@@ -440,6 +461,39 @@ export default function KitchenSchedules() {
           })}
         </div>
       )}
+
+      {/* 請假總覽（觀察者：老闆/隱藏帳號，只看不簽） */}
+      {isObserver && allUnitLeave.length > 0 && (() => {
+        const pending = allUnitLeave.filter((r) => r.status === 'pending')
+        const history = allUnitLeave.filter((r) => r.status !== 'pending')
+        const nameOf = (id: string) => kitchenStaff.find((s) => s.id === id)?.name || id
+        return (
+          <div className="px-4 py-3 space-y-2 no-print">
+            <h3 className="text-sm font-bold text-brand-oak">
+              請假總覽 — 待主管簽核（{pending.length}）
+            </h3>
+            {pending.length === 0 && (
+              <p className="text-xs text-brand-lotus">目前沒有待簽核的請假</p>
+            )}
+            {pending.map((req) => (
+              <LeaveRequestCard key={req.id} request={req} showStaffName={nameOf(req.staff_id)} />
+            ))}
+            {history.length > 0 && (
+              <>
+                <button
+                  onClick={() => setShowLeaveHistory(!showLeaveHistory)}
+                  className="text-xs text-brand-lotus underline"
+                >
+                  {showLeaveHistory ? '隱藏歷史紀錄' : `顯示歷史紀錄（${history.length}）`}
+                </button>
+                {showLeaveHistory && history.map((req) => (
+                  <LeaveRequestCard key={req.id} request={req} showStaffName={nameOf(req.staff_id)} />
+                ))}
+              </>
+            )}
+          </div>
+        )
+      })()}
 
       {/* 我的請假申請 */}
       {session?.staffId && myLeaveRequests.length > 0 && (

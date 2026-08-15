@@ -81,6 +81,25 @@ export interface LeaveBalance {
   used_days: number
 }
 
+// ── 請假觀察者（只看不簽）─────────────────────────────────
+// 老闆的各單位隱藏帳號：能看到該單位所有請假資訊，但不出現核准/駁回按鈕。
+// 簽核權仍只屬於 user_pins.is_leave_approver 的真主管。
+// ⚠️ 新增隱藏帳號時要改這裡並重新部署。
+const LEAVE_OBSERVER_IDS = [
+  'staff_1772009863775', // 央（央廚）
+  'staff_1772009874879', // 樂（樂華）
+  'staff_1772009882783', // 興（興南）
+]
+
+/**
+ * 本人是否為「只看不簽」的請假觀察者。
+ * admin（老闆/闆娘）與上列隱藏帳號皆是。
+ */
+export function isLeaveObserver(staffId: string | undefined, role: string | undefined): boolean {
+  if (!staffId) return false
+  return role === 'admin' || LEAVE_OBSERVER_IDS.includes(staffId)
+}
+
 // ── 工具函式 ─────────────────────────────────────────────
 
 export function calcLeaveDays(startDate: string, endDate: string, dayPart: DayPart): number {

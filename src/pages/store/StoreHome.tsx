@@ -10,6 +10,7 @@ import type { Notification } from '@/hooks/useNotifications'
 import { clearSession, getSession } from '@/lib/auth'
 import { useCanSchedule } from '@/hooks/useCanSchedule'
 import { useAllowedPages } from '@/hooks/useAllowedPages'
+import { useLeavePendingCount } from '@/hooks/useLeavePendingCount'
 import ChangePinModal from '@/components/ChangePinModal'
 
 const menuItems = [
@@ -36,6 +37,9 @@ export default function StoreHome() {
   const visibleMenuItems = allowedPages === null
     ? menuItems
     : menuItems.filter((item) => allowedPages.includes(item.key))
+  // 主管待簽核筆數 → 排班表入口紅點（非主管回 0，不顯示）
+  const storeStaffIds = staffList.map((s) => s.id)
+  const leavePending = useLeavePendingCount(storeId || '', storeStaffIds)
   const [currentStaff, setCurrentStaff] = useState(() => {
     // 先信任 sessionStorage（staffList 可能尚未載入）
     return sessionStorage.getItem(`store_${storeId}_staff`) || ''
@@ -141,10 +145,22 @@ export default function StoreHome() {
             <div className={`${item.color} w-12 h-12 rounded-xl flex items-center justify-center text-white shrink-0`}>
               <item.icon size={24} />
             </div>
-            <div>
+            <div className="flex-1 min-w-0">
               <h2 className="text-base font-semibold text-brand-oak">{item.label}</h2>
               <p className="text-sm text-brand-lotus">{item.desc}</p>
             </div>
+            {item.key === 'schedule' && leavePending.count > 0 && (
+              <span
+                className={`shrink-0 min-w-[24px] h-6 px-2 rounded-full text-xs font-semibold flex items-center justify-center ${
+                  leavePending.kind === 'action'
+                    ? 'bg-status-danger text-white'
+                    : 'border border-brand-silver text-brand-lotus'
+                }`}
+                title={leavePending.kind === 'action' ? '等你簽核' : '待主管簽核（僅供參考）'}
+              >
+                {leavePending.count}
+              </span>
+            )}
           </button>
         ))}
       </div>
