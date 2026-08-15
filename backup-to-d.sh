@@ -47,6 +47,11 @@ cp -r supabase/migrations "$DEST/config/migrations"
 echo "🧠 備份 Claude 記憶..."
 cp -r "$HOME/.claude/projects/C--Users-YEN-YEN-project-Yba-order/memory/"* "$DEST/.claude-memory/" 2>/dev/null || true
 
+# ── 5b. SSH 金鑰（無 passphrase = VPS root 權限，當密碼保管）──
+echo "🔑 備份 SSH 金鑰..."
+mkdir -p "$DEST/ssh-key"
+cp "$SSH_KEY" "$SSH_KEY.pub" "$DEST/ssh-key/" 2>/dev/null || true
+
 # ── 6. 只保留最近 7 份 DB dump 與 bundle（避免 D 槽爆掉）──
 ls -1t "$DEST/db-backup/"yba-*.sql.gz 2>/dev/null | tail -n +8 | xargs -r rm -f
 ls -1t "$DEST/"Yba_order-*.bundle    2>/dev/null | tail -n +8 | xargs -r rm -f
