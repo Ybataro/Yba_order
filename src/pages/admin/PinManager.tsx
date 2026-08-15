@@ -288,7 +288,8 @@ export default function PinManager() {
   const refreshStaff = async () => {
     if (!supabase) return
     const { data } = await supabase
-      .from('staff').select('id, name, group_id, sort_order, telegram_id').order('sort_order')
+      // ⚠️ 欄位必須與初次載入一致：少抓 is_active 會讓全部員工被判為「已離職」
+      .from('staff').select('id, name, group_id, sort_order, telegram_id, is_active').order('sort_order')
     setAllStaffRows((data as StaffRow[] | null) || [])
   }
 
