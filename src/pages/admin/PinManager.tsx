@@ -461,6 +461,25 @@ export default function PinManager() {
     setApproverSaving(false)
   }
 
+  // ── 儲存 admin 最終審核者的 Telegram ID ───────────────────
+  // admin 不是假單主管，只需存 telegram_id，絕不可動 is_leave_approver
+  const saveAdminTelegramId = async (pin: UserPin) => {
+    if (approverSaving) return
+    setApproverSaving(true)
+    await guardedWrite('Telegram ID 儲存', async () => {
+      if (!supabase) return
+      const { error } = await supabase
+        .from('staff')
+        .update({ telegram_id: approverTelegramId.trim() || null })
+        .eq('id', pin.staff_id)
+      if (error) throw error
+      await refreshStaff()
+      setApproverEditing(false)
+      showToast('Telegram ID 已儲存')
+    })
+    setApproverSaving(false)
+  }
+
   // ── 關閉假單主管設定 ─────────────────────────────────────
   const removeApproverSettings = async (pin: UserPin) => {
     if (approverSaving) return
@@ -914,6 +933,21 @@ export default function PinManager() {
                                         </div>
                                       </div>
                                     </div>
+                                  ) : pin.role === 'admin' ? (
+                                    // admin 是「最終審核者」（第三關），不是各單位假單主管。
+                                    // 仍會收到請假推播，故顯示 Telegram ID，避免誤以為沒設定。
+                                    <div className="bg-blue-50 rounded-xl px-4 py-3 border border-blue-100 space-y-2">
+                                      <p className="text-sm font-semibold text-blue-700">👑 最終審核者</p>
+                                      <p className="text-[11px] text-blue-500">
+                                        雙主管核准後，由此帳號做最終審核。不需設為假單主管。
+                                      </p>
+                                      <div className="text-xs">
+                                        <span className="text-blue-400">Telegram ID</span>
+                                        <p className="font-medium text-blue-700">
+                                          {staffRowMap.get(pin.staff_id)?.telegram_id || '未設定'}
+                                        </p>
+                                      </div>
+                                    </div>
                                   ) : (
                                     <div className="bg-gray-50 rounded-xl px-4 py-3 border border-gray-200">
                                       <p className="text-sm text-brand-lotus text-center">尚未設定為假單主管</p>
@@ -930,7 +964,11 @@ export default function PinManager() {
                                       }}
                                       className="flex-1 py-2.5 rounded-xl text-sm font-medium bg-brand-oak text-white active:opacity-80 transition-opacity"
                                     >
-                                      {pin.is_leave_approver ? '修改設定' : '設為假單主管'}
+                                      {pin.is_leave_approver
+                                        ? '修改設定'
+                                        : pin.role === 'admin'
+                                          ? '修改 Telegram ID'
+                                          : '設為假單主管'}
                                     </button>
                                     {pin.is_leave_approver && (
                                       <button
@@ -946,7 +984,17 @@ export default function PinManager() {
                               ) : (
                                 /* 編輯表單 */
                                 <div className="space-y-3">
+                                  {/* admin 最終審核者只改 Telegram ID，不設群組/順序 */}
+                                  {pin.role === 'admin' && !pin.is_leave_approver && (
+                                    <div className="bg-blue-50 rounded-xl px-3 py-2 border border-blue-100">
+                                      <p className="text-[11px] text-blue-600">
+                                        最終審核者僅需設定 Telegram ID，不需指定負責群組與簽核順序。
+                                      </p>
+                                    </div>
+                                  )}
+
                                   {/* 負責群組 */}
+                                  {!(pin.role === 'admin' && !pin.is_leave_approver) && (
                                   <div>
                                     <label className="block text-xs font-semibold text-brand-oak mb-1.5">
                                       負責群組 <span className="text-status-danger">*</span>
@@ -967,8 +1015,10 @@ export default function PinManager() {
                                       ))}
                                     </div>
                                   </div>
+                                  )}
 
                                   {/* 簽核順序 */}
+                                  {!(pin.role === 'admin' && !pin.is_leave_approver) && (
                                   <div>
                                     <label className="block text-xs font-semibold text-brand-oak mb-1.5">
                                       簽核順序 <span className="text-status-danger">*</span>
@@ -994,6 +1044,7 @@ export default function PinManager() {
                                         : '第一主管核准後，此主管接續審核'}
                                     </p>
                                   </div>
+                                  )}
 
                                   {/* Telegram ID */}
                                   <div>
@@ -1022,7 +1073,9 @@ export default function PinManager() {
                                       取消
                                     </button>
                                     <button
-                                      onClick={() => saveApproverSettings(pin)}
+                                      onClick={() => (pin.role === 'admin' && !pin.is_leave_approver)
+                                        ? saveAdminTelegramId(pin)
+                                        : saveApproverSettings(pin)}
                                       disabled={approverSaving}
                                       className="flex-1 py-2.5 rounded-xl text-sm font-medium bg-brand-oak text-white disabled:opacity-50 active:opacity-80"
                                     >
