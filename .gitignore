@@ -40,3 +40,12 @@ backup
 
 # Design mockups
 stitch
+
+# SSH 金鑰／憑證（絕對不可進版控 — 這把金鑰無 passphrase，等同 VPS root 權限）
+id_ed25519
+id_ed25519.pub
+id_rsa
+id_rsa.pub
+*.pem
+*.ppk
+ssh-key/
