@@ -8,7 +8,7 @@ import { formatCurrency } from '@/lib/utils'
 import { exportToExcel } from '@/lib/exportExcel'
 import { exportToPdf } from '@/lib/exportPdf'
 import ExportButtons from '@/components/ExportButtons'
-import { ChevronLeft, ChevronRight, Settings, StickyNote } from 'lucide-react'
+import { ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Settings, StickyNote } from 'lucide-react'
 import {
   computeMonthlyPnL,
   computeYearlyPnL,
@@ -21,6 +21,8 @@ import {
   type PnLResult,
 } from '@/lib/profitLoss'
 import { ExpenseCategoryModal } from '@/components/ExpenseCategoryModal'
+import { LoanModal } from '@/components/LoanModal'
+import { fetchLoanSummary, fetchLoanSummaryForYear, remainingAt, type LoanSummary } from '@/lib/loans'
 import { useToast } from '@/components/Toast'
 
 type ViewMode = 'month' | 'year'
@@ -81,6 +83,11 @@ export default function ProfitLoss() {
     kitchen: { cost: number } | null
   } | null>(null)
 
+  // 總覽：公司層級貸款（不影響各店 P&L）
+  const [loanSummary, setLoanSummary] = useState<LoanSummary | null>(null)
+  const [loanModalOpen, setLoanModalOpen] = useState(false)
+  const [loanDetailOpen, setLoanDetailOpen] = useState(false)
+
   const isKitchen = entity === 'kitchen'
   const isOverview = entity === 'overview'
 
@@ -99,6 +106,7 @@ export default function ProfitLoss() {
       xingnan: xn ? { revenue: xn.revenue, surplus: xn.surplus } : null,
       kitchen: kc ? { cost: kc.totalExpense } : null,
     })
+    setLoanSummary(await fetchLoanSummary(yearMonth))
     setLoading(false)
   }, [yearMonth])
 
@@ -114,6 +122,7 @@ export default function ProfitLoss() {
       xingnan: xn ? { revenue: xn.totals.revenue, surplus: xn.totals.surplus } : null,
       kitchen: kc ? { cost: kc.totals.totalExpense } : null,
     })
+    setLoanSummary(await fetchLoanSummaryForYear(year))
     setLoading(false)
   }, [year])
 
@@ -516,14 +525,23 @@ export default function ProfitLoss() {
           const kitchenCost = data.kitchen?.cost || 0
           const totalNet = lehuaSurplus + xingnanSurplus - kitchenCost
           const periodLabel = viewMode === 'month' ? monthLabel : `${year}年`
+          const loanPrincipal = loanSummary?.monthlyPrincipal || 0
+          const loanInterest = loanSummary?.monthlyInterest || 0
+          const loanTotal = loanSummary?.monthlyTotal || 0
+          const pretaxProfit = totalNet - loanInterest       // 會計損益：只扣利息
+          const disposableCash = totalNet - loanTotal        // 現金流：本金+利息都扣
+          const periodWord = viewMode === 'month' ? '本月' : '本年'
           return (
             <>
-              {/* 總盈餘大卡 */}
+              {/* 可支配現金大卡 */}
               <div className="mx-4 mb-3 rounded-xl bg-white border border-gray-100 shadow-sm overflow-hidden">
                 <div className="px-4 pt-3 pb-3">
-                  <p className="text-xs text-brand-lotus mb-1">{periodLabel} 總盈餘（樂華 + 興南 − 央廚）</p>
-                  <p className={`text-3xl font-bold font-num ${totalNet >= 0 ? 'text-status-success' : 'text-status-danger'}`}>
-                    {formatCurrency(totalNet)}
+                  <p className="text-xs text-brand-lotus mb-1">{periodLabel} 可支配現金（扣貸款月繳後）</p>
+                  <p className={`text-3xl font-bold font-num ${disposableCash >= 0 ? 'text-status-success' : 'text-status-danger'}`}>
+                    {formatCurrency(disposableCash)}
+                  </p>
+                  <p className="text-[11px] text-brand-lotus mt-1.5">
+                    營運盈餘 {formatCurrency(totalNet)} − 貸款月繳 {formatCurrency(loanTotal)}
                   </p>
                 </div>
               </div>
@@ -557,7 +575,109 @@ export default function ProfitLoss() {
                     −{formatCurrency(kitchenCost)}
                   </span>
                 </div>
+                <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100 bg-gray-50/60">
+                  <span className="text-sm font-semibold text-brand-oak">營運盈餘小計</span>
+                  <span className={`text-base font-bold font-num ${totalNet >= 0 ? 'text-status-success' : 'text-status-danger'}`}>
+                    {formatCurrency(totalNet)}
+                  </span>
+                </div>
               </div>
+
+              {/* ── 公司貸款 ── */}
+              <div className="flex items-center justify-between">
+                <SectionHeader title="公司貸款" icon="■" />
+                <button
+                  onClick={() => setLoanModalOpen(true)}
+                  className="mr-4 p-1.5 rounded-lg hover:bg-gray-100 active:bg-gray-200"
+                >
+                  <Settings size={16} className="text-brand-lotus" />
+                </button>
+              </div>
+              <div className="bg-white">
+                <div className="flex items-center justify-between px-4 py-2.5 border-b border-gray-50">
+                  <div>
+                    <p className="text-sm text-brand-oak">貸款利息</p>
+                    <p className="text-[11px] text-brand-lotus mt-0.5">費用（會計上減少獲利）</p>
+                  </div>
+                  <span className="text-sm font-num text-status-danger">−{formatCurrency(loanInterest)}</span>
+                </div>
+                <div className="flex items-center justify-between px-4 py-2.5 border-b border-gray-50">
+                  <div>
+                    <p className="text-sm text-brand-oak">貸款本金</p>
+                    <p className="text-[11px] text-brand-lotus mt-0.5">還債（不是費用，但吃現金）</p>
+                  </div>
+                  <span className="text-sm font-num text-status-danger">−{formatCurrency(loanPrincipal)}</span>
+                </div>
+
+                {/* 明細展開 */}
+                <button
+                  type="button"
+                  onClick={() => setLoanDetailOpen((v) => !v)}
+                  className="w-full flex items-center justify-between px-4 py-2.5 active:bg-gray-50 border-b border-gray-50"
+                >
+                  <span className="text-[11px] text-brand-lotus">
+                    {loanDetailOpen ? '收合' : '展開'}貸款明細（{loanSummary?.loans.length || 0} 筆）
+                  </span>
+                  {loanDetailOpen
+                    ? <ChevronUp size={14} className="text-brand-lotus" />
+                    : <ChevronDown size={14} className="text-brand-lotus" />}
+                </button>
+                {loanDetailOpen && (loanSummary?.loans || []).map((l) => {
+                  const balanceMonth = viewMode === 'month' ? yearMonth : `${year}-12`
+                  const bal = remainingAt(l, balanceMonth)
+                  return (
+                    <div key={l.id} className="px-4 py-2.5 border-b border-gray-50 bg-gray-50/50">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0">
+                          <p className="text-[13px] text-brand-oak truncate">{l.name}</p>
+                          <p className="text-[11px] text-brand-lotus mt-0.5">
+                            {l.bank}
+                            {l.rate != null && ` · ${(l.rate * 100).toFixed(2)}%`}
+                            {l.periods != null && ` · ${l.periods}期`}
+                          </p>
+                        </div>
+                        <div className="text-right shrink-0">
+                          <p className="text-[13px] font-num text-brand-oak">{formatCurrency(bal)}</p>
+                          <p className="text-[11px] text-brand-lotus mt-0.5 font-num">
+                            月繳 {formatCurrency(l.monthly_principal + l.monthly_interest)}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })}
+
+                <div className="flex items-center justify-between px-4 py-3">
+                  <span className="text-sm font-semibold text-brand-oak">剩餘負債總額</span>
+                  <span className="text-base font-bold font-num text-brand-oak">
+                    {formatCurrency(loanSummary?.totalRemaining || 0)}
+                  </span>
+                </div>
+              </div>
+
+              {/* ── 結算 ── */}
+              <SectionHeader title="結算" icon="■" />
+              <div className="bg-white">
+                <div className="flex items-center justify-between px-4 py-2.5 border-b border-gray-50">
+                  <div>
+                    <span className="text-sm text-brand-oak">稅前淨利</span>
+                    <p className="text-[11px] text-brand-lotus mt-0.5">營運盈餘 − 利息</p>
+                  </div>
+                  <span className={`text-sm font-bold font-num ${pretaxProfit >= 0 ? 'text-status-success' : 'text-status-danger'}`}>
+                    {formatCurrency(pretaxProfit)}
+                  </span>
+                </div>
+                <div className={`flex items-center justify-between px-4 py-3 ${disposableCash >= 0 ? 'bg-status-success/10' : 'bg-status-danger/10'}`}>
+                  <div>
+                    <span className="text-sm font-bold text-brand-oak">{periodWord}可支配現金</span>
+                    <p className="text-[11px] text-brand-lotus mt-0.5">再減本金 {formatCurrency(loanPrincipal)}</p>
+                  </div>
+                  <span className={`text-base font-bold font-num ${disposableCash >= 0 ? 'text-status-success' : 'text-status-danger'}`}>
+                    {formatCurrency(disposableCash)}
+                  </span>
+                </div>
+              </div>
+
               <div className="h-6" />
             </>
           )
@@ -940,6 +1060,16 @@ export default function ProfitLoss() {
         onClose={() => setCategoryModalOpen(false)}
         storeId={entity as 'lehua' | 'xingnan' | 'kitchen'}
         onSaved={() => { if (viewMode === 'month') fetchMonth() }}
+      />
+
+      <LoanModal
+        open={loanModalOpen}
+        onClose={() => setLoanModalOpen(false)}
+        yearMonth={yearMonth}
+        onSaved={() => {
+          if (viewMode === 'month') fetchOverviewMonth()
+          else fetchOverviewYear()
+        }}
       />
     </div>
   )
