@@ -29,6 +29,7 @@ function makeRecipe(overrides: Partial<Recipe> = {}): Recipe {
     name: '芋圓',
     unit: 'g',
     total_weight_g: 500,
+    yield_qty: 1,
     notes: '',
     sort_order: 0,
     serving_units: [],
@@ -127,6 +128,37 @@ describe('getRecipeCost', () => {
 
     expect(result.totalCost).toBe(50) // 0.5 * 100
     expect(result.details[0].name).toBe('特殊配料')
+  })
+
+  // 為何重要：原料合計是「整批」成本，一批做 N 盒時若不除 N，每克成本放大 N 倍，
+  // 連帶販售品成本（用 costPerG）全部偏高。實例：金鳳茶王冰淇淋 3 盒 × 1600g，原料 $97.98
+  it('一批產出多單位時，每單位與每克成本須除以產出數', () => {
+    const recipe = makeRecipe({
+      total_weight_g: 1600,
+      yield_qty: 3,
+      ingredients: [
+        { id: 'i1', recipe_id: 'r1', custom_name: '原料', custom_price_per_g: 97.98, amount_g: 1, sort_order: 0 },
+      ],
+    })
+    const result = getRecipeCost(recipe, new Map())
+
+    expect(result.totalCost).toBeCloseTo(97.98, 6)
+    expect(result.costPerUnit).toBeCloseTo(32.66, 6) // 97.98 / 3
+    expect(result.costPerG).toBeCloseTo(97.98 / 4800, 10)
+    expect(result.costPerG! * 380).toBeCloseTo(7.76, 2) // 1 杯 380g
+  })
+
+  it('yield_qty 預設 1 時與舊算法一致（既有配方不受影響）', () => {
+    const recipe = makeRecipe({
+      total_weight_g: 500,
+      yield_qty: 1,
+      ingredients: [
+        { id: 'i1', recipe_id: 'r1', custom_name: 'x', custom_price_per_g: 0.1, amount_g: 250, sort_order: 0 },
+      ],
+    })
+    const result = getRecipeCost(recipe, new Map())
+    expect(result.costPerUnit).toBe(result.totalCost)
+    expect(result.costPerG).toBe(25 / 500)
   })
 
   it('total_weight_g 為 0 時 costPerG 為 null', () => {

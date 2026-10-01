@@ -21,7 +21,7 @@ export default function RecipeManager() {
 
   const [modalOpen, setModalOpen] = useState(false)
   const [editing, setEditing] = useState<Recipe | null>(null)
-  const [form, setForm] = useState({ name: '', unit: '盒', total_weight_g: '', solid_weight_g: '', liquid_weight_g: '', notes: '', category: '未分類' })
+  const [form, setForm] = useState({ name: '', unit: '盒', total_weight_g: '', yield_qty: '1', solid_weight_g: '', liquid_weight_g: '', notes: '', category: '未分類' })
   const [formIngredients, setFormIngredients] = useState<RecipeIngredient[]>([])
   const [formServingUnits, setFormServingUnits] = useState<ServingUnit[]>([])
   const [expandedId, setExpandedId] = useState<string | null>(null)
@@ -35,6 +35,18 @@ export default function RecipeManager() {
     materials.forEach((mat) => m.set(mat.id, mat))
     return m
   }, [materials])
+
+  // 編輯中即時試算（與列表共用 getRecipeCost，SSOT）
+  const formPreview = useMemo(() => {
+    const yieldQty = parseFloat(form.yield_qty)
+    if (formIngredients.length === 0 || !(yieldQty > 0)) return null
+    return getRecipeCost({
+      id: '', name: '', unit: form.unit, category: '', notes: '', sort_order: 0, serving_units: [],
+      total_weight_g: parseFloat(form.total_weight_g) || 0,
+      yield_qty: yieldQty,
+      ingredients: formIngredients,
+    }, materialsMap)
+  }, [form.yield_qty, form.total_weight_g, form.unit, formIngredients, materialsMap])
 
   // 按分類分組配方
   const groupedRecipes = useMemo(() => {
@@ -54,7 +66,7 @@ export default function RecipeManager() {
 
   const openAdd = () => {
     setEditing(null)
-    setForm({ name: '', unit: '盒', total_weight_g: '', solid_weight_g: '', liquid_weight_g: '', notes: '', category: recipeCategories[0] ?? '未分類' })
+    setForm({ name: '', unit: '盒', total_weight_g: '', yield_qty: '1', solid_weight_g: '', liquid_weight_g: '', notes: '', category: recipeCategories[0] ?? '未分類' })
     setFormIngredients([])
     setFormServingUnits([])
     setModalOpen(true)
@@ -66,6 +78,7 @@ export default function RecipeManager() {
       name: recipe.name,
       unit: recipe.unit,
       total_weight_g: recipe.total_weight_g ? String(recipe.total_weight_g) : '',
+      yield_qty: String(recipe.yield_qty),
       solid_weight_g: recipe.solid_weight_g ? String(recipe.solid_weight_g) : '',
       liquid_weight_g: recipe.liquid_weight_g ? String(recipe.liquid_weight_g) : '',
       notes: recipe.notes,
@@ -82,6 +95,11 @@ export default function RecipeManager() {
       return
     }
     const totalWeight = parseFloat(form.total_weight_g) || 0
+    const yieldQty = parseFloat(form.yield_qty)
+    if (!(yieldQty > 0)) {
+      showToast('一批產出數量須大於 0', 'error')
+      return
+    }
 
     const validUnits = formServingUnits.filter((u) => u.label && u.grams > 0)
 
@@ -90,6 +108,7 @@ export default function RecipeManager() {
         name: form.name.trim(),
         unit: form.unit,
         total_weight_g: totalWeight,
+        yield_qty: yieldQty,
         solid_weight_g: parseFloat(form.solid_weight_g) || null,
         liquid_weight_g: parseFloat(form.liquid_weight_g) || null,
         notes: form.notes,
@@ -108,6 +127,7 @@ export default function RecipeManager() {
         name: form.name.trim(),
         unit: form.unit,
         total_weight_g: totalWeight,
+        yield_qty: yieldQty,
         solid_weight_g: parseFloat(form.solid_weight_g) || null,
         liquid_weight_g: parseFloat(form.liquid_weight_g) || null,
         store_product_id: null,
@@ -291,7 +311,7 @@ export default function RecipeManager() {
               {/* 該分類下的配方 */}
               <div className="space-y-2">
                 {catRecipes.map((recipe, rIdx) => {
-                  const { totalCost, costPerG, details } = getRecipeCost(recipe, materialsMap)
+                  const { totalCost, costPerUnit, costPerG, details } = getRecipeCost(recipe, materialsMap)
                   const isOpen = expandedId === recipe.id
 
                   return (
@@ -305,8 +325,9 @@ export default function RecipeManager() {
                           <p className="text-sm font-semibold text-brand-oak">{recipe.name}</p>
                           <p className="text-[10px] text-brand-lotus">
                             {recipe.total_weight_g}g/{recipe.unit}
+                            {' · '}${costPerUnit.toFixed(2)}/{recipe.unit}
                             {costPerG != null && ` · $${costPerG.toFixed(4)}/g`}
-                            {' · '}總成本 ${totalCost.toFixed(2)}
+                            {recipe.yield_qty !== 1 && ` · 一批${recipe.yield_qty}${recipe.unit} $${totalCost.toFixed(2)}`}
                           </p>
                         </div>
                         <div className="flex items-center gap-0.5 shrink-0">
@@ -348,7 +369,7 @@ export default function RecipeManager() {
                           ))}
                           {recipe.serving_units?.length > 0 && (
                             <p className="text-[10px] text-brand-lotus mt-1">
-                              份量：{recipe.serving_units.map((u) => `${u.label}=${u.grams}g`).join('、')}
+                              份量：{recipe.serving_units.map((u) => `${u.label}=${u.grams}g${costPerG != null ? ` $${(costPerG * u.grams).toFixed(2)}` : ''}`).join('、')}
                             </p>
                           )}
                           {recipe.notes && (
@@ -385,9 +406,14 @@ export default function RecipeManager() {
         <ModalField label="單位">
           <ModalInput value={form.unit} onChange={(v) => setForm({ ...form, unit: v })} placeholder="例：盒、鍋" />
         </ModalField>
-        <ModalField label="總重量（g）">
-          <ModalInput value={form.total_weight_g} onChange={(v) => setForm({ ...form, total_weight_g: v })} placeholder="例：2000" />
-        </ModalField>
+        <div className="grid grid-cols-2 gap-3">
+          <ModalField label={`每${form.unit || '單位'}重量（g）`}>
+            <ModalInput value={form.total_weight_g} onChange={(v) => setForm({ ...form, total_weight_g: v })} placeholder="例：1600" />
+          </ModalField>
+          <ModalField label={`一批產出（${form.unit || '單位'}）`}>
+            <ModalInput value={form.yield_qty} onChange={(v) => setForm({ ...form, yield_qty: v })} placeholder="例：3" />
+          </ModalField>
+        </div>
         <div className="grid grid-cols-2 gap-3">
           <ModalField label="固體重（g）">
             <ModalInput value={form.solid_weight_g} onChange={(v) => setForm({ ...form, solid_weight_g: v })} placeholder="選填" />
@@ -452,6 +478,21 @@ export default function RecipeManager() {
           onChange={setFormIngredients}
           recipeId={editing?.id ?? 'new'}
         />
+
+        {formPreview && (
+          <div className="rounded-card bg-surface-section px-3 py-2 space-y-0.5 text-xs">
+            <div className="flex justify-between">
+              <span className="text-brand-lotus">每{form.unit || '單位'}成本</span>
+              <span className="font-semibold text-brand-oak">${formPreview.costPerUnit.toFixed(2)}</span>
+            </div>
+            {formPreview.costPerG != null && formServingUnits.filter((u) => u.label && u.grams > 0).map((u, i) => (
+              <div key={i} className="flex justify-between">
+                <span className="text-brand-lotus">{u.label}（{u.grams}g）</span>
+                <span className="text-brand-oak">${(formPreview.costPerG! * u.grams).toFixed(2)}</span>
+              </div>
+            ))}
+          </div>
+        )}
       </AdminModal>
 
       {deleteConfirm && (

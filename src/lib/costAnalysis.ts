@@ -10,6 +10,8 @@ export interface Recipe {
   name: string
   unit: string
   total_weight_g: number
+  /** 一批原料產出幾單位（total_weight_g 為每單位重量）；舊資料預設 1 */
+  yield_qty: number
   solid_weight_g?: number | null
   liquid_weight_g?: number | null
   store_product_id?: string | null
@@ -59,11 +61,11 @@ export function getMaterialCostPerG(m: RawMaterial): number | null {
   return m.purchase_price / m.net_weight_g
 }
 
-/** 成品配方總成本 & 每克成本 */
+/** 成品配方：整批總成本、每單位成本、每克成本 */
 export function getRecipeCost(
   recipe: Recipe,
   materialsMap: Map<string, RawMaterial>,
-): { totalCost: number; costPerG: number | null; details: { name: string; amountG: number; unitCost: number | null; subtotal: number | null }[] } {
+): { totalCost: number; costPerUnit: number; costPerG: number | null; details: { name: string; amountG: number; unitCost: number | null; subtotal: number | null }[] } {
   let totalCost = 0
   const details: { name: string; amountG: number; unitCost: number | null; subtotal: number | null }[] = []
 
@@ -88,9 +90,11 @@ export function getRecipeCost(
     details.push({ name, amountG: ing.amount_g, unitCost, subtotal })
   }
 
-  const costPerG = recipe.total_weight_g > 0 ? totalCost / recipe.total_weight_g : null
+  const yieldQty = recipe.yield_qty > 0 ? recipe.yield_qty : 1
+  const costPerUnit = totalCost / yieldQty
+  const costPerG = recipe.total_weight_g > 0 ? costPerUnit / recipe.total_weight_g : null
 
-  return { totalCost, costPerG, details }
+  return { totalCost, costPerUnit, costPerG, details }
 }
 
 /** 販售品成本、毛利、毛利率 */

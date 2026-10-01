@@ -133,7 +133,7 @@ function RecipesTab({ recipes, materialsMap }: { recipes: ReturnType<typeof useC
       )}
 
       {recipes.map((recipe) => {
-        const { totalCost, costPerG, details } = getRecipeCost(recipe, materialsMap)
+        const { totalCost, costPerUnit, costPerG, details } = getRecipeCost(recipe, materialsMap)
         const isOpen = expandedId === recipe.id
 
         return (
@@ -146,8 +146,9 @@ function RecipesTab({ recipes, materialsMap }: { recipes: ReturnType<typeof useC
                 <p className="text-sm font-semibold text-brand-oak">{recipe.name}</p>
                 <p className="text-[10px] text-brand-lotus">
                   {recipe.total_weight_g}g/{recipe.unit}
+                  {' · '}${costPerUnit.toFixed(2)}/{recipe.unit}
                   {costPerG != null && ` · $${costPerG.toFixed(4)}/g`}
-                  {' · 總成本 '}${totalCost.toFixed(2)}
+                  {recipe.yield_qty !== 1 && ` · 一批${recipe.yield_qty}${recipe.unit} $${totalCost.toFixed(2)}`}
                 </p>
               </div>
               <ChevronDown size={16} className={`text-brand-lotus transition-transform ${isOpen ? 'rotate-180' : ''}`} />
@@ -165,9 +166,15 @@ function RecipesTab({ recipes, materialsMap }: { recipes: ReturnType<typeof useC
                   </div>
                 ))}
                 <div className="flex justify-between text-xs pt-1 border-t border-gray-100">
-                  <span className="font-medium text-brand-oak">合計</span>
+                  <span className="font-medium text-brand-oak">合計{recipe.yield_qty !== 1 && `（一批 ${recipe.yield_qty} ${recipe.unit}）`}</span>
                   <span className="font-semibold text-brand-oak">${totalCost.toFixed(2)}</span>
                 </div>
+                {recipe.yield_qty !== 1 && (
+                  <div className="flex justify-between text-xs">
+                    <span className="font-medium text-brand-oak">每{recipe.unit}</span>
+                    <span className="font-semibold text-brand-oak">${costPerUnit.toFixed(2)}</span>
+                  </div>
+                )}
               </div>
             )}
           </div>
