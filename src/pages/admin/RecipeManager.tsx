@@ -12,7 +12,7 @@ import { Plus, ChevronDown, ChevronUp, Trash2, Edit3, Settings, Copy } from 'luc
 
 export default function RecipeManager() {
   const {
-    recipes, addRecipe, updateRecipe, removeRecipe, setRecipeIngredients,
+    recipes, menuItems, addRecipe, updateRecipe, removeRecipe, setRecipeIngredients,
     recipeCategories, addRecipeCategory, renameRecipeCategory, deleteRecipeCategory,
     reorderRecipeCategories, reorderRecipe,
   } = useCostStore()
@@ -89,7 +89,10 @@ export default function RecipeManager() {
     setModalOpen(true)
   }
 
-  const handleSubmit = () => {
+  const [saving, setSaving] = useState(false)
+
+  const handleSubmit = async () => {
+    if (saving) return
     if (!form.name.trim()) {
       showToast('請填寫配方名稱', 'error')
       return
@@ -103,8 +106,10 @@ export default function RecipeManager() {
 
     const validUnits = formServingUnits.filter((u) => u.label && u.grams > 0)
 
+    setSaving(true)
+    let saveError: string | null
     if (editing) {
-      updateRecipe(editing.id, {
+      const [recipeErr, ingErr] = await Promise.all([updateRecipe(editing.id, {
         name: form.name.trim(),
         unit: form.unit,
         total_weight_g: totalWeight,
@@ -114,15 +119,15 @@ export default function RecipeManager() {
         notes: form.notes,
         serving_units: validUnits,
         category: form.category,
-      })
-      setRecipeIngredients(editing.id, formIngredients.map((ing, i) => ({ ...ing, recipe_id: editing.id, sort_order: i })))
-      showToast('配方已更新')
+      }),
+      setRecipeIngredients(editing.id, formIngredients.map((ing, i) => ({ ...ing, recipe_id: editing.id, sort_order: i })))])
+      saveError = recipeErr ?? ingErr
     } else {
       const newId = `recipe_${Date.now()}`
       const ings = formIngredients.map((ing, i) => ({ ...ing, recipe_id: newId, sort_order: i }))
       const sameCat = recipes.filter((r) => r.category === form.category)
       const maxSort = sameCat.length > 0 ? Math.max(...sameCat.map((r) => r.sort_order)) + 1 : 0
-      addRecipe({
+      saveError = await addRecipe({
         id: newId,
         name: form.name.trim(),
         unit: form.unit,
@@ -137,12 +142,18 @@ export default function RecipeManager() {
         category: form.category,
         ingredients: ings,
       })
-      showToast('配方已新增')
     }
+    setSaving(false)
+    if (saveError) {
+      // 不關視窗：讓使用者保有剛輸入的內容，可重試
+      showToast(`儲存失敗：${saveError}（請重新整理確認資料）`, 'error')
+      return
+    }
+    showToast(editing ? '配方已更新' : '配方已新增')
     setModalOpen(false)
   }
 
-  const duplicateRecipe = (recipe: Recipe) => {
+  const duplicateRecipe = async (recipe: Recipe) => {
     const newId = `recipe_${Date.now()}`
     const sameCat = recipes.filter((r) => r.category === recipe.category)
     const maxSort = sameCat.length > 0 ? Math.max(...sameCat.map((r) => r.sort_order)) + 1 : 0
@@ -152,7 +163,7 @@ export default function RecipeManager() {
       recipe_id: newId,
       sort_order: i,
     }))
-    addRecipe({
+    const err = await addRecipe({
       ...recipe,
       id: newId,
       name: `${recipe.name}複製`,
@@ -160,15 +171,21 @@ export default function RecipeManager() {
       serving_units: recipe.serving_units ? [...recipe.serving_units] : [],
       ingredients: newIngs,
     })
+    if (err) { showToast(`複製失敗：${err}`, 'error'); return }
     showToast(`已複製「${recipe.name}」`)
   }
 
-  const confirmDelete = () => {
-    if (deleteConfirm) {
-      removeRecipe(deleteConfirm.id)
-      showToast('配方已刪除')
-      setDeleteConfirm(null)
-    }
+  // 被販售品使用中的配方不可刪（DB 亦有 FK RESTRICT 兜底）
+  const usedByMenuItems = deleteConfirm
+    ? menuItems.filter((mi) => mi.ingredients.some((ing) => ing.recipe_id === deleteConfirm.id)).map((mi) => mi.name)
+    : []
+
+  const confirmDelete = async () => {
+    if (!deleteConfirm || usedByMenuItems.length > 0) return
+    const err = await removeRecipe(deleteConfirm.id)
+    if (err) { showToast(`刪除失敗：${err}`, 'error'); return }
+    showToast('配方已刪除')
+    setDeleteConfirm(null)
   }
 
   const handleAddCategory = () => {
@@ -311,7 +328,7 @@ export default function RecipeManager() {
               {/* 該分類下的配方 */}
               <div className="space-y-2">
                 {catRecipes.map((recipe, rIdx) => {
-                  const { totalCost, costPerUnit, costPerG, details } = getRecipeCost(recipe, materialsMap)
+                  const { totalCost, costPerUnit, costPerG, missingPriceCount, details } = getRecipeCost(recipe, materialsMap)
                   const isOpen = expandedId === recipe.id
 
                   return (
@@ -329,6 +346,9 @@ export default function RecipeManager() {
                             {costPerG != null && ` · $${costPerG.toFixed(4)}/g`}
                             {recipe.yield_qty !== 1 && ` · 一批${recipe.yield_qty}${recipe.unit} $${totalCost.toFixed(2)}`}
                           </p>
+                          {missingPriceCount > 0 && (
+                            <p className="text-[10px] font-medium text-status-danger">⚠ {missingPriceCount} 項原料未設價格，成本不完整</p>
+                          )}
                         </div>
                         <div className="flex items-center gap-0.5 shrink-0">
                           <button
@@ -481,6 +501,9 @@ export default function RecipeManager() {
 
         {formPreview && (
           <div className="rounded-card bg-surface-section px-3 py-2 space-y-0.5 text-xs">
+            {formPreview.missingPriceCount > 0 && (
+              <p className="font-medium text-status-danger">⚠ {formPreview.missingPriceCount} 項原料未設價格，以下成本不完整</p>
+            )}
             <div className="flex justify-between">
               <span className="text-brand-lotus">每{form.unit || '單位'}成本</span>
               <span className="font-semibold text-brand-oak">${formPreview.costPerUnit.toFixed(2)}</span>
@@ -500,10 +523,14 @@ export default function RecipeManager() {
           <div className="absolute inset-0 bg-black/40" />
           <div className="relative bg-white rounded-card p-6 mx-6 max-w-sm w-full" onClick={(e) => e.stopPropagation()}>
             <h3 className="text-base font-semibold text-brand-oak mb-2">確認刪除</h3>
-            <p className="text-sm text-brand-lotus mb-4">確定要刪除「{deleteConfirm.name}」嗎？此操作無法復原。</p>
+            {usedByMenuItems.length > 0 ? (
+              <p className="text-sm text-status-danger mb-4">「{deleteConfirm.name}」被販售品使用中：{usedByMenuItems.join('、')}。請先從販售品移除後再刪除。</p>
+            ) : (
+              <p className="text-sm text-brand-lotus mb-4">確定要刪除「{deleteConfirm.name}」嗎？此操作無法復原。</p>
+            )}
             <div className="flex gap-3">
               <button onClick={() => setDeleteConfirm(null)} className="btn-secondary flex-1 !h-10">取消</button>
-              <button onClick={confirmDelete} className="flex-1 h-10 rounded-btn text-white font-semibold text-sm bg-status-danger active:opacity-80">刪除</button>
+              <button onClick={confirmDelete} disabled={usedByMenuItems.length > 0} className="flex-1 h-10 rounded-btn text-white font-semibold text-sm bg-status-danger active:opacity-80 disabled:opacity-30">刪除</button>
             </div>
           </div>
         </div>

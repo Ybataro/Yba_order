@@ -162,6 +162,22 @@ describe('getRecipeCost', () => {
     expect(result.costPerG).toBe(25 / 500)
   })
 
+  // 為何重要：缺價原料原本被靜默略過，合計偏低卻無提示（鮮奶/冰淇淋液、豆花孤兒原料事件）
+  it('未設價、原物料已刪除的原料計入 missingPriceCount', () => {
+    const priced = makeMaterial({ id: 'm1', purchase_price: 100, net_weight_g: 1000 })
+    const noPrice = makeMaterial({ id: 'm2', purchase_price: null })
+    const recipe = makeRecipe({
+      ingredients: [
+        { id: 'i1', recipe_id: 'r1', material_id: 'm1', amount_g: 100, sort_order: 0 },
+        { id: 'i2', recipe_id: 'r1', material_id: 'm2', amount_g: 100, sort_order: 1 },
+        { id: 'i3', recipe_id: 'r1', material_id: 'deleted', amount_g: 100, sort_order: 2 },
+      ],
+    })
+    const result = getRecipeCost(recipe, new Map([['m1', priced], ['m2', noPrice]]))
+    expect(result.totalCost).toBe(10)
+    expect(result.missingPriceCount).toBe(2)
+  })
+
   it('total_weight_g 為 0 時 costPerG 為 null', () => {
     const recipe = makeRecipe({ total_weight_g: 0, ingredients: [] })
     const result = getRecipeCost(recipe, new Map())

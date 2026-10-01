@@ -133,7 +133,7 @@ function RecipesTab({ recipes, materialsMap }: { recipes: ReturnType<typeof useC
       )}
 
       {recipes.map((recipe) => {
-        const { totalCost, costPerUnit, costPerG, details } = getRecipeCost(recipe, materialsMap)
+        const { totalCost, costPerUnit, costPerG, missingPriceCount, details } = getRecipeCost(recipe, materialsMap)
         const isOpen = expandedId === recipe.id
 
         return (
@@ -150,6 +150,9 @@ function RecipesTab({ recipes, materialsMap }: { recipes: ReturnType<typeof useC
                   {costPerG != null && ` · $${costPerG.toFixed(4)}/g`}
                   {recipe.yield_qty !== 1 && ` · 一批${recipe.yield_qty}${recipe.unit} $${totalCost.toFixed(2)}`}
                 </p>
+                {missingPriceCount > 0 && (
+                  <p className="text-[10px] font-medium text-status-danger">⚠ {missingPriceCount} 項原料未設價格，成本不完整</p>
+                )}
               </div>
               <ChevronDown size={16} className={`text-brand-lotus transition-transform ${isOpen ? 'rotate-180' : ''}`} />
             </button>

@@ -9,11 +9,11 @@ interface CostState {
   loading: boolean
   initialized: boolean
   initialize: () => Promise<void>
-  // Recipe CRUD
-  addRecipe: (recipe: Recipe) => void
-  updateRecipe: (id: string, partial: Partial<Omit<Recipe, 'ingredients'>>) => void
-  removeRecipe: (id: string) => void
-  setRecipeIngredients: (recipeId: string, ingredients: RecipeIngredient[]) => void
+  // Recipe CRUD — 回傳錯誤訊息（null = 成功），由頁面顯示，避免靜默失敗
+  addRecipe: (recipe: Recipe) => Promise<string | null>
+  updateRecipe: (id: string, partial: Partial<Omit<Recipe, 'ingredients'>>) => Promise<string | null>
+  removeRecipe: (id: string) => Promise<string | null>
+  setRecipeIngredients: (recipeId: string, ingredients: RecipeIngredient[]) => Promise<string | null>
   // Recipe Category CRUD
   addRecipeCategory: (name: string) => void
   renameRecipeCategory: (oldName: string, newName: string) => void
@@ -37,6 +37,16 @@ function buildRecipeIngRow(ri: RecipeIngredient) {
     amount_g: ri.amount_g,
     sort_order: ri.sort_order,
   }
+}
+
+/** 單一交易覆寫配方原料（DB function save_recipe_ingredients），失敗時原料保持原狀 */
+async function saveIngredients(recipeId: string, ingredients: RecipeIngredient[]): Promise<string | null> {
+  const { error } = await supabase!.rpc('save_recipe_ingredients', {
+    p_recipe_id: recipeId,
+    p_rows: ingredients.map(buildRecipeIngRow),
+  })
+  if (error) { console.error('saveRecipeIngredients error:', error); return error.message }
+  return null
 }
 
 function buildMenuIngRow(mii: MenuItemIngredient) {
@@ -128,11 +138,11 @@ export const useCostStore = create<CostState>()((set, get) => ({
 
   // ─── Recipe ───
 
-  addRecipe: (recipe) => {
+  addRecipe: async (recipe) => {
     set((s) => ({ recipes: [...s.recipes, recipe] }))
     if (supabase) {
-      // 必須先 insert recipe，再 insert ingredients（FK 依賴）
-      supabase.from('recipes').insert({
+      // 必須先 insert recipe，再寫 ingredients（FK 依賴）
+      const { error } = await supabase.from('recipes').insert({
         id: recipe.id,
         name: recipe.name,
         unit: recipe.unit,
@@ -145,18 +155,14 @@ export const useCostStore = create<CostState>()((set, get) => ({
         sort_order: recipe.sort_order,
         serving_units: recipe.serving_units,
         category: recipe.category,
-      }).then(({ error }) => {
-        if (error) { console.error('addRecipe error:', error); return }
-        if (recipe.ingredients.length > 0) {
-          supabase!.from('recipe_ingredients')
-            .insert(recipe.ingredients.map(buildRecipeIngRow))
-            .then(({ error: e2 }) => { if (e2) console.error('addRecipeIngredients error:', e2) })
-        }
       })
+      if (error) { console.error('addRecipe error:', error); return error.message }
+      if (recipe.ingredients.length > 0) return saveIngredients(recipe.id, recipe.ingredients)
     }
+    return null
   },
 
-  updateRecipe: (id, partial) => {
+  updateRecipe: async (id, partial) => {
     set((s) => ({
       recipes: s.recipes.map((r) => (r.id === id ? { ...r, ...partial } : r)),
     }))
@@ -174,36 +180,30 @@ export const useCostStore = create<CostState>()((set, get) => ({
       if (partial.serving_units !== undefined) db.serving_units = partial.serving_units
       if (partial.category !== undefined) db.category = partial.category
       if (Object.keys(db).length > 0) {
-        supabase.from('recipes').update(db).eq('id', id).then()
+        const { error } = await supabase.from('recipes').update(db).eq('id', id)
+        if (error) { console.error('updateRecipe error:', error); return error.message }
       }
     }
+    return null
   },
 
-  removeRecipe: (id) => {
-    set((s) => ({ recipes: s.recipes.filter((r) => r.id !== id) }))
+  removeRecipe: async (id) => {
     if (supabase) {
-      supabase.from('recipes').delete().eq('id', id).then()
+      // 先刪 DB 再改本地：FK RESTRICT（販售品使用中）會擋下，不能讓畫面先消失
+      const { error } = await supabase.from('recipes').delete().eq('id', id)
+      if (error) { console.error('removeRecipe error:', error); return error.message }
     }
+    set((s) => ({ recipes: s.recipes.filter((r) => r.id !== id) }))
+    return null
   },
 
-  setRecipeIngredients: (recipeId, ingredients) => {
+  setRecipeIngredients: async (recipeId, ingredients) => {
     set((s) => ({
       recipes: s.recipes.map((r) =>
         r.id === recipeId ? { ...r, ingredients } : r
       ),
     }))
-    if (supabase) {
-      // 必須先 delete 完成，再 insert（避免 PK 衝突或資料遺失）
-      supabase.from('recipe_ingredients').delete().eq('recipe_id', recipeId)
-        .then(({ error }) => {
-          if (error) { console.error('deleteRecipeIngredients error:', error); return }
-          if (ingredients.length > 0) {
-            supabase!.from('recipe_ingredients')
-              .insert(ingredients.map(buildRecipeIngRow))
-              .then(({ error: e2 }) => { if (e2) console.error('insertRecipeIngredients error:', e2) })
-          }
-        })
-    }
+    return supabase ? saveIngredients(recipeId, ingredients) : null
   },
 
   // ─── Recipe Category ───

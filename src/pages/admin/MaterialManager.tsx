@@ -7,6 +7,8 @@ import { SectionHeader } from '@/components/SectionHeader'
 import { CategoryManager } from '@/components/CategoryManager'
 import { useToast } from '@/components/Toast'
 import { useMaterialStore } from '@/stores/useMaterialStore'
+import { useCostStore } from '@/stores/useCostStore'
+import { useProductStore } from '@/stores/useProductStore'
 import type { RawMaterial } from '@/data/rawMaterials'
 import { Plus, FolderCog } from 'lucide-react'
 import { getMaterialCostPerG } from '@/lib/costAnalysis'
@@ -22,6 +24,20 @@ export default function MaterialManager() {
   const [form, setForm] = useState<RawMaterial>(emptyMaterial)
   const [filterCat, setFilterCat] = useState<string>('')
   const [deleteConfirm, setDeleteConfirm] = useState<RawMaterial | null>(null)
+  // 價格用字串 state 追蹤，避免 number 轉換吃掉輸入中的 "12." 小數點
+  const [purchasePriceStr, setPurchasePriceStr] = useState('')
+  const [netWeightStr, setNetWeightStr] = useState('')
+  const recipes = useCostStore((s) => s.recipes)
+  const menuItems = useCostStore((s) => s.menuItems)
+  const storeProducts = useProductStore((s) => s.items)
+
+  /** 使用此原物料的配方/販售品/門店品項（使用中不可刪；配方、販售品 DB 亦有 FK RESTRICT 兜底，門店品項 DB 為 SET NULL 故只能靠此擋） */
+  const getUsage = (materialId: string) => [
+    ...recipes.filter((r) => r.ingredients.some((i) => i.material_id === materialId)).map((r) => `配方「${r.name}」`),
+    ...menuItems.filter((mi) => mi.ingredients.some((i) => i.material_id === materialId)).map((mi) => `販售品「${mi.name}」`),
+    ...storeProducts.filter((p) => p.material_id === materialId).map((p) => `門店品項「${p.name}」`),
+  ]
+  const deleteUsage = deleteConfirm ? getUsage(deleteConfirm.id) : []
 
   const catCounts = useMemo(() => {
     const counts: Record<string, number> = {}
@@ -34,12 +50,16 @@ export default function MaterialManager() {
   const openAdd = () => {
     setEditing(null)
     setForm({ ...emptyMaterial, id: `m${Date.now()}` })
+    setPurchasePriceStr('')
+    setNetWeightStr('')
     setModalOpen(true)
   }
 
   const openEdit = (item: RawMaterial) => {
     setEditing(item)
     setForm({ ...item })
+    setPurchasePriceStr(item.purchase_price ? String(item.purchase_price) : '')
+    setNetWeightStr(item.net_weight_g ? String(item.net_weight_g) : '')
     setModalOpen(true)
   }
 
@@ -48,11 +68,12 @@ export default function MaterialManager() {
       showToast('請填寫品名、分類、單位', 'error')
       return
     }
+    const submitForm = { ...form, purchase_price: parseFloat(purchasePriceStr) || null, net_weight_g: parseFloat(netWeightStr) || null }
     if (editing) {
-      update(editing.id, form)
+      update(editing.id, submitForm)
       showToast('原物料已更新')
     } else {
-      add(form)
+      add(submitForm)
       showToast('原物料已新增')
     }
     setModalOpen(false)
@@ -60,12 +81,22 @@ export default function MaterialManager() {
 
   const handleDelete = (item: RawMaterial) => setDeleteConfirm(item)
 
-  const confirmDelete = () => {
-    if (deleteConfirm) {
-      remove(deleteConfirm.id)
-      showToast('原物料已刪除')
-      setDeleteConfirm(null)
+  const confirmDelete = async () => {
+    if (!deleteConfirm || deleteUsage.length > 0) return
+    const err = await remove(deleteConfirm.id)
+    if (err) { showToast(`刪除失敗：${err}`, 'error'); return }
+    showToast('原物料已刪除')
+    setDeleteConfirm(null)
+  }
+
+  // 刪分類會連帶刪除底下所有原物料：其中有使用中的就整個擋下
+  const handleRemoveCategory = (name: string) => {
+    const used = items.filter((m) => m.category === name && getUsage(m.id).length > 0).map((m) => m.name)
+    if (used.length > 0) {
+      showToast(`無法刪除分類：${used.join('、')} 使用中`, 'error')
+      return
     }
+    removeCategory(name)
   }
 
   const categoryOptions = categories.map((c) => ({ value: c, label: c }))
@@ -94,7 +125,7 @@ export default function MaterialManager() {
             itemCounts={catCounts}
             onRename={renameCategory}
             onAdd={addCategory}
-            onRemove={removeCategory}
+            onRemove={handleRemoveCategory}
             onReorder={reorderCategory}
             label="分類"
           />
@@ -206,14 +237,14 @@ export default function MaterialManager() {
           <ModalInput value={form.box_ratio ? String(form.box_ratio) : ''} onChange={(v) => setForm({ ...form, box_ratio: parseInt(v) || undefined })} placeholder="例：6（1箱=6袋）" />
         </ModalField>
         <ModalField label="採購價（元）">
-          <ModalInput value={form.purchase_price ? String(form.purchase_price) : ''} onChange={(v) => setForm({ ...form, purchase_price: parseFloat(v) || null })} placeholder="例：750（選填，用於成本計算）" />
+          <ModalInput value={purchasePriceStr} onChange={setPurchasePriceStr} placeholder="例：750（選填，用於成本計算）" />
         </ModalField>
         <ModalField label="淨重（克）">
-          <ModalInput value={form.net_weight_g ? String(form.net_weight_g) : ''} onChange={(v) => setForm({ ...form, net_weight_g: parseFloat(v) || null })} placeholder="例：30000（選填，用於成本計算）" />
+          <ModalInput value={netWeightStr} onChange={setNetWeightStr} placeholder="例：30000（選填，用於成本計算）" />
         </ModalField>
-        {form.purchase_price && form.net_weight_g ? (
+        {parseFloat(purchasePriceStr) > 0 && parseFloat(netWeightStr) > 0 ? (
           <div className="px-3 py-2 bg-surface-section rounded-card text-xs text-brand-oak">
-            每克成本：<span className="font-semibold">${(form.purchase_price / form.net_weight_g).toFixed(4)}</span> 元/g
+            每克成本：<span className="font-semibold">${(parseFloat(purchasePriceStr) / parseFloat(netWeightStr)).toFixed(4)}</span> 元/g
           </div>
         ) : null}
         <ModalField label="備註">
@@ -226,10 +257,14 @@ export default function MaterialManager() {
           <div className="absolute inset-0 bg-black/40" />
           <div className="relative bg-white rounded-card p-6 mx-6 max-w-sm w-full" onClick={(e) => e.stopPropagation()}>
             <h3 className="text-base font-semibold text-brand-oak mb-2">確認刪除</h3>
-            <p className="text-sm text-brand-lotus mb-4">確定要刪除「{deleteConfirm.name}」嗎？此操作無法復原。</p>
+            {deleteUsage.length > 0 ? (
+              <p className="text-sm text-status-danger mb-4">「{deleteConfirm.name}」使用中：{deleteUsage.join('、')}。請先從這些項目移除後再刪除。</p>
+            ) : (
+              <p className="text-sm text-brand-lotus mb-4">確定要刪除「{deleteConfirm.name}」嗎？此操作無法復原。</p>
+            )}
             <div className="flex gap-3">
               <button onClick={() => setDeleteConfirm(null)} className="btn-secondary flex-1 !h-10">取消</button>
-              <button onClick={confirmDelete} className="flex-1 h-10 rounded-btn text-white font-semibold text-sm bg-status-danger active:opacity-80">刪除</button>
+              <button onClick={confirmDelete} disabled={deleteUsage.length > 0} className="flex-1 h-10 rounded-btn text-white font-semibold text-sm bg-status-danger active:opacity-80 disabled:opacity-30">刪除</button>
             </div>
           </div>
         </div>

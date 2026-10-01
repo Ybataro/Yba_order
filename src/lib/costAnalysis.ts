@@ -65,7 +65,7 @@ export function getMaterialCostPerG(m: RawMaterial): number | null {
 export function getRecipeCost(
   recipe: Recipe,
   materialsMap: Map<string, RawMaterial>,
-): { totalCost: number; costPerUnit: number; costPerG: number | null; details: { name: string; amountG: number; unitCost: number | null; subtotal: number | null }[] } {
+): { totalCost: number; costPerUnit: number; costPerG: number | null; missingPriceCount: number; details: { name: string; amountG: number; unitCost: number | null; subtotal: number | null }[] } {
   let totalCost = 0
   const details: { name: string; amountG: number; unitCost: number | null; subtotal: number | null }[] = []
 
@@ -94,7 +94,10 @@ export function getRecipeCost(
   const costPerUnit = totalCost / yieldQty
   const costPerG = recipe.total_weight_g > 0 ? costPerUnit / recipe.total_weight_g : null
 
-  return { totalCost, costPerUnit, costPerG, details }
+  // 算不出價格的原料（未設採購價、原物料已刪、自訂未填單價）不計入 totalCost → 合計不完整，須提示
+  const missingPriceCount = details.filter((d) => d.subtotal == null).length
+
+  return { totalCost, costPerUnit, costPerG, missingPriceCount, details }
 }
 
 /** 叫貨品項的原料成本（每叫貨單位）= 對應配方或原物料的每克成本 × 每單位克數；未綁定或無法計算回傳 null */

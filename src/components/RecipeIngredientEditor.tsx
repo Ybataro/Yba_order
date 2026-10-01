@@ -65,12 +65,14 @@ export function RecipeIngredientEditor({ ingredients, onChange, recipeId }: Prop
     const sub = getSubtotal(ing)
     return sub != null ? sum + sub : sum
   }, 0)
+  const missingPriceCount = ingredients.filter((ing) => getSubtotal(ing) == null).length
 
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
         <span className="text-sm font-medium text-brand-oak">配方原料</span>
         <span className="text-xs text-brand-lotus">
+          {missingPriceCount > 0 && <span className="font-medium text-status-danger">⚠ {missingPriceCount} 項未設價 · </span>}
           合計：<span className="font-semibold text-brand-oak">${total.toFixed(2)}</span> 元
         </span>
       </div>
@@ -162,6 +164,11 @@ export function RecipeIngredientEditor({ ingredients, onChange, recipeId }: Prop
                 )}
               </div>
 
+              {subtotal == null && (
+                <p className="text-[10px] text-status-danger">
+                  {isCustom ? '未填單價（$/g）' : materials.some((m) => m.id === ing.material_id) ? '此原料未設採購價/淨重，請到央廚原物料管理補上' : '原物料已被刪除，請重新選擇'}
+                </p>
+              )}
               {(subtotal != null || (pack && ing.amount_g > 0)) && (
                 <p className="text-[10px] text-brand-mocha">
                   {subtotal != null && `$${subtotal.toFixed(2)}`}

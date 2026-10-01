@@ -10,7 +10,7 @@ interface MaterialState {
   initialize: () => Promise<void>
   add: (item: RawMaterial) => void
   update: (id: string, partial: Partial<RawMaterial>) => void
-  remove: (id: string) => void
+  remove: (id: string) => Promise<string | null>
   reorder: (fromIdx: number, toIdx: number) => void
   getByCategory: () => Map<string, RawMaterial[]>
   renameCategory: (oldName: string, newName: string) => void
@@ -94,11 +94,14 @@ export const useMaterialStore = create<MaterialState>()((set, get) => ({
     }
   },
 
-  remove: (id) => {
-    set((s) => ({ items: s.items.filter((m) => m.id !== id) }))
+  remove: async (id) => {
     if (supabase) {
-      supabase.from('raw_materials').delete().eq('id', id).then()
+      // 先刪 DB 再改本地：被配方使用中時 FK RESTRICT 會擋下，畫面不可先消失
+      const { error } = await supabase.from('raw_materials').delete().eq('id', id)
+      if (error) { console.error('[raw_materials] delete failed:', error.message); return error.message }
     }
+    set((s) => ({ items: s.items.filter((m) => m.id !== id) }))
+    return null
   },
 
   reorder: (fromIdx, toIdx) => {
