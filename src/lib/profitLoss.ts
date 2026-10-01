@@ -61,21 +61,36 @@ export async function computeMonthlyPnL(
 
   const isKitchen = storeId === 'kitchen'
 
-  // 一店一份分類：lehua / xingnan / kitchen 各自獨立
-  const { data: categories } = await supabase
-    .from('expense_categories')
-    .select('*')
-    .eq('store_id', storeId)
-    .order('sort_order')
+  // Compute date range for the month
+  const [year, month] = yearMonth.split('-').map(Number)
+  const startDate = `${yearMonth}-01`
+  const lastDay = new Date(year, month, 0).getDate()
+  const endDate = `${yearMonth}-${String(lastDay).padStart(2, '0')}`
+
+  // 互不相依的查詢同時發出（原本 8 次依序往返，每次約 0.2s，逐月累加造成越後面月份越慢）
+  const [
+    { data: categories },
+    { data: monthlyData },
+    { data: dailyExpData },
+    sessionsRes,
+    shipmentRes,
+  ] = await Promise.all([
+    // 一店一份分類：lehua / xingnan / kitchen 各自獨立
+    supabase.from('expense_categories').select('*').eq('store_id', storeId).order('sort_order'),
+    // 手動費用（含自動覆寫 + 備註）
+    supabase.from('monthly_expenses').select('category_id, amount, override_amount, note')
+      .eq('store_id', storeId).eq('year_month', yearMonth),
+    supabase.from('daily_expenses').select('amount')
+      .eq('store_id', storeId).gte('date', startDate).lte('date', endDate),
+    isKitchen ? null : supabase.from('settlement_sessions').select('*, settlement_values(*)')
+      .eq('store_id', storeId).gte('date', startDate).lte('date', endDate),
+    // SSOT: 央廚實際出貨量（含主動出貨/補出貨）才是真實成本，order_items 是「店長叫貨意圖」
+    // shipment_sessions.date = 出貨日；品項以嵌入方式一併取回（省一次往返）
+    isKitchen ? null : supabase.from('shipment_sessions').select('id, shipment_items(product_id, actual_qty)')
+      .eq('store_id', storeId).gte('date', startDate).lte('date', endDate),
+  ])
 
   if (!categories) return null
-
-  // 2. Fetch monthly manual expenses（含自動覆寫 + 備註）
-  const { data: monthlyData } = await supabase
-    .from('monthly_expenses')
-    .select('category_id, amount, override_amount, note')
-    .eq('store_id', storeId)
-    .eq('year_month', yearMonth)
 
   const manualMap = new Map<string, number>()
   const overrideMap = new Map<string, number>()
@@ -91,55 +106,41 @@ export async function computeMonthlyPnL(
     .filter(c => c.is_auto && c.auto_rate != null)
     .map(c => c.id)
 
+  const shipItems: { product_id: string; actual_qty: number }[] = (shipmentRes?.data || [])
+    .flatMap((s: { shipment_items: { product_id: string; actual_qty: number }[] | null }) => s.shipment_items || [])
+  const productIds = [...new Set(shipItems.map((i) => i.product_id))]
+
+  // 第二階段：依賴第一階段結果的兩個查詢，同時發出
+  const [rateRes, productsRes] = await Promise.all([
+    autoCategoryIds.length > 0
+      ? supabase.from('expense_rate_history').select('category_id, effective_from, rate')
+        .in('category_id', autoCategoryIds).lte('effective_from', yearMonth)
+        .order('effective_from', { ascending: false })
+      : null,
+    productIds.length > 0 ? supabase.from('store_products').select('id, our_cost').in('id', productIds) : null,
+  ])
+
   const effectiveRateMap = new Map<string, number>()
-  if (autoCategoryIds.length > 0) {
-    const { data: rateRows } = await supabase
-      .from('expense_rate_history')
-      .select('category_id, effective_from, rate')
-      .in('category_id', autoCategoryIds)
-      .lte('effective_from', yearMonth)
-      .order('effective_from', { ascending: false })
-
-    ;(rateRows || []).forEach((r: RateHistoryRow) => {
-      // 同 category 多筆時，第一筆（最新生效）勝出
-      if (!effectiveRateMap.has(r.category_id)) {
-        effectiveRateMap.set(r.category_id, r.rate)
-      }
-    })
-  }
-
-  // 3. Compute date range for the month
-  const [year, month] = yearMonth.split('-').map(Number)
-  const startDate = `${yearMonth}-01`
-  const lastDay = new Date(year, month, 0).getDate()
-  const endDate = `${yearMonth}-${String(lastDay).padStart(2, '0')}`
-
-  // 4. Fetch daily expenses total for the month
-  const { data: dailyExpData } = await supabase
-    .from('daily_expenses')
-    .select('amount')
-    .eq('store_id', storeId)
-    .gte('date', startDate)
-    .lte('date', endDate)
+  ;(rateRes?.data || []).forEach((r: RateHistoryRow) => {
+    // 同 category 多筆時，第一筆（最新生效）勝出
+    if (!effectiveRateMap.has(r.category_id)) {
+      effectiveRateMap.set(r.category_id, r.rate)
+    }
+  })
 
   const dailyExpenseTotal = (dailyExpData || []).reduce(
     (sum: number, r: { amount: number }) => sum + r.amount,
     0,
   )
 
-  // 5. For stores: fetch settlement data and order costs
+  // 5. For stores: settlement data and order costs
   let revenue = 0
-  let settlementTotals: Record<string, number> = {}
+  const settlementTotals: Record<string, number> = {}
   let orderCostTotal = 0
 
   if (!isKitchen) {
     // 5a. Settlement sessions for the month
-    const { data: sessions } = await supabase
-      .from('settlement_sessions')
-      .select('*, settlement_values(*)')
-      .eq('store_id', storeId)
-      .gte('date', startDate)
-      .lte('date', endDate)
+    const sessions = sessionsRes?.data
 
     if (sessions) {
       sessions.forEach((s: { settlement_values: SettlementValue[] }) => {
@@ -154,42 +155,14 @@ export async function computeMonthlyPnL(
     }
 
     // 5b. Order cost: sum(actual_qty * our_cost) for this store's actual shipments
-    // SSOT: 央廚實際出貨量（含主動出貨/補出貨）才是真實成本，order_items 是「店長叫貨意圖」
-    // shipment_sessions.date = 出貨日
-    const { data: shipmentSessions } = await supabase
-      .from('shipment_sessions')
-      .select('id')
-      .eq('store_id', storeId)
-      .gte('date', startDate)
-      .lte('date', endDate)
-
-    if (shipmentSessions && shipmentSessions.length > 0) {
-      const sessionIds = shipmentSessions.map((s: { id: string }) => s.id)
-      const { data: shipItems } = await supabase
-        .from('shipment_items')
-        .select('product_id, actual_qty')
-        .in('session_id', sessionIds)
-
-      if (shipItems) {
-        const productIds = [...new Set(shipItems.map((i: { product_id: string }) => i.product_id))]
-        if (productIds.length > 0) {
-          const { data: products } = await supabase
-            .from('store_products')
-            .select('id, our_cost')
-            .in('id', productIds)
-
-          const costMap = new Map<string, number>()
-          ;(products || []).forEach((p: { id: string; our_cost: number }) => {
-            costMap.set(p.id, p.our_cost || 0)
-          })
-
-          shipItems.forEach((item: { product_id: string; actual_qty: number }) => {
-            const cost = costMap.get(item.product_id) || 0
-            orderCostTotal += (item.actual_qty || 0) * cost
-          })
-        }
-      }
-    }
+    const costMap = new Map<string, number>()
+    ;(productsRes?.data || []).forEach((p: { id: string; our_cost: number }) => {
+      costMap.set(p.id, p.our_cost || 0)
+    })
+    shipItems.forEach((item) => {
+      const cost = costMap.get(item.product_id) || 0
+      orderCostTotal += (item.actual_qty || 0) * cost
+    })
   }
 
   // 6. Build expense items
@@ -264,9 +237,13 @@ export async function computeYearlyPnL(
   let totalExpense = 0
   let totalSurplus = 0
 
-  for (let m = 1; m <= 12; m++) {
-    const ym = `${year}-${String(m).padStart(2, '0')}`
-    const result = await computeMonthlyPnL(storeId, ym)
+  // 12 個月同時計算（原本逐月 await，年報需 ~96 次依序往返）
+  const yearMonths = Array.from({ length: 12 }, (_, i) => `${year}-${String(i + 1).padStart(2, '0')}`)
+  const results = await Promise.all(yearMonths.map((ym) => computeMonthlyPnL(storeId, ym)))
+
+  for (let i = 0; i < 12; i++) {
+    const ym = yearMonths[i]
+    const result = results[i]
     const revenue = result?.revenue || 0
     const expense = result?.totalExpense || 0
     const surplus = revenue - expense

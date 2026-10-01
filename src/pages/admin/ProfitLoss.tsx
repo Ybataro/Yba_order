@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { TopNav } from '@/components/TopNav'
 import { SectionHeader } from '@/components/SectionHeader'
 import { useStoreStore } from '@/stores/useStoreStore'
@@ -69,7 +69,9 @@ export default function ProfitLoss() {
   } | null>(null)
 
   // Cumulative surplus
-  const [cumulativeSurplus, setCumulativeSurplus] = useState<number>(0)
+  const [cumulativeSurplus, setCumulativeSurplus] = useState<number | null>(null)
+  // 最新一次月報請求的 key：快速切換月份/分店時，晚回來的舊結果不可覆蓋畫面
+  const latestMonthKey = useRef('')
 
   // 總覽：三方數字
   const [overviewMonth, setOverviewMonth] = useState<{
@@ -128,8 +130,11 @@ export default function ProfitLoss() {
 
   // ── Fetch month data ──
   const fetchMonth = useCallback(async () => {
+    const requestKey = `${entity}|${yearMonth}`
+    latestMonthKey.current = requestKey
     setLoading(true)
     const result = await computeMonthlyPnL(entity, yearMonth)
+    if (latestMonthKey.current !== requestKey) return
     setPnl(result)
 
     // Initialize edit values from manual expenses
@@ -141,21 +146,18 @@ export default function ProfitLoss() {
       setEditValues(vals)
     }
 
+    // 本月先顯示；累計盈餘（1 月～上月同時計算）稍後補上，不卡住整頁
+    setLoading(false)
+
     // Compute cumulative surplus: sum of all months from Jan to current month
     const [y, m] = yearMonth.split('-').map(Number)
-    let cumulative = 0
-    for (let i = 1; i <= m; i++) {
-      const ym = `${y}-${String(i).padStart(2, '0')}`
-      if (ym === yearMonth && result) {
-        cumulative += result.revenue - result.totalExpense
-      } else {
-        const r = await computeMonthlyPnL(entity, ym)
-        if (r) cumulative += r.revenue - r.totalExpense
-      }
-    }
-    setCumulativeSurplus(cumulative)
-
-    setLoading(false)
+    const prevMonths = Array.from({ length: m - 1 }, (_, i) => `${y}-${String(i + 1).padStart(2, '0')}`)
+    setCumulativeSurplus(null)
+    const prevResults = await Promise.all(prevMonths.map((ym) => computeMonthlyPnL(entity, ym)))
+    let cumulative = result ? result.revenue - result.totalExpense : 0
+    prevResults.forEach((r) => { if (r) cumulative += r.revenue - r.totalExpense })
+    // 切換月份/分店後舊請求晚回來時不可覆蓋新畫面
+    if (latestMonthKey.current === requestKey) setCumulativeSurplus(cumulative)
   }, [entity, yearMonth])
 
   // ── Fetch year data ──
@@ -954,8 +956,8 @@ export default function ProfitLoss() {
                   </div>
                   <div className="flex items-center justify-between px-4 py-2.5">
                     <span className="text-sm text-brand-lotus">累計盈餘（至本月）</span>
-                    <span className={`text-sm font-bold font-num ${cumulativeSurplus >= 0 ? 'text-status-success' : 'text-status-danger'}`}>
-                      {formatCurrency(cumulativeSurplus)}
+                    <span className={`text-sm font-bold font-num ${cumulativeSurplus == null ? 'text-brand-lotus' : cumulativeSurplus >= 0 ? 'text-status-success' : 'text-status-danger'}`}>
+                      {cumulativeSurplus == null ? '計算中…' : formatCurrency(cumulativeSurplus)}
                     </span>
                   </div>
                 </>
