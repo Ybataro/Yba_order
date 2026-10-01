@@ -4,6 +4,9 @@ import { SectionHeader } from '@/components/SectionHeader'
 import { NumericInput } from '@/components/NumericInput'
 import { useStoreStore } from '@/stores/useStoreStore'
 import { useProductStore } from '@/stores/useProductStore'
+import { useCostStore } from '@/stores/useCostStore'
+import { useMaterialStore } from '@/stores/useMaterialStore'
+import { getProductRecipeCost } from '@/lib/costAnalysis'
 import { supabase } from '@/lib/supabase'
 import { getTodayTW } from '@/lib/session'
 import { formatCurrency } from '@/lib/utils'
@@ -69,6 +72,10 @@ export default function OrderPricing() {
   const products = useMemo(() => allProducts.filter(p => !p.visibleIn || p.visibleIn === 'both' || p.visibleIn === 'order_only'), [allProducts])
   const categories = useProductStore((s) => s.categories)
   const updateProduct = useProductStore((s) => s.update)
+  const recipes = useCostStore((s) => s.recipes)
+  const materials = useMaterialStore((s) => s.items)
+  const recipesMap = useMemo(() => new Map(recipes.map((r) => [r.id, r])), [recipes])
+  const materialsMap = useMemo(() => new Map(materials.map((m) => [m.id, m])), [materials])
 
   // Local editable price state — keyed by product id
   const [editPrices, setEditPrices] = useState<Record<string, { ourCost?: string; franchisePrice?: string }>>({})
@@ -457,6 +464,7 @@ export default function OrderPricing() {
                         const total = productTotals[prod.id] || 0
                         const ourPrice = prod.ourCost || 0
                         const franPrice = prod.franchisePrice || 0
+                        const recipeCost = getProductRecipeCost(prod, recipesMap, materialsMap)
                         return (
                           <tr key={prod.id} className="border-b border-gray-50 bg-white">
                             <td className="sticky left-0 bg-white px-3 py-1.5 text-sm text-brand-oak truncate max-w-[120px] z-10">
@@ -479,6 +487,15 @@ export default function OrderPricing() {
                                 isFilled
                                 className="!w-[52px] !h-7 !text-xs"
                               />
+                              {recipeCost != null && recipeCost !== ourPrice && (
+                                <button
+                                  onClick={() => updateProduct(prod.id, { ourCost: recipeCost })}
+                                  title="配方原料成本（不含人工/包材），點擊套用"
+                                  className="block mx-auto mt-0.5 text-[10px] leading-tight text-brand-mocha underline decoration-dotted font-num"
+                                >
+                                  原料${recipeCost}
+                                </button>
+                              )}
                             </td>
                             <td className="text-center py-1.5 font-num font-semibold text-brand-oak">
                               {formatCurrency(total * ourPrice)}

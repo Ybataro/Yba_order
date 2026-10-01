@@ -4,6 +4,7 @@ import {
   getMaterialCostPerG,
   getRecipeCost,
   getMenuItemCost,
+  getProductRecipeCost,
   type Recipe,
   type MenuItem,
 } from '../costAnalysis'
@@ -166,6 +167,37 @@ describe('getRecipeCost', () => {
     const result = getRecipeCost(recipe, new Map())
 
     expect(result.costPerG).toBeNull()
+  })
+})
+
+// ─── getProductRecipeCost ───
+
+// 為何重要：同一配方對應多個叫貨品項（盒/杯），每個品項依自己 1 單位的克數換算；
+// 數字會被一鍵套用成 our_cost 進叫貨金額與盈餘統計，算錯即錢算錯
+describe('getProductRecipeCost', () => {
+  const recipe = makeRecipe({
+    id: 'r1',
+    total_weight_g: 1600,
+    yield_qty: 3,
+    ingredients: [
+      { id: 'i1', recipe_id: 'r1', custom_name: '原料', custom_price_per_g: 97.98, amount_g: 1, sort_order: 0 },
+    ],
+  })
+  const recipesMap = new Map([['r1', recipe]])
+
+  it('盒/杯各依自己克數換算', () => {
+    expect(getProductRecipeCost({ recipe_id: 'r1', recipe_grams: 1600 }, recipesMap, new Map())).toBe(32.66)
+    expect(getProductRecipeCost({ recipe_id: 'r1', recipe_grams: 380 }, recipesMap, new Map())).toBe(7.7568)
+  })
+
+  it('以克計價品項保留 4 位小數（2 位會有 >1% 誤差）', () => {
+    expect(getProductRecipeCost({ recipe_id: 'r1', recipe_grams: 1 }, recipesMap, new Map())).toBe(0.0204)
+  })
+
+  it('未綁定、克數缺漏、配方已刪除 → null（不給錯誤建議值）', () => {
+    expect(getProductRecipeCost({}, recipesMap, new Map())).toBeNull()
+    expect(getProductRecipeCost({ recipe_id: 'r1', recipe_grams: null }, recipesMap, new Map())).toBeNull()
+    expect(getProductRecipeCost({ recipe_id: 'gone', recipe_grams: 100 }, recipesMap, new Map())).toBeNull()
   })
 })
 

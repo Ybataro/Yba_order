@@ -51,6 +51,8 @@ export const useProductStore = create<ProductState>()((set, get) => ({
           box_unit: d.box_unit ?? undefined,
           box_ratio: d.box_ratio ?? undefined,
           bag_weight: d.bag_weight ?? undefined,
+          recipe_id: d.recipe_id ?? null,
+          recipe_grams: d.recipe_grams != null ? Number(d.recipe_grams) : null,
           wideInput: staticFlags.get(d.id)?.wideInput,
           integerOnly: staticFlags.get(d.id)?.integerOnly,
         })),
@@ -80,6 +82,8 @@ export const useProductStore = create<ProductState>()((set, get) => ({
         box_unit: item.box_unit ?? null,
         box_ratio: item.box_ratio ?? null,
         bag_weight: item.bag_weight ?? null,
+        recipe_id: item.recipe_id ?? null,
+        recipe_grams: item.recipe_grams ?? null,
         sort_order: get().items.length - 1,
       }).then(({ error }) => {
         if (error) console.error('[store_products] insert failed:', error.message)
@@ -106,6 +110,8 @@ export const useProductStore = create<ProductState>()((set, get) => ({
       if (partial.box_unit !== undefined) db.box_unit = partial.box_unit ?? null
       if (partial.box_ratio !== undefined) db.box_ratio = partial.box_ratio ?? null
       if (partial.bag_weight !== undefined) db.bag_weight = partial.bag_weight ?? null
+      if (partial.recipe_id !== undefined) db.recipe_id = partial.recipe_id ?? null
+      if (partial.recipe_grams !== undefined) db.recipe_grams = partial.recipe_grams ?? null
       if (Object.keys(db).length > 0) {
         supabase.from('store_products').update(db).eq('id', id).then(({ error }) => {
           if (error) console.error('[store_products] update failed:', error.message)

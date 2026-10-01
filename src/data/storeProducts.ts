@@ -15,6 +15,10 @@ export interface StoreProduct {
   box_unit?: string
   box_ratio?: number
   bag_weight?: number | null
+  /** 對應成品配方（僅供「配方原料成本」參考，不自動覆寫 ourCost） */
+  recipe_id?: string | null
+  /** 1 個叫貨單位含多少克配方成品 */
+  recipe_grams?: number | null
   wideInput?: boolean
   integerOnly?: boolean
 }

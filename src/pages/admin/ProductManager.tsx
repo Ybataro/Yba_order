@@ -8,6 +8,9 @@ import { CategoryManager } from '@/components/CategoryManager'
 import { useToast } from '@/components/Toast'
 import { useProductStore } from '@/stores/useProductStore'
 import { useFrozenProductStore } from '@/stores/useFrozenProductStore'
+import { useCostStore } from '@/stores/useCostStore'
+import { useMaterialStore } from '@/stores/useMaterialStore'
+import { getProductRecipeCost } from '@/lib/costAnalysis'
 import type { StoreProduct, VisibleIn } from '@/data/storeProducts'
 import type { FrozenProduct } from '@/lib/frozenProducts'
 import { Plus, FolderCog, Snowflake } from 'lucide-react'
@@ -50,12 +53,26 @@ export default function ProductManager() {
   // 價格用字串 state 追蹤，避免 number 轉換丟失輸入中的 "0." 等中間狀態
   const [ourCostStr, setOurCostStr] = useState('')
   const [franchisePriceStr, setFranchisePriceStr] = useState('')
+  const [recipeGramsStr, setRecipeGramsStr] = useState('')
+
+  // 配方原料成本（僅參考，按「套用」才寫入我們價格）
+  const recipes = useCostStore((s) => s.recipes)
+  const materials = useMaterialStore((s) => s.items)
+  const recipesMap = useMemo(() => new Map(recipes.map((r) => [r.id, r])), [recipes])
+  const materialsMap = useMemo(() => new Map(materials.map((m) => [m.id, m])), [materials])
+  const linkedRecipe = form.recipe_id ? recipesMap.get(form.recipe_id) : undefined
+  const recipeCostSuggestion = getProductRecipeCost(
+    { recipe_id: form.recipe_id, recipe_grams: parseFloat(recipeGramsStr) || null },
+    recipesMap,
+    materialsMap,
+  )
 
   const openAdd = () => {
     setEditing(null)
     setForm({ ...emptyProduct, id: `p${Date.now()}` })
     setOurCostStr('')
     setFranchisePriceStr('')
+    setRecipeGramsStr('')
     setModalOpen(true)
   }
 
@@ -64,6 +81,7 @@ export default function ProductManager() {
     setForm({ ...item })
     setOurCostStr(item.ourCost ? String(item.ourCost) : '')
     setFranchisePriceStr(item.franchisePrice ? String(item.franchisePrice) : '')
+    setRecipeGramsStr(item.recipe_grams ? String(item.recipe_grams) : '')
     setModalOpen(true)
   }
 
@@ -72,7 +90,18 @@ export default function ProductManager() {
       showToast('請填寫品名、分類、單位', 'error')
       return
     }
-    const submitForm = { ...form, ourCost: parseFloat(ourCostStr) || 0, franchisePrice: parseFloat(franchisePriceStr) || 0 }
+    const recipeGrams = parseFloat(recipeGramsStr) || null
+    if (form.recipe_id && !recipeGrams) {
+      showToast('已選對應配方，請填每單位克數', 'error')
+      return
+    }
+    const submitForm = {
+      ...form,
+      ourCost: parseFloat(ourCostStr) || 0,
+      franchisePrice: parseFloat(franchisePriceStr) || 0,
+      recipe_id: form.recipe_id || null,
+      recipe_grams: form.recipe_id ? recipeGrams : null,
+    }
     if (editing) {
       update(editing.id, submitForm)
       showToast('品項已更新')
@@ -323,6 +352,63 @@ export default function ProductManager() {
         <ModalField label="加盟價格">
           <ModalInput value={franchisePriceStr} onChange={setFranchisePriceStr} placeholder="例：65 或 0.09" />
         </ModalField>
+        <ModalField label="對應配方（參考原料成本）">
+          <select
+            value={form.recipe_id ?? ''}
+            onChange={(e) => {
+              const recipeId = e.target.value || null
+              setForm({ ...form, recipe_id: recipeId })
+              // 單位相同時預填每單位重量，省一步
+              const r = recipeId ? recipesMap.get(recipeId) : undefined
+              if (r && !recipeGramsStr && r.unit === form.unit && r.total_weight_g > 0) setRecipeGramsStr(String(r.total_weight_g))
+            }}
+            className="w-full h-9 rounded-input px-3 text-sm border border-gray-200 bg-white text-brand-oak"
+          >
+            <option value="">不對應</option>
+            {recipes.map((r) => (
+              <option key={r.id} value={r.id}>{r.name}</option>
+            ))}
+          </select>
+        </ModalField>
+        {linkedRecipe && (
+          <div className="space-y-2">
+            <ModalField label={`每${form.unit || '單位'}含配方（g）`}>
+              <ModalInput value={recipeGramsStr} onChange={setRecipeGramsStr} placeholder="例：1600 或 380" />
+            </ModalField>
+            <div className="flex flex-wrap gap-1.5">
+              {[
+                ...(linkedRecipe.total_weight_g > 0 ? [{ label: `1${linkedRecipe.unit}`, grams: linkedRecipe.total_weight_g }] : []),
+                ...linkedRecipe.serving_units.filter((u) => u.grams > 0),
+                { label: '以克計價', grams: 1 },
+              ].map((opt) => (
+                <button
+                  key={opt.label}
+                  type="button"
+                  onClick={() => setRecipeGramsStr(String(opt.grams))}
+                  className="h-7 px-2.5 rounded-tag text-xs text-brand-oak bg-surface-section active:bg-surface-filled"
+                >
+                  {opt.label} {opt.grams}g
+                </button>
+              ))}
+            </div>
+            <div className="flex items-center justify-between rounded-card bg-surface-section px-3 py-2">
+              <div>
+                <p className="text-xs text-brand-lotus">配方原料成本（不含人工/包材）</p>
+                <p className="text-sm font-semibold text-brand-oak font-num">
+                  {recipeCostSuggestion != null ? `$${recipeCostSuggestion}` : '—'}
+                </p>
+              </div>
+              <button
+                type="button"
+                disabled={recipeCostSuggestion == null}
+                onClick={() => { if (recipeCostSuggestion != null) setOurCostStr(String(recipeCostSuggestion)) }}
+                className="h-8 px-3 rounded-btn text-xs font-medium text-white bg-brand-mocha active:opacity-80 disabled:opacity-30"
+              >
+                套用到我們價格
+              </button>
+            </div>
+          </div>
+        )}
         <ModalField label="顯示範圍">
           <ModalSelect
             value={form.visibleIn || 'both'}
