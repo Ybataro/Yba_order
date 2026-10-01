@@ -202,28 +202,28 @@ describe('getProductRecipeCost', () => {
   const recipesMap = new Map([['r1', recipe]])
 
   it('盒/杯各依自己克數換算', () => {
-    expect(getProductRecipeCost({ recipe_id: 'r1', recipe_grams: 1600 }, recipesMap, new Map())).toBe(32.66)
-    expect(getProductRecipeCost({ recipe_id: 'r1', recipe_grams: 380 }, recipesMap, new Map())).toBe(7.7568)
+    expect(getProductRecipeCost({ recipe_id: 'r1', unit_grams: 1600 }, recipesMap, new Map())).toBe(32.66)
+    expect(getProductRecipeCost({ recipe_id: 'r1', unit_grams: 380 }, recipesMap, new Map())).toBe(7.7568)
   })
 
   it('以克計價品項保留 4 位小數（2 位會有 >1% 誤差）', () => {
-    expect(getProductRecipeCost({ recipe_id: 'r1', recipe_grams: 1 }, recipesMap, new Map())).toBe(0.0204)
+    expect(getProductRecipeCost({ recipe_id: 'r1', unit_grams: 1 }, recipesMap, new Map())).toBe(0.0204)
   })
 
   // 為何重要：門店「鮮奶」對應原物料「鮮奶」，價格只在原物料維護一處（SSOT），叫貨價自原物料換算
   it('對應原物料：採購價 ÷ 淨重 × 每單位克數', () => {
     const milk = makeMaterial({ id: 'm028', purchase_price: 65, net_weight_g: 936 })
     const mats = new Map([['m028', milk]])
-    expect(getProductRecipeCost({ material_id: 'm028', recipe_grams: 936 }, recipesMap, mats)).toBe(65)
+    expect(getProductRecipeCost({ material_id: 'm028', unit_grams: 936 }, recipesMap, mats)).toBe(65)
     // 原物料未設採購價 → null，不顯示錯誤的 $0
     const noPrice = new Map([['m028', makeMaterial({ id: 'm028', purchase_price: null })]])
-    expect(getProductRecipeCost({ material_id: 'm028', recipe_grams: 936 }, recipesMap, noPrice)).toBeNull()
+    expect(getProductRecipeCost({ material_id: 'm028', unit_grams: 936 }, recipesMap, noPrice)).toBeNull()
   })
 
   it('未綁定、克數缺漏、配方已刪除 → null（不給錯誤建議值）', () => {
     expect(getProductRecipeCost({}, recipesMap, new Map())).toBeNull()
-    expect(getProductRecipeCost({ recipe_id: 'r1', recipe_grams: null }, recipesMap, new Map())).toBeNull()
-    expect(getProductRecipeCost({ recipe_id: 'gone', recipe_grams: 100 }, recipesMap, new Map())).toBeNull()
+    expect(getProductRecipeCost({ recipe_id: 'r1', unit_grams: null }, recipesMap, new Map())).toBeNull()
+    expect(getProductRecipeCost({ recipe_id: 'gone', unit_grams: 100 }, recipesMap, new Map())).toBeNull()
   })
 })
 

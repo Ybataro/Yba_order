@@ -53,7 +53,7 @@ export default function ProductManager() {
   // 價格用字串 state 追蹤，避免 number 轉換丟失輸入中的 "0." 等中間狀態
   const [ourCostStr, setOurCostStr] = useState('')
   const [franchisePriceStr, setFranchisePriceStr] = useState('')
-  const [recipeGramsStr, setRecipeGramsStr] = useState('')
+  const [unitGramsStr, setUnitGramsStr] = useState('')
 
   // 配方原料成本（僅參考，按「套用」才寫入我們價格）
   const recipes = useCostStore((s) => s.recipes)
@@ -70,7 +70,7 @@ export default function ProductManager() {
       ]
     : linkedMaterial?.net_weight_g ? [{ label: `1${linkedMaterial.unit}`, grams: linkedMaterial.net_weight_g }] : []
   const recipeCostSuggestion = getProductRecipeCost(
-    { recipe_id: form.recipe_id, material_id: form.material_id, recipe_grams: parseFloat(recipeGramsStr) || null },
+    { recipe_id: form.recipe_id, material_id: form.material_id, unit_grams: parseFloat(unitGramsStr) || null },
     recipesMap,
     materialsMap,
   )
@@ -80,7 +80,7 @@ export default function ProductManager() {
     setForm({ ...emptyProduct, id: `p${Date.now()}` })
     setOurCostStr('')
     setFranchisePriceStr('')
-    setRecipeGramsStr('')
+    setUnitGramsStr('')
     setModalOpen(true)
   }
 
@@ -89,7 +89,7 @@ export default function ProductManager() {
     setForm({ ...item })
     setOurCostStr(item.ourCost ? String(item.ourCost) : '')
     setFranchisePriceStr(item.franchisePrice ? String(item.franchisePrice) : '')
-    setRecipeGramsStr(item.recipe_grams ? String(item.recipe_grams) : '')
+    setUnitGramsStr(item.unit_grams ? String(item.unit_grams) : '')
     setModalOpen(true)
   }
 
@@ -98,9 +98,9 @@ export default function ProductManager() {
       showToast('請填寫品名、分類、單位', 'error')
       return
     }
-    const recipeGrams = parseFloat(recipeGramsStr) || null
+    const unitGrams = parseFloat(unitGramsStr) || null
     const hasSource = !!(form.recipe_id || form.material_id)
-    if (hasSource && !recipeGrams) {
+    if (hasSource && !unitGrams) {
       showToast('已選對應配方/原料，請填每單位克數', 'error')
       return
     }
@@ -110,7 +110,7 @@ export default function ProductManager() {
       franchisePrice: parseFloat(franchisePriceStr) || 0,
       recipe_id: form.recipe_id || null,
       material_id: form.recipe_id ? null : form.material_id || null,
-      recipe_grams: hasSource ? recipeGrams : null,
+      unit_grams: hasSource ? unitGrams : null,
     }
     if (editing) {
       update(editing.id, submitForm)
@@ -374,7 +374,7 @@ export default function ProductManager() {
               const r = recipeId ? recipesMap.get(recipeId) : undefined
               const m = materialId ? materialsMap.get(materialId) : undefined
               const autoGrams = r && r.unit === form.unit ? r.total_weight_g : m && m.unit === form.unit ? m.net_weight_g : null
-              if (autoGrams && autoGrams > 0) setRecipeGramsStr(String(autoGrams))
+              if (autoGrams && autoGrams > 0) setUnitGramsStr(String(autoGrams))
             }}
             className="w-full h-9 rounded-input px-3 text-sm border border-gray-200 bg-white text-brand-oak"
           >
@@ -394,14 +394,14 @@ export default function ProductManager() {
         {(linkedRecipe || linkedMaterial) && (
           <div className="space-y-2">
             <ModalField label={`每${form.unit || '單位'}含${linkedRecipe ? '配方' : '原料'}（g）`}>
-              <ModalInput value={recipeGramsStr} onChange={setRecipeGramsStr} placeholder={linkedRecipe ? '例：1600 或 380' : '例：936'} />
+              <ModalInput value={unitGramsStr} onChange={setUnitGramsStr} placeholder={linkedRecipe ? '例：1600 或 380' : '例：936'} />
             </ModalField>
             <div className="flex flex-wrap gap-1.5">
               {[...gramOptions, { label: '以克計價', grams: 1 }].map((opt) => (
                 <button
                   key={opt.label}
                   type="button"
-                  onClick={() => setRecipeGramsStr(String(opt.grams))}
+                  onClick={() => setUnitGramsStr(String(opt.grams))}
                   className="h-7 px-2.5 rounded-tag text-xs text-brand-oak bg-surface-section active:bg-surface-filled"
                 >
                   {opt.label} {opt.grams}g

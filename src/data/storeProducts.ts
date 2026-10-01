@@ -20,7 +20,7 @@ export interface StoreProduct {
   /** 對應央廚原物料（與 recipe_id 二擇一） */
   material_id?: string | null
   /** 1 個叫貨單位含多少克（配方或原料共用） */
-  recipe_grams?: number | null
+  unit_grams?: number | null
   wideInput?: boolean
   integerOnly?: boolean
 }

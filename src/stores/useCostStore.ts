@@ -94,7 +94,6 @@ export const useCostStore = create<CostState>()((set, get) => ({
       yield_qty: Number(r.yield_qty) > 0 ? Number(r.yield_qty) : 1,
       solid_weight_g: r.solid_weight_g != null ? Number(r.solid_weight_g) : null,
       liquid_weight_g: r.liquid_weight_g != null ? Number(r.liquid_weight_g) : null,
-      store_product_id: r.store_product_id ?? null,
       notes: r.notes ?? '',
       sort_order: r.sort_order ?? 0,
       serving_units: Array.isArray(r.serving_units) ? r.serving_units : [],
@@ -150,7 +149,6 @@ export const useCostStore = create<CostState>()((set, get) => ({
         yield_qty: recipe.yield_qty,
         solid_weight_g: recipe.solid_weight_g ?? null,
         liquid_weight_g: recipe.liquid_weight_g ?? null,
-        store_product_id: recipe.store_product_id ?? null,
         notes: recipe.notes,
         sort_order: recipe.sort_order,
         serving_units: recipe.serving_units,
@@ -174,7 +172,6 @@ export const useCostStore = create<CostState>()((set, get) => ({
       if (partial.yield_qty !== undefined) db.yield_qty = partial.yield_qty
       if (partial.solid_weight_g !== undefined) db.solid_weight_g = partial.solid_weight_g ?? null
       if (partial.liquid_weight_g !== undefined) db.liquid_weight_g = partial.liquid_weight_g ?? null
-      if (partial.store_product_id !== undefined) db.store_product_id = partial.store_product_id ?? null
       if (partial.notes !== undefined) db.notes = partial.notes
       if (partial.sort_order !== undefined) db.sort_order = partial.sort_order
       if (partial.serving_units !== undefined) db.serving_units = partial.serving_units

@@ -24,7 +24,7 @@ export default function MaterialStock() {
   const zoneProducts = useZoneStore((s) => s.zoneProducts)
   const kitchenStaff = useStaffStore((s) => s.kitchenStaff)
 
-  // 該日 session 已有資料的原物料：即使已停用仍須顯示，否則存檔時「刪除不在列表中的品項」會刪掉歷史盤點值
+  // 該日 session 已有資料的原物料：即使已停用或已移出區域仍須顯示，否則存檔時「刪除不在列表中的品項」會刪掉歷史盤點值
   const [loadedIds, setLoadedIds] = useState<Set<string>>(new Set())
 
   // 如果央廚有設定區域，只顯示已分配的原物料；否則顯示全部（皆排除已停用，除非該日已有資料）
@@ -38,7 +38,7 @@ export default function MaterialStock() {
     const assignedIds = new Set(
       zoneProducts.filter((zp) => kitchenZoneIds.has(zp.zoneId)).map((zp) => zp.productId)
     )
-    const filtered = visibleMaterials.filter((m) => assignedIds.has(m.id))
+    const filtered = visibleMaterials.filter((m) => assignedIds.has(m.id) || loadedIds.has(m.id))
     const cats = new Set(filtered.map((m) => m.category))
     return { rawMaterials: filtered, materialCategories: allMaterialCategories.filter((c) => cats.has(c)) }
   }, [allMaterials, allMaterialCategories, zones, zoneProducts, loadedIds])

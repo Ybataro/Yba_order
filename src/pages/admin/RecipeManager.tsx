@@ -135,7 +135,6 @@ export default function RecipeManager() {
         yield_qty: yieldQty,
         solid_weight_g: parseFloat(form.solid_weight_g) || null,
         liquid_weight_g: parseFloat(form.liquid_weight_g) || null,
-        store_product_id: null,
         notes: form.notes,
         sort_order: maxSort,
         serving_units: validUnits,

@@ -78,7 +78,7 @@ export default function Shipment() {
       const rplyData: Record<string, string> = {}
       const exData: Record<string, Record<string, string>> = {}
       const noteData: typeof orderNotes = {}
-      const productMap = new Map(storeProducts.map(p => [p.id, p]))
+      const productMap = new Map(allProducts.map(p => [p.id, p]))
 
       for (const store of stores) {
         oqData[store.id] = {}
@@ -199,8 +199,9 @@ export default function Shipment() {
     }))
   }
 
-  // 只顯示有叫貨的品項
-  const items = storeProducts.filter(p => {
+  // 只顯示有叫貨的品項。用 allProducts 而非 storeProducts：品項事後改為「僅盤點」時，
+  // 編輯當時已叫貨的舊出貨單仍須列出，否則存檔「刪除不在列表中的品項」會刪掉出貨（叫料成本 SSOT）
+  const items = allProducts.filter(p => {
     const qty = orderQty[activeStore]?.[p.id] || 0
     return qty > 0
   })
@@ -237,9 +238,9 @@ export default function Shipment() {
   const extraItemsList = useMemo(() => {
     const ids = Object.keys(extraItems[activeStore] || {})
     return ids
-      .map(id => storeProducts.find(p => p.id === id))
-      .filter((p): p is (typeof storeProducts)[number] => !!p)
-  }, [extraItems, activeStore, storeProducts])
+      .map(id => allProducts.find(p => p.id === id))
+      .filter((p): p is (typeof allProducts)[number] => !!p)
+  }, [extraItems, activeStore, allProducts])
 
   const extraByCategory = useMemo(() => {
     const map = new Map<string, typeof storeProducts>()

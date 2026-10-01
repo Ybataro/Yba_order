@@ -31,7 +31,10 @@ export default function ProductStock() {
   const zoneProducts = useZoneStore((s) => s.zoneProducts)
   const kitchenStaff = useStaffStore((s) => s.kitchenStaff)
 
-  // 如果央廚有設定區域，只顯示已分配的成品；否則顯示全部
+  // 該日 session 已有資料的成品：即使已移出區域仍須顯示，否則存檔時「刪除不在列表中的品項」會刪掉歷史盤點值
+  const [loadedIds, setLoadedIds] = useState<Set<string>>(new Set())
+
+  // 如果央廚有設定區域，只顯示已分配的成品（及該日已有資料者）；否則顯示全部
   const { storeProducts, productCategories } = useMemo(() => {
     const kitchenZones = zones.filter((z) => z.storeId === 'kitchen')
     if (kitchenZones.length === 0) {
@@ -41,10 +44,10 @@ export default function ProductStock() {
     const assignedIds = new Set(
       zoneProducts.filter((zp) => kitchenZoneIds.has(zp.zoneId)).map((zp) => zp.productId)
     )
-    const filtered = allProducts.filter((p) => assignedIds.has(p.id))
+    const filtered = allProducts.filter((p) => assignedIds.has(p.id) || loadedIds.has(p.id))
     const cats = new Set(filtered.map((p) => p.category))
     return { storeProducts: filtered, productCategories: allCategories.filter((c) => cats.has(c)) }
-  }, [allProducts, allCategories, zones, zoneProducts])
+  }, [allProducts, allCategories, zones, zoneProducts, loadedIds])
   const [confirmBy, setConfirmBy] = useState('')
 
   const today = getTodayTW()
@@ -82,6 +85,7 @@ export default function ProductStock() {
     const initStock: Record<string, string> = {}
     storeProducts.forEach(p => { initStock[p.id] = '' })
     setStock(initStock)
+    setLoadedIds(new Set())
     setIsEdit(false)
     setConfirmBy('')
     setStockEntries({})
@@ -116,6 +120,7 @@ export default function ProductStock() {
               loadedDiscarded[item.product_id] = String(item.discarded)
             }
           })
+          setLoadedIds(new Set(items.map((item) => item.product_id as string)))
           setStock(loadedStock)
           setDiscarded(loadedDiscarded)
         }
