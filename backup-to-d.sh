@@ -47,20 +47,52 @@ cp -r supabase/migrations "$DEST/config/migrations"
 echo "🧠 備份 Claude 記憶..."
 cp -r "$HOME/.claude/projects/C--Users-YEN-YEN-project-Yba-order/memory/"* "$DEST/.claude-memory/" 2>/dev/null || true
 
-# ── 5b. SSH 金鑰（無 passphrase = VPS root 權限，當密碼保管）──
-echo "🔑 備份 SSH 金鑰..."
-mkdir -p "$DEST/ssh-key"
-cp "$SSH_KEY" "$SSH_KEY.pub" "$DEST/ssh-key/" 2>/dev/null || true
+# ── 5b. VPS 基礎設施（不備這些，DB 救回來也架不起來）──
+# nginx/data/logs 91M 純日誌，排除。
+echo "🏗️  備份 VPS 基礎設施..."
+mkdir -p "$DEST/vps-infra"
+ssh -i "$SSH_KEY" "$VPS" "cd /root/vps-deploy && tar czf - \
+  docker-compose.yml nginx/spa.conf nginx/stock-v2.conf scripts \
+  --exclude='nginx/data/logs' nginx/data nginx/letsencrypt 2>/dev/null" \
+  > "$DEST/vps-infra/vps-infra-$STAMP.tar.gz"
+gzip -t "$DEST/vps-infra/vps-infra-$STAMP.tar.gz" || { echo "🔴 infra tar 損毀"; exit 1; }
+ssh -i "$SSH_KEY" "$VPS" "crontab -l" > "$DEST/vps-infra/crontab-$STAMP.txt" 2>/dev/null || true
+echo "   ✅ infra $(du -h "$DEST/vps-infra/vps-infra-$STAMP.tar.gz" | cut -f1)（含 NPM 設定 + SSL 憑證）"
 
-# ── 6. 只保留最近 7 份 DB dump 與 bundle（避免 D 槽爆掉）──
-ls -1t "$DEST/db-backup/"yba-*.sql.gz 2>/dev/null | tail -n +8 | xargs -r rm -f
-ls -1t "$DEST/"Yba_order-*.bundle    2>/dev/null | tail -n +8 | xargs -r rm -f
+# ── 5c. 機密檔加密（JWT_SECRET / SSH 金鑰 = VPS root 權限，明文放 D 槽等於裸奔）──
+# AES-256，密碼存 $DEST/../yba-backup-pass.txt（放 D 槽根目錄外，或自行改成手動輸入）
+echo "🔐 加密機密檔..."
+PASSFILE="$HOME/.yba-backup-pass"
+[ -f "$PASSFILE" ] || { echo "🔴 缺密碼檔 $PASSFILE — 請先建立（內容=備份密碼）"; exit 1; }
+# openssl 是原生 Windows 版，吃不懂 Git Bash 的 /c/... 路徑，要轉成 C:/...
+PASSARG=$(cygpath -m "$PASSFILE" 2>/dev/null || echo "$PASSFILE")
+SECRET_TMP=$(mktemp -d)
+cp "$SSH_KEY" "$SSH_KEY.pub" "$SECRET_TMP/" 2>/dev/null || true
+ssh -i "$SSH_KEY" "$VPS" "cat /root/vps-deploy/.env" > "$SECRET_TMP/vps-deploy.env"
+cp .env .env.staging "$SECRET_TMP/" 2>/dev/null || true
+tar czf - -C "$SECRET_TMP" . | openssl enc -aes-256-cbc -pbkdf2 -iter 200000 \
+  -pass file:"$PASSARG" -out "$DEST/secrets-$STAMP.tar.gz.enc"
+rm -rf "$SECRET_TMP"
+# 驗證：解得開才算數
+openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 -pass file:"$PASSARG" \
+  -in "$DEST/secrets-$STAMP.tar.gz.enc" | tar tzf - >/dev/null \
+  && echo "   ✅ 加密包驗證通過（解密可讀）" || { echo "🔴 加密包解不開！"; exit 1; }
+# 舊的明文金鑰目錄清掉
+rm -rf "$DEST/ssh-key" "$DEST/config/.env" "$DEST/config/.env.staging"
+
+# ── 6. 只保留最近 7 份 DB dump / bundle / infra / secrets（避免 D 槽爆掉）──
+ls -1t "$DEST/db-backup/"yba-*.sql.gz        2>/dev/null | tail -n +8 | xargs -r rm -f
+ls -1t "$DEST/"Yba_order-*.bundle            2>/dev/null | tail -n +8 | xargs -r rm -f
+ls -1t "$DEST/vps-infra/"vps-infra-*.tar.gz  2>/dev/null | tail -n +8 | xargs -r rm -f
+ls -1t "$DEST/vps-infra/"crontab-*.txt       2>/dev/null | tail -n +8 | xargs -r rm -f
+ls -1t "$DEST/"secrets-*.tar.gz.enc          2>/dev/null | tail -n +8 | xargs -r rm -f
 
 echo ""
 echo "✅ 備份完成 → $DEST"
 echo "   DB dump : yba-$STAMP.sql.gz ($TABLES 張表)"
 echo "   bundle  : Yba_order-$STAMP.bundle"
+echo "   infra   : vps-infra/vps-infra-$STAMP.tar.gz + crontab-$STAMP.txt"
+echo "   機密    : secrets-$STAMP.tar.gz.enc（AES-256 加密）"
 echo "   記憶檔  : $(ls -1 "$DEST/.claude-memory/"*.md 2>/dev/null | wc -l) 個"
 echo ""
-echo "還原 DB 指令："
-echo "  zcat $DEST/db-backup/yba-$STAMP.sql.gz | ssh -i ~/.ssh/id_ed25519 $VPS 'docker exec -i supabase-db psql -U postgres -d postgres'"
+echo "🔴 VPS 全毀重架 → 照 $DEST/RESTORE.md 的「災難復原」章節做"
