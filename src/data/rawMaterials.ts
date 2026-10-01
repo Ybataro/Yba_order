@@ -9,6 +9,8 @@ export interface RawMaterial {
   box_ratio?: number
   purchase_price?: number | null
   net_weight_g?: number | null
+  /** false = 已停用（隱藏於輸入選單，歷史保留）；undefined 視為啟用 */
+  is_active?: boolean
 }
 
 export const materialCategories = [

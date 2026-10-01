@@ -71,7 +71,8 @@ export function MenuIngredientEditor({ ingredients, onChange, menuItemId }: Prop
       custom_cost: null,
     }
     if (source === 'recipe' && recipes.length > 0) base.recipe_id = recipes[0].id
-    if (source === 'material' && materials.length > 0) base.material_id = materials[0].id
+    const firstActive = materials.find((m) => m.is_active !== false)
+    if (source === 'material' && firstActive) base.material_id = firstActive.id
     updateRow(idx, base)
   }
 
@@ -151,8 +152,8 @@ export function MenuIngredientEditor({ ingredients, onChange, menuItemId }: Prop
                   className="w-full h-8 rounded-input px-2 text-xs border border-gray-200 bg-white"
                 >
                   <option value="">選擇原料</option>
-                  {materials.map((m) => (
-                    <option key={m.id} value={m.id}>{m.name}</option>
+                  {materials.filter((m) => m.is_active !== false || m.id === ing.material_id).map((m) => (
+                    <option key={m.id} value={m.id}>{m.name}{m.is_active === false ? '（已停用）' : ''}</option>
                   ))}
                 </select>
               )}

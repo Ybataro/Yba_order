@@ -10,20 +10,21 @@ import { useMaterialStore } from '@/stores/useMaterialStore'
 import { useCostStore } from '@/stores/useCostStore'
 import { useProductStore } from '@/stores/useProductStore'
 import type { RawMaterial } from '@/data/rawMaterials'
-import { Plus, FolderCog } from 'lucide-react'
+import { Plus, FolderCog, Archive, ChevronDown } from 'lucide-react'
 import { getMaterialCostPerG } from '@/lib/costAnalysis'
 
 const emptyMaterial: RawMaterial = { id: '', name: '', category: '', spec: '', unit: '', notes: '', box_unit: undefined, box_ratio: undefined, purchase_price: null, net_weight_g: null }
 
 export default function MaterialManager() {
-  const { items, categories, add, update, remove, reorder, renameCategory, addCategory, removeCategory, reorderCategory } = useMaterialStore()
+  const { items, categories, add, update, reorder, renameCategory, addCategory, removeCategory, reorderCategory } = useMaterialStore()
   const { showToast } = useToast()
   const [showCatManager, setShowCatManager] = useState(false)
   const [modalOpen, setModalOpen] = useState(false)
   const [editing, setEditing] = useState<RawMaterial | null>(null)
   const [form, setForm] = useState<RawMaterial>(emptyMaterial)
   const [filterCat, setFilterCat] = useState<string>('')
-  const [deleteConfirm, setDeleteConfirm] = useState<RawMaterial | null>(null)
+  const [deactivateConfirm, setDeactivateConfirm] = useState<RawMaterial | null>(null)
+  const [showInactive, setShowInactive] = useState(false)
   // 價格用字串 state 追蹤，避免 number 轉換吃掉輸入中的 "12." 小數點
   const [purchasePriceStr, setPurchasePriceStr] = useState('')
   const [netWeightStr, setNetWeightStr] = useState('')
@@ -31,21 +32,26 @@ export default function MaterialManager() {
   const menuItems = useCostStore((s) => s.menuItems)
   const storeProducts = useProductStore((s) => s.items)
 
-  /** 使用此原物料的配方/販售品/門店品項（使用中不可刪；配方、販售品 DB 亦有 FK RESTRICT 兜底，門店品項 DB 為 SET NULL 故只能靠此擋） */
+  /** 使用此原物料的配方/販售品/門店品項（停用時提示；停用不影響其成本計算） */
   const getUsage = (materialId: string) => [
     ...recipes.filter((r) => r.ingredients.some((i) => i.material_id === materialId)).map((r) => `配方「${r.name}」`),
     ...menuItems.filter((mi) => mi.ingredients.some((i) => i.material_id === materialId)).map((mi) => `販售品「${mi.name}」`),
     ...storeProducts.filter((p) => p.material_id === materialId).map((p) => `門店品項「${p.name}」`),
   ]
-  const deleteUsage = deleteConfirm ? getUsage(deleteConfirm.id) : []
+  const deactivateUsage = deactivateConfirm ? getUsage(deactivateConfirm.id) : []
 
+  // 已停用的原物料收在頁面底部，不混在啟用清單
+  const activeItems = useMemo(() => items.filter((m) => m.is_active !== false), [items])
+  const inactiveItems = useMemo(() => items.filter((m) => m.is_active === false), [items])
+
+  // 分類計數含已停用：刪分類會連帶刪除底下全部原物料，計數不可漏算
   const catCounts = useMemo(() => {
     const counts: Record<string, number> = {}
     categories.forEach((c) => { counts[c] = items.filter((m) => m.category === c).length })
     return counts
   }, [items, categories])
 
-  const filteredItems = filterCat ? items.filter((m) => m.category === filterCat) : items
+  const filteredItems = filterCat ? activeItems.filter((m) => m.category === filterCat) : activeItems
 
   const openAdd = () => {
     setEditing(null)
@@ -63,14 +69,15 @@ export default function MaterialManager() {
     setModalOpen(true)
   }
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!form.name.trim() || !form.category || !form.unit.trim()) {
       showToast('請填寫品名、分類、單位', 'error')
       return
     }
     const submitForm = { ...form, purchase_price: parseFloat(purchasePriceStr) || null, net_weight_g: parseFloat(netWeightStr) || null }
     if (editing) {
-      update(editing.id, submitForm)
+      const err = await update(editing.id, submitForm)
+      if (err) { showToast(`儲存失敗：${err}`, 'error'); return }
       showToast('原物料已更新')
     } else {
       add(submitForm)
@@ -79,21 +86,23 @@ export default function MaterialManager() {
     setModalOpen(false)
   }
 
-  const handleDelete = (item: RawMaterial) => setDeleteConfirm(item)
-
-  const confirmDelete = async () => {
-    if (!deleteConfirm || deleteUsage.length > 0) return
-    const err = await remove(deleteConfirm.id)
-    if (err) { showToast(`刪除失敗：${err}`, 'error'); return }
-    showToast('原物料已刪除')
-    setDeleteConfirm(null)
+  const setActive = async (item: RawMaterial, isActive: boolean) => {
+    const err = await update(item.id, { is_active: isActive })
+    if (err) { showToast(`${isActive ? '恢復' : '停用'}失敗：${err}`, 'error'); return false }
+    showToast(isActive ? `已恢復「${item.name}」` : `已停用「${item.name}」`)
+    return true
   }
 
-  // 刪分類會連帶刪除底下所有原物料：其中有使用中的就整個擋下
+  const confirmDeactivate = async () => {
+    if (!deactivateConfirm) return
+    if (await setActive(deactivateConfirm, false)) setDeactivateConfirm(null)
+  }
+
+  // 刪分類會連帶「刪除」底下原物料（含已停用）→ 歷史紀錄失去品名，故分類內有任何原物料就擋下
   const handleRemoveCategory = (name: string) => {
-    const used = items.filter((m) => m.category === name && getUsage(m.id).length > 0).map((m) => m.name)
-    if (used.length > 0) {
-      showToast(`無法刪除分類：${used.join('、')} 使用中`, 'error')
+    const count = catCounts[name] || 0
+    if (count > 0) {
+      showToast(`「${name}」內還有 ${count} 項原物料（含已停用），請先移到其他分類`, 'error')
       return
     }
     removeCategory(name)
@@ -139,10 +148,10 @@ export default function MaterialManager() {
             onClick={() => setFilterCat('')}
             className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${!filterCat ? 'bg-brand-mocha text-white' : 'bg-surface-section text-brand-lotus'}`}
           >
-            全部 ({items.length})
+            全部 ({activeItems.length})
           </button>
           {categories.map((cat) => {
-            const count = items.filter((m) => m.category === cat).length
+            const count = activeItems.filter((m) => m.category === cat).length
             return (
               <button
                 key={cat}
@@ -172,7 +181,8 @@ export default function MaterialManager() {
             },
           ]}
           onEdit={openEdit}
-          onDelete={handleDelete}
+          onDelete={setDeactivateConfirm}
+          deleteIcon={<Archive size={15} className="text-brand-lotus" />}
           onMoveUp={(idx) => {
             if (idx > 0) reorder(items.indexOf(filteredItems[idx]), items.indexOf(filteredItems[idx - 1]))
           }}
@@ -182,7 +192,7 @@ export default function MaterialManager() {
         />
       ) : (
         categories.map((cat) => {
-          const catItems = items.filter((m) => m.category === cat)
+          const catItems = activeItems.filter((m) => m.category === cat)
           if (catItems.length === 0) return null
           return (
             <div key={cat}>
@@ -202,7 +212,8 @@ export default function MaterialManager() {
                   },
                 ]}
                 onEdit={openEdit}
-                onDelete={handleDelete}
+                onDelete={setDeactivateConfirm}
+                deleteIcon={<Archive size={15} className="text-brand-lotus" />}
                 onMoveUp={(idx) => {
                   if (idx > 0) reorder(items.indexOf(catItems[idx]), items.indexOf(catItems[idx - 1]))
                 }}
@@ -213,6 +224,37 @@ export default function MaterialManager() {
             </div>
           )
         })
+      )}
+
+      {/* 已停用（預設收合） */}
+      {inactiveItems.length > 0 && (
+        <div className="px-4 py-3">
+          <button
+            onClick={() => setShowInactive(!showInactive)}
+            className="w-full flex items-center justify-center gap-1 h-8 text-xs text-brand-lotus"
+          >
+            {showInactive ? '收合' : '顯示'}已停用 {inactiveItems.length} 項
+            <ChevronDown size={14} className={`transition-transform ${showInactive ? 'rotate-180' : ''}`} />
+          </button>
+          {showInactive && (
+            <div className="mt-1 rounded-card bg-white divide-y divide-gray-50">
+              {inactiveItems.map((m) => (
+                <div key={m.id} className="flex items-center justify-between px-4 py-2.5">
+                  <div className="min-w-0">
+                    <p className="text-sm text-brand-lotus truncate">{m.name}</p>
+                    <p className="text-[10px] text-brand-lotus/70">{m.category}{m.spec ? ` · ${m.spec}` : ''}</p>
+                  </div>
+                  <button
+                    onClick={() => setActive(m, true)}
+                    className="shrink-0 h-7 px-3 rounded-btn text-xs font-medium text-brand-mocha bg-surface-section active:bg-surface-filled"
+                  >
+                    恢復
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       )}
 
       <BottomAction label="新增原物料" onClick={openAdd} icon={<Plus size={18} />} />
@@ -252,19 +294,18 @@ export default function MaterialManager() {
         </ModalField>
       </AdminModal>
 
-      {deleteConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center" onClick={() => setDeleteConfirm(null)}>
+      {deactivateConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center" onClick={() => setDeactivateConfirm(null)}>
           <div className="absolute inset-0 bg-black/40" />
           <div className="relative bg-white rounded-card p-6 mx-6 max-w-sm w-full" onClick={(e) => e.stopPropagation()}>
-            <h3 className="text-base font-semibold text-brand-oak mb-2">確認刪除</h3>
-            {deleteUsage.length > 0 ? (
-              <p className="text-sm text-status-danger mb-4">「{deleteConfirm.name}」使用中：{deleteUsage.join('、')}。請先從這些項目移除後再刪除。</p>
-            ) : (
-              <p className="text-sm text-brand-lotus mb-4">確定要刪除「{deleteConfirm.name}」嗎？此操作無法復原。</p>
+            <h3 className="text-base font-semibold text-brand-oak mb-2">停用原物料</h3>
+            <p className="text-sm text-brand-lotus mb-2">停用「{deactivateConfirm.name}」後，盤點、叫貨與配方選單不再顯示；歷史紀錄保留，可隨時恢復。</p>
+            {deactivateUsage.length > 0 && (
+              <p className="text-xs text-status-warning mb-2">仍被使用：{deactivateUsage.join('、')}。這些項目的成本照常計算。</p>
             )}
-            <div className="flex gap-3">
-              <button onClick={() => setDeleteConfirm(null)} className="btn-secondary flex-1 !h-10">取消</button>
-              <button onClick={confirmDelete} disabled={deleteUsage.length > 0} className="flex-1 h-10 rounded-btn text-white font-semibold text-sm bg-status-danger active:opacity-80 disabled:opacity-30">刪除</button>
+            <div className="flex gap-3 mt-4">
+              <button onClick={() => setDeactivateConfirm(null)} className="btn-secondary flex-1 !h-10">取消</button>
+              <button onClick={confirmDeactivate} className="flex-1 h-10 rounded-btn text-white font-semibold text-sm bg-brand-mocha active:opacity-80">停用</button>
             </div>
           </div>
         </div>

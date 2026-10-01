@@ -12,6 +12,8 @@ interface AdminTableProps<T extends { id: string }> {
   columns: Column<T>[]
   onEdit: (item: T) => void
   onDelete: (item: T) => void
+  /** 取代預設垃圾桶圖示（如「停用」用 Archive） */
+  deleteIcon?: React.ReactNode
   onMoveUp: (idx: number) => void
   onMoveDown: (idx: number) => void
 }
@@ -21,6 +23,7 @@ export function AdminTable<T extends { id: string }>({
   columns,
   onEdit,
   onDelete,
+  deleteIcon,
   onMoveUp,
   onMoveDown,
 }: AdminTableProps<T>) {
@@ -92,7 +95,7 @@ export function AdminTable<T extends { id: string }>({
               onClick={() => onDelete(item)}
               className="p-1.5 rounded-lg hover:bg-red-50 active:bg-red-100"
             >
-              <Trash2 size={15} className="text-status-danger" />
+              {deleteIcon ?? <Trash2 size={15} className="text-status-danger" />}
             </button>
           </div>
         </div>

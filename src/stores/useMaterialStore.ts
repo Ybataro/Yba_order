@@ -9,8 +9,7 @@ interface MaterialState {
   initialized: boolean
   initialize: () => Promise<void>
   add: (item: RawMaterial) => void
-  update: (id: string, partial: Partial<RawMaterial>) => void
-  remove: (id: string) => Promise<string | null>
+  update: (id: string, partial: Partial<RawMaterial>) => Promise<string | null>
   reorder: (fromIdx: number, toIdx: number) => void
   getByCategory: () => Map<string, RawMaterial[]>
   renameCategory: (oldName: string, newName: string) => void
@@ -45,6 +44,7 @@ export const useMaterialStore = create<MaterialState>()((set, get) => ({
           box_ratio: d.box_ratio ?? undefined,
           purchase_price: d.purchase_price ?? null,
           net_weight_g: d.net_weight_g ?? null,
+          is_active: d.is_active !== false,
         })),
       })
     }
@@ -68,12 +68,13 @@ export const useMaterialStore = create<MaterialState>()((set, get) => ({
         box_ratio: item.box_ratio ?? null,
         purchase_price: item.purchase_price ?? null,
         net_weight_g: item.net_weight_g ?? null,
+        is_active: item.is_active !== false,
         sort_order: get().items.length - 1,
       }).then()
     }
   },
 
-  update: (id, partial) => {
+  update: async (id, partial) => {
     set((s) => ({
       items: s.items.map((m) => (m.id === id ? { ...m, ...partial } : m)),
     }))
@@ -88,21 +89,15 @@ export const useMaterialStore = create<MaterialState>()((set, get) => ({
       if (partial.box_ratio !== undefined) db.box_ratio = partial.box_ratio ?? null
       if (partial.purchase_price !== undefined) db.purchase_price = partial.purchase_price ?? null
       if (partial.net_weight_g !== undefined) db.net_weight_g = partial.net_weight_g ?? null
+      if (partial.is_active !== undefined) db.is_active = partial.is_active
       if (Object.keys(db).length > 0) {
-        supabase.from('raw_materials').update(db).eq('id', id).then()
+        const { error } = await supabase.from('raw_materials').update(db).eq('id', id)
+        if (error) { console.error('[raw_materials] update failed:', error.message); return error.message }
       }
     }
-  },
-
-  remove: async (id) => {
-    if (supabase) {
-      // 先刪 DB 再改本地：被配方使用中時 FK RESTRICT 會擋下，畫面不可先消失
-      const { error } = await supabase.from('raw_materials').delete().eq('id', id)
-      if (error) { console.error('[raw_materials] delete failed:', error.message); return error.message }
-    }
-    set((s) => ({ items: s.items.filter((m) => m.id !== id) }))
     return null
   },
+  // 原物料不提供刪除（改 is_active 停用），保留叫貨/盤點/配方歷史
 
   reorder: (fromIdx, toIdx) => {
     set((s) => {

@@ -14,7 +14,9 @@ export default function ZoneManager() {
   const products = useProductStore((s) => s.items)
   const productCategories = useProductStore((s) => s.categories)
   const frozenProducts = useFrozenProductStore((s) => s.items)
-  const materials = useMaterialStore((s) => s.items)
+  const allMaterials = useMaterialStore((s) => s.items)
+  // 已停用原物料不再分配區域（盤點頁本身也已排除）
+  const materials = useMemo(() => allMaterials.filter((m) => m.is_active !== false), [allMaterials])
   const materialCategories = useMaterialStore((s) => s.categories)
   const { zones, getStoreZones, getZoneProductIds, addZone, removeZone, assignProduct, unassignProduct } = useZoneStore()
   const { showToast } = useToast()

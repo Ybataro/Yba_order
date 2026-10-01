@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { TopNav } from '@/components/TopNav'
 import { useToast } from '@/components/Toast'
 import { useProductStore } from '@/stores/useProductStore'
@@ -22,7 +22,8 @@ export default function ItemSortManager() {
   const stores = useStoreStore((s) => s.items)
   const products = useProductStore((s) => s.items)
   const productCategories = useProductStore((s) => s.categories)
-  const materials = useMaterialStore((s) => s.items)
+  const allMaterials = useMaterialStore((s) => s.items)
+  const materials = useMemo(() => allMaterials.filter((m) => m.is_active !== false), [allMaterials])
   const materialCategories = useMaterialStore((s) => s.categories)
 
   const tabs: { id: string; name: string }[] = [

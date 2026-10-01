@@ -101,8 +101,8 @@ export function RecipeIngredientEditor({ ingredients, onChange, recipeId }: Prop
                 className="w-full h-8 rounded-input px-2 text-xs border border-gray-200 bg-white"
               >
                 <option value="__custom__">自訂項目</option>
-                {materials.map((m) => (
-                  <option key={m.id} value={m.id}>{m.name}</option>
+                {materials.filter((m) => m.is_active !== false || m.id === ing.material_id).map((m) => (
+                  <option key={m.id} value={m.id}>{m.name}{m.is_active === false ? '（已停用）' : ''}</option>
                 ))}
               </select>
 

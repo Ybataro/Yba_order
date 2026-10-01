@@ -24,20 +24,24 @@ export default function MaterialStock() {
   const zoneProducts = useZoneStore((s) => s.zoneProducts)
   const kitchenStaff = useStaffStore((s) => s.kitchenStaff)
 
-  // 如果央廚有設定區域，只顯示已分配的原物料；否則顯示全部
+  // 該日 session 已有資料的原物料：即使已停用仍須顯示，否則存檔時「刪除不在列表中的品項」會刪掉歷史盤點值
+  const [loadedIds, setLoadedIds] = useState<Set<string>>(new Set())
+
+  // 如果央廚有設定區域，只顯示已分配的原物料；否則顯示全部（皆排除已停用，除非該日已有資料）
   const { rawMaterials, materialCategories } = useMemo(() => {
+    const visibleMaterials = allMaterials.filter((m) => m.is_active !== false || loadedIds.has(m.id))
     const kitchenZones = zones.filter((z) => z.storeId === 'kitchen')
     if (kitchenZones.length === 0) {
-      return { rawMaterials: allMaterials, materialCategories: allMaterialCategories }
+      return { rawMaterials: visibleMaterials, materialCategories: allMaterialCategories }
     }
     const kitchenZoneIds = new Set(kitchenZones.map((z) => z.id))
     const assignedIds = new Set(
       zoneProducts.filter((zp) => kitchenZoneIds.has(zp.zoneId)).map((zp) => zp.productId)
     )
-    const filtered = allMaterials.filter((m) => assignedIds.has(m.id))
+    const filtered = visibleMaterials.filter((m) => assignedIds.has(m.id))
     const cats = new Set(filtered.map((m) => m.category))
     return { rawMaterials: filtered, materialCategories: allMaterialCategories.filter((c) => cats.has(c)) }
-  }, [allMaterials, allMaterialCategories, zones, zoneProducts])
+  }, [allMaterials, allMaterialCategories, zones, zoneProducts, loadedIds])
   const [confirmBy, setConfirmBy] = useState('')
 
   const today = getTodayTW()
@@ -66,6 +70,7 @@ export default function MaterialStock() {
       const initStock: Record<string, string> = {}
       rawMaterials.forEach(m => { initStock[m.id] = '' })
       setStock(initStock)
+      setLoadedIds(new Set())
       setIsEdit(false)
       setConfirmBy('')
 
@@ -91,6 +96,7 @@ export default function MaterialStock() {
         items.forEach(item => {
           loadedStock[item.material_id] = item.stock_qty != null ? String(item.stock_qty) : ''
         })
+        setLoadedIds(new Set(items.map((item) => item.material_id as string)))
         setStock(loadedStock)
       }
       setLoading(false)

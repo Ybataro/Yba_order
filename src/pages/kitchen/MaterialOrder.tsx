@@ -16,7 +16,13 @@ import { buildSortedByCategory } from '@/lib/sortByStore'
 
 export default function MaterialOrder() {
   const { showToast } = useToast()
-  const rawMaterials = useMaterialStore((s) => s.items)
+  const allMaterials = useMaterialStore((s) => s.items)
+  // 已停用的原物料不顯示，除非該日叫貨單已有它（編輯歷史單時保留可見）
+  const [loadedIds, setLoadedIds] = useState<Set<string>>(new Set())
+  const rawMaterials = useMemo(
+    () => allMaterials.filter((m) => m.is_active !== false || loadedIds.has(m.id)),
+    [allMaterials, loadedIds],
+  )
   const materialCategories = useMaterialStore((s) => s.categories)
   const kitchenStaff = useStaffStore((s) => s.kitchenStaff)
   const [confirmBy, setConfirmBy] = useState('')
@@ -42,6 +48,7 @@ export default function MaterialOrder() {
     const initOrders: Record<string, string> = {}
     rawMaterials.forEach(m => { initOrders[m.id] = '' })
     setOrders(initOrders)
+    setLoadedIds(new Set())
     setIsEdit(false)
     setConfirmBy('')
 
@@ -65,6 +72,7 @@ export default function MaterialOrder() {
               items.forEach(item => {
                 loaded[item.material_id] = item.quantity > 0 ? String(item.quantity) : ''
               })
+              setLoadedIds(new Set(items.map((item) => item.material_id as string)))
               setOrders(loaded)
             }
             setLoading(false)

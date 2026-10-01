@@ -385,7 +385,7 @@ export default function ProductManager() {
               ))}
             </optgroup>
             <optgroup label="央廚原物料">
-              {materials.map((m) => (
+              {materials.filter((m) => m.is_active !== false || m.id === form.material_id).map((m) => (
                 <option key={m.id} value={`m:${m.id}`}>{m.name}{m.purchase_price && m.net_weight_g ? '' : '（未設採購價）'}</option>
               ))}
             </optgroup>
