@@ -3,6 +3,7 @@ import { Plus, Trash2 } from 'lucide-react'
 import { useMaterialStore } from '@/stores/useMaterialStore'
 import { getMaterialCostPerG } from '@/lib/costAnalysis'
 import type { RecipeIngredient } from '@/lib/costAnalysis'
+import type { RawMaterial } from '@/data/rawMaterials'
 
 interface Props {
   ingredients: RecipeIngredient[]
@@ -10,11 +11,19 @@ interface Props {
   recipeId: string
 }
 
-const UNIT_LABELS = ['g', '顆', 'ml']
+/** 原料可用「採購單位」輸入（如 瓶）：需有淨重，且單位不是克本身 */
+function getPackUnit(mat: RawMaterial | undefined): { label: string; grams: number } | null {
+  if (!mat?.net_weight_g || mat.net_weight_g <= 0 || !mat.unit || ['g', '克', '公克'].includes(mat.unit)) return null
+  return { label: mat.unit, grams: mat.net_weight_g }
+}
+
+const fmtQty = (n: number) => String(Math.round(n * 10000) / 10000)
 
 export function RecipeIngredientEditor({ ingredients, onChange, recipeId }: Props) {
   const materials = useMaterialStore((s) => s.items)
-  const [unitLabels, setUnitLabels] = useState<Record<string, string>>({})
+  // 存檔一律存克數（amount_g）；選採購單位時僅輸入介面換算。draft 保留輸入中的 "3." 等中間狀態
+  const [packMode, setPackMode] = useState<Record<string, boolean>>({})
+  const [packDraft, setPackDraft] = useState<Record<string, string>>({})
 
   const addRow = () => {
     onChange([
@@ -69,6 +78,8 @@ export function RecipeIngredientEditor({ ingredients, onChange, recipeId }: Prop
       {ingredients.map((ing, idx) => {
         const isCustom = !ing.material_id
         const subtotal = getSubtotal(ing)
+        const pack = isCustom ? null : getPackUnit(materials.find((m) => m.id === ing.material_id))
+        const inPackMode = pack != null && packMode[ing.id] === true
 
         return (
           <div key={ing.id} className="flex items-start gap-2 p-2 bg-surface-section rounded-card">
@@ -83,6 +94,7 @@ export function RecipeIngredientEditor({ ingredients, onChange, recipeId }: Prop
                   } else {
                     updateRow(idx, { material_id: val, custom_name: null, custom_price_per_g: null })
                   }
+                  setPackMode({ ...packMode, [ing.id]: false })
                 }}
                 className="w-full h-8 rounded-input px-2 text-xs border border-gray-200 bg-white"
               >
@@ -111,26 +123,56 @@ export function RecipeIngredientEditor({ ingredients, onChange, recipeId }: Prop
                     />
                   </>
                 )}
-                <input
-                  type="number"
-                  value={ing.amount_g || ''}
-                  onChange={(e) => updateRow(idx, { amount_g: parseFloat(e.target.value) || 0 })}
-                  placeholder="克數"
-                  className="w-20 h-7 rounded-input px-2 text-xs border border-gray-200 bg-white"
-                />
-                <select
-                  value={unitLabels[ing.id] ?? 'g'}
-                  onChange={(e) => setUnitLabels({ ...unitLabels, [ing.id]: e.target.value })}
-                  className="h-7 rounded-input px-1 text-[10px] border border-gray-200 bg-white text-brand-lotus self-center shrink-0"
-                >
-                  {UNIT_LABELS.map((u) => (
-                    <option key={u} value={u}>{u}</option>
-                  ))}
-                </select>
+                {inPackMode ? (
+                  <input
+                    type="number"
+                    inputMode="decimal"
+                    value={packDraft[ing.id] ?? (ing.amount_g ? fmtQty(ing.amount_g / pack.grams) : '')}
+                    onChange={(e) => {
+                      setPackDraft({ ...packDraft, [ing.id]: e.target.value })
+                      // DB amount_g 為 NUMERIC(10,1)，先取到 0.1g 避免存檔後數字飄移
+                      updateRow(idx, { amount_g: Math.round((parseFloat(e.target.value) || 0) * pack.grams * 10) / 10 })
+                    }}
+                    placeholder={`${pack.label}數`}
+                    className="w-20 h-7 rounded-input px-2 text-xs border border-gray-200 bg-white"
+                  />
+                ) : (
+                  <input
+                    type="number"
+                    value={ing.amount_g || ''}
+                    onChange={(e) => updateRow(idx, { amount_g: parseFloat(e.target.value) || 0 })}
+                    placeholder="克數"
+                    className="w-20 h-7 rounded-input px-2 text-xs border border-gray-200 bg-white"
+                  />
+                )}
+                {pack ? (
+                  <select
+                    value={inPackMode ? 'pack' : 'g'}
+                    onChange={(e) => {
+                      setPackMode({ ...packMode, [ing.id]: e.target.value === 'pack' })
+                      setPackDraft((prev) => { const next = { ...prev }; delete next[ing.id]; return next })
+                    }}
+                    className="h-7 rounded-input px-1 text-[10px] border border-gray-200 bg-white text-brand-lotus self-center shrink-0"
+                  >
+                    <option value="g">g</option>
+                    <option value="pack">{pack.label}</option>
+                  </select>
+                ) : (
+                  <span className="text-[10px] text-brand-lotus self-center shrink-0">g</span>
+                )}
               </div>
 
-              {subtotal != null && (
-                <p className="text-[10px] text-brand-mocha">${subtotal.toFixed(2)}</p>
+              {(subtotal != null || (pack && ing.amount_g > 0)) && (
+                <p className="text-[10px] text-brand-mocha">
+                  {subtotal != null && `$${subtotal.toFixed(2)}`}
+                  {pack && ing.amount_g > 0 && (
+                    <span className="text-brand-lotus">
+                      {subtotal != null && ' · '}
+                      {inPackMode ? `= ${fmtQty(ing.amount_g)}g` : `= ${fmtQty(ing.amount_g / pack.grams)}${pack.label}`}
+                      {`（1${pack.label}=${pack.grams}g）`}
+                    </span>
+                  )}
+                </p>
               )}
             </div>
 
