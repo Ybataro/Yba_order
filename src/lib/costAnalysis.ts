@@ -97,16 +97,21 @@ export function getRecipeCost(
   return { totalCost, costPerUnit, costPerG, details }
 }
 
-/** 叫貨品項的配方原料成本（每叫貨單位）= 配方每克成本 × 每單位克數；未綁定或無法計算回傳 null */
+/** 叫貨品項的原料成本（每叫貨單位）= 對應配方或原物料的每克成本 × 每單位克數；未綁定或無法計算回傳 null */
 export function getProductRecipeCost(
-  product: { recipe_id?: string | null; recipe_grams?: number | null },
+  product: { recipe_id?: string | null; material_id?: string | null; recipe_grams?: number | null },
   recipesMap: Map<string, Recipe>,
   materialsMap: Map<string, RawMaterial>,
 ): number | null {
-  if (!product.recipe_id || !product.recipe_grams || product.recipe_grams <= 0) return null
-  const recipe = recipesMap.get(product.recipe_id)
-  if (!recipe) return null
-  const { costPerG } = getRecipeCost(recipe, materialsMap)
+  if (!product.recipe_grams || product.recipe_grams <= 0) return null
+  let costPerG: number | null = null
+  if (product.recipe_id) {
+    const recipe = recipesMap.get(product.recipe_id)
+    if (recipe) costPerG = getRecipeCost(recipe, materialsMap).costPerG
+  } else if (product.material_id) {
+    const mat = materialsMap.get(product.material_id)
+    if (mat) costPerG = getMaterialCostPerG(mat)
+  }
   if (costPerG == null) return null
   // 4 位小數：以克計價的品項（如 0.0204/g）取 2 位會產生 >1% 誤差
   return Math.round(costPerG * product.recipe_grams * 10000) / 10000

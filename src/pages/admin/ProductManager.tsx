@@ -61,8 +61,16 @@ export default function ProductManager() {
   const recipesMap = useMemo(() => new Map(recipes.map((r) => [r.id, r])), [recipes])
   const materialsMap = useMemo(() => new Map(materials.map((m) => [m.id, m])), [materials])
   const linkedRecipe = form.recipe_id ? recipesMap.get(form.recipe_id) : undefined
+  const linkedMaterial = !form.recipe_id && form.material_id ? materialsMap.get(form.material_id) : undefined
+  // 快選克數：配方 = 每單位重量 + 份量單位；原料 = 每採購單位淨重
+  const gramOptions: { label: string; grams: number }[] = linkedRecipe
+    ? [
+        ...(linkedRecipe.total_weight_g > 0 ? [{ label: `1${linkedRecipe.unit}`, grams: linkedRecipe.total_weight_g }] : []),
+        ...linkedRecipe.serving_units.filter((u) => u.grams > 0),
+      ]
+    : linkedMaterial?.net_weight_g ? [{ label: `1${linkedMaterial.unit}`, grams: linkedMaterial.net_weight_g }] : []
   const recipeCostSuggestion = getProductRecipeCost(
-    { recipe_id: form.recipe_id, recipe_grams: parseFloat(recipeGramsStr) || null },
+    { recipe_id: form.recipe_id, material_id: form.material_id, recipe_grams: parseFloat(recipeGramsStr) || null },
     recipesMap,
     materialsMap,
   )
@@ -91,8 +99,9 @@ export default function ProductManager() {
       return
     }
     const recipeGrams = parseFloat(recipeGramsStr) || null
-    if (form.recipe_id && !recipeGrams) {
-      showToast('已選對應配方，請填每單位克數', 'error')
+    const hasSource = !!(form.recipe_id || form.material_id)
+    if (hasSource && !recipeGrams) {
+      showToast('已選對應配方/原料，請填每單位克數', 'error')
       return
     }
     const submitForm = {
@@ -100,7 +109,8 @@ export default function ProductManager() {
       ourCost: parseFloat(ourCostStr) || 0,
       franchisePrice: parseFloat(franchisePriceStr) || 0,
       recipe_id: form.recipe_id || null,
-      recipe_grams: form.recipe_id ? recipeGrams : null,
+      material_id: form.recipe_id ? null : form.material_id || null,
+      recipe_grams: hasSource ? recipeGrams : null,
     }
     if (editing) {
       update(editing.id, submitForm)
@@ -352,35 +362,42 @@ export default function ProductManager() {
         <ModalField label="加盟價格">
           <ModalInput value={franchisePriceStr} onChange={setFranchisePriceStr} placeholder="例：65 或 0.09" />
         </ModalField>
-        <ModalField label="對應配方（參考原料成本）">
+        <ModalField label="對應配方/原料（參考原料成本）">
           <select
-            value={form.recipe_id ?? ''}
+            value={form.recipe_id ? `r:${form.recipe_id}` : form.material_id ? `m:${form.material_id}` : ''}
             onChange={(e) => {
-              const recipeId = e.target.value || null
-              setForm({ ...form, recipe_id: recipeId })
-              // 單位相同時預填每單位重量，省一步
+              const v = e.target.value
+              const recipeId = v.startsWith('r:') ? v.slice(2) : null
+              const materialId = v.startsWith('m:') ? v.slice(2) : null
+              setForm({ ...form, recipe_id: recipeId, material_id: materialId })
+              // 單位相同時預填每單位克數，省一步
               const r = recipeId ? recipesMap.get(recipeId) : undefined
-              if (r && !recipeGramsStr && r.unit === form.unit && r.total_weight_g > 0) setRecipeGramsStr(String(r.total_weight_g))
+              const m = materialId ? materialsMap.get(materialId) : undefined
+              const autoGrams = r && r.unit === form.unit ? r.total_weight_g : m && m.unit === form.unit ? m.net_weight_g : null
+              if (autoGrams && autoGrams > 0) setRecipeGramsStr(String(autoGrams))
             }}
             className="w-full h-9 rounded-input px-3 text-sm border border-gray-200 bg-white text-brand-oak"
           >
             <option value="">不對應</option>
-            {recipes.map((r) => (
-              <option key={r.id} value={r.id}>{r.name}</option>
-            ))}
+            <optgroup label="成品配方">
+              {recipes.map((r) => (
+                <option key={r.id} value={`r:${r.id}`}>{r.name}</option>
+              ))}
+            </optgroup>
+            <optgroup label="央廚原物料">
+              {materials.map((m) => (
+                <option key={m.id} value={`m:${m.id}`}>{m.name}{m.purchase_price && m.net_weight_g ? '' : '（未設採購價）'}</option>
+              ))}
+            </optgroup>
           </select>
         </ModalField>
-        {linkedRecipe && (
+        {(linkedRecipe || linkedMaterial) && (
           <div className="space-y-2">
-            <ModalField label={`每${form.unit || '單位'}含配方（g）`}>
-              <ModalInput value={recipeGramsStr} onChange={setRecipeGramsStr} placeholder="例：1600 或 380" />
+            <ModalField label={`每${form.unit || '單位'}含${linkedRecipe ? '配方' : '原料'}（g）`}>
+              <ModalInput value={recipeGramsStr} onChange={setRecipeGramsStr} placeholder={linkedRecipe ? '例：1600 或 380' : '例：936'} />
             </ModalField>
             <div className="flex flex-wrap gap-1.5">
-              {[
-                ...(linkedRecipe.total_weight_g > 0 ? [{ label: `1${linkedRecipe.unit}`, grams: linkedRecipe.total_weight_g }] : []),
-                ...linkedRecipe.serving_units.filter((u) => u.grams > 0),
-                { label: '以克計價', grams: 1 },
-              ].map((opt) => (
+              {[...gramOptions, { label: '以克計價', grams: 1 }].map((opt) => (
                 <button
                   key={opt.label}
                   type="button"
@@ -393,7 +410,7 @@ export default function ProductManager() {
             </div>
             <div className="flex items-center justify-between rounded-card bg-surface-section px-3 py-2">
               <div>
-                <p className="text-xs text-brand-lotus">配方原料成本（不含人工/包材）</p>
+                <p className="text-xs text-brand-lotus">{linkedRecipe ? '配方原料成本（不含人工/包材）' : `原料成本（${linkedMaterial?.name} 採購價換算）`}</p>
                 <p className="text-sm font-semibold text-brand-oak font-num">
                   {recipeCostSuggestion != null ? `$${recipeCostSuggestion}` : '—'}
                 </p>

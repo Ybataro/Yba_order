@@ -17,7 +17,9 @@ export interface StoreProduct {
   bag_weight?: number | null
   /** 對應成品配方（僅供「配方原料成本」參考，不自動覆寫 ourCost） */
   recipe_id?: string | null
-  /** 1 個叫貨單位含多少克配方成品 */
+  /** 對應央廚原物料（與 recipe_id 二擇一） */
+  material_id?: string | null
+  /** 1 個叫貨單位含多少克（配方或原料共用） */
   recipe_grams?: number | null
   wideInput?: boolean
   integerOnly?: boolean

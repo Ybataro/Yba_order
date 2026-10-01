@@ -194,6 +194,16 @@ describe('getProductRecipeCost', () => {
     expect(getProductRecipeCost({ recipe_id: 'r1', recipe_grams: 1 }, recipesMap, new Map())).toBe(0.0204)
   })
 
+  // 為何重要：門店「鮮奶」對應原物料「鮮奶」，價格只在原物料維護一處（SSOT），叫貨價自原物料換算
+  it('對應原物料：採購價 ÷ 淨重 × 每單位克數', () => {
+    const milk = makeMaterial({ id: 'm028', purchase_price: 65, net_weight_g: 936 })
+    const mats = new Map([['m028', milk]])
+    expect(getProductRecipeCost({ material_id: 'm028', recipe_grams: 936 }, recipesMap, mats)).toBe(65)
+    // 原物料未設採購價 → null，不顯示錯誤的 $0
+    const noPrice = new Map([['m028', makeMaterial({ id: 'm028', purchase_price: null })]])
+    expect(getProductRecipeCost({ material_id: 'm028', recipe_grams: 936 }, recipesMap, noPrice)).toBeNull()
+  })
+
   it('未綁定、克數缺漏、配方已刪除 → null（不給錯誤建議值）', () => {
     expect(getProductRecipeCost({}, recipesMap, new Map())).toBeNull()
     expect(getProductRecipeCost({ recipe_id: 'r1', recipe_grams: null }, recipesMap, new Map())).toBeNull()
